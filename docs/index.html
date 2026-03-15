@@ -296,7 +296,7 @@
   <div class="nav-logo">
     <span class="logo-dna">🧬</span>
     <span class="brand">CodeDNA</span>
-    <span class="nav-version">v0.2</span>
+    <span class="nav-version">v0.3</span>
   </div>
   <div class="nav-links">
     <a href="#architecture">Architecture</a>
@@ -310,7 +310,7 @@
 <div class="hero">
   <div class="hero-grid"></div>
   <div class="hero-glow"></div>
-  <div class="badge"><span class="badge-dot"></span> Research Framework — v0.2 · MIT</div>
+  <div class="badge"><span class="badge-dot"></span> Research Framework — v0.3 · MIT</div>
   <h1>Code that carries<br>its own genome.</h1>
   <p class="hero-sub">
     <strong>CodeDNA</strong> embeds context directly into source files — at every level.<br>
@@ -664,17 +664,24 @@
       </div>
     </div>
     <div class="roadmap-item">
-      <span class="roadmap-status status-next">→ Next</span>
+      <span class="roadmap-status status-done">✓ Done</span>
       <div class="roadmap-text">
-        <h3>Manifest Validator CLI</h3>
-        <p>Static analysis tool that verifies every file has a valid header, LAST_MODIFIED is current, and @REQUIRES-READ links resolve to real symbols.</p>
+        <h3>Level 3 — Semantic Naming + CONTEXT_BUDGET (Spec v0.3)</h3>
+        <p>Semantic variable naming convention. CONTEXT_BUDGET field for planner efficiency. Planner Manifest-Only Read protocol.</p>
       </div>
     </div>
     <div class="roadmap-item">
-      <span class="roadmap-status status-next">→ Next</span>
+      <span class="roadmap-status status-done">✓ Done</span>
       <div class="roadmap-text">
-        <h3>Planner manifest-only mode</h3>
-        <p>Read only the first 12 lines (manifest) of every file to build a complete architectural map of a codebase in &lt;200 tokens total.</p>
+        <h3>Tooling — Validator CLI + Pre-commit hook + System prompts</h3>
+        <p><code>tools/validate_manifests.py</code> · <code>tools/pre-commit</code> · ready-to-paste prompts for Claude, Cursor, Copilot, Aider.</p>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <span class="roadmap-status status-wip">◆ In progress</span>
+      <div class="roadmap-text">
+        <h3>Multi-language examples (Python ✓ · JS ✓ · TS ✓ · Go · Rust)</h3>
+        <p>Reference implementations showing all three levels of annotation in each language ecosystem.</p>
       </div>
     </div>
     <div class="roadmap-item">
@@ -687,13 +694,122 @@
   </div>
 </section>
 
+<!-- QUICK START -->
+<div class="strip" id="quickstart">
+  <div class="strip-inner">
+    <p class="section-label">Quick Start</p>
+    <h2 style="margin-bottom:0.75rem;">Activate CodeDNA in your AI tool.</h2>
+    <p style="color:var(--muted); font-size:1rem; margin-bottom:2rem; max-width:600px;">Paste one of these into your AI assistant's system prompt. No install required — it's just instructions.</p>
+
+    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1.5rem;">
+
+      <div style="border-radius:16px; border:1px solid var(--border); background:var(--bg); overflow:hidden;">
+        <div style="padding:1rem 1.25rem; background:var(--bg3); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
+          <span style="font-size:0.8rem; font-weight:700;">Universal (Claude / GPT-4 / Gemini)</span>
+          <button onclick="copyPrompt('prompt-universal')" style="font-size:0.7rem; padding:0.2rem 0.6rem; border-radius:6px; border:1px solid var(--border); cursor:pointer; background:var(--bg2); color:var(--accent); font-weight:700;">Copy</button>
+        </div>
+        <pre id="prompt-universal" style="padding:1rem; font-size:0.72rem; line-height:1.6; white-space:pre-wrap; overflow:auto; max-height:220px;">You follow the CodeDNA v0.3 protocol.
+
+EDITING: Read the manifest header first. Follow DEPENDS_ON constraints. Follow every @REQUIRES-READ link before writing logic. Update LAST_MODIFIED as your first change.
+
+GENERATING: Write the manifest header before any imports. Add @REQUIRES-READ/@MODIFIES-ALSO to cross-file functions. Use semantic variable names: list_dict_users_from_db = get_users()
+
+EXPORTS are contracts — never rename without explicit instruction.</pre>
+      </div>
+
+      <div style="border-radius:16px; border:1px solid var(--border); background:var(--bg); overflow:hidden;">
+        <div style="padding:1rem 1.25rem; background:var(--bg3); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
+          <span style="font-size:0.8rem; font-weight:700;">Cursor (.cursorrules)</span>
+          <button onclick="copyPrompt('prompt-cursor')" style="font-size:0.7rem; padding:0.2rem 0.6rem; border-radius:6px; border:1px solid var(--border); cursor:pointer; background:var(--bg2); color:var(--accent); font-weight:700;">Copy</button>
+        </div>
+        <pre id="prompt-cursor" style="padding:1rem; font-size:0.72rem; line-height:1.6; white-space:pre-wrap; overflow:auto; max-height:220px;"># CodeDNA v0.3
+Every file needs a manifest header:
+# === CODEDNA:0.3 =====
+# FILE: name.py
+# PURPOSE: what it does
+# CONTEXT_BUDGET: normal
+# DEPENDS_ON: file → symbol | none
+# EXPORTS: fn(args) → type
+# LAST_MODIFIED: last change
+# =====================
+On edit: update LAST_MODIFIED first.
+Follow @REQUIRES-READ before writing.
+Cascade @MODIFIES-ALSO always.</pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- CODE TRANSLATOR -->
+<section style="max-width:1100px; margin:0 auto; padding:5rem 2rem;">
+  <p class="section-label">Translate Your Code</p>
+  <h2 style="margin-bottom:0.75rem;">Before &amp; after CodeDNA</h2>
+  <p style="color:var(--muted); font-size:1rem; margin-bottom:2rem; max-width:600px;">Any file can become a CodeDNA file. The transformation is additive — no code changes, only new information layers.</p>
+
+  <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; align-items:start;">
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div>
+        <span class="code-title">❌ Standard — no context</span>
+      </div>
+      <pre><span class="c-keyword">from</span> .utils <span class="c-keyword">import</span> <span class="c-func">get_users</span>, <span class="c-func">send_email</span>
+
+<span class="c-keyword">def</span> <span class="c-func">notify_inactive</span>(days):
+    data = <span class="c-func">get_users</span>()
+    <span class="c-keyword">for</span> u <span class="c-keyword">in</span> data:
+        <span class="c-keyword">if</span> u[<span class="c-string">"inactive_days"</span>] &gt; days:
+            <span class="c-func">send_email</span>(u[<span class="c-string">"email"</span>])
+<span class="c-muted"># AI reading this has ZERO context:</span>
+<span class="c-muted"># What does data contain?</span>
+<span class="c-muted"># What happens if send_email fails?</span>
+<span class="c-muted"># Does this touch the DB directly?</span></pre>
+    </div>
+
+    <div class="code-wrap">
+      <div class="code-header">
+        <div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div>
+        <span class="code-title">✅ CodeDNA v0.3 — full context</span>
+      </div>
+      <pre><span class="c-manifest"># === CODEDNA:0.3 ========================
+# FILE: notifications.py
+# PURPOSE: Email inactive users after N days
+# CONTEXT_BUDGET: normal
+# DEPENDS_ON: utils.py → get_users(),
+#             utils.py → send_email()
+# EXPORTS: notify_inactive(days: int) → None
+# DB_TABLES: users (email, inactive_days)
+# LAST_MODIFIED: initial implementation
+# ========================================</span>
+<span class="c-keyword">from</span> .utils <span class="c-keyword">import</span> <span class="c-func">get_users</span>, <span class="c-func">send_email</span>
+
+<span class="c-keyword">def</span> <span class="c-func">notify_inactive</span>(days: <span class="c-type">int</span>) -&gt; <span class="c-type">None</span>:
+    <span class="c-hyperlink"># @REQUIRES-READ: utils.py → get_users()</span>
+    <span class="c-hyperlink"># @MODIFIES-ALSO: logs.py → activity_log()</span>
+    list_dict_users_from_db = <span class="c-func">get_users</span>()
+    <span class="c-keyword">for</span> user_dict <span class="c-keyword">in</span> list_dict_users_from_db:
+        <span class="c-keyword">if</span> user_dict[<span class="c-string">"inactive_days"</span>] &gt; days:
+            <span class="c-func">send_email</span>(user_dict[<span class="c-string">"email"</span>])</pre>
+    </div>
+  </div>
+</section>
+
 <!-- FOOTER -->
 <footer>
   <p style="font-size:1.5rem; margin-bottom:0.5rem;">🧬</p>
-  <p><strong>CodeDNA Framework</strong> — v0.2 · MIT License</p>
+  <p><strong>CodeDNA Framework</strong> — v0.3 · MIT License</p>
   <p style="margin-top:0.5rem;"><em>"Every file carries the complete genome of the project it belongs to."</em></p>
-  <p style="margin-top:1rem;"><a href="https://github.com/Larens94/beacon-framework" style="color:var(--accent); text-decoration:none;">github.com/Larens94/beacon-framework</a></p>
+  <p style="margin-top:1rem;"><a href="https://github.com/Larens94/codedna" style="color:var(--accent); text-decoration:none;">github.com/Larens94/codedna</a></p>
 </footer>
+
+<script>
+function copyPrompt(id) {
+  const el = document.getElementById(id);
+  navigator.clipboard.writeText(el.textContent).then(() => {
+    const btn = el.previousElementSibling ? el.parentElement.querySelector('button') : null;
+    if (btn) { const t = btn.textContent; btn.textContent = '✓ Copied!'; setTimeout(() => btn.textContent = t, 1500); }
+  });
+}
+</script>
 
 </body>
 </html>

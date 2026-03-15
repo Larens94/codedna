@@ -1,0 +1,82 @@
+#!/usr/bin/env bash
+# === CODEDNA:0.3 ================================================
+# FILE: pre-commit
+# PURPOSE: Git pre-commit hook — validates CodeDNA manifest headers
+# CONTEXT_BUDGET: minimal
+# DEPENDS_ON: tools/validate_manifests.py
+# LAST_MODIFIED: initial implementation v0.3
+# ================================================================
+#
+# INSTALLATION:
+#   cp tools/pre-commit .git/hooks/pre-commit
+#   chmod +x .git/hooks/pre-commit
+#
+# Or use the install script:
+#   bash tools/install-hooks.sh
+
+set -euo pipefail
+
+echo "🧬 CodeDNA manifest validation..."
+
+# Find Python interpreter
+PYTHON=""
+for cmd in python3 python; do
+    if command -v "$cmd" &>/dev/null; then
+        PYTHON="$cmd"
+        break
+    fi
+done
+
+if [[ -z "$PYTHON" ]]; then
+    echo "⚠️  Python not found — skipping CodeDNA validation"
+    exit 0
+fi
+
+# Check if validator exists
+VALIDATOR="$(git rev-parse --show-toplevel)/tools/validate_manifests.py"
+if [[ ! -f "$VALIDATOR" ]]; then
+    echo "⚠️  Validator not found at tools/validate_manifests.py — skipping"
+    exit 0
+fi
+
+# Get list of staged source files
+STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(py|js|ts|jsx|tsx|go|rs)$' || true)
+
+if [[ -z "$STAGED" ]]; then
+    echo "✅ No source files staged."
+    exit 0
+fi
+
+# Validate only staged files
+ERRORS=0
+for FILE in $STAGED; do
+    if [[ -f "$FILE" ]]; then
+        RESULT=$("$PYTHON" "$VALIDATOR" "$FILE" 2>&1) || true
+        if echo "$RESULT" | grep -q "ERROR:"; then
+            echo ""
+            echo "❌  $FILE"
+            echo "$RESULT" | grep "ERROR:" | sed 's/^/    /'
+            ERRORS=$((ERRORS + 1))
+        fi
+    fi
+done
+
+if [[ $ERRORS -gt 0 ]]; then
+    echo ""
+    echo "❌ Commit blocked: $ERRORS file(s) missing valid CodeDNA manifests."
+    echo "   Add a manifest header to each file or run: python tools/validate_manifests.py ."
+    echo ""
+    echo "   Minimal header template:"
+    echo "   # === CODEDNA:0.3 ============================================="
+    echo "   # FILE: your_file.py"
+    echo "   # PURPOSE: what this file does (max 15 words)"
+    echo "   # CONTEXT_BUDGET: normal"
+    echo "   # DEPENDS_ON: none"
+    echo "   # EXPORTS: function_name(args) → return_type"
+    echo "   # LAST_MODIFIED: initial commit"
+    echo "   # =============================================================="
+    exit 1
+fi
+
+echo "✅ All staged files have valid CodeDNA manifests."
+exit 0
