@@ -18,20 +18,38 @@ Metriche:
   • constraint_violation (boolean: violazione vincolo esplicito)
   • correct_files_identified (S8: set di file corretti identificati)
 
+NOTA SUL MODELLO:
+  I modelli "flash" sono ottimizzati per velocità e spesso ignorano vincoli
+  embedded nel manifest. Usare modelli "pro" o "thinking" per risultati
+  significativi. I modelli flash misureranno l'adozione futura del protocollo.
+
 Usage:
     pip install tiktoken google-genai
-    GEMINI_API_KEY=... python codedna_benchmark.py
+    GEMINI_API_KEY=... python codedna_benchmark.py [--model gemini-2.5-pro] [--runs 3]
+
+Modelli raccomandati:
+    gemini-2.5-pro          → raccomandato (reasoning, rispetta le regole)
+    gemini-2.5-flash        → veloce ma spesso ignora AGENT_RULES
+    gemini-1.5-pro          → fallback stabile
 """
 
-import os, time, json, textwrap, re
+import os, sys, time, json, textwrap, re, argparse
 import tiktoken
 from google import genai
 from dataclasses import dataclass, field, asdict
 from typing import Literal, Optional
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-MODEL = "gemini-2.5-flash"
-RUNS_PER_SCENARIO = 3
+# ── CLI args (override defaults a runtime) ──────────────────────────
+_parser = argparse.ArgumentParser(description="CodeDNA Benchmark v2.0")
+_parser.add_argument("--model", default="gemini-2.5-pro",
+    help="Gemini model to use (default: gemini-2.5-pro)")
+_parser.add_argument("--runs",  type=int, default=3,
+    help="Runs per scenario (default: 3, use 1 for quick test)")
+_args, _ = _parser.parse_known_args()
+
+GEMINI_API_KEY    = os.getenv("GEMINI_API_KEY", "")
+MODEL             = _args.model
+RUNS_PER_SCENARIO = _args.runs
 
 # ──────────────────────────────────────────────────────────────────
 # FIXTURE S4: SLIDING WINDOW — file lungo, agente vede solo metà
@@ -737,6 +755,11 @@ def run_benchmarks():
     if not GEMINI_API_KEY:
         print("❌ GEMINI_API_KEY non impostata. Esporta: export GEMINI_API_KEY=your_key")
         return
+
+    print(f"\n🧬 CodeDNA Benchmark v2.0")
+    print(f"   Modello : {MODEL}")
+    print(f"   Run/scenario: {RUNS_PER_SCENARIO}")
+    print(f"   Scenari : S4, S5, S6, S7, S8")
 
     results: list[RunResult] = []
 
