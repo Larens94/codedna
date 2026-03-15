@@ -1,0 +1,26 @@
+# CodeDNA v0.3
+
+This project uses CodeDNA. Every source file begins with a manifest header.
+
+On EDIT:
+- Update LAST_MODIFIED first
+- Read DEPENDS_ON before changing signatures
+- Follow @REQUIRES-READ before writing logic
+- Apply @MODIFIES-ALSO changes in same session
+
+On CREATE:
+- Write manifest header before imports
+- Set CONTEXT_BUDGET: always (core) | normal (standard) | minimal (utility)
+- Add @REQUIRES-READ/@MODIFIES-ALSO to cross-file functions
+
+EXPORTS are contracts — never rename without instruction.
+
+Manifest format:
+# === CODEDNA:0.3 ===
+# FILE: name.ext
+# PURPOSE: ≤15 words
+# CONTEXT_BUDGET: always|normal|minimal
+# DEPENDS_ON: file → symbol | none
+# EXPORTS: fn(args) → type
+# LAST_MODIFIED: ≤8 words
+# ==================

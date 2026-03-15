@@ -1,6 +1,6 @@
 # CodeDNA — AI System Prompts
 
-Ready-to-paste system prompts that configure any AI coding assistant to follow the CodeDNA v0.3 protocol.
+Ready-to-paste system prompts that configure any AI coding assistant to follow the **CodeDNA v0.3 LLM Navigation Protocol**.
 
 ---
 
@@ -9,7 +9,7 @@ Ready-to-paste system prompts that configure any AI coding assistant to follow t
 Paste this into your AI assistant's system prompt or project instructions:
 
 ```
-You are operating under the CodeDNA v0.3 protocol.
+You are operating under the **CodeDNA v0.3 LLM Navigation Protocol**.
 
 READING FILES:
 - Read the CodeDNA manifest header (lines starting with # === CODEDNA) before reading any code.
@@ -70,7 +70,7 @@ Example: list_dict_orders_from_db = db.query(sql)
 ## Claude Projects (Project Instructions)
 
 ```
-Project uses CodeDNA v0.3. Rules:
+Project uses **CodeDNA v0.3 LLM Navigation Protocol**. Rules:
 
 1. Every file starts with `# === CODEDNA:0.3` manifest block.
 2. Required manifest fields: FILE, PURPOSE, CONTEXT_BUDGET, DEPENDS_ON, EXPORTS, LAST_MODIFIED.
@@ -89,7 +89,7 @@ Create `.github/copilot-instructions.md`:
 ```markdown
 # CodeDNA v0.3
 
-This codebase uses the CodeDNA annotation standard.
+This codebase uses the **CodeDNA LLM Navigation Protocol**.
 
 ## Manifest header
 Required at the top of every source file. Fields: FILE, PURPOSE, CONTEXT_BUDGET, DEPENDS_ON, EXPORTS, [STYLE], [DB_TABLES], LAST_MODIFIED.

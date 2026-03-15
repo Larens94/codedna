@@ -2,7 +2,7 @@
 
 > *Every file contains the entire project's genome. The AI reads one cell and understands the whole organism.*
 
-**CodeDNA** is a source-file annotation standard that embeds context directly into code — at every level. Like biological DNA, a single fragment contains enough information to understand the whole.
+**CodeDNA** is an **LLM Navigation Protocol** that embeds context directly into source code — at every level. Like biological DNA, a single fragment contains enough information to understand the whole.
 
 No external memory. No vector databases. No context files that drift out of sync.
 
@@ -107,7 +107,7 @@ Full results: [`benchmark/results.json`](./benchmark/results.json)
 
 ## Language Support
 
-Beacon works with any language that supports single-line comments:
+CodeDNA works with any language that supports single-line comments:
 
 | Language | Comment style |
 |---|---|
@@ -132,7 +132,7 @@ codedna/
 └── benchmark/
     ├── codedna_benchmark.py    ← reproducible benchmark
     ├── results.json            ← real Gemini results
-    └── index.html              ← framework landing page
+    └── index.html              ← protocol landing page
 ```
 
 ---

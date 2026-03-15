@@ -66,9 +66,12 @@ def extract_manifest(lines: list[str], prefix: str) -> dict:
     """Extract key-value pairs from the CodeDNA manifest header."""
     in_manifest = False
     fields = {}
-    delimiter_re = re.compile(rf"^{re.escape(prefix)}\s*={5,}")
+    # Match: "# ====" OR "# === CODEDNA:0.3 ===" OR "# === CODEDNA:0.3 ="
+    delimiter_re = re.compile(
+        rf"^{re.escape(prefix)}\s*(={{4,}}|===\s*CODEDNA:[^\s]+\s*=+)"
+    )
 
-    for line in lines[:25]:  # manifest must start within first 25 lines
+    for line in lines[:30]:  # manifest must start within first 30 lines
         stripped = line.strip()
         if delimiter_re.match(stripped):
             if not in_manifest:
@@ -106,9 +109,12 @@ def validate_file(filepath: str) -> ValidationResult:
         result.warnings.append("Empty file")
         return result
 
-    # Check if manifest is present at all
-    delimiter_re = re.compile(rf"^{re.escape(prefix)}\s*={5,}")
-    has_manifest = any(delimiter_re.match(l.strip()) for l in lines[:10])
+    # Check if manifest is present at all (first 20 lines)
+    delimiter_re = re.compile(
+        rf"^{re.escape(prefix)}\s*(={{4,}}|===\s*CODEDNA:[^\s]+\s*=+)"
+    )
+    has_manifest = any(delimiter_re.match(l.strip()) for l in lines[:20])
+
     if not has_manifest:
         result.valid = False
         result.errors.append("No CodeDNA manifest header found (missing delimiter ====)")

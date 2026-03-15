@@ -1,0 +1,50 @@
+# CodeDNA v0.3
+
+Every source file in this project must have a CodeDNA manifest header as the first block.
+
+## Manifest format
+
+```
+# === CODEDNA:0.3 =============================================
+# FILE: <filename.ext>
+# PURPOSE: <15 words max>
+# CONTEXT_BUDGET: always | normal | minimal
+# DEPENDS_ON: file → symbol | none
+# EXPORTS: symbol(args) → type
+# STYLE: framework, library | none
+# DB_TABLES: table (cols) | none
+# LAST_MODIFIED: <8 words max>
+# ==============================================================
+```
+
+## Rules on every edit
+
+- Update `LAST_MODIFIED` as your **first** change
+- Read `DEPENDS_ON` before modifying function signatures
+- Follow `@REQUIRES-READ` annotations before writing logic
+- Apply `@MODIFIES-ALSO` changes in the same edit session
+- Never rename `EXPORTS` symbols without explicit instruction
+
+## Rules on generate
+
+- Write the manifest header before any imports
+- Add `@REQUIRES-READ` / `@MODIFIES-ALSO` to cross-file functions
+- Use semantic variable names: `list_dict_users_from_db = get_users()`
+
+## Inline annotations
+
+```python
+def process(data):
+    # @REQUIRES-READ: config.py → MAX_ITEMS
+    # @MODIFIES-ALSO: logger.py → audit_log()
+    ...
+
+TIMEOUT = 30  # @SEE: config.py → DEFAULT_TIMEOUT (keep in sync)
+```
+
+## CONTEXT_BUDGET for planning
+
+When planning changes across multiple files, read only the first 12 lines (manifest) of each file. Use CONTEXT_BUDGET to filter:
+- `always` → always read
+- `normal` → read if relevant  
+- `minimal` → skip unless referenced

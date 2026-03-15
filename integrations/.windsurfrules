@@ -1,0 +1,26 @@
+# CodeDNA v0.3
+
+This project uses the CodeDNA annotation standard.
+
+Every source file begins with:
+# === CODEDNA:0.3 =============================================
+# FILE: filename.ext
+# PURPOSE: what it does (≤15 words)  
+# CONTEXT_BUDGET: always | normal | minimal
+# DEPENDS_ON: file → symbol | none
+# EXPORTS: symbol(args) → return_type
+# LAST_MODIFIED: ≤8 words
+# ==============================================================
+
+EDITING RULES:
+1. Update LAST_MODIFIED first
+2. Check DEPENDS_ON before changing function signatures  
+3. Follow @REQUIRES-READ annotations before writing logic
+4. Apply @MODIFIES-ALSO cascades in the same edit
+
+GENERATION RULES:
+1. Manifest header before any imports
+2. @REQUIRES-READ on cross-file functions
+3. Semantic variable names: list_dict_X_from_db not data
+
+EXPORTS = contracts. Do not rename without explicit instruction.
