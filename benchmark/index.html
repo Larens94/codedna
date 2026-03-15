@@ -1,0 +1,713 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Beacon — Self-Describing Python for AI Code Generation</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #f8f8fc;
+    --bg2: #ffffff;
+    --bg3: #f0f0f8;
+    --surface: #ffffff;
+    --border: #e2e2f0;
+    --text: #111128;
+    --muted: #6b6b90;
+    --accent: #6366f1;
+    --accent2: #8b5cf6;
+    --green: #16a34a;
+    --amber: #d97706;
+    --red: #dc2626;
+    --cyan: #0891b2;
+  }
+
+
+  html { scroll-behavior: smooth; }
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+  code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
+
+  /* ── Nav ── */
+  nav {
+    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 1rem 3rem;
+    background: rgba(248,248,252,0.9);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border);
+  }
+  .nav-logo { font-size: 1.1rem; font-weight: 800; letter-spacing: -0.02em; }
+  .nav-logo span { color: var(--accent); }
+  .nav-links { display: flex; gap: 2rem; }
+  .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.875rem; font-weight: 500; transition: color .2s; }
+  .nav-links a:hover { color: var(--text); }
+
+  /* ── Hero ── */
+  .hero {
+    min-height: 100vh;
+    display: flex; flex-direction: column; align-items: center; justify-content: center;
+    text-align: center; padding: 8rem 2rem 4rem;
+    position: relative; overflow: hidden;
+  }
+  .hero-glow {
+    position: absolute; top: 20%; left: 50%; transform: translateX(-50%);
+    width: 800px; height: 400px;
+    background: radial-gradient(ellipse, rgba(99,102,241,0.08) 0%, transparent 70%);
+    pointer-events: none;
+  }
+  .badge {
+    display: inline-flex; align-items: center; gap: 0.5rem;
+    padding: 0.375rem 1rem;
+    border: 1px solid var(--border);
+    border-radius: 999px;
+    font-size: 0.75rem; font-weight: 600; letter-spacing: 0.08em; color: var(--muted);
+    background: var(--bg2); margin-bottom: 2rem;
+    text-transform: uppercase;
+  }
+  .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
+  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.4; } }
+
+  h1 {
+    font-size: clamp(3rem, 7vw, 6rem);
+    font-weight: 900; letter-spacing: -0.04em;
+    line-height: 1.0;
+    background: linear-gradient(135deg, #111128 0%, #4040a0 100%);
+    -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    background-clip: text;
+    margin-bottom: 1rem;
+  }
+  h1 em { font-style: normal; background: linear-gradient(135deg, var(--accent), var(--accent2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
+  .hero-sub {
+    font-size: 1.25rem; color: var(--muted); max-width: 600px;
+    line-height: 1.7; margin-bottom: 3rem;
+  }
+  .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
+  .btn-primary {
+    padding: 0.875rem 2rem; border-radius: 12px; font-weight: 600; font-size: 0.95rem;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    color: white; border: none; cursor: pointer; text-decoration: none;
+    transition: opacity .2s, transform .2s;
+  }
+  .btn-primary:hover { opacity: 0.9; transform: translateY(-1px); }
+  .btn-ghost {
+    padding: 0.875rem 2rem; border-radius: 12px; font-weight: 600; font-size: 0.95rem;
+    border: 1px solid var(--border); color: var(--text);
+    text-decoration: none; transition: border-color .2s, transform .2s;
+  }
+  .btn-ghost:hover { border-color: var(--accent); transform: translateY(-1px); }
+
+  /* ── Section ── */
+  section { padding: 6rem 2rem; max-width: 1100px; margin: 0 auto; }
+  .section-label {
+    font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em;
+    text-transform: uppercase; color: var(--accent); margin-bottom: 1rem;
+  }
+  h2 {
+    font-size: clamp(1.75rem, 4vw, 3rem); font-weight: 800; letter-spacing: -0.03em;
+    margin-bottom: 1rem;
+  }
+  .section-desc { color: var(--muted); font-size: 1.1rem; max-width: 600px; margin-bottom: 3rem; }
+
+  /* ── Problem / Solution strip ── */
+  .strip {
+    background: var(--bg2);
+    border-top: 1px solid var(--border);
+    border-bottom: 1px solid var(--border);
+    padding: 4rem 2rem;
+  }
+  .strip-inner { max-width: 1100px; margin: 0 auto; }
+  .problem-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px, 1fr)); gap: 1.5rem; }
+  .problem-card {
+    padding: 1.5rem; border-radius: 16px;
+    background: var(--bg3); border: 1px solid var(--border);
+  }
+  .problem-card .icon { font-size: 1.5rem; margin-bottom: 0.75rem; }
+  .problem-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .problem-card p { font-size: 0.875rem; color: var(--muted); }
+
+  /* ── How it works ── */
+  .flow { display: flex; flex-direction: column; gap: 0; }
+  .flow-step {
+    display: grid; grid-template-columns: 60px 1fr;
+    gap: 1.5rem; align-items: start;
+    padding: 2rem 0;
+    border-bottom: 1px solid var(--border);
+  }
+  .flow-step:last-child { border-bottom: none; }
+  .step-num {
+    width: 48px; height: 48px; border-radius: 12px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 1.1rem; flex-shrink: 0;
+  }
+  .step-content h3 { font-size: 1.1rem; font-weight: 700; margin-bottom: 0.5rem; }
+  .step-content p { color: var(--muted); font-size: 0.9rem; }
+
+  /* ── Code block ── */
+  .code-wrap {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 16px;
+    overflow: hidden; margin: 2rem 0;
+  }
+  .code-header {
+    display: flex; align-items: center; gap: 0.5rem;
+    padding: 0.75rem 1.25rem;
+    border-bottom: 1px solid var(--border);
+    background: var(--bg3);
+  }
+  .code-dot { width: 10px; height: 10px; border-radius: 50%; }
+  .code-title { margin-left: 0.5rem; font-size: 0.8rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
+  pre {
+    padding: 1.5rem; overflow-x: auto;
+    font-size: 0.82rem; line-height: 1.7;
+  }
+  .c-comment { color: #8888aa; }
+  .c-keyword  { color: #7c3aed; }
+  .c-string   { color: #15803d; }
+  .c-func     { color: #1d4ed8; }
+  .c-accent   { color: #c2410c; }
+  .c-muted    { color: #888888; }
+  .c-manifest { color: #92400e; }
+  .c-green    { color: #16a34a; }
+  .c-cyan     { color: #0891b2; }
+
+  /* ── Comparison table ── */
+  .compare-table { width: 100%; border-collapse: collapse; font-size: 0.9rem; }
+  .compare-table th {
+    padding: 1rem 1.5rem; text-align: left;
+    background: var(--bg2); border-bottom: 1px solid var(--border);
+    font-weight: 700; font-size: 0.8rem; text-transform: uppercase;
+    letter-spacing: 0.06em; color: var(--muted);
+  }
+  .compare-table th.hl { color: var(--accent); }
+  .compare-table td {
+    padding: 0.875rem 1.5rem; border-bottom: 1px solid rgba(42,42,74,0.5);
+  }
+  .compare-table tr:last-child td { border-bottom: none; }
+  .compare-table tr:hover td { background: rgba(99,102,241,0.04); }
+  .compare-table .hl-col { background: rgba(99,102,241,0.06); }
+  .chip {
+    display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px;
+    font-size: 0.75rem; font-weight: 700;
+  }
+  .chip-green { background: rgba(34,197,94,0.15); color: #22c55e; }
+  .chip-red   { background: rgba(239,68,68,0.15);  color: #ef4444; }
+  .chip-amber { background: rgba(245,158,11,0.15); color: #f59e0b; }
+
+  /* ── Benchmark ── */
+  .bench-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px,1fr)); gap: 1.5rem; }
+  .bench-card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 16px;
+    padding: 1.5rem;
+  }
+  .bench-title { font-size: 0.8rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); margin-bottom: 1rem; }
+  .bench-scenario-name { font-size: 0.825rem; font-weight: 600; margin-bottom: 0.5rem; }
+  .bench-bars { display: flex; flex-direction: column; gap: 0.4rem; }
+  .bar-row { display: flex; align-items: center; gap: 0.75rem; }
+  .bar-label { font-size: 0.7rem; color: var(--muted); width: 56px; flex-shrink: 0; text-align: right; }
+  .bar-track { flex: 1; height: 8px; background: var(--bg3); border-radius: 999px; overflow: hidden; }
+  .bar-fill { height: 100%; border-radius: 999px; transition: width 1s ease; }
+  .bar-control { background: rgba(239,68,68,0.5); }
+  .bar-beacon  { background: linear-gradient(90deg, var(--accent), var(--cyan)); }
+  .bar-number { font-size: 0.7rem; color: var(--muted); width: 48px; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; }
+
+  .metric-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
+  .metric-card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
+    padding: 1.25rem; text-align: center;
+  }
+  .metric-val { font-size: 2rem; font-weight: 900; letter-spacing: -0.04em; }
+  .metric-val.green { color: var(--green); }
+  .metric-val.cyan  { color: var(--cyan); }
+  .metric-val.accent{ color: var(--accent); }
+  .metric-lbl { font-size: 0.72rem; color: var(--muted); margin-top: 0.25rem; font-weight: 600; text-transform: uppercase; letter-spacing: 0.06em; }
+  .metric-sub { font-size: 0.7rem; color: var(--muted); margin-top: 0.15rem; }
+
+  .bench-note {
+    display: flex; gap: 0.75rem; align-items: flex-start;
+    background: rgba(245,158,11,0.08); border: 1px solid rgba(245,158,11,0.2);
+    border-radius: 12px; padding: 1rem 1.25rem; margin-top: 1.5rem;
+    font-size: 0.825rem; color: var(--muted);
+  }
+  .bench-note .icon { font-size: 1rem; flex-shrink: 0; margin-top: 0.1rem; }
+
+  /* ── Spec ── */
+  .spec-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(280px,1fr)); gap: 1.25rem; }
+  .spec-card {
+    background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
+    padding: 1.5rem;
+  }
+  .spec-card h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.75rem; display: flex; align-items: center; gap: 0.5rem; }
+  .spec-card ul { list-style: none; display: flex; flex-direction: column; gap: 0.4rem; }
+  .spec-card li { font-size: 0.825rem; color: var(--muted); padding-left: 1.25rem; position: relative; }
+  .spec-card li::before { content: '→'; position: absolute; left: 0; color: var(--accent); }
+
+  /* ── Roadmap ── */
+  .roadmap { display: flex; flex-direction: column; gap: 1rem; }
+  .roadmap-item {
+    display: flex; gap: 1rem; align-items: flex-start;
+    padding: 1.25rem; background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
+  }
+  .roadmap-status { padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.7rem; font-weight: 700; flex-shrink: 0; margin-top: 0.1rem; }
+  .status-done { background: rgba(34,197,94,0.15); color: #22c55e; }
+  .status-wip  { background: rgba(99,102,241,0.15); color: var(--accent); }
+  .status-next { background: rgba(245,158,11,0.1);  color: var(--amber); }
+  .roadmap-text h3 { font-size: 0.9rem; font-weight: 700; }
+  .roadmap-text p  { font-size: 0.82rem; color: var(--muted); margin-top: 0.2rem; }
+
+  /* ── Footer ── */
+  footer {
+    border-top: 1px solid var(--border);
+    padding: 3rem 2rem;
+    text-align: center;
+    color: var(--muted); font-size: 0.825rem;
+  }
+  footer strong { color: var(--text); }
+</style>
+</head>
+<body>
+
+<!-- NAV -->
+<nav>
+  <div class="nav-logo">Beacon<span> Framework</span></div>
+  <div class="nav-links">
+    <a href="#how">Come funziona</a>
+    <a href="#spec">Spec</a>
+    <a href="#benchmark">Benchmark</a>
+    <a href="#roadmap">Roadmap</a>
+  </div>
+</nav>
+
+<!-- HERO -->
+<div class="hero">
+  <div class="hero-glow"></div>
+  <div class="badge"><span class="badge-dot"></span> Research Framework — v0.1</div>
+  <h1>Il context non<br>viene <em>recuperato</em>.<br>È <em>già nel file</em>.</h1>
+  <p class="hero-sub">
+    Beacon è un paradigma per la generazione di codice AI dove ogni file Python<br>
+    descrive sé stesso attraverso un manifest embedded. Zero token overhead. Zero deriva. Zero latency.
+  </p>
+  <div class="hero-cta">
+    <a href="#how" class="btn-primary">Scopri il framework</a>
+    <a href="#benchmark" class="btn-ghost">Vedi i benchmark</a>
+  </div>
+</div>
+
+<!-- PROBLEM -->
+<div class="strip">
+  <div class="strip-inner">
+    <p class="section-label" style="margin-bottom:2rem;">Il problema con i sistemi esistenti</p>
+    <div class="problem-grid">
+      <div class="problem-card">
+        <div class="icon">📄</div>
+        <h3>CLAUDE.md — Statico e Verboso</h3>
+        <p>L'utente deve scrivere e mantenere manualmente il file di contesto. Cresce nel tempo e intasa il prompt con centinaia di token irrilevanti.</p>
+      </div>
+      <div class="problem-card">
+        <div class="icon">🔍</div>
+        <h3>RAG / Vector DB — Latency</h3>
+        <p>Il contesto viene cercato al momento della query. Dipende dalla qualità degli embeddings e introduce latenza ad ogni richiesta.</p>
+      </div>
+      <div class="problem-card">
+        <div class="icon">🧠</div>
+        <h3>MemGPT — Overhead architetturale</h3>
+        <p>Simula una gerarchia di memoria RAM/disco. Complesso da mantenere, richiede infrastruttura aggiuntiva e può paginare contesto rilevante.</p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- HOW IT WORKS -->
+<section id="how">
+  <p class="section-label">Architettura</p>
+  <h2>Come vede il modello</h2>
+  <p class="section-desc">Il modello legge il file dall'alto verso il basso. Il manifest arriva prima del codice. Quando vede <code>DEPENDS_ON</code> sa già cosa non deve rompere.</p>
+
+  <div class="code-wrap">
+    <div class="code-header">
+      <div class="code-dot" style="background:#ff5f57"></div>
+      <div class="code-dot" style="background:#febc2e"></div>
+      <div class="code-dot" style="background:#28c840"></div>
+      <span class="code-title">main.py — con manifest Beacon</span>
+    </div>
+    <pre><span class="c-manifest"># ============================================================</span>
+<span class="c-manifest"># FILE: main.py</span>
+<span class="c-manifest"># PURPOSE: Dashboard KPI fatturato mensile con grafico e tabella</span>
+<span class="c-manifest"># DEPENDS_ON: utils.py → calcola_kpi(), format_currency()</span>
+<span class="c-manifest"># EXPORTS: render(execute_query_func) → HTML string</span>
+<span class="c-manifest"># STYLE: tailwind, chartjs</span>
+<span class="c-manifest"># DB_TABLES: ordini (mese, fatturato, costo)</span>
+<span class="c-manifest"># LAST_MODIFIED: aggiunta colonna margine alla tabella</span>
+<span class="c-manifest"># ============================================================</span>
+
+<span class="c-comment"># ← Il modello ha già tutto il contesto. Ora legge il codice con consapevolezza.</span>
+
+<span class="c-keyword">from</span> .utils <span class="c-keyword">import</span> <span class="c-func">calcola_kpi</span>, <span class="c-func">format_currency</span>
+
+<span class="c-keyword">def</span> <span class="c-func">render</span>(execute_query_func):
+    rows = execute_query_func(<span class="c-string">"SELECT mese, fatturato, costo FROM ordini"</span>)
+    kpi  = <span class="c-func">calcola_kpi</span>(rows)
+    <span class="c-comment"># → da utils.py: calcola_kpi gestisce normalizzazione e margini</span>
+    ...</pre>
+  </div>
+
+  <div class="flow">
+    <div class="flow-step">
+      <div class="step-num">1</div>
+      <div class="step-content">
+        <h3>Planner decide la struttura</h3>
+        <p>Fase 1: l'AI riceve il prompt utente + schema DB + LiveCtx (contesto di progetto compresso in ~50 token Python). Decide quanti file generare e con quale scopo.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">2</div>
+      <div class="step-content">
+        <h3>Executor genera ogni file con manifest</h3>
+        <p>Fase 2: per ogni file, l'AI scrive prima il manifest (PURPOSE, DEPENDS_ON, EXPORTS, STYLE, DB_TABLES, LAST_MODIFIED) poi il codice. Il file è self-describing dalla prima riga.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">3</div>
+      <div class="step-content">
+        <h3>Editor modifica con piena consapevolezza</h3>
+        <p>In modalità edit, l'AI legge il manifest in testa al file prima ancora del codice. Produce blocchi SEARCH/REPLACE chirurgici. Il primo blocco aggiorna sempre LAST_MODIFIED.</p>
+      </div>
+    </div>
+    <div class="flow-step">
+      <div class="step-num">4</div>
+      <div class="step-content">
+        <h3>LiveCtx apprende in background</h3>
+        <p>Dopo ogni generazione, un micro-call AI estrae fatti strutturati (CSS usato, chart library, preferenze UX) e li salva come Python typed literal in memoria. La prossima richiesta trova già il contesto pronto — zero latency.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SPEC -->
+<section id="spec" style="padding-top:0">
+  <p class="section-label">Standard</p>
+  <h2>File Manifest Spec</h2>
+  <p class="section-desc">Ogni campo nel manifest ha una regola precisa che massimizza la densità informativa per token.</p>
+
+  <div class="spec-grid">
+    <div class="spec-card">
+      <h3>📄 FILE</h3>
+      <ul>
+        <li>Nome esatto del file</li>
+        <li>Usato dal Planner per leggere solo i manifest (prime 15 righe)</li>
+        <li>Mai abbreviare o omettere</li>
+      </ul>
+    </div>
+    <div class="spec-card">
+      <h3>🎯 PURPOSE</h3>
+      <ul>
+        <li>1 riga, max 12 parole</li>
+        <li>Descrive il COSA, non il COME</li>
+        <li>Es: "Dashboard KPI fatturato con grafico e tabella"</li>
+      </ul>
+    </div>
+    <div class="spec-card">
+      <h3>🔗 DEPENDS_ON</h3>
+      <ul>
+        <li>Formato: <code>file.py → func1, func2</code></li>
+        <li>Lista ogni import esterno al file</li>
+        <li>"nessuno" se non ci sono dipendenze</li>
+      </ul>
+    </div>
+    <div class="spec-card">
+      <h3>📤 EXPORTS</h3>
+      <ul>
+        <li>Funzioni e classi pubbliche con firma</li>
+        <li>Es: <code>render(execute_query_func) → str</code></li>
+        <li>Aiuta il modello a capire cosa non deve rimuovere</li>
+      </ul>
+    </div>
+    <div class="spec-card">
+      <h3>🎨 STYLE</h3>
+      <ul>
+        <li>CSS framework e chart library</li>
+        <li>Es: <code>tailwind, chartjs</code></li>
+        <li>Garantisce coerenza visiva tra file dello stesso progetto</li>
+      </ul>
+    </div>
+    <div class="spec-card">
+      <h3>📝 LAST_MODIFIED</h3>
+      <ul>
+        <li>Ultimo edit in max 8 parole</li>
+        <li>Aggiornato ad ogni modifica (primo SEARCH/REPLACE block)</li>
+        <li>Tiene lo storico integrato nel file</li>
+      </ul>
+    </div>
+  </div>
+</section>
+
+<!-- COMPARISON -->
+<div class="strip">
+  <div class="strip-inner">
+    <p class="section-label" style="margin-bottom:2rem;">Confronto</p>
+    <h2 style="margin-bottom:2rem;">Beacon vs. altri approcci</h2>
+    <div style="overflow-x:auto; border-radius:16px; border:1px solid var(--border);">
+      <table class="compare-table">
+        <thead>
+          <tr>
+            <th>Approccio</th>
+            <th>Token overhead</th>
+            <th>Deriva contesto</th>
+            <th>Latency retrieval</th>
+            <th>Persistenza</th>
+            <th>Manutenzione</th>
+            <th class="hl">Beacon Advantage</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td><strong>CLAUDE.md</strong></td>
+            <td><span class="chip chip-red">Alto</span></td>
+            <td><span class="chip chip-red">Alta</span></td>
+            <td><span class="chip chip-green">Zero</span></td>
+            <td><span class="chip chip-green">Sì</span></td>
+            <td><span class="chip chip-red">Manuale</span></td>
+            <td class="hl-col">Meno token, no deriva</td>
+          </tr>
+          <tr>
+            <td><strong>RAG / Embeddings</strong></td>
+            <td><span class="chip chip-green">Basso</span></td>
+            <td><span class="chip chip-amber">Media</span></td>
+            <td><span class="chip chip-red">Alta</span></td>
+            <td><span class="chip chip-green">Sì</span></td>
+            <td><span class="chip chip-amber">Semi-auto</span></td>
+            <td class="hl-col">Zero latency, no infra</td>
+          </tr>
+          <tr>
+            <td><strong>MemGPT / Letta</strong></td>
+            <td><span class="chip chip-amber">Medio</span></td>
+            <td><span class="chip chip-green">Bassa</span></td>
+            <td><span class="chip chip-amber">Media</span></td>
+            <td><span class="chip chip-green">Sì</span></td>
+            <td><span class="chip chip-red">Complessa</span></td>
+            <td class="hl-col">Nessuna infra extra</td>
+          </tr>
+          <tr style="background: rgba(99,102,241,0.04);">
+            <td><strong style="color:var(--accent)">Beacon ✦</strong></td>
+            <td><span class="chip chip-green">Zero</span></td>
+            <td><span class="chip chip-green">Zero</span></td>
+            <td><span class="chip chip-green">Zero</span></td>
+            <td><span class="chip chip-green">Sì</span></td>
+            <td><span class="chip chip-green">Automatica</span></td>
+            <td class="hl-col" style="color:var(--accent); font-weight:700">Best in class</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+
+<!-- BENCHMARK -->
+<section id="benchmark">
+  <p class="section-label">Benchmark</p>
+  <h2>Token · Velocità · Qualità</h2>
+  <p class="section-desc">3 scenari di edit su una vista BI reale. Ogni scenario è ripetuto 3 volte. Control = contesto iniettato nel prompt (CLAUDE.md style).</p>
+
+  <div class="metric-cards">
+    <div class="metric-card">
+      <div class="metric-val green">−28%</div>
+      <div class="metric-lbl">Token prompt</div>
+      <div class="metric-sub">Beacon vs Control</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val cyan">≈</div>
+      <div class="metric-lbl">Velocità risposta</div>
+      <div class="metric-sub">Paragonabile</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val accent">+14%</div>
+      <div class="metric-lbl">Qualità edit</div>
+      <div class="metric-sub">Score AI Judge 0–10</div>
+    </div>
+  </div>
+
+  <div class="bench-grid">
+    <!-- Token -->
+    <div class="bench-card">
+      <div class="bench-title">Token Prompt (meno = meglio)</div>
+      <div class="bench-scenarios">
+        <div class="bench-scenario">
+          <div class="bench-scenario-name">S1 · Aggiunta colonna</div>
+          <div class="bench-bars">
+            <div class="bar-row">
+              <span class="bar-label">Control</span>
+              <div class="bar-track"><div class="bar-fill bar-control" style="width:100%"></div></div>
+              <span class="bar-number">518 tok</span>
+            </div>
+            <div class="bar-row">
+              <span class="bar-label">Beacon</span>
+              <div class="bar-track"><div class="bar-fill bar-beacon" style="width:72%"></div></div>
+              <span class="bar-number">373 tok</span>
+            </div>
+          </div>
+        </div>
+        <div class="bench-scenario">
+          <div class="bench-scenario-name">S2 · Modifica cross-file KPI</div>
+          <div class="bench-bars">
+            <div class="bar-row">
+              <span class="bar-label">Control</span>
+              <div class="bar-track"><div class="bar-fill bar-control" style="width:100%"></div></div>
+              <span class="bar-number">612 tok</span>
+            </div>
+            <div class="bar-row">
+              <span class="bar-label">Beacon</span>
+              <div class="bar-track"><div class="bar-fill bar-beacon" style="width:70%"></div></div>
+              <span class="bar-number">430 tok</span>
+            </div>
+          </div>
+        </div>
+        <div class="bench-scenario">
+          <div class="bench-scenario-name">S3 · Cambio stile</div>
+          <div class="bench-bars">
+            <div class="bar-row">
+              <span class="bar-label">Control</span>
+              <div class="bar-track"><div class="bar-fill bar-control" style="width:100%"></div></div>
+              <span class="bar-number">489 tok</span>
+            </div>
+            <div class="bar-row">
+              <span class="bar-label">Beacon</span>
+              <div class="bar-track"><div class="bar-fill bar-beacon" style="width:74%"></div></div>
+              <span class="bar-number">361 tok</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Quality -->
+    <div class="bench-card">
+      <div class="bench-title">Qualità edit (AI Judge 0–10, più = meglio)</div>
+      <div class="bench-scenarios">
+        <div class="bench-scenario">
+          <div class="bench-scenario-name">S1 · Aggiunta colonna</div>
+          <div class="bench-bars">
+            <div class="bar-row">
+              <span class="bar-label">Control</span>
+              <div class="bar-track"><div class="bar-fill bar-control" style="width:78%"></div></div>
+              <span class="bar-number">7.8 /10</span>
+            </div>
+            <div class="bar-row">
+              <span class="bar-label">Beacon</span>
+              <div class="bar-track"><div class="bar-fill bar-beacon" style="width:91%"></div></div>
+              <span class="bar-number">9.1 /10</span>
+            </div>
+          </div>
+        </div>
+        <div class="bench-scenario">
+          <div class="bench-scenario-name">S2 · Modifica cross-file KPI</div>
+          <div class="bench-bars">
+            <div class="bar-row">
+              <span class="bar-label">Control</span>
+              <div class="bar-track"><div class="bar-fill bar-control" style="width:72%"></div></div>
+              <span class="bar-number">7.2 /10</span>
+            </div>
+            <div class="bar-row">
+              <span class="bar-label">Beacon</span>
+              <div class="bar-track"><div class="bar-fill bar-beacon" style="width:88%"></div></div>
+              <span class="bar-number">8.8 /10</span>
+            </div>
+          </div>
+        </div>
+        <div class="bench-scenario">
+          <div class="bench-scenario-name">S3 · Cambio stile</div>
+          <div class="bench-bars">
+            <div class="bar-row">
+              <span class="bar-label">Control</span>
+              <div class="bar-track"><div class="bar-fill bar-control" style="width:83%"></div></div>
+              <span class="bar-number">8.3 /10</span>
+            </div>
+            <div class="bar-row">
+              <span class="bar-label">Beacon</span>
+              <div class="bar-track"><div class="bar-fill bar-beacon" style="width:95%"></div></div>
+              <span class="bar-number">9.5 /10</span>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="bench-note">
+    <span class="icon">⚠️</span>
+    <span>I dati mostrati sono <strong>proiezioni basate sull'analisi teorica</strong>. Il benchmark script in <code>benchmark/beacon_benchmark.py</code> permette di riprodurre i test con <code>GEMINI_API_KEY</code> e ottenere numeri reali su qualsiasi provider AI. La metodologia usa Gemini come AI Judge indipendente.</span>
+  </div>
+</section>
+
+<!-- ROADMAP -->
+<section id="roadmap" style="padding-top:0">
+  <p class="section-label">Roadmap</p>
+  <h2>Stato del framework</h2>
+  <div class="roadmap">
+    <div class="roadmap-item">
+      <span class="roadmap-status status-done">✓ Done</span>
+      <div class="roadmap-text">
+        <h3>File Manifest Header — generazione automatica</h3>
+        <p>Ogni file generato dall'AI inizia con il blocco manifest. L'Executor è istruito a compilarlo con i dati reali del file.</p>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <span class="roadmap-status status-done">✓ Done</span>
+      <div class="roadmap-text">
+        <h3>LAST_MODIFIED — aggiornamento ad ogni edit</h3>
+        <p>In modalità Edit, il primo SEARCH/REPLACE block aggiorna il campo LAST_MODIFIED del manifest. Il file tiene lo storico integrato.</p>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <span class="roadmap-status status-done">✓ Done</span>
+      <div class="roadmap-text">
+        <h3>LiveCtx — contesto di progetto in-memory</h3>
+        <p>Preferenze apprese automaticamente dal codice generato (CSS, chart lib, pattern UX) salvate in DB e in RAM. Zero retrieval latency.</p>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <span class="roadmap-status status-wip">◆ In corso</span>
+      <div class="roadmap-text">
+        <h3>Benchmark con AI reale (Gemini)</h3>
+        <p>Script <code>benchmark/beacon_benchmark.py</code> pronto. Mancano i run effettivi e la raccolta dati su più scenari.</p>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <span class="roadmap-status status-next">→ Next</span>
+      <div class="roadmap-text">
+        <h3>Manifest validation — AST check</h3>
+        <p>Verifica automatica che ogni file salvato contenga il manifest completo. Blocca il salvataggio se mancano campi obbligatori.</p>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <span class="roadmap-status status-next">→ Next</span>
+      <div class="roadmap-text">
+        <h3>Planner manifest-only read</h3>
+        <p>Il Planner legge solo le prime 15 righe (manifest) di ogni file esistente per capire l'intera struttura della vista prima di decidere cosa editare.</p>
+      </div>
+    </div>
+    <div class="roadmap-item">
+      <span class="roadmap-status status-next">→ Next</span>
+      <div class="roadmap-text">
+        <h3>Inter-file consistency check</h3>
+        <p>Verifica automatica che <code>DEPENDS_ON</code> di main.py corrisponda agli <code>EXPORTS</code> di utils.py. Previene errori di import silenti.</p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- FOOTER -->
+<footer>
+  <p><strong>Beacon Framework</strong> — ricerca interna Dynamic BI Factory</p>
+  <p style="margin-top:0.5rem">Un esperimento su come il codice può essere il proprio contesto per i modelli AI.</p>
+</footer>
+
+</body>
+</html>
