@@ -1,52 +1,80 @@
 #!/usr/bin/env bash
-# CodeDNA v0.3 — Integration installer
-# Usage: bash install.sh [--tool claude|cursor|copilot|cline|windsurf|all]
-# Default: installs all available integrations
+# CodeDNA v0.3 — Integration Installer
+# Works in two modes:
+#   1. Via curl:  bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh)
+#   2. Local:     bash integrations/install.sh [tool]
+#
+# Optional argument: claude | cursor | copilot | cline | windsurf | agents | all (default: all)
 
 set -euo pipefail
 
-SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
-REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 TOOL="${1:-all}"
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
+RAW_BASE="https://raw.githubusercontent.com/Larens94/codedna/main/integrations"
 
-install_claude() {
-    cp "$SCRIPT_DIR/CLAUDE.md" "$REPO_ROOT/CLAUDE.md"
-    echo "✅ Claude Code: CLAUDE.md installed"
-}
-install_cursor() {
-    cp "$SCRIPT_DIR/.cursorrules" "$REPO_ROOT/.cursorrules"
-    echo "✅ Cursor: .cursorrules installed"
-}
-install_copilot() {
-    mkdir -p "$REPO_ROOT/.github"
-    cp "$SCRIPT_DIR/copilot-instructions.md" "$REPO_ROOT/.github/copilot-instructions.md"
-    echo "✅ GitHub Copilot: .github/copilot-instructions.md installed"
-}
-install_cline() {
-    cp "$SCRIPT_DIR/.clinerules" "$REPO_ROOT/.clinerules"
-    echo "✅ Cline: .clinerules installed"
-}
-install_windsurf() {
-    cp "$SCRIPT_DIR/.windsurfrules" "$REPO_ROOT/.windsurfrules"
-    echo "✅ Windsurf: .windsurfrules installed"
-}
-install_agents() {
-    mkdir -p "$REPO_ROOT/.agents/workflows"
-    cp "$SCRIPT_DIR/.agents/workflows/codedna.md" "$REPO_ROOT/.agents/workflows/codedna.md"
-    echo "✅ Antigravity/.agents: .agents/workflows/codedna.md installed"
-}
+# Detect if running from repo (local) or via curl pipe
+SCRIPT_PATH="${BASH_SOURCE[0]:-}"
+if [[ "$SCRIPT_PATH" == /dev/fd/* ]] || [[ -z "$SCRIPT_PATH" ]]; then
+    MODE="remote"
+else
+    SCRIPT_DIR="$(cd "$(dirname "$SCRIPT_PATH")" && pwd)"
+    MODE="local"
+fi
 
 echo "🧬 CodeDNA v0.3 Integration Installer"
-echo "Target: $REPO_ROOT"
+echo "   Mode:   $MODE"
+echo "   Target: $REPO_ROOT"
 echo ""
 
+# Helper: get file content (local or GitHub download)
+get_file() {
+    local name="$1"
+    if [[ "$MODE" == "local" ]] && [[ -f "$SCRIPT_DIR/$name" ]]; then
+        cat "$SCRIPT_DIR/$name"
+    else
+        curl -fsSL "$RAW_BASE/$name"
+    fi
+}
+
+install_claude() {
+    get_file "CLAUDE.md" > "$REPO_ROOT/CLAUDE.md"
+    echo "✅ Claude Code    → CLAUDE.md"
+}
+
+install_cursor() {
+    get_file ".cursorrules" > "$REPO_ROOT/.cursorrules"
+    echo "✅ Cursor         → .cursorrules"
+}
+
+install_copilot() {
+    mkdir -p "$REPO_ROOT/.github"
+    get_file "copilot-instructions.md" > "$REPO_ROOT/.github/copilot-instructions.md"
+    echo "✅ GitHub Copilot → .github/copilot-instructions.md"
+}
+
+install_cline() {
+    get_file ".clinerules" > "$REPO_ROOT/.clinerules"
+    echo "✅ Cline          → .clinerules"
+}
+
+install_windsurf() {
+    get_file ".windsurfrules" > "$REPO_ROOT/.windsurfrules"
+    echo "✅ Windsurf       → .windsurfrules"
+}
+
+install_agents() {
+    mkdir -p "$REPO_ROOT/.agents/workflows"
+    curl -fsSL "$RAW_BASE/.agents/workflows/codedna.md" > "$REPO_ROOT/.agents/workflows/codedna.md"
+    echo "✅ Antigravity    → .agents/workflows/codedna.md"
+}
+
 case "$TOOL" in
-    claude)    install_claude ;;
-    cursor)    install_cursor ;;
-    copilot)   install_copilot ;;
-    cline)     install_cline ;;
-    windsurf)  install_windsurf ;;
-    agents)    install_agents ;;
+    claude)   install_claude ;;
+    cursor)   install_cursor ;;
+    copilot)  install_copilot ;;
+    cline)    install_cline ;;
+    windsurf) install_windsurf ;;
+    agents)   install_agents ;;
     all)
         install_claude
         install_cursor
@@ -62,5 +90,7 @@ case "$TOOL" in
 esac
 
 echo ""
-echo "🧬 Done. Your AI tools now follow CodeDNA v0.3."
-echo "   Verify: ask your AI to create a new file — it should start with # === CODEDNA:0.3"
+echo "🧬 Done. CodeDNA v0.3 is active in your repo."
+echo ""
+echo "   Verify: ask your AI to create a new file."
+echo "   It should start with:  # === CODEDNA:0.3"
