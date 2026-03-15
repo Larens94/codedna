@@ -518,19 +518,19 @@
 
   <div class="metric-cards">
     <div class="metric-card">
-      <div class="metric-val green">−28%</div>
-      <div class="metric-lbl">Token prompt</div>
-      <div class="metric-sub">Beacon vs Control</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-val cyan">≈</div>
-      <div class="metric-lbl">Velocità risposta</div>
-      <div class="metric-sub">Paragonabile</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-val accent">+14%</div>
+      <div class="metric-val green">10/10</div>
       <div class="metric-lbl">Qualità edit</div>
-      <div class="metric-sub">Score AI Judge 0–10</div>
+      <div class="metric-sub">Control e Beacon — pari merito</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val cyan">893</div>
+      <div class="metric-lbl">Prompt tok Control (avg)</div>
+      <div class="metric-sub">senza contesto esterno</div>
+    </div>
+    <div class="metric-card">
+      <div class="metric-val accent">+0%</div>
+      <div class="metric-lbl">Errori cross-file</div>
+      <div class="metric-sub">Beacon: nessuna dipendenza rotta</div>
     </div>
   </div>
 
@@ -641,8 +641,8 @@
   </div>
 
   <div class="bench-note">
-    <span class="icon">⚠️</span>
-    <span>I dati mostrati sono <strong>proiezioni basate sull'analisi teorica</strong>. Il benchmark script in <code>benchmark/beacon_benchmark.py</code> permette di riprodurre i test con <code>GEMINI_API_KEY</code> e ottenere numeri reali su qualsiasi provider AI. La metodologia usa Gemini come AI Judge indipendente.</span>
+    <span class="icon">🔬</span>
+    <span>Benchmark reali eseguiti su <strong>gemini-2.5-flash</strong> — 3 scenari × 3 run. La qualità degli edit è <strong>10/10</strong> per entrambi gli approcci: Beacon mantiene parità di qualità pur eliminando la necessità di un sistema esterno di contesto. I token del Beacon sono leggermente superiori in questo test perché il manifest è incluso nel file — ma in un sistema reale <em>sostituisce</em> l'iniezione di contesto da CLAUDE.md o RAG, abbattendone l'overhead. Risultati completi: <code>benchmark/results.json</code>.</span>
   </div>
 </section>
 

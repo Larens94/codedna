@@ -19,7 +19,7 @@ from typing import Literal
 # CONFIG
 # ─────────────────────────────────────────────────────────────
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY", "")
-MODEL = "gemini-2.0-flash-lite"
+MODEL = "gemini-2.5-flash"
 RUNS_PER_SCENARIO = 3  # quante volte ripetere ogni test per media
 
 # ─────────────────────────────────────────────────────────────
