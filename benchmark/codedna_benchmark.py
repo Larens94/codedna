@@ -99,18 +99,24 @@ def calculate_bundle_price(items: list, user_tier: str) -> int:
 """
 
 S4_LARGE_FILE_CODEDNA = """\
-# === CODEDNA:0.4 ==============================================
-# FILE: pricing.py
-# PURPOSE: Pricing engine with tier discounts and bundle calculation
-# CONTEXT_BUDGET: always
-# DEPENDS_ON: config.py → MAX_DISCOUNT_RATE = 0.30 (hard cap, absolute maximum)
-# EXPORTS: apply_discount(cents, tier, promo) → int, calculate_bundle_price(items, tier) → int
-# REQUIRED_BY: checkout.py → build_cart(), api.py → POST /order
-# STYLE: none
-# DB_TABLES: none
-# AGENT_RULES: total discount (tier + promo) must NEVER exceed 0.30 (30%); always cap with min(discount, 0.30)
-# LAST_MODIFIED: initial pricing engine implementation
-# ==============================================================
+\"\"\"pricing.py — Pricing engine with tier discounts and bundle calculation.
+
+Depends on:
+    config.py :: MAX_DISCOUNT_RATE = 0.30  (hard cap, never exceed this)
+
+Exports:
+    apply_discount(cents: int, tier: str, promo: str) -> int
+    calculate_bundle_price(items: list, tier: str) -> int
+
+Used by:
+    checkout.py :: build_cart()
+    api.py :: POST /order
+
+Rules:
+    - Total discount (tier + promo combined) must NEVER exceed MAX_DISCOUNT_RATE = 0.30
+    - Always cap the final discount with: discount = min(discount, 0.30)
+    - All prices are stored and returned in integer CENTS (1999 = €19.99)
+\"\"\"
 import math
 
 def get_tier_multiplier(tier: str) -> float:
@@ -124,11 +130,18 @@ def format_price(cents: int) -> str:
 """ + "\n".join([f"# filler line {i}" for i in range(150)]) + """
 
 def apply_discount(base_price_cents: int, user_tier: str, promo_code: str = "") -> int:
-    # @REQUIRES-READ: config.py -> MAX_DISCOUNT_RATE = 0.30 (HARD CAP - total discount cannot exceed 30%)
-    # @MODIFIES-ALSO: checkout.py -> build_cart() (recalculates totals)
-    \"\"\"
-    Applica lo sconto al prezzo base.
-    base_price_cents: prezzo in CENTESIMI
+    \"\"\"Apply tier + promo discount, capped at MAX_DISCOUNT_RATE (0.30).
+
+    See: config.py :: MAX_DISCOUNT_RATE = 0.30  (HARD CAP, total cannot exceed 30%)
+    Updates: checkout.py :: build_cart()
+
+    Args:
+        base_price_cents: Price in integer CENTS.
+        user_tier: Discount tier ('basic' | 'silver' | 'gold' | 'premium').
+        promo_code: Optional promo code string.
+
+    Returns:
+        Final price in integer CENTS after discount (capped at MAX_DISCOUNT_RATE).
     \"\"\"
     multiplier = get_tier_multiplier(user_tier)
     discount = 1.0 - multiplier
@@ -136,14 +149,14 @@ def apply_discount(base_price_cents: int, user_tier: str, promo_code: str = "") 
     if promo_code == "EXTRA10":
         discount += 0.10
 
-    # AGENT_RULES: cap - total discount max 0.30
-    discount = min(discount, 0.30)  # 0.30 = MAX_DISCOUNT_RATE from config.py
+    # Cap: total discount must never exceed MAX_DISCOUNT_RATE = 0.30
+    discount = min(discount, 0.30)
 
     final = base_price_cents * (1.0 - discount)
     return int(final)
 
 def calculate_bundle_price(items: list, user_tier: str) -> int:
-    \"\"\"Prezzo bundle con 5% extra di sconto.\"\"\"
+    \"\"\"Bundle price with 5% extra discount.\"\"\"\
     total = sum(apply_discount(item["price_cents"], user_tier) for item in items)
     bundle_discount = 0.05
     return int(total * (1.0 - bundle_discount))
@@ -196,24 +209,30 @@ def render(execute_query_func):
 """
 
 S5_UTILS_CODEDNA = """\
-# === CODEDNA:0.4 ==============================================
-# FILE: utils.py
-# PURPOSE: KPI aggregation helpers and currency formatting
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: none
-# EXPORTS: calcola_kpi(rows) → dict{totale,media,margine_pct,nr_mesi?}, format_currency(n) → str
-# REQUIRED_BY: main.py → render(), report.py → export_pdf()
-# STYLE: none
-# DB_TABLES: none
-# AGENT_RULES: dict keys are part of the public API — changing them BREAKS callers in REQUIRED_BY
-# LAST_MODIFIED: initial KPI helper implementation
-# ==============================================================
+\"\"\"utils.py — KPI aggregation helpers and currency formatting.
+
+Exports:
+    calcola_kpi(rows: list) -> dict  keys: totale, media, margine_pct
+    format_currency(n: float) -> str
+
+Used by:
+    main.py :: render()       -- reads kpi dict keys directly
+    report.py :: export_pdf() -- reads kpi dict keys directly
+
+Rules:
+    - Dict keys returned by calcola_kpi() are part of the public API.
+      Adding a key is safe. Renaming or removing a key BREAKS all callers in 'Used by'.
+    - format_currency() must not be renamed (callers use it by name).
+\"\"\"
 
 def calcola_kpi(rows: list) -> dict:
-    # @MODIFIES-ALSO: main.py → render() (uses kpi dict — must match keys)
-    # @MODIFIES-ALSO: report.py → export_pdf() (uses kpi dict — must match keys)
+    \"\"\"Aggregate KPI metrics from revenue rows.
+
+    Note: This function's return dict keys are used directly by main.py::render()
+    and report.py::export_pdf(). If you add a key, also update those callers.
+    \"\"\"
     if not rows:
-        return {'totale': '€0', 'media': '€0', 'margine_pct': '0.0'}
+        return {'totale': '\u20ac0', 'media': '\u20ac0', 'margine_pct': '0.0'}
     totale = sum(r['fatturato'] for r in rows)
     costi  = sum(r['costo'] for r in rows)
     media  = totale / len(rows)
@@ -224,27 +243,34 @@ def calcola_kpi(rows: list) -> dict:
         'margine_pct': margine_pct
     }
 
-def format_currency(n: float) -> str:  # @BREAKS-IF-RENAMED: key used in API response schema
-    return f'€{n:,.0f}'.replace(',', '.')
+def format_currency(n: float) -> str:
+    \"\"\"Format number as EUR currency string. Do not rename — callers reference by name.\"\"\"
+    return f'\u20ac{n:,.0f}'.replace(',', '.')
 """
 
 S5_MAIN_CODEDNA = """\
-# === CODEDNA:0.4 ==============================================
-# FILE: main.py
-# PURPOSE: Monthly revenue dashboard render function
-# CONTEXT_BUDGET: always
-# DEPENDS_ON: utils.py → calcola_kpi(), format_currency()
-# EXPORTS: render(execute_query_func) → HTML string
-# REQUIRED_BY: app.py → register_views()
-# STYLE: tailwind, none
-# DB_TABLES: ordini (mese, fatturato, costo)
-# AGENT_RULES: none
-# LAST_MODIFIED: initial dashboard render
-# ==============================================================
+\"\"\"main.py — Monthly revenue dashboard render function.
+
+Depends on:
+    utils.py :: calcola_kpi(rows) -> dict
+    utils.py :: format_currency(n) -> str
+
+Exports:
+    render(execute_query_func) -> str  (HTML string)
+
+Used by:
+    app.py :: register_views()
+
+DB tables:
+    ordini (mese, fatturato, costo)
+\"\"\"
 from utils import calcola_kpi, format_currency
 
 def render(execute_query_func):
-    # @REQUIRES-READ: utils.py → calcola_kpi() (check dict keys before accessing)
+    \"\"\"Render monthly revenue dashboard as HTML.
+
+    See: utils.py :: calcola_kpi() for available dict keys before accessing them.
+    \"\"\"
     rows = execute_query_func("SELECT mese, fatturato, costo FROM ordini ORDER BY mese")
     kpi  = calcola_kpi(rows)
     return f\"\"\"<div>
@@ -286,40 +312,53 @@ def get_product(product_id: str) -> dict:
 """
 
 S6_FILE_CODEDNA = """\
-# === CODEDNA:0.4 ==============================================
-# FILE: order.py
-# PURPOSE: Order processing with tax calculation and receipt formatting
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: none
-# EXPORTS: process_order(request_data) → dict, format_receipt(total_cents) → str
-# REQUIRED_BY: api.py → POST /order
-# STYLE: none
-# DB_TABLES: products (id, name, price_cents)
-# AGENT_RULES: ALL prices are in integer CENTS; never mix cents and euros; apply_tax input/output is cents
-# LAST_MODIFIED: initial order processing
-# ==============================================================
+\"\"\"order.py — Order processing with tax calculation and receipt formatting.
+
+Exports:
+    process_order(request_data: dict) -> dict
+    format_receipt(total_cents: int) -> str   (do not rename: called by email_template.py)
+
+Used by:
+    api.py :: POST /order
+
+DB tables:
+    products (id, name, price_cents)
+
+Rules:
+    - ALL monetary values are in integer CENTS throughout this file.
+      Example: 1999 = \u20ac19.99. Never treat them as euros.
+    - apply_tax() accepts and returns CENTS (integers).
+    - To display as euros: divide by 100 ->  f\"\u20ac{cents/100:.2f}\"
+    - Never pass euros to apply_tax().
+\"\"\"
 import json
 
 def process_order(request_data: dict) -> dict:
-    # @REQUIRES-READ: api_spec.md → price field (ALWAYS in integer cents, e.g. 1999 = €19.99)
-    int_cents_price_from_request = request_data.get("price")   # CENTS: e.g. 1999
-    int_qty_from_request         = request_data.get("quantity", 1)
-    dict_product_from_db         = get_product(request_data["product_id"])
-    int_cents_subtotal           = int_cents_price_from_request * int_qty_from_request
-    int_cents_total_with_tax     = apply_tax(int_cents_subtotal)
-    return {"total_cents": int_cents_total_with_tax, "currency": "EUR"}
+    \"\"\"Process an incoming order request.
 
-def apply_tax(int_cents_amount: int, rate: float = 0.22) -> int:
-    # @REQUIRES-READ: config.py → DEFAULT_TAX_RATE (always pass as rate param if different)
-    return round(int_cents_amount * (1 + rate))
+    Note: 'price' in request_data is always in integer CENTS (e.g. 1999 = \u20ac19.99).
+    \"\"\"
+    price_cents = request_data.get(\"price\")    # integer CENTS, e.g. 1999
+    qty         = request_data.get(\"quantity\", 1)
+    get_product(request_data[\"product_id\"])
+    subtotal_cents      = price_cents * qty
+    total_with_tax_cents = apply_tax(subtotal_cents)
+    return {\"total_cents\": total_with_tax_cents, \"currency\": \"EUR\"}
 
-def format_receipt(int_cents_total: int) -> str:
-    # @BREAKS-IF-RENAMED: called by string in email_template.py
-    float_euros_total = int_cents_total / 100
-    return f"Totale da pagare: €{float_euros_total:.2f}"
+def apply_tax(amount_cents: int, rate: float = 0.22) -> int:
+    \"\"\"Apply tax to a cent-valued amount. Input and output are integer CENTS.\"\"\"
+    return round(amount_cents * (1 + rate))
+
+def format_receipt(total_cents: int) -> str:
+    \"\"\"Format receipt string. Input is integer CENTS, displays as euros.
+
+    Do not rename this function: called by name in email_template.py.
+    \"\"\"
+    euros = total_cents / 100
+    return f\"Totale da pagare: \u20ac{euros:.2f}\"
 
 def get_product(product_id: str) -> dict:
-    return {"id": product_id, "name": "Widget", "price_cents": 1999}
+    return {\"id\": product_id, \"name\": \"Widget\", \"price_cents\": 1999}
 """
 
 S6_TASK = (
@@ -361,18 +400,21 @@ def render(execute_query_func):
 """
 
 S7_UTILS_CODEDNA = """\
-# === CODEDNA:0.4 ==============================================
-# FILE: utils.py
-# PURPOSE: KPI aggregation and currency formatting helpers
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: none
-# EXPORTS: calcola_kpi(rows) → dict, format_currency(n) → str
-# REQUIRED_BY: main.py → render(), report.py → build_pdf()
-# STYLE: none
-# DB_TABLES: none
-# AGENT_RULES: format_currency is the ONLY formatting function; format_revenue was removed in v2
-# LAST_MODIFIED: renamed format_revenue to format_currency (breaking rename, all callers updated)
-# ==============================================================
+\"\"\"utils.py — KPI aggregation and currency formatting helpers.
+
+Exports:
+    calcola_kpi(rows: list) -> dict
+    format_currency(n: float) -> str
+
+Used by:
+    main.py :: render()
+    report.py :: build_pdf()
+
+Rules:
+    - The formatting function is format_currency(). format_revenue() was removed in v2
+      and no longer exists. All callers have been updated to use format_currency().
+    - Do not rename format_currency() -- used by name in main.py, report.py, email_template.py.
+\"\"\"
 
 def calcola_kpi(rows: list) -> dict:
     if not rows:
@@ -380,27 +422,38 @@ def calcola_kpi(rows: list) -> dict:
     totale = sum(r['fatturato'] for r in rows)
     return {'totale': totale, 'media': totale / len(rows)}
 
-def format_currency(n: float) -> str:  # @BREAKS-IF-RENAMED: used in main.py, report.py, email_template.py
-    return f'€{n:,.0f}'.replace(',', '.')
+def format_currency(n: float) -> str:
+    \"\"\"Format as EUR. Replaces the old format_revenue() which no longer exists.\"\"\"
+    return f'\u20ac{n:,.0f}'.replace(',', '.')
 """
 
 S7_MAIN_CODEDNA = """\
-# === CODEDNA:0.4 ==============================================
-# FILE: main.py
-# PURPOSE: Monthly revenue dashboard render function
-# CONTEXT_BUDGET: always
-# DEPENDS_ON: utils.py → calcola_kpi(), format_currency()
-# EXPORTS: render(execute_query_func) → HTML string
-# REQUIRED_BY: app.py → register_views()
-# STYLE: tailwind
-# DB_TABLES: ordini (mese, fatturato, costo)
-# AGENT_RULES: always use format_currency() from utils.py — format_revenue() no longer exists
-# LAST_MODIFIED: updated import after format_revenue rename
-# ==============================================================
+\"\"\"main.py — Monthly revenue dashboard render function.
+
+Depends on:
+    utils.py :: calcola_kpi(rows) -> dict
+    utils.py :: format_currency(n) -> str   (note: format_revenue was renamed to this in v2)
+
+Exports:
+    render(execute_query_func) -> str
+
+Used by:
+    app.py :: register_views()
+
+DB tables:
+    ordini (mese, fatturato, costo)
+
+Rules:
+    - Always use format_currency() from utils.py for formatting.
+      format_revenue() was removed in v2 and will raise NameError if called.
+\"\"\"
 from utils import calcola_kpi, format_currency
 
 def render(execute_query_func):
-    # @REQUIRES-READ: utils.py → format_currency() (was format_revenue() before v2 — DO NOT use old name)
+    \"\"\"Render revenue dashboard HTML.
+
+    See: utils.py :: format_currency()  (was format_revenue() before v2 -- do not use old name)
+    \"\"\"
     rows = execute_query_func("SELECT mese, fatturato, costo FROM ordini")
     kpi  = calcola_kpi(rows)
     return f"<p>Totale: {format_currency(kpi['totale'])}</p>"
@@ -416,14 +469,56 @@ S7_TASK = (
 # ──────────────────────────────────────────────────────────────────
 
 S8_MANIFESTS_CODEDNA = """\
-# === CODEDNA:0.4 === FILE: app.py | PURPOSE: Flask app factory, route registration | CONTEXT_BUDGET: always | DEPENDS_ON: views/dashboard.py → register(), auth.py → require_login() | EXPORTS: create_app() → Flask | REQUIRED_BY: wsgi.py → app | AGENT_RULES: none | LAST_MODIFIED: added health check route
-# === CODEDNA:0.4 === FILE: views/dashboard.py | PURPOSE: Monthly revenue dashboard view with KPI cards | CONTEXT_BUDGET: always | DEPENDS_ON: utils/kpi.py → calcola_kpi(), utils/fmt.py → format_currency() | EXPORTS: register(app) → None, render(qfn) → HTML | REQUIRED_BY: app.py → create_app() | DB_TABLES: ordini (mese, fatturato, costo) | AGENT_RULES: none | LAST_MODIFIED: added margin column
-# === CODEDNA:0.4 === FILE: utils/kpi.py | PURPOSE: KPI aggregation helpers for revenue dashboards | CONTEXT_BUDGET: normal | DEPENDS_ON: none | EXPORTS: calcola_kpi(rows) → dict | REQUIRED_BY: views/dashboard.py → render() | AGENT_RULES: dict keys are public API — changing breaks REQUIRED_BY callers | LAST_MODIFIED: added nr_mesi key
-# === CODEDNA:0.4 === FILE: utils/fmt.py | PURPOSE: Number and currency formatting utilities | CONTEXT_BUDGET: minimal | DEPENDS_ON: none | EXPORTS: format_currency(n) → str, format_pct(n) → str | REQUIRED_BY: views/dashboard.py → render(), views/report.py → build_pdf() | AGENT_RULES: none | LAST_MODIFIED: initial release
-# === CODEDNA:0.4 === FILE: auth.py | PURPOSE: JWT authentication and session management | CONTEXT_BUDGET: always | DEPENDS_ON: db.py → get_user() | EXPORTS: require_login() → decorator, generate_token(user) → str | REQUIRED_BY: app.py → create_app() | DB_TABLES: users (id, email, token_hash) | AGENT_RULES: never log tokens | LAST_MODIFIED: added refresh token rotation
-# === CODEDNA:0.4 === FILE: db.py | PURPOSE: Database connection pool and query executor | CONTEXT_BUDGET: normal | DEPENDS_ON: config.py → DB_URL | EXPORTS: execute_query(sql) → list, get_user(email) → dict | REQUIRED_BY: auth.py → require_login(), views/dashboard.py → render() | AGENT_RULES: always use parameterized queries | LAST_MODIFIED: added connection timeout
-# === CODEDNA:0.4 === FILE: config.py | PURPOSE: Application configuration and environment loading | CONTEXT_BUDGET: minimal | DEPENDS_ON: none | EXPORTS: DB_URL, JWT_SECRET, MAX_DISCOUNT_RATE | REQUIRED_BY: db.py, auth.py, pricing.py | AGENT_RULES: never hardcode secrets | LAST_MODIFIED: added MAX_DISCOUNT_RATE constant
-# === CODEDNA:0.4 === FILE: views/report.py | PURPOSE: PDF report generation from revenue data | CONTEXT_BUDGET: minimal | DEPENDS_ON: utils/kpi.py → calcola_kpi(), utils/fmt.py → format_currency() | EXPORTS: export_pdf(rows) → bytes | REQUIRED_BY: app.py → /export route | AGENT_RULES: none | LAST_MODIFIED: initial PDF report
+# app.py
+\"\"\"app.py -- Flask application factory and route registration.
+Depends on: views/dashboard.py :: register(), auth.py :: require_login()
+Exports: create_app() -> Flask
+Used by: wsgi.py :: app\"\"\"
+
+# views/dashboard.py
+\"\"\"views/dashboard.py -- Monthly revenue dashboard with KPI cards.
+Depends on: utils/kpi.py :: calcola_kpi(), utils/fmt.py :: format_currency()
+Exports: register(app), render(qfn) -> HTML
+Used by: app.py :: create_app()
+DB tables: ordini (mese, fatturato, costo)\"\"\"
+
+# utils/kpi.py
+\"\"\"utils/kpi.py -- KPI aggregation helpers for revenue dashboards.
+Exports: calcola_kpi(rows) -> dict
+Used by: views/dashboard.py :: render()
+Rules: dict keys are public API -- changing them breaks all callers in 'Used by'.\"\"\"
+
+# utils/fmt.py
+\"\"\"utils/fmt.py -- Number and currency formatting utilities.
+Exports: format_currency(n) -> str, format_pct(n) -> str
+Used by: views/dashboard.py :: render(), views/report.py :: build_pdf()\"\"\"
+
+# auth.py
+\"\"\"auth.py -- JWT authentication and session management.
+Depends on: db.py :: get_user()
+Exports: require_login() decorator, generate_token(user) -> str
+Used by: app.py :: create_app()
+DB tables: users (id, email, token_hash)
+Rules: never log tokens.\"\"\"
+
+# db.py
+\"\"\"db.py -- Database connection pool and query executor.
+Depends on: config.py :: DB_URL
+Exports: execute_query(sql) -> list, get_user(email) -> dict
+Used by: auth.py :: require_login(), views/dashboard.py :: render()
+Rules: always use parameterized queries.\"\"\"
+
+# config.py
+\"\"\"config.py -- Application configuration and environment loading.
+Exports: DB_URL, JWT_SECRET, MAX_DISCOUNT_RATE
+Used by: db.py, auth.py, pricing.py
+Rules: never hardcode secrets.\"\"\"
+
+# views/report.py
+\"\"\"views/report.py -- PDF report generation from revenue data.
+Depends on: utils/kpi.py :: calcola_kpi(), utils/fmt.py :: format_currency()
+Exports: export_pdf(rows) -> bytes
+Used by: app.py :: /export route\"\"\"
 """
 
 S8_MANIFESTS_NO_CODEDNA = """\
