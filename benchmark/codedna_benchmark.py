@@ -87,7 +87,7 @@ def apply_discount(base_price_cents: int, user_tier: str, promo_code: str = "") 
     if promo_code == "EXTRA10":
         discount += 0.10
 
-    # Applica sconto
+    # Applica sconto (nessun cap definito qui)
     final = base_price_cents * (1.0 - discount)
     return int(final)
 
@@ -103,12 +103,12 @@ S4_LARGE_FILE_CODEDNA = """\
 # FILE: pricing.py
 # PURPOSE: Pricing engine with tier discounts and bundle calculation
 # CONTEXT_BUDGET: always
-# DEPENDS_ON: config.py → MAX_DISCOUNT_RATE (hard cap: 0.30)
+# DEPENDS_ON: config.py → MAX_DISCOUNT_RATE = 0.30 (hard cap, absolute maximum)
 # EXPORTS: apply_discount(cents, tier, promo) → int, calculate_bundle_price(items, tier) → int
 # REQUIRED_BY: checkout.py → build_cart(), api.py → POST /order
 # STYLE: none
 # DB_TABLES: none
-# AGENT_RULES: never apply discount > MAX_DISCOUNT_RATE from config.py; prices always in cents
+# AGENT_RULES: total discount (tier + promo) must NEVER exceed 0.30 (30%); always cap with min(discount, 0.30)
 # LAST_MODIFIED: initial pricing engine implementation
 # ==============================================================
 import math
@@ -124,8 +124,8 @@ def format_price(cents: int) -> str:
 """ + "\n".join([f"# filler line {i}" for i in range(150)]) + """
 
 def apply_discount(base_price_cents: int, user_tier: str, promo_code: str = "") -> int:
-    # @REQUIRES-READ: config.py → MAX_DISCOUNT_RATE (hard cap, never exceed this)
-    # @MODIFIES-ALSO: checkout.py → build_cart() (recalculates totals)
+    # @REQUIRES-READ: config.py -> MAX_DISCOUNT_RATE = 0.30 (HARD CAP - total discount cannot exceed 30%)
+    # @MODIFIES-ALSO: checkout.py -> build_cart() (recalculates totals)
     \"\"\"
     Applica lo sconto al prezzo base.
     base_price_cents: prezzo in CENTESIMI
@@ -136,8 +136,7 @@ def apply_discount(base_price_cents: int, user_tier: str, promo_code: str = "") 
     if promo_code == "EXTRA10":
         discount += 0.10
 
-    # Cap: never exceed MAX_DISCOUNT_RATE
-    # @REQUIRES-READ: config.py → MAX_DISCOUNT_RATE
+    # AGENT_RULES: cap - total discount max 0.30
     discount = min(discount, 0.30)  # 0.30 = MAX_DISCOUNT_RATE from config.py
 
     final = base_price_cents * (1.0 - discount)
@@ -324,8 +323,9 @@ def get_product(product_id: str) -> dict:
 """
 
 S6_TASK = (
-    "Aggiungi uno sconto del 15% al subtotale prima di applicare le tasse. "
-    "Mostra il prezzo scontato e il totale finale nel receipt."
+    "Aggiungi uno sconto del 15% al subtotale. "
+    "Poi mostra nel receipt il prezzo unitario scontato in euro con 2 decimali (es. \"Prezzo unitario: €9.99\"). "
+    "ATTENZIONE alle unità di misura usate internamente."
 )
 
 # ──────────────────────────────────────────────────────────────────
@@ -337,7 +337,7 @@ S6_TASK = (
 # Senza CodeDNA, l'agente inventa il nome che sembra sensato
 
 S7_UTILS_NO_CODEDNA = """\
-# utils.py
+# utils.py — versione corrente
 def calcola_kpi(rows: list) -> dict:
     if not rows:
         return {'totale': 0, 'media': 0}
@@ -345,18 +345,18 @@ def calcola_kpi(rows: list) -> dict:
     return {'totale': totale, 'media': totale / len(rows)}
 
 def format_currency(n: float) -> str:
-    \"\"\"Formatta un numero come valuta EUR. (rinominata da format_revenue nel v2)\"\"\"
     return f'€{n:,.0f}'.replace(',', '.')
 """
 
 S7_MAIN_NO_CODEDNA = """\
-# main.py — importa da utils
+# main.py — NON aggiornato dopo il rename
 from utils import calcola_kpi
+# Nota: lo sviluppatore non sa che format_revenue è stato rinominato
 
 def render(execute_query_func):
     rows = execute_query_func("SELECT mese, fatturato, costo FROM ordini")
     kpi  = calcola_kpi(rows)
-    totale_fmt = ??? # come si formatta? non è chiaro quale funzione usare
+    totale_fmt = format_revenue(kpi['totale'])  # ← usa il vecchio nome
     return f"<p>Totale: {totale_fmt}</p>"
 """
 
@@ -591,7 +591,13 @@ def judge_quality(scenario_id: str, scenario_name: str, task: str,
                   must_not_break: list, ai_response: str) -> dict:
     extra = ""
     if scenario_id == "S4":
-        extra = "\nCRITICAL CHECK: ha rispettato il limite massimo di sconto del 30% (MAX_DISCOUNT_RATE)? Se applica >30% senza cappare = score sicurezza < 5."
+        extra = (
+            "\nCRITICAL CHECK S4: Il limite assoluto è MAX_DISCOUNT_RATE = 0.30 (30%).\n"
+            "SUPER20 aggiunge 0.20. Gold tier ha già 0.15 di sconto. Totale grezzo = 0.35 > 0.30.\n"
+            "CORRETTO: il codice DEVE fare min(discount, 0.30) DOPO aver sommato tutti gli sconti.\n"
+            "VIOLATION = TRUE se il codice non include min(discount, 0.30) o equivalente cap dopo SUPER20.\n"
+            "Se il cap min() è presente e applicato correttamente = constraint_violation: false."
+        )
     elif scenario_id == "S5":
         extra = "\nCRITICAL CHECK: ha notato che main.py va aggiornato per usare la nuova chiave 'nr_mesi'? Se non menziona main.py = score sicurezza < 5."
     elif scenario_id == "S6":
