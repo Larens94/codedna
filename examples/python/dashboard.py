@@ -1,17 +1,17 @@
-# ==============================================================
+# === CODEDNA:0.2 ==============================================
 # FILE: dashboard.py
 # PURPOSE: Monthly revenue KPI dashboard with chart and table
 # DEPENDS_ON: utils.py → calculate_kpi(), format_currency()
 # EXPORTS: render(execute_query_func) → HTML string
 # STYLE: tailwind, chart.js
 # DB_TABLES: orders (month, revenue, cost)
-# LAST_MODIFIED: initial Beacon Framework example
+# LAST_MODIFIED: added Level 2 CodeDNA inline hyperlinks
 # ==============================================================
 
 from .utils import calculate_kpi, format_currency
 
 
-def render(execute_query_func):
+def render(execute_query_func: callable) -> str:
     """
     Main entry point called by the view engine.
 
@@ -19,23 +19,31 @@ def render(execute_query_func):
         execute_query_func: callable(sql: str) -> list[dict]
     Returns:
         Rendered HTML string
-    Used by: view engine → injected at runtime
+
+    # @SEE: utils.py → calculate_kpi() (returns dict with 'total', 'average', 'margin_pct')
+    # @REQUIRES-READ: schema.sql → orders (month: str, revenue: int, cost: int)
+    # @MODIFIES-ALSO: utils.py → calculate_kpi() if changing column names in SQL
     """
     rows = execute_query_func(
         "SELECT month, revenue, cost FROM orders ORDER BY month"
+        # @REQUIRES-READ: schema.sql → orders (column types are int, not decimal)
     )
-    # → from utils.py: calculate_kpi handles normalization and margin calc
+
+    # → from utils.py: calculate_kpi handles normalization, margins, and formatting
     kpi = calculate_kpi(rows)
 
     rows_html = ""
     for r in rows:
         margin = r["revenue"] - r["cost"]
+        margin_pct = round((margin / r["revenue"]) * 100, 1) if r["revenue"] else 0
+
         rows_html += f"""
         <tr class="even:bg-gray-50">
             <td class="px-4 py-2">{r['month']}</td>
             <td class="px-4 py-2 text-right">{format_currency(r['revenue'])}</td>
             <td class="px-4 py-2 text-right">{format_currency(r['cost'])}</td>
             <td class="px-4 py-2 text-right">{format_currency(margin)}</td>
+            <td class="px-4 py-2 text-right text-green-600">{margin_pct}%</td>
         </tr>"""
 
     return f"""
@@ -62,6 +70,7 @@ def render(execute_query_func):
                     <th class="px-4 py-2 text-right">Revenue</th>
                     <th class="px-4 py-2 text-right">Cost</th>
                     <th class="px-4 py-2 text-right">Margin</th>
+                    <th class="px-4 py-2 text-right">Margin %</th>
                 </tr>
             </thead>
             <tbody>{rows_html}</tbody>

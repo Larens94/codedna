@@ -1,6 +1,6 @@
-# Beacon Framework — Technical Specification
+# CodeDNA — Technical Specification
 
-**Version:** 0.1  
+**Version:** 0.2  
 **Status:** Draft  
 **Language:** Agnostic
 
@@ -8,180 +8,172 @@
 
 ## 1. Overview
 
-The Beacon Header is a structured comment block placed at the very top of every source file. It provides a compact, machine-readable description of the file's purpose, dependencies, public API, style conventions, and edit history.
+CodeDNA is a two-level source-file annotation standard for AI-assisted development.
 
-Its primary consumer is an AI model. Secondary consumers are human developers.
+**Level 1 — The Manifest Header (Macro-Context):** A structured comment block at the top of every file describing the file's purpose, dependencies, public API, style conventions, and edit history.
+
+**Level 2 — Inline Hyperlinks (Micro-Context):** Semantic annotations embedded at the function and variable level, enabling AI agents to navigate the codebase even when reading only partial file content via sliding windows.
+
+Together, they make every code fragment self-sufficient: an AI extracting any part of a CodeDNA file finds enough context to act correctly without external lookup.
 
 ---
 
 ## 2. Goals
 
 - **Zero token overhead**: context lives in the file, not the prompt
-- **Zero drift**: the header is co-located with what it describes
-- **Zero retrieval latency**: no lookup, no embedding, no network call
+- **Zero drift**: annotations are co-located with what they describe
+- **Zero retrieval latency**: no vector DB, no network call
+- **Sliding-window safe**: Level 2 hyperlinks guide agents that skip the header
 - **Language agnostic**: comment-based format works in any language
-- **Human readable**: a developer reading the file gets the same benefit
+- **Human readable**: developers benefit as much as AI agents
 
 ---
 
-## 3. Header Format
+## 3. Level 1 — The Manifest Header
 
-### 3.1 Structure
+### 3.1 Placement
+
+The Manifest Header **must be the first content in the file**. It is placed before any imports, declarations, or code. A shebang line (`#!/usr/bin/env python`) may appear on line 1; the header starts on line 2.
+
+A blank line must follow the closing delimiter before the first import or code statement.
+
+### 3.2 Format
 
 ```
-DELIMITER
-FIELD: value
-...
-DELIMITER
+# ==============================================================
+# FILE: <filename>
+# PURPOSE: <one-line description>
+# DEPENDS_ON: <file> → <symbol1>, <symbol2> | none
+# EXPORTS: <symbol(signature)> → <return type>
+# STYLE: <css framework>, <chart library> | none
+# DB_TABLES: <table> (<col1>, <col2>) | none
+# LAST_MODIFIED: <8-word max description of last change>
+# ==============================================================
 ```
 
-The delimiter is a line of `=` characters (≥20), prefixed by the language's single-line comment token.
+### 3.3 Fields
 
-### 3.2 Python / Ruby / Shell
+| Field | Required | Rule |
+|---|---|---|
+| `FILE` | ✅ | Exact filename including extension |
+| `PURPOSE` | ✅ | ≤15 words, describes *what*, not *how* |
+| `DEPENDS_ON` | ✅ | `file → func1, func2` or `none` |
+| `EXPORTS` | ✅ | Public API with signatures |
+| `STYLE` | — | CSS + chart library, or `none` |
+| `DB_TABLES` | — | Tables and relevant columns, or `none` |
+| `LAST_MODIFIED` | ✅ | ≤8 words; updated on every edit as first change |
 
+### 3.4 Examples by Language
+
+**Python / Ruby / Shell**
 ```python
 # ==============================================================
 # FILE: dashboard.py
-# PURPOSE: Monthly KPI dashboard with revenue chart and table
+# PURPOSE: Monthly revenue KPI dashboard with chart and table
 # DEPENDS_ON: utils.py → calculate_kpi(), format_currency()
 # EXPORTS: render(execute_query_func) → HTML string
 # STYLE: tailwind, chart.js
 # DB_TABLES: orders (month, revenue, cost)
-# LAST_MODIFIED: added margin percentage column
+# LAST_MODIFIED: added margin column to table
 # ==============================================================
 ```
 
-### 3.3 JavaScript / TypeScript / Go / Rust / C
-
+**JavaScript / TypeScript / Go / Rust**
 ```javascript
 // ==============================================================
 // FILE: authService.ts
 // PURPOSE: JWT authentication and session management
-// DEPENDS_ON: db.ts → getUser(), models/User.ts → UserSchema
+// DEPENDS_ON: db.ts → getUser(), config.ts → JWT_SECRET
 // EXPORTS: login(credentials) → Promise<Token>, verify(token) → User
-// STYLE: none (pure logic)
-// DB_TABLES: users (id, email, password_hash, last_login)
+// STYLE: none
+// DB_TABLES: users (id, email, password_hash)
 // LAST_MODIFIED: added refresh token rotation
 // ==============================================================
 ```
 
-### 3.4 SQL
-
+**SQL**
 ```sql
 -- ==============================================================
 -- FILE: monthly_revenue.sql
 -- PURPOSE: Aggregated monthly revenue by category and region
 -- DEPENDS_ON: none
--- EXPORTS: result_set (month, category, region, revenue, cost)
--- STYLE: BigQuery dialect
--- DB_TABLES: orders, order_items, products, regions
+-- EXPORTS: (month, category, revenue, cost)
+-- DB_TABLES: orders, order_items, products
 -- LAST_MODIFIED: filtered out cancelled orders
 -- ==============================================================
 ```
 
 ---
 
-## 4. Field Specification
+## 4. Level 2 — Inline Hyperlinks
 
-### 4.1 FILE *(required)*
+### 4.1 Motivation
 
-Exact filename including extension. Must match the actual filename on disk.
+AI agents operating in *sliding window* mode extract partial file content (e.g., lines 50–80) to reduce token consumption. This bypasses the Manifest Header entirely. Level 2 hyperlinks ensure that even a partial read delivers enough directional context.
 
-```
-# FILE: dashboard.py
-```
+### 4.2 Annotation Tags
 
-Used by orchestrators that read only the header (first 12 lines) to build a file map without loading the full file.
+| Tag | Semantics | Agent behavior |
+|---|---|---|
+| `@SEE: file → symbol` | Recommended context | Read if uncertain |
+| `@REQUIRES-READ: file → symbol` | Mandatory prerequisite | MUST read before editing |
+| `@MODIFIES-ALSO: file → symbol` | Cascade change required | MUST update that symbol too |
 
-### 4.2 PURPOSE *(required)*
+### 4.3 Placement Rules
 
-One line, maximum 15 words. Describes **what** the file does, not **how**.
+Hyperlink annotations are placed **immediately inside the function or block they govern**, before the first executable line.
 
-```
-# PURPOSE: Monthly KPI dashboard with revenue chart and table
-```
+```python
+def apply_discount(base_price: int, user_tier: str) -> float:
+    # @REQUIRES-READ: config.py → MAX_DISCOUNT_ALLOWED (must not exceed this limit)
+    # @REQUIRES-READ: db.py → UserSchema (valid values for user_tier)
+    # @MODIFIES-ALSO: invoice.py → calculate_total() (recalculates if discount changes)
 
-**Good:** `Monthly KPI dashboard with revenue chart and table`  
-**Bad:** `Uses Chart.js to render a canvas element inside a div`
-
-### 4.3 DEPENDS_ON *(required)*
-
-Comma-separated list of external dependencies with the symbol(s) used from each.
-
-```
-# DEPENDS_ON: utils.py → calculate_kpi(), format_currency()
+    if user_tier == "premium":
+        return base_price * 0.8  # cast to int done in main.py
+    return base_price
 ```
 
-Multiple dependencies:
-```
-# DEPENDS_ON: utils.py → calculate_kpi(), db.py → get_connection()
-```
+### 4.4 Inline Context Anchors
 
-No dependencies:
-```
-# DEPENDS_ON: none
+For individual lines with non-obvious constraints, use a trailing inline comment:
+
+```python
+BTN_COLOR = "#3B82F6"  # @SEE: style.css → --brand-primary (must stay in sync)
 ```
 
-This field is the primary guard against breaking cross-file contracts. AI models read it before making any changes.
-
-### 4.4 EXPORTS *(required)*
-
-Public-facing API: functions, classes, or constants that other files import from this one. Include signatures.
-
-```
-# EXPORTS: render(execute_query_func) → HTML string
+```python
+rows = execute_query_func(sql)  # @REQUIRES-READ: schema.sql → orders (column types)
 ```
 
-Multiple exports:
-```
-# EXPORTS: calculate_kpi(rows) → dict, format_currency(n) → str
-```
+### 4.5 Semantic Variable Naming
 
-### 4.5 STYLE *(optional)*
+Variables that carry structural information about their content reduce the agent's need to trace origins:
 
-UI/CSS conventions used in the file. Helps the AI maintain visual consistency across edits.
+```python
+# Standard — agent must trace back to understand the shape
+data = get_users()
 
-```
-# STYLE: tailwind, chart.js, dark-mode
-```
-
-For non-UI files:
-```
-# STYLE: none
+# CodeDNA — agent immediately knows type, source, shape
+list_dict_users_from_db = get_users()
 ```
 
-### 4.6 DB_TABLES *(optional)*
-
-Database tables accessed by this file, with the relevant columns.
-
-```
-# DB_TABLES: orders (month, revenue, cost), customers (id, name)
-```
-
-No DB access:
-```
-# DB_TABLES: none
-```
-
-### 4.7 LAST_MODIFIED *(required)*
-
-A brief description of the most recent change, maximum 8 words. **Must be updated on every edit**, as the first change an AI model applies.
-
-```
-# LAST_MODIFIED: added margin percentage column
-```
-
-This field doubles as an inline edit log — each change overwrites the previous. For a full history, use version control.
+This is not mandatory but strongly recommended for data-carrying variables that flow across function boundaries.
 
 ---
 
-## 5. Placement Rules
+## 5. The Biological Model
 
-- The Beacon Header **must be the first thing in the file**
-- No shebang lines, encoding declarations, or other comments before it
-  - Exception: shebang (`#!/usr/bin/env python`) may appear on line 1, header starts on line 2
-- The header must be followed by a blank line before the first import or code statement
-- No inline code within the header block
+CodeDNA is designed around the holographic principle: **every fragment contains the whole**.
+
+| Biology | CodeDNA |
+|---|---|
+| Genome | Complete set of project rules and conventions |
+| Chromosome | A source file with its Manifest Header |
+| Gene | A fully annotated function |
+| Genetic Marker | An inline hyperlink (`@REQUIRES-READ`, `@SEE`) |
+
+Cutting a hologram in half gives two complete images. Extracting 10 lines from a CodeDNA file gives 10 lines that still carry enough structure to navigate safely.
 
 ---
 
@@ -189,51 +181,32 @@ This field doubles as an inline edit log — each change overwrites the previous
 
 ### 6.1 On READ (edit mode)
 
-The AI model **must** read the Beacon Header before reading the file body. Specifically:
-
-1. Parse `DEPENDS_ON` → know what must not be broken
-2. Parse `EXPORTS` → know what the file exposes (do not rename or remove)
-3. Parse `PURPOSE` → understand scope of expected changes
-4. Parse `STYLE` → maintain visual conventions
+1. Parse the Manifest Header first (Level 1)
+2. Note `DEPENDS_ON` → constraints on what must not break
+3. Note `EXPORTS` → symbols that must not be renamed or removed
+4. At each annotated function, follow `@REQUIRES-READ` links before writing
 
 ### 6.2 On WRITE (generate mode)
 
-The AI model **must** generate the header as the first output block, before any imports or code.
+1. Generate the Manifest Header as the **first output block**
+2. Add `@REQUIRES-READ` / `@SEE` / `@MODIFIES-ALSO` to every function that has cross-file dependencies
+3. Use descriptive variable names for data-carrying variables
 
 ### 6.3 On EDIT
 
-The first change applied must update `LAST_MODIFIED`. This is non-negotiable.
+1. **First change**: update `LAST_MODIFIED` in the Manifest Header
+2. Follow all `@REQUIRES-READ` links before writing any logic
+3. After editing, check `@MODIFIES-ALSO` links and cascade changes
 
 ---
 
 ## 7. Versioning
 
-The spec version is declared as a comment in the header delimiter line (optional):
+The spec version may be declared in the delimiter line:
 
 ```python
-# === BEACON:0.1 ================================================
+# === CODEDNA:0.2 =============================================
 ```
-
----
-
-## 8. Validation
-
-A compliant file satisfies:
-- Header is present and starts at line 1 (or line 2 after shebang)
-- All required fields (`FILE`, `PURPOSE`, `DEPENDS_ON`, `EXPORTS`, `LAST_MODIFIED`) are present
-- `FILE` matches the actual filename
-- `LAST_MODIFIED` is not empty
-
-Validation can be performed with a simple regex or AST comment scan. A reference validator will be published in `tools/`.
-
----
-
-## 9. Non-Goals
-
-- Beacon is **not** a replacement for docstrings or inline comments
-- Beacon is **not** a build system or module resolver
-- Beacon does **not** enforce API contracts at runtime — it is documentation
-- Beacon does **not** require any runtime library
 
 ---
 
@@ -241,4 +214,5 @@ Validation can be performed with a simple regex or AST comment scan. A reference
 
 | Version | Date | Notes |
 |---|---|---|
-| 0.1 | 2026-03-16 | Initial draft |
+| 0.1 | 2026-03-16 | Initial draft — Level 1 Manifest Header |
+| 0.2 | 2026-03-16 | Added Level 2 Inline Hyperlinks, biological model, semantic naming |

@@ -1,30 +1,38 @@
-# Beacon Framework
+# CodeDNA
 
-> *The context doesn't need to be retrieved. It's already in the file.*
+> *Every file contains the entire project's genome. The AI reads one cell and understands the whole organism.*
 
-**Beacon** is a source-file annotation standard that lets AI models understand any file instantly — by reading it top to bottom, without external memory, vector databases, or context injection.
+**CodeDNA** is a source-file annotation standard that embeds context directly into code — at every level. Like biological DNA, a single fragment contains enough information to understand the whole.
 
-Every file starts with a **Beacon Header**: a compact, machine-readable block that describes what the file does, what it depends on, what it exports, and what changed last. The AI reads the header first. By the time it reaches line 1 of actual code, it already knows everything it needs.
+No external memory. No vector databases. No context files that drift out of sync.
 
 ---
 
-## The Problem
+## The Biological Analogy
 
-Modern AI coding assistants manage context through external systems:
-
-| Approach | Problem |
+| Biology | CodeDNA |
 |---|---|
-| `CLAUDE.md` / `Cursor Rules` | Static, grows stale, floods the prompt with irrelevant tokens |
-| RAG / Vector DBs | Retrieval latency, depends on embedding quality |
-| MemGPT-style paging | Complex infrastructure, can evict relevant context |
+| **Genome** | The complete set of project rules and conventions |
+| **Chromosome** | A source file with its Manifest Header |
+| **Gene** | A fully annotated function |
+| **Genetic Marker** | An inline hyperlink (`@REQUIRES-READ`, `@SEE`) |
 
-All of these treat context as something to be *fetched*. Beacon treats context as something to be *embedded*.
+Just as cutting a hologram in half gives you two complete (if smaller) images, extracting 10 lines from a CodeDNA file gives you 10 lines that still carry enough context to act safely.
 
 ---
 
-## How It Works
+## The Two-Level Architecture
 
-Every source file begins with a Beacon Header:
+### Level 1 — The Genome (Manifest Header)
+
+Every file starts with a **Manifest Header**: a compact, machine-readable block read by the AI *before* any code. In ~60 tokens, it answers:
+
+- **What does this file do?** (`PURPOSE`)
+- **What must I never break?** (`DEPENDS_ON`)
+- **What do others rely on from me?** (`EXPORTS`)
+- **What style must I maintain?** (`STYLE`)
+- **Which database tables do I touch?** (`DB_TABLES`)
+- **What was the last change?** (`LAST_MODIFIED`)
 
 ```python
 # ==============================================================
@@ -36,20 +44,64 @@ Every source file begins with a Beacon Header:
 # DB_TABLES: orders (month, revenue, cost)
 # LAST_MODIFIED: added margin column to table
 # ==============================================================
-
-from .utils import calculate_kpi, format_currency
-
-def render(execute_query_func):
-    ...
 ```
 
-When an AI model opens this file, it reads the header in the first pass. It immediately knows:
-- **What** the file does (`PURPOSE`)  
-- **What it must not break** (`DEPENDS_ON`)  
-- **What others rely on** (`EXPORTS`)  
-- **What was last changed** (`LAST_MODIFIED`)
+### Level 2 — The Genetic Markers (Inline Hyperlinks)
 
-No external lookup. No prompt stuffing. Zero overhead.
+Modern AI agents often extract code in **sliding windows** — reading only lines 50–80 to edit a function, skipping the file header entirely. CodeDNA solves this with **inline hyperlinks** embedded at the function level:
+
+```python
+def apply_discount(base_price: int, user_tier: str) -> float:
+    # @REQUIRES-READ: config.py → MAX_DISCOUNT_ALLOWED (must not exceed this limit)
+    # @REQUIRES-READ: db.py → UserSchema (valid values for user_tier)
+    # @MODIFIES-ALSO: invoice.py → calculate_total() (recalculates if discount changes)
+
+    if user_tier == "premium":
+        return base_price * 0.8  # cast to int done in main.py
+    return base_price
+```
+
+When an agent reads this fragment, it knows exactly what to look up before making any change. It's **Hyperlinking for LLMs** — the agent follows the links, gathers context, then acts.
+
+#### Hyperlink Annotations
+
+| Tag | Semantics |
+|---|---|
+| `@SEE: file → symbol` | Recommended context — helpful but not blocking |
+| `@REQUIRES-READ: file → symbol` | Mandatory — agent MUST read this before editing |
+| `@MODIFIES-ALSO: file → symbol` | If you change this, go change that too |
+
+---
+
+## Why It Works
+
+**Standard approach**: context lives outside the code (CLAUDE.md, RAG, MemGPT).  
+Every prompt must fetch, inject, and pay the token cost for it.
+
+**CodeDNA approach**: context lives *inside* the code, at every level.  
+The AI reads it for free as part of reading the file.
+
+```
+Token overhead:    Zero   — context is in the file, not the prompt
+Context drift:     Zero   — the header is co-located with the code it describes
+Retrieval latency: Zero   — no lookup, no embedding, no network call
+Sliding window:    Solved — inline hyperlinks guide the agent even on partial reads
+```
+
+---
+
+## Benchmark (Real Results — gemini-2.5-flash)
+
+3 edit scenarios × 3 runs each. Judge: independent Gemini instance.
+
+| Metric | Control | CodeDNA |
+|---|---|---|
+| Edit quality (AI Judge) | **10 / 10** | **10 / 10** |
+| Cross-file errors | baseline | **0** |
+| External context system required | Yes | **No** |
+
+CodeDNA matches quality without any external context infrastructure.  
+Full results: [`benchmark/results.json`](./benchmark/results.json)
 
 ---
 
@@ -57,97 +109,40 @@ No external lookup. No prompt stuffing. Zero overhead.
 
 Beacon works with any language that supports single-line comments:
 
-| Language | Header style |
+| Language | Comment style |
 |---|---|
-| Python | `# KEY: value` |
-| JavaScript / TypeScript | `// KEY: value` |
-| Go, Rust, C, C++ | `// KEY: value` |
-| Ruby | `# KEY: value` |
+| Python, Ruby, Shell | `# KEY: value` |
+| JavaScript, TypeScript, Go, Rust, C | `// KEY: value` |
 | SQL | `-- KEY: value` |
-| Shell | `# KEY: value` |
-
-See [`examples/`](./examples/) for reference implementations.
-
----
-
-## Benchmark Results
-
-Compared to context-injection (CLAUDE.md style), Beacon shows:
-
-| Metric | Control | Beacon | Delta |
-|---|---|---|---|
-| Prompt tokens (avg) | 540 | 388 | **−28%** |
-| Edit quality score (AI Judge, 0–10) | 7.8 | 8.8 | **+13%** |
-| Response speed | baseline | ≈ same | — |
-
-Benchmarks run with Gemini across 3 edit scenarios × 3 runs each.  
-Reproduce: see [`benchmark/`](./benchmark/).
-
----
-
-## The Beacon Header Spec
-
-| Field | Rule |
-|---|---|
-| `FILE` | Exact filename |
-| `PURPOSE` | 1 line, max 12 words, describes *what*, not *how* |
-| `DEPENDS_ON` | `file → func1, func2` or `none` |
-| `EXPORTS` | Public API with signature, e.g. `render(fn) → str` |
-| `STYLE` | CSS framework, chart library, UI conventions |
-| `DB_TABLES` | Tables and relevant columns |
-| `LAST_MODIFIED` | Last change in ≤8 words, updated on every edit |
-
-Full spec: [`SPEC.md`](./SPEC.md)
-
----
-
-## Why Beacon Wins
-
-```
-Token overhead:    Zero   (context is in the file, not the prompt)
-Context drift:     Zero   (header is co-located with the code it describes)
-Retrieval latency: Zero   (no lookup required)
-Maintenance:       Auto   (LAST_MODIFIED updated on every edit)
-```
-
----
-
-## Quick Start
-
-1. Add a Beacon Header to every file you want AI-aware
-2. Configure your AI coding assistant to read the header before editing
-3. Instruct the assistant to update `LAST_MODIFIED` as its first change on every edit
-
-No libraries to install. No infrastructure to run. It's just comments.
 
 ---
 
 ## Repository Structure
 
 ```
-beacon-framework/
-├── README.md           ← you are here
-├── SPEC.md             ← full technical specification
-├── CONTRIBUTING.md     ← how to contribute
-├── LICENSE             ← MIT
+codedna/
+├── README.md               ← you are here
+├── SPEC.md                 ← full technical specification
+├── CONTRIBUTING.md         ← how to add language examples
+├── LICENSE                 ← MIT
 ├── examples/
-│   ├── python/         ← Python example
-│   ├── javascript/     ← JavaScript example
-│   └── typescript/     ← TypeScript example
+│   ├── python/             ← Python with Manifest + Hyperlinks
+│   ├── javascript/         ← JavaScript example
+│   └── typescript/         ← TypeScript example
 └── benchmark/
-    ├── beacon_benchmark.py   ← reproducible benchmark script
-    ├── index.html            ← framework landing page
-    └── README.md             ← how to run benchmarks
+    ├── codedna_benchmark.py    ← reproducible benchmark
+    ├── results.json            ← real Gemini results
+    └── index.html              ← framework landing page
 ```
 
 ---
 
 ## Contributing
 
-See [`CONTRIBUTING.md`](./CONTRIBUTING.md). All languages and use cases welcome.
+See [`CONTRIBUTING.md`](./CONTRIBUTING.md). Examples in any language are welcome.
 
 ---
 
 ## License
 
-[MIT](./LICENSE) — use it, fork it, embed it.
+[MIT](./LICENSE)
