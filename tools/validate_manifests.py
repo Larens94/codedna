@@ -105,7 +105,7 @@ def validate_file(filepath: str) -> ValidationResult:
 
     prefix = detect_prefix(filepath)
     if not prefix:
-        result.warnings.append(f"Unknown extension — skipping")
+        result.warnings.append("Unknown extension — skipping")
         return result
 
     try:
@@ -122,7 +122,7 @@ def validate_file(filepath: str) -> ValidationResult:
 
     # Check if manifest is present at all (first 20 lines)
     delimiter_re = re.compile(rf"^{re.escape(prefix)}\s*(={{4,}}|===\s*CODEDNA:[^\s]+\s*=+)")
-    has_manifest = any(delimiter_re.match(l.strip()) for l in lines[:20])
+    has_manifest = any(delimiter_re.match(line.strip()) for line in lines[:20])
 
     if not has_manifest:
         result.valid = False
