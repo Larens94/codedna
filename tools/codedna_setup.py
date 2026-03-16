@@ -19,11 +19,16 @@ import shutil
 from pathlib import Path
 
 # ── Colours ──────────────────────────────────────────────────────────────────
-R = "\033[31m"; G = "\033[32m"; Y = "\033[33m"; B = "\033[34m"
-C = "\033[36m"; W = "\033[1m";  D = "\033[0m"
+R = "\033[31m"
+G = "\033[32m"
+Y = "\033[33m"
+B = "\033[34m"
+C = "\033[36m"
+W = "\033[1m"
+D = "\033[0m"
 
-REPO_ROOT  = Path(__file__).parent.parent
-INTEG_DIR  = REPO_ROOT / "integrations"
+REPO_ROOT = Path(__file__).parent.parent
+INTEG_DIR = REPO_ROOT / "integrations"
 
 LOGO = f"""
 {C}{W}🧬 CodeDNA v0.5{D}  {Y}github.com/Larens94/codedna{D}
@@ -35,35 +40,35 @@ TOOLS = {
     "cursor": {
         "name": "Cursor",
         "emoji": "🖱️",
-        "src":  INTEG_DIR / ".cursorrules",
+        "src": INTEG_DIR / ".cursorrules",
         "dest": ".cursorrules",
         "desc": "Adds CodeDNA rules to .cursorrules at project root",
     },
     "claude": {
         "name": "Claude Code",
         "emoji": "🤖",
-        "src":  INTEG_DIR / "CLAUDE.md",
+        "src": INTEG_DIR / "CLAUDE.md",
         "dest": "CLAUDE.md",
         "desc": "Creates CLAUDE.md at project root",
     },
     "copilot": {
         "name": "GitHub Copilot",
         "emoji": "🐙",
-        "src":  INTEG_DIR / "copilot-instructions.md",
+        "src": INTEG_DIR / "copilot-instructions.md",
         "dest": ".github/copilot-instructions.md",
         "desc": "Creates .github/copilot-instructions.md",
     },
     "windsurf": {
         "name": "Windsurf",
         "emoji": "🌊",
-        "src":  INTEG_DIR / ".cursorrules",    # same format
+        "src": INTEG_DIR / ".cursorrules",  # same format
         "dest": ".windsurfrules",
         "desc": "Adds CodeDNA rules to .windsurfrules at project root",
     },
     "antigravity": {
         "name": "Antigravity",
         "emoji": "🪐",
-        "src":  None,
+        "src": None,
         "dest": None,
         "prompt": True,
         "desc": "Prints system prompt to paste in Antigravity settings",
@@ -88,11 +93,25 @@ all REQUIRED_BY callers."""
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
 
-def success(msg): print(f"  {G}✓{D} {msg}")
-def warn(msg):    print(f"  {Y}⚠{D}  {msg}")
-def error(msg):   print(f"  {R}✗{D} {msg}")
-def info(msg):    print(f"  {C}·{D} {msg}")
-def section(msg): print(f"\n{W}{msg}{D}")
+
+def success(msg):
+    print(f"  {G}✓{D} {msg}")
+
+
+def warn(msg):
+    print(f"  {Y}⚠{D}  {msg}")
+
+
+def error(msg):
+    print(f"  {R}✗{D} {msg}")
+
+
+def info(msg):
+    print(f"  {C}·{D} {msg}")
+
+
+def section(msg):
+    print(f"\n{W}{msg}{D}")
 
 
 def install_tool(tool_key: str, target_dir: Path):
@@ -189,9 +208,12 @@ def cmd_validate(args: list[str], target_dir: Path):
             ok += 1
 
     print()
-    if ok:    success(f"{ok} file(s) with complete manifests")
-    if bad:   error(f"{bad} file(s) with incomplete manifests")
-    if skipped: info(f"{skipped} file(s) without CodeDNA headers (not annotated yet)")
+    if ok:
+        success(f"{ok} file(s) with complete manifests")
+    if bad:
+        error(f"{bad} file(s) with incomplete manifests")
+    if skipped:
+        info(f"{skipped} file(s) without CodeDNA headers (not annotated yet)")
 
     if problems:
         print()
@@ -259,11 +281,12 @@ def cmd_check(_, target_dir: Path):
 # ── Main ──────────────────────────────────────────────────────────────────────
 
 COMMANDS = {
-    "install":  cmd_install,
+    "install": cmd_install,
     "validate": cmd_validate,
     "annotate": cmd_annotate,
-    "check":    cmd_check,
+    "check": cmd_check,
 }
+
 
 def main():
     print(LOGO)

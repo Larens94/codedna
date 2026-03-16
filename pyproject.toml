@@ -1,0 +1,26 @@
+[tool.black]
+line-length = 120
+target-version = ["py311"]
+exclude = '''
+/(
+    \.git
+  | \.venv
+  | venv
+  | __pycache__
+  | benchmark
+  | benchmark_agent
+  | docs
+)/
+'''
+
+[tool.flake8]
+max-line-length = 120
+exclude = [
+    ".git",
+    "__pycache__",
+    "venv",
+    ".venv",
+    "benchmark",
+    "benchmark_agent",
+    "docs",
+]

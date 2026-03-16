@@ -42,11 +42,24 @@ VALID_BUDGETS = {"always", "normal", "minimal"}
 
 # Comment prefixes by file extension
 COMMENT_PREFIXES = {
-    ".py": "#", ".rb": "#", ".sh": "#", ".bash": "#", ".zsh": "#",
-    ".js": "//", ".ts": "//", ".jsx": "//", ".tsx": "//",
-    ".go": "//", ".rs": "//", ".c": "//", ".cpp": "//", ".java": "//",
-    ".sql": "--", ".lua": "--",
+    ".py": "#",
+    ".rb": "#",
+    ".sh": "#",
+    ".bash": "#",
+    ".zsh": "#",
+    ".js": "//",
+    ".ts": "//",
+    ".jsx": "//",
+    ".tsx": "//",
+    ".go": "//",
+    ".rs": "//",
+    ".c": "//",
+    ".cpp": "//",
+    ".java": "//",
+    ".sql": "--",
+    ".lua": "--",
 }
+
 
 @dataclass
 class ValidationResult:
@@ -67,9 +80,7 @@ def extract_manifest(lines: list[str], prefix: str) -> dict:
     in_manifest = False
     fields = {}
     # Match: "# ====" OR "# === CODEDNA:0.3 ===" OR "# === CODEDNA:0.3 ="
-    delimiter_re = re.compile(
-        rf"^{re.escape(prefix)}\s*(={{4,}}|===\s*CODEDNA:[^\s]+\s*=+)"
-    )
+    delimiter_re = re.compile(rf"^{re.escape(prefix)}\s*(={{4,}}|===\s*CODEDNA:[^\s]+\s*=+)")
 
     for line in lines[:30]:  # manifest must start within first 30 lines
         stripped = line.strip()
@@ -110,9 +121,7 @@ def validate_file(filepath: str) -> ValidationResult:
         return result
 
     # Check if manifest is present at all (first 20 lines)
-    delimiter_re = re.compile(
-        rf"^{re.escape(prefix)}\s*(={{4,}}|===\s*CODEDNA:[^\s]+\s*=+)"
-    )
+    delimiter_re = re.compile(rf"^{re.escape(prefix)}\s*(={{4,}}|===\s*CODEDNA:[^\s]+\s*=+)")
     has_manifest = any(delimiter_re.match(l.strip()) for l in lines[:20])
 
     if not has_manifest:
@@ -224,12 +233,9 @@ def print_results(results: list[ValidationResult], verbose: bool = False) -> int
 
 
 def main():
-    parser = argparse.ArgumentParser(
-        description="CodeDNA Manifest Validator v0.3"
-    )
+    parser = argparse.ArgumentParser(description="CodeDNA Manifest Validator v0.3")
     parser.add_argument("directory", nargs="?", default=".", help="Root directory to validate (default: .)")
-    parser.add_argument("--extensions", nargs="+", metavar="EXT",
-                        help="File extensions to check (e.g. .py .js .ts)")
+    parser.add_argument("--extensions", nargs="+", metavar="EXT", help="File extensions to check (e.g. .py .js .ts)")
     parser.add_argument("--verbose", "-v", action="store_true", help="Show valid files too")
     args = parser.parse_args()
 
