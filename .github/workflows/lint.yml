@@ -1,0 +1,30 @@
+name: Python Lint
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  lint:
+    name: Lint Python Code
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install linting tools
+        run: pip install flake8 black
+
+      - name: Run Black (format check)
+        run: black --check --diff .
+
+      - name: Run Flake8 (style check)
+        run: flake8 . --max-line-length=120 --exclude=.git,__pycache__,benchmark,benchmark_agent
