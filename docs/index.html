@@ -261,6 +261,7 @@ footer a { color:var(--accent); text-decoration:none; }
   </a>
   <div class="nav-links">
     <a href="#problema" data-i18n="navProblem">The Problem</a>
+    <a href="#setup" data-i18n="navSetup">Setup</a>
     <a href="#come-funziona" data-i18n="navHow">How It Works</a>
     <a href="#benchmark">Benchmark</a>
     <a href="#roadmap">Roadmap</a>
@@ -277,7 +278,7 @@ footer a { color:var(--accent); text-decoration:none; }
     <div class="hero-eyebrow fade-up"><span class="eyebrow-dot"></span>CodeDNA Annotation Standard · v0.5 · MIT</div>
     <h1 class="fade-up" data-i18n-html="h1">The code that<br><em>explains itself.</em></h1>
     <p class="hero-sub fade-up" data-i18n-html="heroSub">
-      AI tools editing your code make mistakes because they have <strong>no context</strong>. CodeDNA embeds it directly in the files — like DNA in every cell. Zero RAG. Zero drift.
+      AI tools editing your code make mistakes because they have <strong>no context</strong>. CodeDNA embeds it directly in the files — like DNA in every cell. Zero RAG. Minimal drift.
     </p>
     <div class="hero-actions fade-up">
       <a href="#benchmark" class="btn-primary" data-i18n="heroCta1">See the evidence →</a>
@@ -338,6 +339,62 @@ footer a { color:var(--accent); text-decoration:none; }
   </div>
 </div>
 
+<!-- SETUP -->
+<div class="full-bleed" id="setup">
+  <div class="full-bleed-inner">
+    <div class="eyebrow" data-i18n="setupEyebrow">Setup</div>
+    <h2 data-i18n="setupH2">Works with your favorite AI tool.</h2>
+    <p class="section-lead" data-i18n="setupLead">One command installs CodeDNA rules for any AI coding assistant. Or pick the file for your tool and paste it into your project.</p>
+
+    <div style="background:#1e1e2e; border-radius:12px; padding:1.25rem 1.5rem; margin-bottom:2.5rem; box-shadow:var(--shadow-md);">
+      <div style="font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#6272a4; margin-bottom:0.5rem;" data-i18n="setupCmdLabel">One-line installer (installs all)</div>
+      <pre style="font-size:0.85rem; color:#f8f8f2; line-height:1.7; margin:0; border:none; background:transparent; padding:0;"><span style="color:#50fa7b;">bash</span> <span style="color:#bd93f9;">&lt;(</span><span style="color:#ff79c6;">curl</span> -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh<span style="color:#bd93f9;">)</span></pre>
+    </div>
+
+    <div class="scenario-cards" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
+      <div class="sc-card" style="text-align:center;">
+        <div style="font-size:1.8rem; margin-bottom:0.5rem;">🟣</div>
+        <div class="sc-title">Antigravity</div>
+        <div class="sc-body" style="font-size:0.78rem;" data-i18n="setupAntigravity">Copy <code>.agents/workflows/codedna.md</code> into your project. Antigravity follows the protocol automatically.</div>
+        <a href="https://github.com/Larens94/codedna/tree/main/integrations/.agents" target="_blank" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">View file →</a>
+      </div>
+      <div class="sc-card" style="text-align:center;">
+        <div style="font-size:1.8rem; margin-bottom:0.5rem;">🟠</div>
+        <div class="sc-title">Claude Code</div>
+        <div class="sc-body" style="font-size:0.78rem;" data-i18n="setupClaude">Copy <code>CLAUDE.md</code> to your project root. Claude reads it on every session.</div>
+        <a href="https://github.com/Larens94/codedna/blob/main/integrations/CLAUDE.md" target="_blank" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">View file →</a>
+      </div>
+      <div class="sc-card" style="text-align:center;">
+        <div style="font-size:1.8rem; margin-bottom:0.5rem;">⚡</div>
+        <div class="sc-title">Cursor</div>
+        <div class="sc-body" style="font-size:0.78rem;" data-i18n="setupCursor">Copy <code>.cursorrules</code> to your project root. Cursor applies the rules on every edit.</div>
+        <a href="https://github.com/Larens94/codedna/blob/main/integrations/.cursorrules" target="_blank" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">View file →</a>
+      </div>
+      <div class="sc-card" style="text-align:center;">
+        <div style="font-size:1.8rem; margin-bottom:0.5rem;">🐙</div>
+        <div class="sc-title">GitHub Copilot</div>
+        <div class="sc-body" style="font-size:0.78rem;" data-i18n="setupCopilot">Copy to <code>.github/copilot-instructions.md</code>. Copilot follows the instructions in every suggestion.</div>
+        <a href="https://github.com/Larens94/codedna/blob/main/integrations/copilot-instructions.md" target="_blank" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">View file →</a>
+      </div>
+      <div class="sc-card" style="text-align:center;">
+        <div style="font-size:1.8rem; margin-bottom:0.5rem;">🏄</div>
+        <div class="sc-title">Windsurf</div>
+        <div class="sc-body" style="font-size:0.78rem;" data-i18n="setupWindsurf">Copy <code>.windsurfrules</code> to your project root.</div>
+        <a href="https://github.com/Larens94/codedna/blob/main/integrations/.windsurfrules" target="_blank" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">View file →</a>
+      </div>
+      <div class="sc-card" style="text-align:center;">
+        <div style="font-size:1.8rem; margin-bottom:0.5rem;">🔧</div>
+        <div class="sc-title">Cline</div>
+        <div class="sc-body" style="font-size:0.78rem;" data-i18n="setupCline">Copy <code>.clinerules</code> to your project root.</div>
+        <a href="https://github.com/Larens94/codedna/blob/main/integrations/.clinerules" target="_blank" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">View file →</a>
+      </div>
+    </div>
+
+    <p style="text-align:center; margin-top:1.5rem;">
+      <a href="https://github.com/Larens94/codedna/blob/main/QUICKSTART.md" target="_blank" class="btn-secondary" data-i18n="setupQuickstart">📖 Full Quickstart Guide</a>
+    </p>
+  </div>
+</div>
 <!-- COME FUNZIONA -->
 <div class="full-bleed" id="come-funziona">
   <div class="full-bleed-inner">
@@ -505,6 +562,55 @@ data  = get_users()
   </p>
 </div>
 
+<!-- MULTI-MODEL SWE-BENCH -->
+<div class="full-bleed">
+  <div class="full-bleed-inner">
+    <div class="eyebrow" data-i18n="mmEyebrow">Multi-Model SWE-bench</div>
+    <h2 data-i18n="mmH2">Works across every major LLM.</h2>
+    <p class="section-lead" data-i18n-html="mmLead">5 real Django issues from <strong>SWE-bench</strong>, tested across 5 state-of-the-art models. Same prompt, same tools, same tasks. <strong>CodeDNA improves 4 out of 5 models.</strong></p>
+
+    <div class="chart-pair">
+      <div class="chart-card" style="grid-column: span 2;">
+        <div class="chart-label" data-i18n="chartMLabel">File Localization F1 — Control vs CodeDNA by Model</div>
+        <canvas id="cM" height="180"></canvas>
+      </div>
+    </div>
+
+    <div class="scenario-cards">
+      <div class="sc-card">
+        <div class="sc-tag">Best Model</div>
+        <div class="sc-title" data-i18n="mmBestTitle">🏆 Gemini 2.5 Flash — +20pp F1</div>
+        <div class="sc-body" data-i18n="mmBestBody">From 57% to 77%. Wins 4 out of 5 tasks. Reaches F1=100% on Task 13495 (7 backend files connected via deps/used_by). The model that best exploits structured annotations.</div>
+        <div class="sc-scores">
+          <div class="sc-score bad">Control<strong>57%</strong></div>
+          <div class="sc-score good">CodeDNA<strong>77%</strong></div>
+        </div>
+      </div>
+      <div class="sc-card">
+        <div class="sc-tag">Biggest Surprise</div>
+        <div class="sc-title" data-i18n="mmSurpTitle">🚀 GPT-5.3 Codex — +12pp F1</div>
+        <div class="sc-body" data-i18n="mmSurpBody">From 39% to 51%. Works across OpenAI's Responses API. CodeDNA's format is understood even by models using a completely different API paradigm.</div>
+        <div class="sc-scores">
+          <div class="sc-score bad">Control<strong>39%</strong></div>
+          <div class="sc-score good">CodeDNA<strong>51%</strong></div>
+        </div>
+      </div>
+      <div class="sc-card">
+        <div class="sc-tag">Key Finding</div>
+        <div class="sc-title" data-i18n="mmFindTitle">🧠 Model-Agnostic Benefits</div>
+        <div class="sc-body" data-i18n="mmFindBody">4 out of 5 models improve with CodeDNA. The benefit is strongest on tasks requiring cross-module navigation — exactly where AI agents struggle most.</div>
+        <div class="sc-scores">
+          <div class="sc-score good" style="flex:2;">4/5 models improved<strong>+2 to +20pp</strong></div>
+        </div>
+      </div>
+    </div>
+
+    <p style="margin-top:1.75rem; font-size:0.8rem; color:var(--muted); padding:1rem 1.25rem; background:var(--bg2); border:1px solid var(--border); border-radius:10px;" data-i18n-html="mmMethod">
+      🔬 <strong style="color:var(--text2)">Methodology:</strong> 5 SWE-bench Django tasks × 5 models (Gemini 2.5 Flash, Gemini 2.5 Pro, GPT-5.3 Codex, GPT-4o, DeepSeek-V3). Identical system prompt, same 3 tools (read_file, list_files, grep), max 15 turns. Metric: F1 over ground-truth files from patch. Script: <code>benchmark_agent/swebench/run_agent_multi.py</code>.
+    </p>
+  </div>
+</div>
+
 <!-- CONFRONTO -->
 <div class="full-bleed">
   <div class="full-bleed-inner">
@@ -536,9 +642,11 @@ data  = get_users()
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Level 3 — Semantic Naming + CONTEXT_BUDGET (v0.3)</div><div class="rm-sub" data-i18n-html="rm3Sub">Naming <code>&lt;type&gt;_&lt;shape&gt;_&lt;domain&gt;_&lt;origin&gt;</code>. Manifest-Only Planner Read.</div></div></div>
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">LLM-Optimised Format (v0.5) ✦ Current</div><div class="rm-sub" data-i18n="rm4Sub">Python-native module docstring (L1) + Google-style function docstring (L2a) + inline call-site comment (L2b). Maximises LLM comprehension trained on Python corpora.</div></div></div>
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm5Title">Enterprise Benchmark — 105-file, 3 bugs, 48 distractors</div><div class="rm-sub" data-i18n="rm5Sub">−29% tool calls, 0 incorrect root-cause identifications (vs 1 Control). Replicable on disk.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm6Title">Multi-Model SWE-bench Benchmark — 5 LLMs, 5 tasks</div><div class="rm-sub" data-i18n="rm6Sub">Gemini Flash +20pp, Codex +12pp, Pro +8pp, GPT-4o +2pp. 4/5 models improved. Model-agnostic validation.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm7Title">White Paper / arXiv preprint</div><div class="rm-sub" data-i18n="rm7Sub">Formal study with reproducible methodology, DNA analogy, and comparison against SWE-bench, LoCoBench-Agent, ETH Zurich (2026).</div></div></div>
 
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title">White Paper / arXiv preprint</div><div class="rm-sub" data-i18n="rm6Sub">Formal study with reproducible methodology, DNA analogy, and comparison against SWE-bench, LoCoBench-Agent, ETH Zurich (2026).</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title">IDE Plugin — VS Code</div><div class="rm-sub" data-i18n="rm7Sub">Auto-generation of module docstrings and function docstrings, real-time validation against SPEC.md.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm8Title">IDE Plugin — VS Code</div><div class="rm-sub" data-i18n="rm8Sub">Auto-generation of module docstrings and function docstrings, real-time validation against SPEC.md.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm9Title">Full SWE-bench Evaluation — 50+ tasks</div><div class="rm-sub" data-i18n="rm9Sub">Extended benchmark across multiple repositories and languages. Statistical significance testing.</div></div></div>
   </div>
 </div>
 
@@ -699,7 +807,39 @@ function updateCharts(l) {
     window.chartE.data.datasets[1].label = cl.dnaR;
     window.chartE.update();
   }
+  if (window.chartM) {
+    window.chartM.data.datasets[0].label = cl.ctl || 'Control';
+    window.chartM.data.datasets[1].label = cl.dna || 'CodeDNA';
+    window.chartM.update();
+  }
 }
+
+// CHART.JS — Multi-Model F1 grouped bar
+(function(){
+  const mCtx = document.getElementById('cM');
+  if (!mCtx) return;
+  window.chartM = new Chart(mCtx.getContext('2d'), {
+    type: 'bar',
+    data: {
+      labels: ['Gemini 2.5\nFlash', 'GPT-5.3\nCodex', 'Gemini 2.5\nPro', 'GPT-4o', 'DeepSeek\nChat'],
+      datasets: [
+        { label:'Control', data:[57,39,57,49,42], backgroundColor:'rgba(220,38,38,0.15)', borderColor:'rgba(220,38,38,0.7)', borderWidth:1.5, borderRadius:5 },
+        { label:'CodeDNA', data:[77,51,65,51,40], backgroundColor:'rgba(67,56,202,0.15)', borderColor:'rgba(67,56,202,0.7)', borderWidth:1.5, borderRadius:5 }
+      ]
+    },
+    options:{
+      responsive:true,
+      scales:{
+        y:{ min:0, max:100, grid:{color:'rgba(0,0,0,0.04)'}, ticks:{color:'#8787a0',font:{size:11},callback:v=>v+'%'} },
+        x:{ grid:{display:false}, ticks:{color:'#8787a0',font:{size:10}} }
+      },
+      plugins:{
+        legend:{labels:{color:'#1a1a2e',font:{size:11},boxWidth:10}},
+        tooltip:{backgroundColor:'#1a1a2e',titleColor:'#fff',bodyColor:'#c7d2fe',cornerRadius:8,callbacks:{label:ctx=>ctx.dataset.label+': '+ctx.parsed.y+'%'}}
+      }
+    }
+  });
+})();
 
 // COUNT-UP
 const io = new IntersectionObserver(entries=>{

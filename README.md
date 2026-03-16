@@ -18,7 +18,7 @@
 
 **CodeDNA** embeds architectural context **directly into source files**. Like biological DNA — cut a hologram in half and you get two smaller complete images. Extract 10 lines from a CodeDNA file and those 10 lines still carry enough context for an AI agent to act correctly.
 
-**No RAG. No vector DB. No external rules files. Zero drift.**
+**No RAG. No vector DB. No external rules files. Minimal drift (context co-located with code).**
 
 ![CodeDNA Site — Animated DNA Hero](./docs/hero.png)
 
@@ -42,7 +42,21 @@ Then annotate your first file → see [QUICKSTART.md](./QUICKSTART.md)
 
 ## 📊 Benchmark — Real Agent Results
 
-A real **Gemini 2.5 Flash agent** with function-calling tools (`read_file`, `list_files`, `grep`) navigated two versions of the same codebase to find bugs. **Identical task. Identical model. Only difference: CodeDNA annotations.**
+### 🆕 Multi-Model SWE-bench Benchmark (5 models × 5 tasks)
+
+5 real Django issues from [SWE-bench](https://github.com/princeton-nlp/SWE-bench), tested across 5 state-of-the-art LLMs. Same prompt, same tools, same tasks. **Only difference: CodeDNA annotations.**
+
+| Model | Ctrl F1 | DNA F1 | **Δ F1** | Tasks Won |
+|---|---|---|---|---|
+| **Gemini 2.5 Flash** | 57% | **77%** | **+20%** | 4/5 |
+| **GPT-5.3 Codex** | 39% | **51%** | **+12%** | 3/5 |
+| **Gemini 2.5 Pro** | 57% | **65%** | **+8%** | 3/5 |
+| **GPT-4o** | 49% | **51%** | **+2%** | 1/5 |
+| **DeepSeek Chat** | 42% | 40% | −1% | 1/5 |
+
+> **CodeDNA improves file localization F1 on 4 out of 5 models.** The largest gain (+20pp) is on Gemini 2.5 Flash, winning 4/5 tasks. The benefit is most pronounced on tasks requiring cross-module navigation.
+
+Full data: [`benchmark_agent/runs/`](./benchmark_agent/runs/) · Script: [`benchmark_agent/swebench/run_agent_multi.py`](./benchmark_agent/swebench/run_agent_multi.py)
 
 ### Agent Navigation Benchmark — Simple Codebase (11 files)
 
@@ -53,9 +67,7 @@ A real **Gemini 2.5 Flash agent** with function-calling tools (`read_file`, `lis
 | Conversation turns | 5 | 4 | **−20%** |
 | Bug found | ✅ Yes | ✅ Yes | Equal accuracy |
 
-### Enterprise Benchmark — Large Multi-Domain Codebase
-
-3 real-world bug scenarios. Control = no annotations. CodeDNA = standard v0.5 headers.
+### Enterprise Benchmark — 105-file Codebase (3 bugs, 48 distractors)
 
 | Bug Scenario | Control Tools | CodeDNA Tools | Control Found? | CodeDNA Found? |
 |---|---|---|---|---|
@@ -65,8 +77,6 @@ A real **Gemini 2.5 Flash agent** with function-calling tools (`read_file`, `lis
 | **Average** | **4.3** | **3.3** | **67%** | **100%** |
 
 > **B1 is the decisive scenario**: the Control agent used more tool calls and still failed to identify the root cause. CodeDNA used fewer calls and succeeded.
-
-Full data: [`benchmark_agent/results_agent.json`](./benchmark_agent/results_agent.json) · [`benchmark_agent/results_enterprise.json`](./benchmark_agent/results_enterprise.json)
 
 ---
 
@@ -153,18 +163,19 @@ codedna/
 ├── integrations/
 │   ├── CLAUDE.md               ← Claude Code system prompt
 │   ├── .cursorrules             ← Cursor rules file
-│   └── copilot-instructions.md ← GitHub Copilot instructions
+│   ├── copilot-instructions.md ← GitHub Copilot instructions
+│   └── install.sh              ← one-line installer for all tools
 ├── benchmark_agent/
-│   ├── agent.py                ← live Gemini agent with function calling
-│   ├── generate_codebase.py    ← generates control + codedna codebases
-│   ├── run_benchmark.py        ← runs the benchmark
-│   ├── results_agent.json      ← simple benchmark results
-│   └── results_enterprise.json ← enterprise benchmark results
+│   ├── swebench/
+│   │   ├── run_agent.py            ← single-model Gemini benchmark
+│   │   ├── run_agent_multi.py      ← multi-model benchmark (5 providers)
+│   │   ├── analyze.py              ← single-model analysis
+│   │   └── analyze_multi.py        ← multi-model comparison
+│   └── runs/                       ← results by model (gemini-2.5-flash, gpt-4o, etc.)
 ├── examples/
 │   ├── python/
 │   ├── javascript/
 │   └── typescript/
-├── benchmark/              ← older LLM-judge benchmark (v1)
 ├── paper/                  ← scientific paper (arXiv preprint)
 │   └── codedna_paper.pdf
 └── tools/

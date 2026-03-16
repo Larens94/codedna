@@ -276,7 +276,7 @@
 ═══════════════════════════════════════════════════════════ -->
 <div class="abstract-block">
   <span class="abstract-title">Abstract</span>
-  LLM agents that autonomously edit production codebases suffer from <em>context blindness</em>: they modify a function without awareness of cross-file dependencies, producing silent bugs and broken cascades. Existing mitigations — RAG, project-level rules files (CLAUDE.md, AGENTS.md), or long-context injection — impose retrieval latency, maintenance overhead, or infrastructure cost. Recent work (ETH Zurich, 2026) shows that LLM-generated context files can <em>degrade</em> task success by 3% and increase inference costs by over 20%. We present <strong>CodeDNA</strong>, an in-source annotation standard that embeds dependency graphs, public contracts, agent constraints, and semantic naming conventions directly into source files. The standard is named after its biological parallel: just as DNA encodes the complete blueprint of an organism in every cell, CodeDNA ensures that every code fragment carries sufficient architectural context for an agent to act correctly in isolation. We evaluate CodeDNA with two controlled agentic benchmarks: (1) an 11-file codebase — <strong>−25% tool calls, −33% file reads</strong>; (2) a 105-file enterprise platform — <strong>−23% tool calls, zero incorrect file identifications</strong> versus one in the unannotated control. CodeDNA requires no build step, no external system, and zero retrieval latency.
+  LLM agents that autonomously edit production codebases suffer from <em>context blindness</em>: they modify a function without awareness of cross-file dependencies, producing silent bugs and broken cascades. Existing mitigations — RAG, project-level rules files (CLAUDE.md, AGENTS.md), or long-context injection — impose retrieval latency, maintenance overhead, or infrastructure cost. Recent work (ETH Zurich, 2026) shows that LLM-generated context files can <em>degrade</em> task success by 3% and increase inference costs by over 20%. We present <strong>CodeDNA</strong>, an in-source annotation standard that embeds dependency graphs, public contracts, agent constraints, and semantic naming conventions directly into source files. The standard is named after its biological parallel: just as DNA encodes the complete blueprint of an organism in every cell, CodeDNA ensures that every code fragment carries sufficient architectural context for an agent to act correctly in isolation. We evaluate CodeDNA with three benchmarks: (1) an 11-file codebase — <strong>−25% tool calls, −33% file reads</strong>; (2) a 105-file enterprise platform — <strong>−23% tool calls, zero incorrect file identifications</strong>; and (3) a multi-model SWE-bench evaluation across <strong>5 LLMs</strong> (Gemini 2.5 Flash/Pro, GPT-5.3 Codex, GPT-4o, DeepSeek-V3) on 5 real Django issues — <strong>CodeDNA improved file localization F1 on 4 out of 5 models</strong>, with the largest gain of +20 percentage points on Gemini 2.5 Flash (57% → 77%). These results measure <em>navigation efficiency</em> (which files the agent reads), not end-to-end patch correctness, isolating the navigation bottleneck that CodeDNA specifically addresses. CodeDNA requires no build step, no external system, and zero retrieval latency.
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -299,8 +299,9 @@
 <p class="no-indent">(1) The <strong>CodeDNA Annotation Standard v0.5</strong>: a three-level, language-agnostic in-source annotation protocol.</p>
 <p class="no-indent">(2) A biological analogy that frames the standard's design principle and motivates its redundancy property.</p>
 <p class="no-indent">(3) Two <strong>live agentic benchmarks</strong> (11 files and 105 files) using Gemini 2.5 Flash with function-calling tools on real on-disk codebases.</p>
-<p class="no-indent">(4) Evidence of <strong>−23% to −25% tool-call reduction</strong> and zero incorrect diagnoses with CodeDNA.</p>
-<p class="no-indent">(5) Open-source release of spec, benchmark code, and AI integration files.</p>
+<p class="no-indent">(4) A <strong>multi-model SWE-bench benchmark</strong> across 5 LLMs demonstrating broadly beneficial improvements in file localization F1, with heterogeneous gains across model families.</p>
+<p class="no-indent">(5) Evidence of <strong>−23% to −25% tool-call reduction</strong>, zero incorrect diagnoses in custom benchmarks, and +20pp F1 improvement on the best-performing model.</p>
+<p class="no-indent">(6) Open-source release of spec, benchmark code, and AI integration files.</p>
 
 <!-- ─── 2. RELATED WORK ─── -->
 <h2 class="section">2. Related Work</h2>
@@ -401,7 +402,7 @@ int_cents_price_from_req = request.json["price"]</pre>
 <p class="no-indent">We measure <em>navigation efficiency</em> — how many tool interactions an autonomous agent requires to correctly localize the root cause of a bug in a multi-file codebase — across two settings of increasing complexity.</p>
 
 <h3 class="subsection">4.1 Agent Implementation</h3>
-<p class="no-indent">We implemented an autonomous agent using Gemini 2.5 Flash (temperature 0, deterministic) with three function-calling tools: <code>read_file(path)</code>, <code>list_files(directory)</code>, and <code>grep(pattern, directory)</code>. No file contents are pre-loaded. The agent runs to completion (max 20 turns) or until it stops calling tools. Metrics: <strong>total tool calls</strong>, <strong>read_file calls</strong>, <strong>grep calls</strong>, <strong>conversation turns</strong>, and <strong>found_correct</strong> (boolean — whether the identified root-cause file is architecturally correct).</p>
+<p class="no-indent">We implemented an autonomous agent using Gemini 2.5 Flash (temperature 0) with three function-calling tools: <code>read_file(path)</code>, <code>list_files(directory)</code>, and <code>grep(pattern, directory)</code>. No file contents are pre-loaded. The agent runs to completion (max 20 turns) or until it stops calling tools. While temperature 0 minimises sampling variance, we note that the full agent loop (tool orchestration, API behaviour) is not strictly deterministic in the mathematical sense. Metrics: <strong>total tool calls</strong>, <strong>read_file calls</strong>, <strong>grep calls</strong>, <strong>conversation turns</strong>, and <strong>found_correct</strong> (boolean — whether the identified root-cause file is architecturally correct).</p>
 
 <h3 class="subsection">4.2 Benchmark 1 — 11-File Codebase</h3>
 <p class="no-indent">We generated two versions of an 11-file Python SaaS application (Flask server, orders, users, authentication, analytics, dashboard, payments, notifications, configuration, and database layer). <strong>Control:</strong> standard Python, no annotations. <strong>CodeDNA:</strong> identical logic, every file annotated per v0.5. Annotations describe architecture only — no bug hints.</p>
@@ -454,17 +455,40 @@ int_cents_price_from_req = request.json["price"]</pre>
 </table>
 
 <div class="key-result">
-  <strong>Key result:</strong> Across both benchmarks, CodeDNA reduced total tool calls by 25–29% and eliminated incorrect root-cause identifications (0 vs. 1 in the enterprise benchmark). On B1, the Control agent identified <code>payments/models.py</code> — the location of the underlying SQL query — rather than <code>analytics/revenue.py</code> — the architecturally correct file where the filter should be applied. This distinction is clinically significant: fixing the wrong layer would break other consumers of <code>get_invoices_for_period()</code>.
+  <strong>Key result:</strong> Across both benchmarks, CodeDNA reduced total tool calls by 25–29% and eliminated incorrect root-cause identifications (0 vs. 1 in the enterprise benchmark). On B1, the Control agent identified <code>payments/models.py</code> — the location of the underlying SQL query — rather than <code>analytics/revenue.py</code> — the architecturally correct file where the filter should be applied. This distinction is architecturally significant: fixing the wrong layer would break other consumers of <code>get_invoices_for_period()</code>.
 </div>
 
-<h3 class="subsection">5.3 Navigation Path Analysis</h3>
+<h3 class="subsection">5.3 Benchmark 3 — SWE-bench Multi-Model Evaluation</h3>
+<p class="no-indent">To test whether CodeDNA's benefit generalises across different LLM architectures, we evaluated 5 models on 5 real Django issues from SWE-bench. Each model received identical tools (<code>read_file</code>, <code>list_files</code>, <code>grep</code>), the same system prompt, and a maximum of 15 turns. The primary metric is <strong>file localization F1</strong>: the harmonic mean of precision (fraction of files read that are in the ground-truth patch) and recall (fraction of ground-truth files that the agent actually read). We emphasise that this metric measures <em>navigation accuracy</em> — whether the agent reads the right files — not whether it produces a correct patch. Isolating the navigation component allows us to evaluate CodeDNA's specific value proposition without conflating it with the model's code synthesis ability.</p>
+
+<p class="table-caption"><span class="table-num">Table 3.</span> Multi-model file localization F1 — 5 SWE-bench tasks, Control vs. CodeDNA.</p>
+<table>
+  <thead>
+    <tr><th>Model</th><th>Ctrl F1</th><th>DNA F1</th><th>Δ F1</th><th>Tasks Won</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>Gemini 2.5 Flash</td><td>57%</td><td>77%</td><td class="green">+20pp</td><td>4 / 5</td></tr>
+    <tr><td>GPT-5.3 Codex</td><td>39%</td><td>51%</td><td class="green">+12pp</td><td>3 / 5</td></tr>
+    <tr><td>Gemini 2.5 Pro</td><td>57%</td><td>65%</td><td class="green">+8pp</td><td>3 / 5</td></tr>
+    <tr><td>GPT-4o</td><td>49%</td><td>51%</td><td class="green">+2pp</td><td>1 / 5</td></tr>
+    <tr><td>DeepSeek-V3</td><td>42%</td><td>40%</td><td>−1pp</td><td>1 / 5</td></tr>
+  </tbody>
+</table>
+
+<div class="key-result">
+  <strong>Key result:</strong> CodeDNA improved F1 on <strong>4 out of 5 models</strong>, with gains ranging from +2pp to +20pp. The largest gain was on Gemini 2.5 Flash, which reached F1 = 100% on task 13495 (7 backend files connected via <code>deps</code>/<code>used_by</code> annotations). The benefit is most pronounced on tasks requiring cross-module navigation: task 13495 (+40pp on Flash), task 11808 (+27pp on Flash). DeepSeek-V3 showed no improvement (−1pp); notably, it exhausted the 15-turn budget on every task in both conditions, suggesting that its navigation strategy saturates the turn budget regardless of available annotations. This limits what can be concluded about DeepSeek's responsiveness to CodeDNA specifically; higher turn limits may yield different results. Per-task breakdowns for all models are available in the repository.
+</div>
+
+<p>Gemini 2.5 Flash outperformed the larger Gemini 2.5 Pro with CodeDNA annotations (77% vs. 65%). We do not have a definitive explanation for this; one hypothesis is that Flash's more concise reasoning style is better suited to following structured annotation chains, but this requires further investigation. GPT-5.3 Codex — accessed via the OpenAI Responses API — showed a +12pp gain. We note that the five models use different function-calling implementations (Google's native tool use, OpenAI's Chat Completions, OpenAI's Responses API, and Anthropic-compatible endpoints), which introduces some cross-provider variability that is not fully controlled. This does not invalidate the comparison — the annotations themselves are identical — but it means that the observed differences reflect both CodeDNA's effect and provider-specific runtime behaviour.</p>
+
+<h3 class="subsection">5.4 Navigation Path Analysis</h3>
 <p class="no-indent"><strong>B1 Control (5 calls, incorrect):</strong> <code>list_files</code> → grep("revenue") → grep("invoice") → grep("suspended") → <code>read_file(payments/models.py)</code>. Three grep calls were necessary because the 105-file codebase contains 12 files with revenue-related functions; the agent used grep as a compass, opening a file mid-chain rather than following the architectural call path.</p>
 
 <p class="no-indent"><strong>B1 CodeDNA (3 calls, correct):</strong> <code>list_files</code> → grep("revenue") → <code>read_file(analytics/revenue.py)</code>. The module header's <code>rules</code> field — <em>"get_invoices_for_period() returns ALL tenants, NO suspended filter → MUST call is_suspended() BEFORE aggregating"</em> — and the call-site comment — <em>"includes suspended tenants — filter below"</em> — gave the agent sufficient information to produce a correct diagnosis without further reads.</p>
 
 <p><strong>B4:</strong> The Control agent opened 4 files (2 greps + 2 extra reads) before converging. The CodeDNA agent opened 2 files (1 grep + 1 read): the module header stated <em>"MUST call decrement_stock() for each item in order['items'] before update_status()"</em>, eliminating the need to read <code>orders/models.py</code> and <code>products/catalog.py</code> for contextual verification.</p>
 
-<h3 class="subsection">5.4 Scaling Projection</h3>
+<h3 class="subsection">5.5 Scaling Projection</h3>
 <p class="no-indent">A 29% reduction in tool calls compounds across an agentic session:</p>
 
 <p class="table-caption"><span class="table-num">Table 3.</span> Projected savings across multiple sub-tasks (29% reduction assumed constant).</p>
@@ -514,22 +538,26 @@ int_cents_price_from_req = request.json["price"]</pre>
 <p>A secondary observation is that CodeDNA's structured fields (<code>deps:</code>, <code>rules:</code>, <code>Depends:</code>) do not require new syntax — they live inside Python-native docstrings. Many codebases already have docstrings; CodeDNA adds <em>navigation intent</em> to documentation that already exists. The distinction between a standard docstring and a CodeDNA docstring is not syntactic but semantic: the latter must be <em>machine-oriented and navigation-oriented</em>, not merely human-readable.</p>
 
 <h3 class="subsection">6.5 Limitations</h3>
-<p class="no-indent"><strong>Sample size.</strong> Temperature 0 ensures determinism, but single-run results per bug limit statistical confidence. Future work should run multiple seeds, vary bug types, and evaluate on full SWE-bench tasks with real-agent toolchains (Devin-style, Cursor, GPT-tools loop).</p>
+<p class="no-indent"><strong>Sample size.</strong> Temperature 0 minimises sampling variance, but single-run results per bug limit statistical confidence. With 5 SWE-bench tasks (all from Django) and 3 custom bugs, no statistical significance tests are reported. Future work should run multiple seeds across a larger and more diverse task set (≥30 tasks, multiple repositories), and evaluate on the full SWE-bench suite with real-agent toolchains (Devin-style, Cursor, GPT-tools loop).</p>
 
-<p><strong>Annotation synchronization.</strong> The primary maintenance challenge is not <em>writing</em> annotations (in agentic workflows the cost is near-zero) but ensuring they remain <em>consistent</em> with the code over time. If an agent modifies a function without updating the enclosing <code>rules:</code> or <code>Depends:</code> fields, the annotation becomes misleading — potentially worse than no annotation. This shifts the research problem from production cost to <em>consistency enforcement</em>: pre-commit hooks, CI validation, and agent-side re-annotation obligations are the correct mitigations. Future integrations should treat annotation drift as a first-class failure mode.</p>
+<p><strong>Localization vs. resolution.</strong> Benchmark 3 measures file localization F1, not end-to-end patch correctness. While localization is a necessary precondition for correct patching, it is a proxy metric. Whether CodeDNA's navigation improvements translate to higher resolution rates remains an open question for future work.</p>
 
-<p><strong>Single model.</strong> Results are specific to Gemini 2.5 Flash. Models with longer effective context windows may show smaller differences on small codebases; results on 105-file codebases are more representative of real-world conditions.</p>
+<p><strong>Annotation synchronization.</strong> The primary maintenance challenge is not <em>writing</em> annotations (in agentic workflows the cost is near-zero) but ensuring they remain <em>consistent</em> with the code over time. If an agent modifies a function without updating the enclosing <code>rules:</code> or <code>Depends:</code> fields, the annotation becomes misleading — potentially worse than no annotation. This shifts the research problem from production cost to <em>consistency enforcement</em>: pre-commit hooks, CI validation, and agent-side re-annotation obligations are the correct mitigations. A complementary direction is a "CodeDNA Bootstrapper" — a batch LLM pass that injects initial annotations into legacy codebases, preparing them for agentic maintenance. Future integrations should treat annotation drift as a first-class failure mode.</p>
+
+<p><strong>Multi-model evaluation.</strong> Benchmark 3 shows broadly beneficial results across 5 LLMs, but the SWE-bench subset (5 tasks, all Django) is small and all tasks come from a single repository. The 15-turn budget penalises models like DeepSeek-V3 that use more exploratory strategies; results with higher turn limits may differ. Cross-provider runtime differences (function-calling implementations, tool orchestration) introduce variability that is not fully controlled. The results should be replicated on a larger, more diverse task set before  generalisability claims can be strengthened.</p>
+
+<p><strong>Synthetic benchmarks.</strong> Benchmarks 1 and 2 use codebases generated specifically for this evaluation, with annotations written to be accurate and complete. Real-world codebases will have incomplete or partially incorrect annotations, and performance in that setting remains untested.</p>
 
 <p><strong>Bug complexity.</strong> The planted bugs each require understanding one or two cross-file contracts. Bugs spanning five or more architectural layers may amplify the advantage further — a hypothesis that the enterprise benchmark (3 bugs, 48 distractors) provides initial evidence for.</p>
 
 <!-- ─── 7. CONCLUSION ─── -->
 <h2 class="section">7. Conclusion</h2>
 
-<p class="no-indent">We presented CodeDNA, a three-level in-source annotation standard whose design is grounded in a biological analogy: just as DNA encodes a complete organism blueprint in every cell, CodeDNA ensures that every source file — and every function within it — carries enough architectural context for an LLM agent to navigate correctly without external lookup.</p>
+<p class="no-indent">We presented CodeDNA, a three-level in-source annotation standard whose design uses a biological analogy as a guiding intuition: just as DNA encodes a complete organism blueprint in every cell, CodeDNA ensures that every source file — and every function within it — carries enough architectural context for an LLM agent to navigate correctly without external lookup.</p>
 
-<p>Our two live agentic benchmarks demonstrate a 25–29% reduction in tool calls and, crucially, zero incorrect root-cause identifications against one in unannotated codebases. The enterprise benchmark (105 files, 3 bugs, 48 distractor modules) shows that the advantage grows with codebase size, where grep-based navigation becomes increasingly noisy.</p>
+<p>Our three benchmarks provide preliminary evidence that in-source architectural context can reduce navigation cost for LLM agents: (a) a 25–29% reduction in tool calls with zero incorrect root-cause identifications on custom codebases; and (b) broadly beneficial improvements in SWE-bench file localization F1 across 4 out of 5 tested LLMs, with heterogeneous gains ranging from +2pp to +20pp. The best-performing model (Gemini 2.5 Flash) achieved 77% F1 (vs. 57% Control), winning 4 of 5 tasks. These results suggest that CodeDNA functions as a <em>navigation prior</em> that can benefit diverse model architectures, though the small sample size (5 tasks, single repository) limits the strength of generalisability claims.</p>
 
-<p>The result validates the core hypothesis: <em>when cross-file contracts are declared at the point of use, capable agents can reason correctly without following the contract back to its source.</em></p>
+<p>The results are consistent with the core hypothesis: <em>when cross-file contracts are declared at the point of use, agents can navigate more efficiently without following each contract back to its source.</em> Whether this navigation improvement translates to higher end-to-end bug resolution rates is an important open question that we leave to future work with larger-scale evaluations.</p>
 
 <p>The specification (v0.5), benchmark code, both codebase versions, and AI integration files are available at:</p>
 <p class="no-indent" style="text-align:center; font-weight:bold; margin: 6pt 0;">github.com/Larens94/codedna</p>
