@@ -1,3 +1,14 @@
 .DS_Store
-projects_swebench
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
+dist/
+build/
+.env
+.env.*
+*.log
+benchmark_agent/venv/
+projects_swebench/
 note_dev_2

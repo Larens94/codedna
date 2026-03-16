@@ -1,6 +1,6 @@
-# Contributing to Beacon Framework
+# Contributing to CodeDNA
 
-Thank you for your interest in contributing! Beacon is a language-agnostic standard, so contributions from any ecosystem are welcome.
+Thank you for your interest in contributing! CodeDNA is a language-adaptable annotation standard, so contributions from any ecosystem are welcome.
 
 ## Ways to Contribute
 
@@ -12,8 +12,8 @@ Thank you for your interest in contributing! Beacon is a language-agnostic stand
 ## Adding a Language Example
 
 1. Create a folder: `examples/<language>/`
-2. Add at least one file demonstrating a proper Beacon Header
-3. Add a short `README.md` in that folder explaining the header style
+2. Add at least one file demonstrating proper CodeDNA annotations (v0.5 format)
+3. Add a short `README.md` in that folder explaining the annotation style
 4. Open a PR with the title: `feat(examples): add <language> example`
 
 ## Spec Changes
@@ -21,7 +21,7 @@ Thank you for your interest in contributing! Beacon is a language-agnostic stand
 The spec (`SPEC.md`) is versioned. Any change to required fields or placement rules requires:
 1. An issue discussing the change
 2. A version bump
-3. An update to the Changelog section in `SPEC.md`
+3. An update to `CHANGELOG.md`
 
 ## Code of Conduct
 
@@ -29,7 +29,6 @@ Be respectful. This project welcomes contributors of all backgrounds and experie
 
 ## PR Checklist
 
-- [ ] Example files have a valid Beacon Header
-- [ ] `LAST_MODIFIED` is not left empty
-- [ ] `FILE` field matches the actual filename
+- [ ] Example files use valid CodeDNA v0.5 annotations (module docstring format)
+- [ ] Annotations are accurate and consistent with the code
 - [ ] A brief description of the change is included in the PR body

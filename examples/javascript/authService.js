@@ -1,27 +1,33 @@
-// ==============================================================
-// FILE: authService.js
-// PURPOSE: JWT authentication, login, and session verification
-// DEPENDS_ON: db.js → getUser(), config.js → JWT_SECRET
-// EXPORTS: login(credentials) → Promise<{token, user}>, verify(token) → user
-// STYLE: none (pure logic, Node.js)
-// DB_TABLES: users (id, email, password_hash, last_login)
-// LAST_MODIFIED: initial Beacon Framework example
-// ==============================================================
+/**
+ * JWT authentication, login, and session verification.
+ *
+ * Module (CodeDNA v0.5):
+ *   file: authService.js
+ *   purpose: Authenticate users via JWT, verify tokens for protected routes
+ *   deps: db.js (getUser), config.js (JWT_SECRET, JWT_EXPIRES_IN)
+ *   exports: login(credentials) → Promise<{token, user}>, verify(token) → user
+ *   rules:
+ *     - getUser returns null if user not found — caller MUST check before bcrypt.compare
+ *     - JWT_SECRET loaded from env — never hardcode
+ *     - login() throws Error on invalid credentials — caller must catch
+ */
 
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcrypt');
-// → from db.js: getUser fetches user row by email, returns null if not found
+// getUser fetches user row by email, returns null if not found — see db.js
 const { getUser } = require('./db');
-// → from config.js: JWT_SECRET loaded from environment variable
+// JWT_SECRET loaded from environment variable — see config.js
 const { JWT_SECRET, JWT_EXPIRES_IN } = require('./config');
 
 /**
  * Authenticate a user with email and password.
- * ← used by: routes/auth.js POST /login
  *
  * @param {{ email: string, password: string }} credentials
  * @returns {Promise<{ token: string, user: object }>}
  * @throws {Error} if credentials are invalid
+ *
+ * Depends: db.getUser — returns user row or null
+ * Used by: routes/auth.js POST /login
  */
 async function login({ email, password }) {
   const user = await getUser(email);
@@ -41,10 +47,11 @@ async function login({ email, password }) {
 
 /**
  * Verify a JWT token and return the decoded user.
- * ← used by: middleware/auth.js → protects all /api routes
  *
  * @param {string} token
  * @returns {object} decoded user payload
+ *
+ * Used by: middleware/auth.js → protects all /api routes
  */
 function verify(token) {
   return jwt.verify(token, JWT_SECRET);

@@ -1,35 +1,41 @@
-# === CODEDNA:0.2 ==============================================
-# FILE: dashboard.py
-# PURPOSE: Monthly revenue KPI dashboard with chart and table
-# DEPENDS_ON: utils.py → calculate_kpi(), format_currency()
-# EXPORTS: render(execute_query_func) → HTML string
-# STYLE: tailwind, chart.js
-# DB_TABLES: orders (month, revenue, cost)
-# LAST_MODIFIED: added Level 2 CodeDNA inline hyperlinks
-# ==============================================================
+"""Monthly revenue KPI dashboard with chart and table.
+
+Module (CodeDNA v0.5):
+    file: dashboard.py
+    purpose: Render monthly revenue KPI dashboard as HTML
+    deps: utils.py (calculate_kpi, format_currency)
+    exports: render(execute_query_func) → HTML string
+    rules:
+        - execute_query_func returns list[dict] with keys: month, revenue, cost
+        - revenue and cost are int (not decimal) — see schema.sql
+        - calculate_kpi() handles normalization, margins, and formatting
+"""
 
 from .utils import calculate_kpi, format_currency
 
 
 def render(execute_query_func: callable) -> str:
-    """
-    Main entry point called by the view engine.
+    """Main entry point called by the view engine.
 
     Args:
         execute_query_func: callable(sql: str) -> list[dict]
-    Returns:
-        Rendered HTML string
 
-    # @SEE: utils.py → calculate_kpi() (returns dict with 'total', 'average', 'margin_pct')
-    # @REQUIRES-READ: schema.sql → orders (month: str, revenue: int, cost: int)
-    # @MODIFIES-ALSO: utils.py → calculate_kpi() if changing column names in SQL
+    Returns:
+        Rendered HTML string with KPI cards and revenue table.
+
+    Depends:
+        utils.calculate_kpi — returns dict with 'total', 'average', 'margin_pct'
+        schema.sql — orders table (month: str, revenue: int, cost: int)
+
+    Modifies:
+        Nothing (read-only rendering).
     """
     rows = execute_query_func(
         "SELECT month, revenue, cost FROM orders ORDER BY month"
-        # @REQUIRES-READ: schema.sql → orders (column types are int, not decimal)
+        # revenue, cost are int — see schema.sql; do NOT cast to Decimal
     )
 
-    # → from utils.py: calculate_kpi handles normalization, margins, and formatting
+    # calculate_kpi handles normalization and formatting — see utils.py
     kpi = calculate_kpi(rows)
 
     rows_html = ""
