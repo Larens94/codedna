@@ -90,10 +90,12 @@ TOOLS_DECL = [
 
 
 def make_fns(repo_root: Path) -> tuple[dict[str, Callable], dict]:
-    log = {"tool_calls": 0, "files_read": [], "greps": [], "total_chars_consumed": 0}
+    log = {"tool_calls": 0, "read_calls": 0, "grep_calls": 0, "list_calls": 0,
+           "files_read": [], "greps": [], "total_chars_consumed": 0}
 
     def list_files(directory: str = ".", **kwargs) -> str:
         log["tool_calls"] += 1
+        log["list_calls"] += 1
         target = repo_root / directory
         if not target.exists():
             return f"Directory not found: {directory}"
@@ -108,6 +110,7 @@ def make_fns(repo_root: Path) -> tuple[dict[str, Callable], dict]:
 
     def read_file(path: str, **kwargs) -> str:
         log["tool_calls"] += 1
+        log["read_calls"] += 1
         target = repo_root / path
         if not target.exists():
             return f"File not found: {path}"
@@ -118,6 +121,7 @@ def make_fns(repo_root: Path) -> tuple[dict[str, Callable], dict]:
 
     def grep(pattern: str, directory: str = ".", **kwargs) -> str:
         log["tool_calls"] += 1
+        log["grep_calls"] += 1
         log["greps"].append(pattern)
         target = repo_root / directory
         r = subprocess.run(
@@ -190,17 +194,32 @@ def run_agent(problem: str, repo_root: Path, client, max_turns: int = 15) -> dic
 
     return {
         "tool_calls":          log["tool_calls"],
+        "read_calls":          log["read_calls"],
+        "grep_calls":          log["grep_calls"],
+        "list_calls":          log["list_calls"],
         "files_read":          log["files_read"],
+        "files_read_unique":   list(set(log["files_read"])),
         "n_files_read":        len(set(log["files_read"])),
         "greps":               log["greps"],
         "total_chars_consumed": log["total_chars_consumed"],
-        "final_response":      final_text[:1200],
+        "final_response":      final_text,
     }
 
 
 def extract_proposed_files(final_text: str) -> set[str]:
-    """Extract .py file paths mentioned in the agent's final textual response."""
-    return set(re.findall(r'[\w/]+\.py', final_text))
+    """Extract .py file paths mentioned in the agent's final textual response.
+    
+    Normalizes paths by stripping leading ./ or / and keeping only paths
+    that look like real Python module paths (contain at least one /).
+    """
+    raw = set(re.findall(r'[\w./]+\.py', final_text))
+    normalized = set()
+    for p in raw:
+        p = p.lstrip('./')
+        # Skip single-word matches like "True.py" — real paths have /
+        if '/' in p:
+            normalized.add(p)
+    return normalized
 
 
 def file_metrics(files: set[str], ground_truth: list[str]) -> dict:
