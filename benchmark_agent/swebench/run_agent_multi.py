@@ -23,6 +23,7 @@ import os
 import re
 import subprocess
 import sys
+import time
 from pathlib import Path
 
 TASKS_FILE   = Path(__file__).parent / "tasks.json"
@@ -217,13 +218,23 @@ def run_anthropic(problem: str, repo_root: Path, model_id: str, max_turns=15) ->
     final_text = ""
 
     for _ in range(max_turns):
-        resp = client.messages.create(
-            model=model_id,
-            max_tokens=4096,
-            system=SYSTEM_PROMPT,
-            tools=tools,
-            messages=messages,
-        )
+        # Retry up to 3x on Anthropic 500 errors
+        for attempt in range(3):
+            try:
+                resp = client.messages.create(
+                    model=model_id,
+                    max_tokens=4096,
+                    system=SYSTEM_PROMPT,
+                    tools=tools,
+                    messages=messages,
+                )
+                break
+            except Exception as e:
+                if "500" in str(e) and attempt < 2:
+                    print(f"    ⚠️  Anthropic 500, retrying in {2**attempt}s...")
+                    time.sleep(2 ** attempt)
+                else:
+                    raise
         messages.append({"role": "assistant", "content": resp.content})
 
         tool_uses = [b for b in resp.content if b.type == "tool_use"]
@@ -288,12 +299,13 @@ def run_openai_compat(problem: str, repo_root: Path, model_id: str,
     final_text = ""
 
     for _ in range(max_turns):
-        resp = client.chat.completions.create(
-            model=model_id,
-            messages=messages,
-            tools=tools,
-            temperature=0,
-        )
+        # Reasoning models (o1, o3) don't support temperature
+        is_reasoning = any(x in model_id for x in ("o1", "o3"))
+        create_kwargs = dict(model=model_id, messages=messages, tools=tools)
+        if not is_reasoning:
+            create_kwargs["temperature"] = 0
+
+        resp = client.chat.completions.create(**create_kwargs)
         msg = resp.choices[0].message
         messages.append(msg)
 
@@ -309,18 +321,112 @@ def run_openai_compat(problem: str, repo_root: Path, model_id: str,
     return log, final_text
 
 
+# ─────────────────── Provider: OpenAI Responses API (Codex) ───────────────────
+
+def run_openai_responses(problem: str, repo_root: Path, model_id: str, max_turns=15):
+    """Use the OpenAI Responses API for gpt-5-codex base models."""
+    try:
+        from openai import OpenAI
+    except ImportError:
+        print("ERROR: pip install openai"); sys.exit(1)
+
+    api_key = os.getenv("OPENAI_API_KEY", "")
+    if not api_key:
+        print("ERROR: set OPENAI_API_KEY"); sys.exit(1)
+
+    client = OpenAI(api_key=api_key)
+    fns, log = make_fns(repo_root)
+
+    tools = [
+        {"type": "function", "name": "list_files",
+         "description": "List files in a directory",
+         "parameters": {"type": "object", "properties": {
+             "directory": {"type": "string", "default": "."}}}},
+        {"type": "function", "name": "read_file",
+         "description": "Read a source file",
+         "parameters": {"type": "object", "required": ["path"],
+                        "properties": {"path": {"type": "string"}}}},
+        {"type": "function", "name": "grep",
+         "description": "Search for a pattern",
+         "parameters": {"type": "object", "required": ["pattern"],
+                        "properties": {"pattern": {"type": "string"},
+                                       "directory": {"type": "string", "default": "."}}}},
+    ]
+
+    # Responses API: first call sends full input, subsequent calls send only new tool results
+    initial_input = [
+        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "user",
+         "content": f"Problem:\n\n{problem}\n\nStart by listing the root directory."},
+    ]
+    final_text = ""
+    previous_response_id = None
+    next_input = initial_input
+
+    for _ in range(max_turns):
+        create_kwargs = dict(model=model_id, input=next_input, tools=tools)
+        if previous_response_id:
+            create_kwargs["previous_response_id"] = previous_response_id
+
+        resp = client.responses.create(**create_kwargs)
+        previous_response_id = resp.id
+
+        # Collect tool calls and text from output
+        tool_calls_found = []
+        for item in resp.output:
+            if item.type == "function_call":
+                tool_calls_found.append(item)
+            elif item.type == "message":
+                for block in item.content:
+                    if hasattr(block, "text"):
+                        final_text = block.text
+
+        if not tool_calls_found:
+            break
+
+        # Execute tools and build results
+        tool_results = []
+        for tc in tool_calls_found:
+            args = json.loads(tc.arguments)
+            res = fns[tc.name](**args) if tc.name in fns else "unknown function"
+            tool_results.append({
+                "type": "function_call_output",
+                "call_id": tc.call_id,
+                "output": res,
+            })
+
+        # Next turn: only send the new tool results (API tracks history via previous_response_id)
+        next_input = tool_results
+
+    return log, final_text
+
+
 # ─────────────────── Model registry ───────────────────
 
 MODELS = {
     # Google
-    "gemini-2.5-flash": {"provider": "gemini",   "model_id": "gemini-2.5-flash"},
-    "gemini-2.5-pro":   {"provider": "gemini",   "model_id": "gemini-2.5-pro"},
-    # Anthropic
-    "claude-3-7-sonnet": {"provider": "anthropic", "model_id": "claude-3-7-sonnet-20250219"},
-    "claude-3-5-sonnet": {"provider": "anthropic", "model_id": "claude-3-5-sonnet-20241022"},
-    # OpenAI
+    "gemini-2.5-flash": {"provider": "gemini",    "model_id": "gemini-2.5-flash"},
+    "gemini-2.5-pro":   {"provider": "gemini",    "model_id": "gemini-2.5-pro"},
+    # Anthropic Claude 4 (latest, March 2026)
+    "claude-sonnet-4":   {"provider": "anthropic", "model_id": "claude-sonnet-4-20250514"},
+    "claude-opus-4":     {"provider": "anthropic", "model_id": "claude-opus-4-20250514"},
+    "claude-sonnet-4-5": {"provider": "anthropic", "model_id": "claude-sonnet-4-5-20250929"},
+    "claude-opus-4-5":   {"provider": "anthropic", "model_id": "claude-opus-4-5-20251101"},
+    "claude-haiku-4-5":  {"provider": "anthropic", "model_id": "claude-haiku-4-5-20251001"},
+    # OpenAI chat models (function calling via Chat Completions API)
+    "gpt-4.1":           {"provider": "openai",    "model_id": "gpt-4.1"},
     "gpt-4o":            {"provider": "openai",    "model_id": "gpt-4o"},
+    "gpt-4o-mini":       {"provider": "openai",    "model_id": "gpt-4o-mini"},
+    # OpenAI reasoning (no temperature)
+    "o3":                {"provider": "openai",    "model_id": "o3"},
     "o3-mini":           {"provider": "openai",    "model_id": "o3-mini"},
+    "o1-pro":            {"provider": "openai",    "model_id": "o1-pro"},
+    # OpenAI Codex (Responses API — base models, function calling via responses.create)
+    "gpt-5-codex":       {"provider": "codex",     "model_id": "gpt-5-codex"},
+    "gpt-5.1-codex":     {"provider": "codex",     "model_id": "gpt-5.1-codex"},
+    "gpt-5.2-codex":     {"provider": "codex",     "model_id": "gpt-5.2-codex"},
+    "gpt-5.3-codex":     {"provider": "codex",     "model_id": "gpt-5.3-codex"},
+    "gpt-5.1-codex-mini":{"provider": "codex",     "model_id": "gpt-5.1-codex-mini"},
     # DeepSeek (OpenAI-compatible)
     "deepseek-chat":     {"provider": "openai",    "model_id": "deepseek-chat"},
 }
@@ -335,6 +441,8 @@ def dispatch(problem, repo_root, cfg, max_turns=15):
         return run_anthropic(problem, repo_root, m, max_turns)
     elif p == "openai":
         return run_openai_compat(problem, repo_root, m, max_turns=max_turns)
+    elif p == "codex":
+        return run_openai_responses(problem, repo_root, m, max_turns)
     else:
         raise ValueError(f"Unknown provider: {p}")
 

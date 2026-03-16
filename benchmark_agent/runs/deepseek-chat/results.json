@@ -1,0 +1,438 @@
+[
+  {
+    "instance_id": "django__django-14480",
+    "repo": "django/django",
+    "ground_truth_files": [
+      "django/db/backends/base/features.py",
+      "django/db/backends/mysql/features.py",
+      "django/db/models/expressions.py",
+      "django/db/models/query.py",
+      "django/db/models/query_utils.py",
+      "django/db/models/sql/__init__.py",
+      "django/db/models/sql/where.py"
+    ],
+    "control": {
+      "tool_calls": 15,
+      "read_calls": 5,
+      "grep_calls": 5,
+      "list_calls": 5,
+      "files_read": [
+        "django/db/models/query_utils.py",
+        "django/db/models/query.py",
+        "django/db/models/sql/query.py",
+        "django/db/models/sql/where.py",
+        "django/db/models/sql/constants.py"
+      ],
+      "files_read_unique": [
+        "django/db/models/sql/query.py",
+        "django/db/models/query_utils.py",
+        "django/db/models/query.py",
+        "django/db/models/sql/constants.py",
+        "django/db/models/sql/where.py"
+      ],
+      "n_files_read": 5,
+      "greps": [
+        "def filter",
+        "_add_q",
+        "XOR",
+        "xor",
+        "XOR"
+      ],
+      "total_chars_consumed": 37763,
+      "final_response": "",
+      "metrics_read": {
+        "recall": 0.42857142857142855,
+        "precision": 0.6,
+        "f1": 0.5
+      },
+      "metrics_proposed": {
+        "recall": 0.0,
+        "precision": 0.0,
+        "f1": 0.0
+      }
+    },
+    "codedna": {
+      "tool_calls": 15,
+      "read_calls": 6,
+      "grep_calls": 5,
+      "list_calls": 4,
+      "files_read": [
+        "django/db/models/query_utils.py",
+        "django/utils/tree.py",
+        "django/db/models/query.py",
+        "django/db/models/query.py",
+        "django/db/models/query.py",
+        "django/db/models/query.py"
+      ],
+      "files_read_unique": [
+        "django/db/models/query.py",
+        "django/db/models/query_utils.py",
+        "django/utils/tree.py"
+      ],
+      "n_files_read": 3,
+      "greps": [
+        "__and__|__or__|__xor__",
+        "def __and__|def __or__",
+        "__and__",
+        "class QuerySet",
+        "^class QuerySet"
+      ],
+      "total_chars_consumed": 46592,
+      "final_response": "",
+      "metrics_read": {
+        "recall": 0.2857142857142857,
+        "precision": 0.6666666666666666,
+        "f1": 0.4
+      },
+      "metrics_proposed": {
+        "recall": 0.0,
+        "precision": 0.0,
+        "f1": 0.0
+      }
+    }
+  },
+  {
+    "instance_id": "django__django-13495",
+    "repo": "django/django",
+    "ground_truth_files": [
+      "django/db/backends/base/operations.py",
+      "django/db/backends/mysql/operations.py",
+      "django/db/backends/oracle/operations.py",
+      "django/db/backends/postgresql/operations.py",
+      "django/db/backends/sqlite3/base.py",
+      "django/db/backends/sqlite3/operations.py",
+      "django/db/models/functions/datetime.py"
+    ],
+    "control": {
+      "tool_calls": 15,
+      "read_calls": 4,
+      "grep_calls": 6,
+      "list_calls": 5,
+      "files_read": [
+        "django/db/models/functions/datetime.py",
+        "django/db/models/functions/datetime.py",
+        "django/db/models/functions/datetime.py",
+        "django/db/models/functions/datetime.py"
+      ],
+      "files_read_unique": [
+        "django/db/models/functions/datetime.py"
+      ],
+      "n_files_read": 1,
+      "greps": [
+        "Trunc",
+        "class Trunc",
+        "def resolve_expression",
+        "class_output_field",
+        "class Trunc\\(",
+        "class Trunc:\""
+      ],
+      "total_chars_consumed": 40996,
+      "final_response": "",
+      "metrics_read": {
+        "recall": 0.14285714285714285,
+        "precision": 1.0,
+        "f1": 0.25
+      },
+      "metrics_proposed": {
+        "recall": 0.0,
+        "precision": 0.0,
+        "f1": 0.0
+      }
+    },
+    "codedna": {
+      "tool_calls": 15,
+      "read_calls": 5,
+      "grep_calls": 5,
+      "list_calls": 5,
+      "files_read": [
+        "django/db/models/functions/datetime.py",
+        "django/db/models/functions/datetime.py",
+        "django/db/models/functions/datetime.py",
+        "django/db/models/functions/datetime.py",
+        "django/db/models/expressions.py"
+      ],
+      "files_read_unique": [
+        "django/db/models/expressions.py",
+        "django/db/models/functions/datetime.py"
+      ],
+      "n_files_read": 2,
+      "greps": [
+        "class Trunc",
+        "def as_sql",
+        "def as_sql.*compiler.*connection.*:\" -A 30",
+        "def as_sql\" -A 50",
+        "_resolve_output_field"
+      ],
+      "total_chars_consumed": 51522,
+      "final_response": "",
+      "metrics_read": {
+        "recall": 0.14285714285714285,
+        "precision": 0.5,
+        "f1": 0.22222222222222224
+      },
+      "metrics_proposed": {
+        "recall": 0.0,
+        "precision": 0.0,
+        "f1": 0.0
+      }
+    }
+  },
+  {
+    "instance_id": "django__django-12508",
+    "repo": "django/django",
+    "ground_truth_files": [
+      "django/core/management/base.py",
+      "django/core/management/commands/dbshell.py",
+      "django/db/backends/base/client.py",
+      "django/db/backends/mysql/client.py",
+      "django/db/backends/mysql/creation.py",
+      "django/db/backends/oracle/client.py",
+      "django/db/backends/postgresql/client.py",
+      "django/db/backends/sqlite3/client.py"
+    ],
+    "control": {
+      "tool_calls": 15,
+      "read_calls": 4,
+      "grep_calls": 0,
+      "list_calls": 11,
+      "files_read": [
+        "django/core/management/commands/dbshell.py",
+        "django/db/backends/base/client.py",
+        "django/db/backends/postgresql/client.py",
+        "django/db/backends/mysql/client.py"
+      ],
+      "files_read_unique": [
+        "django/core/management/commands/dbshell.py",
+        "django/db/backends/postgresql/client.py",
+        "django/db/backends/base/client.py",
+        "django/db/backends/mysql/client.py"
+      ],
+      "n_files_read": 4,
+      "greps": [],
+      "total_chars_consumed": 7600,
+      "final_response": "",
+      "metrics_read": {
+        "recall": 0.5,
+        "precision": 1.0,
+        "f1": 0.6666666666666666
+      },
+      "metrics_proposed": {
+        "recall": 0.0,
+        "precision": 0.0,
+        "f1": 0.0
+      }
+    },
+    "codedna": {
+      "tool_calls": 15,
+      "read_calls": 6,
+      "grep_calls": 1,
+      "list_calls": 8,
+      "files_read": [
+        "django/core/management/commands/dbshell.py",
+        "django/db/backends/base/client.py",
+        "django/db/backends/postgresql/client.py",
+        "django/db/backends/mysql/client.py",
+        "django/db/backends/sqlite3/client.py",
+        "django/db/backends/oracle/client.py"
+      ],
+      "files_read_unique": [
+        "django/db/backends/mysql/client.py",
+        "django/db/backends/postgresql/client.py",
+        "django/db/backends/oracle/client.py",
+        "django/core/management/commands/dbshell.py",
+        "django/db/backends/base/client.py",
+        "django/db/backends/sqlite3/client.py"
+      ],
+      "n_files_read": 6,
+      "greps": [
+        "dbshell"
+      ],
+      "total_chars_consumed": 14522,
+      "final_response": "",
+      "metrics_read": {
+        "recall": 0.75,
+        "precision": 1.0,
+        "f1": 0.8571428571428571
+      },
+      "metrics_proposed": {
+        "recall": 0.0,
+        "precision": 0.0,
+        "f1": 0.0
+      }
+    }
+  },
+  {
+    "instance_id": "django__django-11991",
+    "repo": "django/django",
+    "ground_truth_files": [
+      "django/contrib/gis/db/backends/postgis/schema.py",
+      "django/contrib/postgres/indexes.py",
+      "django/db/backends/base/features.py",
+      "django/db/backends/base/schema.py",
+      "django/db/backends/postgresql/features.py",
+      "django/db/backends/postgresql/schema.py",
+      "django/db/models/base.py",
+      "django/db/models/constraints.py",
+      "django/db/models/indexes.py"
+    ],
+    "control": {
+      "tool_calls": 15,
+      "read_calls": 6,
+      "grep_calls": 3,
+      "list_calls": 6,
+      "files_read": [
+        "django/db/models/indexes.py",
+        "django/db/backends/postgresql/schema.py",
+        "django/db/backends/postgresql/schema.py",
+        "django/db/backends/postgresql/schema.py",
+        "django/db/backends/postgresql/schema.py",
+        "django/db/backends/base/schema.py"
+      ],
+      "files_read_unique": [
+        "django/db/backends/postgresql/schema.py",
+        "django/db/models/indexes.py",
+        "django/db/backends/base/schema.py"
+      ],
+      "n_files_read": 3,
+      "greps": [
+        "_create_index_sql",
+        "def _create_index_sql",
+        "def _create_index_sql"
+      ],
+      "total_chars_consumed": 47966,
+      "final_response": "",
+      "metrics_read": {
+        "recall": 0.3333333333333333,
+        "precision": 1.0,
+        "f1": 0.5
+      },
+      "metrics_proposed": {
+        "recall": 0.0,
+        "precision": 0.0,
+        "f1": 0.0
+      }
+    },
+    "codedna": {
+      "tool_calls": 15,
+      "read_calls": 3,
+      "grep_calls": 2,
+      "list_calls": 10,
+      "files_read": [
+        "django/db/models/indexes.py",
+        "django/db/backends/base/schema.py",
+        "django/db/backends/base/schema.py"
+      ],
+      "files_read_unique": [
+        "django/db/models/indexes.py",
+        "django/db/backends/base/schema.py"
+      ],
+      "n_files_read": 2,
+      "greps": [
+        "_create_index_sql",
+        "def _create_index_sql"
+      ],
+      "total_chars_consumed": 26484,
+      "final_response": "",
+      "metrics_read": {
+        "recall": 0.2222222222222222,
+        "precision": 1.0,
+        "f1": 0.3636363636363636
+      },
+      "metrics_proposed": {
+        "recall": 0.0,
+        "precision": 0.0,
+        "f1": 0.0
+      }
+    }
+  },
+  {
+    "instance_id": "django__django-11808",
+    "repo": "django/django",
+    "ground_truth_files": [
+      "django/contrib/messages/storage/base.py",
+      "django/contrib/postgres/constraints.py",
+      "django/core/validators.py",
+      "django/db/models/base.py",
+      "django/db/models/constraints.py",
+      "django/db/models/expressions.py",
+      "django/db/models/indexes.py",
+      "django/db/models/query.py",
+      "django/db/models/query_utils.py",
+      "django/template/context.py"
+    ],
+    "control": {
+      "tool_calls": 15,
+      "read_calls": 6,
+      "grep_calls": 5,
+      "list_calls": 4,
+      "files_read": [
+        "django/db/models/base.py",
+        "django/db/models/base.py",
+        "django/db/models/base.py",
+        "django/db/models/base.py",
+        "django/db/models/base.py",
+        "django/db/models/base.py"
+      ],
+      "files_read_unique": [
+        "django/db/models/base.py"
+      ],
+      "n_files_read": 1,
+      "greps": [
+        "def __eq__",
+        "class Model",
+        "__eq__",
+        "def __eq__.*: -A 20",
+        "def __eq__"
+      ],
+      "total_chars_consumed": 52547,
+      "final_response": "",
+      "metrics_read": {
+        "recall": 0.1,
+        "precision": 1.0,
+        "f1": 0.18181818181818182
+      },
+      "metrics_proposed": {
+        "recall": 0.0,
+        "precision": 0.0,
+        "f1": 0.0
+      }
+    },
+    "codedna": {
+      "tool_calls": 15,
+      "read_calls": 7,
+      "grep_calls": 4,
+      "list_calls": 4,
+      "files_read": [
+        "django/db/models/base.py",
+        "django/db/models/base.py",
+        "django/db/models/base.py",
+        "django/db/models/base.py",
+        "django/db/models/base.py",
+        "django/db/models/base.py",
+        "django/db/models/base.py"
+      ],
+      "files_read_unique": [
+        "django/db/models/base.py"
+      ],
+      "n_files_read": 1,
+      "greps": [
+        "def __eq__",
+        "__eq__",
+        "class Model",
+        "def __eq__.*other"
+      ],
+      "total_chars_consumed": 62133,
+      "final_response": "",
+      "metrics_read": {
+        "recall": 0.1,
+        "precision": 1.0,
+        "f1": 0.18181818181818182
+      },
+      "metrics_proposed": {
+        "recall": 0.0,
+        "precision": 0.0,
+        "f1": 0.0
+      }
+    }
+  }
+]

@@ -1,0 +1,457 @@
+[
+  {
+    "instance_id": "django__django-14480",
+    "repo": "django/django",
+    "ground_truth_files": [
+      "django/db/backends/base/features.py",
+      "django/db/backends/mysql/features.py",
+      "django/db/models/expressions.py",
+      "django/db/models/query.py",
+      "django/db/models/query_utils.py",
+      "django/db/models/sql/__init__.py",
+      "django/db/models/sql/where.py"
+    ],
+    "control": {
+      "tool_calls": 10,
+      "read_calls": 3,
+      "grep_calls": 6,
+      "list_calls": 1,
+      "files_read": [
+        "django/db/models/query_utils.py",
+        "django/db/models/query.py",
+        "django/db/models/sql/query.py"
+      ],
+      "files_read_unique": [
+        "django/db/models/query_utils.py",
+        "django/db/models/sql/query.py",
+        "django/db/models/query.py"
+      ],
+      "n_files_read": 3,
+      "greps": [
+        "class Q\\b|def xor|__xor__|\\bxor\\(",
+        "def xor|__xor__|\\bxor\\(",
+        "class QuerySet|def _filter_or_exclude|_combine|\\bor\\b",
+        "class Q",
+        "def __or__|def __and__|_filter_or_exclude|filter\\(|exclude\\(|complex_filter|_combin",
+        "_filter_or_exclude_inplace|complex_filter|def filter\\(|def exclude\\(|def __or__|def __and__"
+      ],
+      "total_chars_consumed": 25347,
+      "final_response": "Implemented feature touches should span **Q object logic, QuerySet set-ops API, SQL query combinators, backend feature flags, and tests/docs**.\n\nBased on the code paths for `Q` and `QuerySet`, here are the files that need modification for a complete fix:\n\n### Core ORM logic\n\n1. **`django/db/models/query_utils.py`**\n   - Add XOR connector support to `Q`:\n     - new connector constant (e.g. `XOR = \"XOR\"`),\n     - `Q.__xor__(self, other)` calling `_combine(other, self.XOR)`.\n   - Ensure deconstruction/serialization naturally handles XOR connector (likely already via `_connector`, but confirm tests).\n\n2. **`django/db/models/sql/where.py`**\n   - Add XOR handling in SQL rendering of `WhereNode` connectors.\n   - If backend supports native logical XOR, emit it.\n   - If backend doesn\u2019t (SQLite), emulate with boolean algebra:\n     - `(A AND NOT B) OR (NOT A AND B)` for 2 operands,\n     - and/or fold pairwise for multiple children.\n   - This is the critical place where connector tokens become SQL.\n\n3. **`django/db/models/query.py`**\n   - Add `QuerySet.xor(*other_qs, all=False)` API mirroring `.union()/.intersection()/.difference()`.\n   - Hook into internal combinator path (`_combinator_query(...)`) with a new combinator token (e.g. `\"xor\"`).\n   - Also add operator overload `QuerySet.__xor__(self, other)` if desired by issue intent (\u201csupport to queryset\u201d).\n\n4. **`django/db/models/sql/query.py`**\n   - Extend combinator validation and setup to recognize XOR as a queryset combinator.\n   - Ensure compiler-facing query state for combinators includes this new mode.\n\n5. **`django/db/models/sql/compiler.py`**\n   - Add SQL generation for queryset-level XOR combinator.\n   - For backends without native XOR set combinator, either:\n     - raise `NotSupportedError`, or\n     - rewrite to equivalent union/intersection/difference structure.\n   - Keep behavior aligned with existing combinator feature checks.\n\n---\n\n### Backend feature flags / ops\n\n6. **`django/db/backends/base/features.py`**\n   - Add capability flag(s), e.g. `supports_logical_xor` and possibly combinator support if queryset XOR uses set operators.\n\n7. **Backend-specific feature files** (as needed):\n   - **`django/db/backends/sqlite3/features.py`**\n     - mark logical XOR unsupported natively.\n   - **`django/db/backends/postgresql/features.py`**\n   - **`django/db/backends/mysql/features.py`**\n   - **`django/db/backends/oracle/features.py`**\n   - **`django/db/backends/sql_server/...`** if present in this tree (often not core Django).\n   - Set accurate support booleans or leave default and override where needed.\n\n---\n\n### Public API export and docs\n\n8. **`django/db/models/__init__.py`** (verify only if needed)\n   - Usually `Q` is already exported; no change likely unless new symbols are introduced.\n\n9. **Docs**\n   - **`docs/ref/models/querysets.txt`**: document `QuerySet.xor()`.\n   - **`docs/topics/db/queries.txt`**: document `Q` XOR usage (`^`).\n   - Any ORM API reference pages mentioning combinators and Q operators.\n\n---\n\n### Tests (required for complete fix)\n\n10. **`tests/queries/test_q.py`** (or equivalent Q tests module)\n    - Add tests for `Q(...) ^ Q(...)` SQL/result semantics.\n    - Include multi-operand XOR and negation interactions.\n    - Add backend-conditional expectations for SQLite emulation.\n\n11. **`tests/queries/test_queryset.py`** (or combinator tests module)\n    - Add tests for `QuerySet.xor(...)` behavior, chaining, ordering restrictions, empty querysets, etc.\n    - Add `__xor__` tests if operator support added.\n\n12. **`tests/backends/...`** (if backend feature tests exist)\n    - Validate feature flags and/or fallback behavior.\n\n---\n\n## Summary of what to implement\n\n- **Q-level XOR:** straightforward addition in `query_utils.py` + SQL rendering in `where.py`.\n- **QuerySet-level XOR:** not just a method; it requires full **combinator plumbing** (`query.py`, `sql/query.py`, `sql/compiler.py`) and backend capability handling.\n- **SQLite:** implement safe fallback/emulation for logical XOR at WHERE-clause level; decide policy for queryset-combinator XOR and test accordingly.\n- **Complete fix includes tests + docs**, not only runtime code.",
+      "metrics_read": {
+        "recall": 0.2857142857142857,
+        "precision": 0.6666666666666666,
+        "f1": 0.4
+      },
+      "metrics_proposed": {
+        "recall": 0.7142857142857143,
+        "precision": 0.3333333333333333,
+        "f1": 0.4545454545454545
+      }
+    },
+    "codedna": {
+      "tool_calls": 11,
+      "read_calls": 3,
+      "grep_calls": 7,
+      "list_calls": 1,
+      "files_read": [
+        "django/db/models/query_utils.py",
+        "django/db/models/query.py",
+        "django/db/models/expressions.py"
+      ],
+      "files_read_unique": [
+        "django/db/models/query_utils.py",
+        "django/db/models/query.py",
+        "django/db/models/expressions.py"
+      ],
+      "n_files_read": 3,
+      "greps": [
+        "class Q\\b|def xor\\b|\\^",
+        "def xor\\b|\\^|XOR",
+        "class Q\\(",
+        "Q\\b",
+        "class WhereNode|def as_sql|XOR|supports_logical_xor",
+        "supports_logical_xor|operators|xor",
+        "__or__\\(|__and__\\(|combine\\(other.query"
+      ],
+      "total_chars_consumed": 28374,
+      "final_response": "Implemented comprehensively, XOR support will require changes across **ORM API**, **query tree connectors**, **SQL compilation**, and **backend feature flags/tests**.\n\nFrom the files inspected and dependency hints in-module, the full fix boundary is:\n\n### Core ORM logic\n1. **`django/db/models/query_utils.py`**\n   - Add `Q.XOR` connector constant.\n   - Add `Q.__xor__(self, other)` delegating to `_combine(other, self.XOR)`.\n   - Ensure deconstruction/serialization naturally supports `_connector=\"XOR\"` (already generic, but validate via tests).\n\n2. **`django/db/models/query.py`**\n   - Add `QuerySet.__xor__(self, other)` (parallel to `__and__` / `__or__`) to combine queries with SQL XOR connector.\n   - Ensure same model/combined-query safety checks mirror existing boolean combinators.\n\n3. **`django/db/models/expressions.py`**\n   - Add `Combinable.__xor__` for conditional expressions, mirroring `__and__`/`__or__`:\n     `return Q(self) ^ Q(other)` when both are conditional.\n   - Add `__rxor__` behavior/error symmetry with `__rand__` / `__ror__` if applicable.\n\n### SQL/query compiler layer\n4. **`django/db/models/sql/where.py`**\n   - Teach `WhereNode.as_sql()` how to render XOR connector.\n   - If backend doesn\u2019t support native logical XOR, emit fallback SQL equivalent:\n     `(a AND NOT b) OR (NOT a AND b)`.\n\n5. **`django/db/models/sql/query.py`**\n   - Ensure combine paths accept XOR connector in the same places AND/OR are handled.\n   - Any connector validation/enforcement must include XOR.\n\n6. **`django/db/models/sql/__init__.py`** (and/or connector constants module if split)\n   - Export/import `XOR` constant alongside `AND`, `OR` so callers (`QuerySet`) can reference it.\n\n### Backend capability flags\n7. **`django/db/backends/base/features.py`**\n   - Add `supports_logical_xor` feature flag default (`False` or as appropriate with fallback strategy).\n\n8. Backend feature overrides where native XOR exists (likely):\n   - **`django/db/backends/postgresql/features.py`**\n   - **`django/db/backends/mysql/features.py`**\n   - **`django/db/backends/oracle/features.py`**\n   - **`django/db/backends/sqlite3/features.py`** (explicitly false unless fallback is universal and feature unused)\n\n### Tests (required for complete fix)\n9. **`tests/queries/test_q.py`** (or equivalent Q-object tests)\n   - New tests for `Q(...) ^ Q(...)`, operator precedence, negation, empty Q interactions.\n\n10. **`tests/queries/test_queryset.py`** (or equivalent queryset combinator tests)\n   - Tests for `qs1 ^ qs2` behavior and constraints.\n\n11. **`tests/expressions/tests.py`** (or conditional expression tests)\n   - Validate `conditional_expr1 ^ conditional_expr2` via `Combinable`.\n\n12. Backend-specific tests if feature-gated SQL differs:\n   - **`tests/backends/sqlite3/...`** for fallback SQL behavior.\n   - Possibly backend feature tests ensuring native XOR path where supported.\n\n---\n\nIf you want, I can now go file-by-file and pinpoint the exact methods/sections to patch once we open the remaining SQL/backend/test files.",
+      "metrics_read": {
+        "recall": 0.42857142857142855,
+        "precision": 1.0,
+        "f1": 0.6
+      },
+      "metrics_proposed": {
+        "recall": 1.0,
+        "precision": 0.5,
+        "f1": 0.6666666666666666
+      }
+    }
+  },
+  {
+    "instance_id": "django__django-13495",
+    "repo": "django/django",
+    "ground_truth_files": [
+      "django/db/backends/base/operations.py",
+      "django/db/backends/mysql/operations.py",
+      "django/db/backends/oracle/operations.py",
+      "django/db/backends/postgresql/operations.py",
+      "django/db/backends/sqlite3/base.py",
+      "django/db/backends/sqlite3/operations.py",
+      "django/db/models/functions/datetime.py"
+    ],
+    "control": {
+      "tool_calls": 7,
+      "read_calls": 3,
+      "grep_calls": 3,
+      "list_calls": 1,
+      "files_read": [
+        "django/db/models/functions/datetime.py",
+        "django/db/models/functions/datetime.py",
+        "django/db/models/functions/datetime.py"
+      ],
+      "files_read_unique": [
+        "django/db/models/functions/datetime.py"
+      ],
+      "n_files_read": 1,
+      "greps": [
+        "class Trunc",
+        "TruncDay",
+        "_resolve_output_field"
+      ],
+      "total_chars_consumed": 30312,
+      "final_response": "Files that require modification for a **complete fix**:\n\n1. **`django/db/models/functions/datetime.py`**  \n   - Root cause is here (`TruncBase.as_sql()`).\n   - Current logic decides timezone handling from `self.output_field`, which is wrong for cases like:\n     `TruncDay('created_at', output_field=DateField(), tzinfo=...)`\n   - Fix should base timezone conversion on the **input expression type** (`self.lhs.output_field`), not only output type.\n   - In practice: when LHS is `DateTimeField`, call datetime-aware trunc SQL path (with `tzname`) even if `output_field` is `DateField` or `TimeField`, while still preserving correct return type behavior.\n\n2. **`tests/db_functions/datetime/test_trunc.py`** (or the trunc datetime tests file in this tree)  \n   - Add regression tests for `TruncDay(..., output_field=DateField(), tzinfo=...)` (and likely `TruncTime`-style variant too if applicable).\n   - Ensure test asserts timezone is actually applied (result correctness, not only SQL string).\n   - This is needed so the bug is permanently covered across backends.\n\n3. **Potential backend-specific expectation files only if present** (none obvious yet, but check if trunc SQL behavior is directly asserted per backend in tests).  \n   - Usually no backend code changes are needed because DB ops already accept tzname in `datetime_trunc_sql`.\n   - But if any backend test fixtures or expected-SQL assertions exist, they may require updates due to changed SQL path selection.\n\n### Why not backend files?\nThe issue is in how `Trunc` chooses which backend op to call, not in backend implementations themselves. PostgreSQL already supports `AT TIME ZONE` in datetime trunc path; it just wasn\u2019t being used for DateField outputs from DateTime input.\n\nSo the **minimum complete set** is:\n- `django/db/models/functions/datetime.py`\n- `tests/db_functions/datetime/test_trunc.py` (exact test path may vary slightly in this checkout)",
+      "metrics_read": {
+        "recall": 0.14285714285714285,
+        "precision": 1.0,
+        "f1": 0.25
+      },
+      "metrics_proposed": {
+        "recall": 0.14285714285714285,
+        "precision": 0.5,
+        "f1": 0.22222222222222224
+      }
+    },
+    "codedna": {
+      "tool_calls": 8,
+      "read_calls": 3,
+      "grep_calls": 4,
+      "list_calls": 1,
+      "files_read": [
+        "django/db/models/functions/datetime.py",
+        "django/db/models/functions/datetime.py",
+        "tests/db_functions/datetime/test_extract_trunc.py"
+      ],
+      "files_read_unique": [
+        "tests/db_functions/datetime/test_extract_trunc.py",
+        "django/db/models/functions/datetime.py"
+      ],
+      "n_files_read": 2,
+      "greps": [
+        "class Trunc",
+        "def as_sql",
+        "TruncDay",
+        "date_trunc_sql("
+      ],
+      "total_chars_consumed": 35713,
+      "final_response": "To implement a **complete fix**, these are the files that need modification:\n\n1. **`django/db/models/functions/datetime.py`**  \n   - Root cause is here in `TruncBase.as_sql()`: timezone handling is tied to `output_field` type, so `DateField` output skips tz conversion even when input is `DateTimeField`.\n   - Fix: base tz application on the **input expression type** (`self.lhs.output_field`), not only on `self.output_field`, and pass `tzname` through the date truncation path too.\n\n2. **`django/db/backends/base/operations.py`**  \n   - Update `date_trunc_sql()` method signature/contract to accept an optional timezone argument (e.g. `tzname=None`) for consistency with `datetime_trunc_sql()` and to support the new call path.\n\n3. **`django/db/backends/postgresql/operations.py`**  \n   - Implement updated `date_trunc_sql(..., tzname=None)` behavior.\n   - Ensure it applies `AT TIME ZONE ...` (or backend helper equivalent) before truncating/casting when tzname is provided.\n\n4. **`django/db/backends/mysql/operations.py`**  \n   - Update `date_trunc_sql()` signature to accept `tzname=None` and handle/ignore appropriately per backend capabilities (but must not break new caller contract).\n\n5. **`django/db/backends/sqlite3/operations.py`**  \n   - Update `date_trunc_sql()` signature similarly and pass tzname to SQLite date-trunc UDF path where relevant.\n\n6. **`django/db/backends/oracle/operations.py`**  \n   - Update `date_trunc_sql()` signature similarly and integrate tz-aware behavior if supported/needed.\n\n7. **`tests/db_functions/datetime/test_extract_trunc.py`**  \n   - Add regression tests covering:\n     - `TruncDay('dt_field', output_field=DateField(), tzinfo=...)`\n     - SQL/result correctness with timezone conversion (especially PostgreSQL expectation).\n   - Ensure existing trunc tests include the DateField-output + tzinfo combination and verify behavior across backends (feature-gated where needed).\n\nIf you want, I can also sketch the exact code-level change for `TruncBase.as_sql()` and a minimal regression test block to drop into `test_extract_trunc.py`.",
+      "metrics_read": {
+        "recall": 0.14285714285714285,
+        "precision": 0.5,
+        "f1": 0.22222222222222224
+      },
+      "metrics_proposed": {
+        "recall": 0.8571428571428571,
+        "precision": 0.8571428571428571,
+        "f1": 0.8571428571428571
+      }
+    }
+  },
+  {
+    "instance_id": "django__django-12508",
+    "repo": "django/django",
+    "ground_truth_files": [
+      "django/core/management/base.py",
+      "django/core/management/commands/dbshell.py",
+      "django/db/backends/base/client.py",
+      "django/db/backends/mysql/client.py",
+      "django/db/backends/mysql/creation.py",
+      "django/db/backends/oracle/client.py",
+      "django/db/backends/postgresql/client.py",
+      "django/db/backends/sqlite3/client.py"
+    ],
+    "control": {
+      "tool_calls": 23,
+      "read_calls": 10,
+      "grep_calls": 8,
+      "list_calls": 5,
+      "files_read": [
+        "django/core/management/commands/dbshell.py",
+        "django/db/backends/base/client.py",
+        "django/db/backends/postgresql/client.py",
+        "django/db/backends/mysql/client.py",
+        "django/db/backends/oracle/client.py",
+        "django/db/backends/sqlite3/client.py",
+        "tests/dbshell/test_mysql.py",
+        "tests/dbshell/test_postgresql.py",
+        "tests/dbshell/test_oracle.py",
+        "tests/dbshell/test_sqlite.py"
+      ],
+      "files_read_unique": [
+        "django/db/backends/sqlite3/client.py",
+        "django/db/backends/base/client.py",
+        "django/db/backends/oracle/client.py",
+        "tests/dbshell/test_sqlite.py",
+        "django/db/backends/postgresql/client.py",
+        "tests/dbshell/test_oracle.py",
+        "django/core/management/commands/dbshell.py",
+        "tests/dbshell/test_postgresql.py",
+        "tests/dbshell/test_mysql.py",
+        "django/db/backends/mysql/client.py"
+      ],
+      "n_files_read": 10,
+      "greps": [
+        "class Command\\(BaseCommand\\)|dbshell",
+        "dbshell",
+        "def dbshell\\(|class DatabaseClient|runshell|dbshell",
+        "class DatabaseClient|def runshell|executable_name",
+        "class DatabaseClient|def runshell|executable_name",
+        "class DatabaseClient|def runshell|executable_name",
+        "class DatabaseClient|def runshell|executable_name",
+        "class BaseDatabaseClient|runshell"
+      ],
+      "total_chars_consumed": 18358,
+      "final_response": "Implemented completely, this feature touches the command layer, backend client interfaces/implementations, and backend-specific tests.\n\n## Files that need modification\n\n1. **`django/core/management/commands/dbshell.py`**\n   - Add a new optional argument `-c/--command` (SQL string).\n   - Pass that value into `connection.client.runshell(...)`.\n   - Keep existing behavior unchanged when `-c` isn\u2019t provided.\n\n2. **`django/db/backends/base/client.py`**\n   - Update `BaseDatabaseClient.runshell()` signature to accept an optional parameter (e.g. `parameters=None` or `command=None`).\n   - This is important for interface consistency across all backend clients.\n\n3. **`django/db/backends/postgresql/client.py`**\n   - Update command construction to support SQL passed via `-c` for `psql` (e.g. append `['-c', sql]` in the correct position).\n   - Update both `runshell_db()` and `runshell()` plumbing so command from management command reaches subprocess.\n\n4. **`django/db/backends/mysql/client.py`**\n   - Update `settings_to_cmd_args()` (or equivalent logic) to accept optional SQL command and translate it to mysql CLI form (`-e`/`--execute`).\n   - Update `runshell()` to pass through the optional command.\n\n5. **`django/db/backends/oracle/client.py`**\n   - Update `runshell()` to accept optional SQL command and pass it using sqlplus-compatible argument style (Oracle-specific handling required).\n   - Ensure `rlwrap` wrapping still works identically.\n\n6. **`django/db/backends/sqlite3/client.py`**\n   - Update `runshell()` to accept optional SQL command and pass it to sqlite3 CLI in supported form.\n\n7. **`tests/dbshell/test_postgresql.py`**\n   - Add test(s) verifying SQL command argument is added correctly to `psql` args and existing env behavior remains intact.\n\n8. **`tests/dbshell/test_mysql.py`**\n   - Add test(s) for command-to-CLI translation (`-e` / execute form), including coexistence with existing connection args.\n\n9. **`tests/dbshell/test_oracle.py`**\n   - Add test(s) for command mode (with and without `rlwrap`) ensuring argument ordering/wrapping is correct.\n\n10. **`tests/dbshell/test_sqlite.py`**\n    - Add test(s) verifying command argument passing for sqlite3.\n\n## Likely also needed (integration-level command test)\n\n11. **`tests/...` management command test module for `dbshell`** (location depends on tree, typically under `tests/user_commands/` or `tests/core/management/commands_tests/`)\n   - Add/extend a test that `manage.py dbshell -c \"...\"` forwards the value to `connection.client.runshell(...)`.\n   - If no existing dbshell command-level tests exist, create a new one in the appropriate management-command test package.\n\nThat\u2019s the full boundary for a complete fix: command parser + base API + all 4 backend clients + backend tests + command forwarding test.",
+      "metrics_read": {
+        "recall": 0.75,
+        "precision": 0.6,
+        "f1": 0.6666666666666665
+      },
+      "metrics_proposed": {
+        "recall": 0.75,
+        "precision": 0.6,
+        "f1": 0.6666666666666665
+      }
+    },
+    "codedna": {
+      "tool_calls": 16,
+      "read_calls": 10,
+      "grep_calls": 4,
+      "list_calls": 2,
+      "files_read": [
+        "django/core/management/commands/dbshell.py",
+        "django/db/backends/base/client.py",
+        "django/db/backends/postgresql/client.py",
+        "django/db/backends/mysql/client.py",
+        "django/db/backends/oracle/client.py",
+        "django/db/backends/sqlite3/client.py",
+        "tests/dbshell/test_postgresql.py",
+        "tests/dbshell/test_oracle.py",
+        "tests/dbshell/test_sqlite.py",
+        "tests/dbshell/test_mysql.py"
+      ],
+      "files_read_unique": [
+        "django/db/backends/sqlite3/client.py",
+        "django/db/backends/base/client.py",
+        "django/db/backends/oracle/client.py",
+        "tests/dbshell/test_mysql.py",
+        "tests/dbshell/test_sqlite.py",
+        "django/db/backends/postgresql/client.py",
+        "tests/dbshell/test_oracle.py",
+        "django/core/management/commands/dbshell.py",
+        "tests/dbshell/test_postgresql.py",
+        "django/db/backends/mysql/client.py"
+      ],
+      "n_files_read": 10,
+      "greps": [
+        "class Command",
+        "dbshell",
+        "def dbshell",
+        "dbshell"
+      ],
+      "total_chars_consumed": 29768,
+      "final_response": "Implemented completely, this feature touches both command parsing and all backend dbshell clients, plus backend-specific tests.\n\n## Files that require modification\n\n1. **`django/core/management/commands/dbshell.py`**\n   - Add `-c/--command` argument in `add_arguments()`.\n   - Pass options into backend shell launcher, e.g. `connection.client.runshell(parameters=options)` (or equivalent).\n   - Keep existing `--database` behavior unchanged.\n\n2. **`django/db/backends/base/client.py`**\n   - Update abstract API signature:\n     - `runshell(self)` \u2192 `runshell(self, parameters=None)`\n   - This keeps a common interface all backends must follow.\n\n3. **`django/db/backends/postgresql/client.py`**\n   - Update both:\n     - `runshell_db(cls, conn_params)` \u2192 `runshell_db(cls, conn_params, parameters=None)`\n     - `runshell(self)` \u2192 `runshell(self, parameters=None)`\n   - If command is provided, append `['-c', command]` to `psql` args.\n   - Forward `parameters` from instance method to classmethod.\n\n4. **`django/db/backends/mysql/client.py`**\n   - Update:\n     - `settings_to_cmd_args(cls, settings_dict)` \u2192 include optional `parameters=None`\n     - `runshell(self)` \u2192 `runshell(self, parameters=None)`\n   - If command exists, append `['-e', command]` to mysql args.\n\n5. **`django/db/backends/oracle/client.py`**\n   - Update `runshell(self)` signature to accept `parameters=None`.\n   - For `-c SQL`, pass SQL through stdin to `sqlplus` (e.g., `subprocess.run(..., input=command, text=True, check=True)`), while keeping existing rlwrap behavior for interactive mode.\n\n6. **`django/db/backends/sqlite3/client.py`**\n   - Update `runshell(self)` signature to accept `parameters=None`.\n   - If command exists, append SQL as positional argument: `sqlite3 <db> \"<SQL>\"`.\n\n---\n\n## Test files that should be updated (complete fix boundary)\n\n7. **`tests/dbshell/test_postgresql.py`**\n   - Add coverage for `-c` mapping to `psql -c ...`.\n   - Adjust helpers if needed for new method signatures.\n\n8. **`tests/dbshell/test_mysql.py`**\n   - Add tests that command becomes `-e ...`.\n   - Update helper to call `settings_to_cmd_args(..., parameters=...)` if signature changed.\n\n9. **`tests/dbshell/test_oracle.py`**\n   - Add tests for command execution path (stdin/input passed to subprocess).\n   - Ensure existing rlwrap tests still pass for interactive mode.\n\n10. **`tests/dbshell/test_sqlite.py`**\n    - Add tests for command appended as positional SQL argument.\n\n---\n\n## Likely also needed (command-level integration test)\n\n11. **`tests/user_commands/tests.py`** or another management-command test module that covers `call_command('dbshell', ...)` behavior (project-dependent location).\n   - Add/adjust a test asserting `dbshell --command=\"...\"` forwards options to `connection.client.runshell(parameters=...)`.\n   - This ensures management command plumbing is tested, not only backend helpers.\n\nIf this codebase currently lacks a dbshell command unit test at management layer, you should add one in the appropriate management command test module.",
+      "metrics_read": {
+        "recall": 0.75,
+        "precision": 0.6,
+        "f1": 0.6666666666666665
+      },
+      "metrics_proposed": {
+        "recall": 0.75,
+        "precision": 0.5454545454545454,
+        "f1": 0.631578947368421
+      }
+    }
+  },
+  {
+    "instance_id": "django__django-11991",
+    "repo": "django/django",
+    "ground_truth_files": [
+      "django/contrib/gis/db/backends/postgis/schema.py",
+      "django/contrib/postgres/indexes.py",
+      "django/db/backends/base/features.py",
+      "django/db/backends/base/schema.py",
+      "django/db/backends/postgresql/features.py",
+      "django/db/backends/postgresql/schema.py",
+      "django/db/models/base.py",
+      "django/db/models/constraints.py",
+      "django/db/models/indexes.py"
+    ],
+    "control": {
+      "tool_calls": 11,
+      "read_calls": 6,
+      "grep_calls": 4,
+      "list_calls": 1,
+      "files_read": [
+        "django/db/models/indexes.py",
+        "django/db/backends/base/schema.py",
+        "django/db/backends/postgresql/schema.py",
+        "django/db/backends/base/schema.py",
+        "django/db/backends/postgresql/schema.py",
+        "django/db/backends/ddl_references.py"
+      ],
+      "files_read_unique": [
+        "django/db/backends/postgresql/schema.py",
+        "django/db/backends/base/schema.py",
+        "django/db/backends/ddl_references.py",
+        "django/db/models/indexes.py"
+      ],
+      "n_files_read": 4,
+      "greps": [
+        "class Index",
+        "INCLUDE",
+        "create_sql",
+        "def _create_index_sql"
+      ],
+      "total_chars_consumed": 50121,
+      "final_response": "To implement this feature completely, the files that need modification are:\n\n1. **`django/db/models/indexes.py`**  \n   - Extend `Index.__init__()` with `include=()` support.\n   - Validate `include` type and constraints (similar style to `fields`/`opclasses` checks).\n   - Store included columns/field names on the instance.\n   - Pass include columns through `create_sql()`.\n   - Include `include` in `deconstruct()`, `__repr__`, equality behavior (via deconstruct), cloning, and likely name generation hash input if required for uniqueness semantics.\n\n2. **`django/db/backends/base/schema.py`**  \n   - Add plumbing in `_create_index_sql()` (and any helper it delegates to) to accept an `include` argument.\n   - Ensure default behavior on non-supporting backends is no-op (i.e., ignore include safely).\n   - Potentially add backend feature gating hook/SQL part placeholder so subclasses can inject INCLUDE clause cleanly.\n   - If SQL templates are structured with parts (`extra`, `condition`), add/include an `include` part in statement construction flow.\n\n3. **`django/db/backends/postgresql/schema.py`**  \n   - Update PostgreSQL index SQL generation to emit `INCLUDE (col...)` for provided non-key columns.\n   - Ensure support works for normal and concurrent index creation paths (`sql_create_index`, `sql_create_index_concurrently`).\n   - Ensure column quoting and statement object usage are correct (likely via `Columns`/`IndexColumns` helpers).\n\n4. **`django/contrib/gis/db/backends/postgresql/schema.py`** (or GIS PostGIS schema editor equivalent in this tree)  \n   - The ticket explicitly says PostgreSQL **and GIS backends** need updating.\n   - GIS backend typically overrides index creation SQL; it must also include INCLUDE support to stay behaviorally consistent.\n\n5. **`django/db/backends/ddl_references.py`**  \n   - If index SQL statement assembly uses reference wrapper objects for columns, you may need a new/reference class or reuse `Columns` for INCLUDE column rendering.\n   - Ensure rename-table/rename-column behavior remains correct for deferred SQL containing include columns.\n\n6. **Tests for indexes and backend schema SQL generation**:\n   - **`tests/model_indexes/...`** (exact files depend on current layout; likely `tests/model_indexes/tests.py` and/or migrations deconstruction tests)  \n     Add tests for:\n     - `Index(include=[...])` constructor/deconstruct/clone/repr behavior.\n     - SQL generation contains INCLUDE for PostgreSQL.\n     - Non-PostgreSQL backends ignore/include handling as expected.\n   - **`tests/postgres_tests/...`** (index/sql/schema tests)  \n     Add backend-specific SQL assertions for INCLUDE and concurrently path.\n   - **`tests/gis_tests/...`** (if GIS backend has schema/index SQL tests)  \n     Add/adjust tests proving GIS backend emits INCLUDE correctly.\n\n---\n\n### Why these are the full boundary\n- Root API surface is `Index` model object (`indexes.py`).\n- SQL emission path flows through base schema editor + PostgreSQL override.\n- Ticket explicitly calls out GIS backend parity.\n- Django requires deconstruction/migration serialization consistency, so tests and deconstruct path must be updated.\n- Deferred DDL/reference helpers may need extension if INCLUDE columns are represented as structured statement parts.\n\nIf you want, I can now enumerate the **exact test files** in this repository tree that should be edited by locating current index/schema test modules.",
+      "metrics_read": {
+        "recall": 0.3333333333333333,
+        "precision": 0.75,
+        "f1": 0.46153846153846156
+      },
+      "metrics_proposed": {
+        "recall": 0.3333333333333333,
+        "precision": 0.5,
+        "f1": 0.4
+      }
+    },
+    "codedna": {
+      "tool_calls": 9,
+      "read_calls": 5,
+      "grep_calls": 3,
+      "list_calls": 1,
+      "files_read": [
+        "django/db/models/indexes.py",
+        "django/db/backends/base/schema.py",
+        "django/db/backends/postgresql/schema.py",
+        "django/db/backends/base/features.py",
+        "django/db/backends/postgresql/features.py"
+      ],
+      "files_read_unique": [
+        "django/db/backends/base/features.py",
+        "django/db/backends/base/schema.py",
+        "django/db/backends/postgresql/schema.py",
+        "django/db/backends/postgresql/features.py",
+        "django/db/models/indexes.py"
+      ],
+      "n_files_read": 5,
+      "greps": [
+        "class Index",
+        "CREATE INDEX",
+        "include"
+      ],
+      "total_chars_consumed": 43168,
+      "final_response": "Great \u2014 I traced the relevant code paths, and a **complete fix** should touch the following files.\n\n## Files that require modification\n\n1. **`django/db/models/indexes.py`**\n   - Add `include=()` (or list/tuple) support to `Index.__init__`.\n   - Validate `include` type similarly to `fields`/`opclasses`.\n   - Store `self.include`.\n   - In `create_sql()`, pass `include=self.include` to `schema_editor._create_index_sql(...)`.\n   - In `deconstruct()`, serialize `include` when non-empty.\n   - Likely update `__repr__`/equality behavior indirectly via deconstruct.\n\n2. **`django/db/backends/base/schema.py`**\n   - Extend `_create_index_sql(...)` signature to accept `include=()`.\n   - Ensure the `Statement` context includes an `include` placeholder (default empty).\n   - Base backend should ignore it unless backend supports covering indexes.\n   - Any helper methods that call `_create_index_sql` may need updated call signatures for forwarding kwargs cleanly.\n\n3. **`django/db/backends/postgresql/schema.py`**\n   - Update PostgreSQL index SQL templates to include `%(include)s` in the correct position:\n     - after key columns and before condition (e.g. `... (%(columns)s)%(include)s%(extra)s%(condition)s` or equivalent ordering consistent with existing code conventions).\n   - Implement/override `_create_index_sql(...)` (if needed) to build `INCLUDE (...)` when `include` is provided.\n   - Quote/include columns correctly via schema editor utilities.\n\n4. **`django/db/backends/base/features.py`**\n   - Add capability flag:\n     - `supports_covering_indexes = False` (default).\n\n5. **`django/db/backends/postgresql/features.py`**\n   - Enable covering indexes for PG11+:\n     - `supports_covering_indexes = property(operator.attrgetter('is_postgresql_11'))` (or equivalent cached property/boolean style used in file).\n\n## Test files that should also be updated/added\n\nTo make the fix complete, tests must cover constructor behavior, SQL generation, and migration serialization. These are the likely files to update:\n\n6. **`tests/model_indexes/tests.py`** (or equivalent index API tests file)\n   - Add tests for `Index(include=[...])` validation.\n   - Ensure include fields must be concrete/local fields.\n   - Ensure `deconstruct()` round-trips include.\n\n7. **`tests/schema/tests.py`** (and/or backend-specific schema tests)\n   - Verify generated SQL includes `INCLUDE (...)` on supported PostgreSQL versions.\n   - Verify unsupported backends ignore/reject per current Django policy (usually gated by features).\n\n8. **`tests/postgres_tests/...`** (backend-specific index tests location)\n   - Add PostgreSQL-only CREATE INDEX SQL tests with include columns.\n   - Add version-gated behavior (PG < 11 vs >= 11).\n\n9. **`tests/migrations/...`** (likely writer/serializer/state tests)\n   - Ensure migration rendering includes `include=[...]` for `models.Index`.\n   - Ensure migration autodetector/state comparison sees include changes as index changes.\n\n---\n\nIf you want, I can now do a second pass to identify the **exact concrete test module paths** in this tree (not just likely locations) and give a patch plan per file.",
+      "metrics_read": {
+        "recall": 0.5555555555555556,
+        "precision": 1.0,
+        "f1": 0.7142857142857143
+      },
+      "metrics_proposed": {
+        "recall": 0.5555555555555556,
+        "precision": 0.7142857142857143,
+        "f1": 0.6250000000000001
+      }
+    }
+  },
+  {
+    "instance_id": "django__django-11808",
+    "repo": "django/django",
+    "ground_truth_files": [
+      "django/contrib/messages/storage/base.py",
+      "django/contrib/postgres/constraints.py",
+      "django/core/validators.py",
+      "django/db/models/base.py",
+      "django/db/models/constraints.py",
+      "django/db/models/expressions.py",
+      "django/db/models/indexes.py",
+      "django/db/models/query.py",
+      "django/db/models/query_utils.py",
+      "django/template/context.py"
+    ],
+    "control": {
+      "tool_calls": 7,
+      "read_calls": 2,
+      "grep_calls": 4,
+      "list_calls": 1,
+      "files_read": [
+        "django/db/models/base.py",
+        "django/db/models/base.py"
+      ],
+      "files_read_unique": [
+        "django/db/models/base.py"
+      ],
+      "n_files_read": 1,
+      "greps": [
+        "def __eq__\\(",
+        "__eq__\\s*=",
+        "class Model",
+        "def __eq__"
+      ],
+      "total_chars_consumed": 18097,
+      "final_response": "Root listed \u2705\n\nBased on the problem statement, the likely fix surface is broader than just `Model.__eq__`, and we should inspect all custom `__eq__` implementations in Django model/utility classes and corresponding tests.\n\nFrom initial tracing, the first confirmed file needing change is:\n\n1. **`django/db/models/base.py`**\n   - `Model.__eq__` currently returns `False` for non-model objects.\n   - It should return `NotImplemented` when comparison type is unsupported.\n\nTo provide the **complete** list (including \u201cseveral Django model and utility classes\u201d + tests), I need to continue scanning all `__eq__` implementations across `django/` and their tests.",
+      "metrics_read": {
+        "recall": 0.1,
+        "precision": 1.0,
+        "f1": 0.18181818181818182
+      },
+      "metrics_proposed": {
+        "recall": 0.1,
+        "precision": 1.0,
+        "f1": 0.18181818181818182
+      }
+    },
+    "codedna": {
+      "tool_calls": 6,
+      "read_calls": 2,
+      "grep_calls": 3,
+      "list_calls": 1,
+      "files_read": [
+        "django/db/models/base.py",
+        "django/core/validators.py"
+      ],
+      "files_read_unique": [
+        "django/db/models/base.py",
+        "django/core/validators.py"
+      ],
+      "n_files_read": 2,
+      "greps": [
+        "def __eq__\\(",
+        "__eq__",
+        "Model.__eq__|__eq__"
+      ],
+      "total_chars_consumed": 20323,
+      "final_response": "Root directory listed \u2705\n\nI also did an initial scan of `__eq__` implementations and started tracing likely impacted files. Based on this problem statement (\u201capply consistently to `__eq__` methods across several Django model and utility classes\u201d), the files that need modification are:\n\n### Core code files\n1. **`django/db/models/base.py`**\n   - `Model.__eq__` currently returns `False` for non-Model objects.\n   - Should return `NotImplemented` when it cannot compare meaningfully.\n\n2. **`django/core/validators.py`**\n   - Multiple validator classes define `__eq__` and currently use `isinstance(... ) and ...` patterns that evaluate to `False` for unknown types.\n   - These should return `NotImplemented` for unsupported `other` types, then perform normal comparison for supported types.\n   - Likely includes:\n     - `RegexValidator.__eq__`\n     - Other validator subclasses overriding `__eq__` (e.g., `EmailValidator`, `BaseValidator`-derived classes, etc.).\n\n3. **`django/template/context.py`**\n   - Has `__eq__`; must be checked/updated for same NotImplemented semantics if it currently returns `False` for unknown types.\n\n### Test files (to enforce behavior and prevent regressions)\nAt least these test modules will need updates/additions:\n\n4. **`tests/model_tests/...`** (the module that tests `Model.__eq__`; exact file to confirm by scanning model equality tests)\n   - Add/adjust tests asserting Python fallback semantics with `NotImplemented`-returning `__eq__` paths.\n\n5. **`tests/validators/tests.py`** (or equivalent validators test module)\n   - Add tests for validator `__eq__` against unsupported object types, ensuring behavior aligns with returning `NotImplemented`.\n\n6. **`tests/template_tests/...`** (file covering `Context.__eq__`, if present)\n   - Add/update tests for unsupported-type comparisons.\n\n---\n\n### Why these are the architectural boundary\n- The bug is specifically about **rich comparison protocol correctness** (`NotImplemented` vs `False`).\n- Any class with custom `__eq__` in model/utility layers that currently uses boolean short-circuit `isinstance(...) and ...` needs adjustment.\n- Tests must be updated alongside each changed behavior area (model, validators, template/context) to make the fix complete and stable.\n\nIf you want, I can now continue with a full repository trace and give you the **exact concrete test file paths** (not just modules) before patching.",
+      "metrics_read": {
+        "recall": 0.2,
+        "precision": 1.0,
+        "f1": 0.33333333333333337
+      },
+      "metrics_proposed": {
+        "recall": 0.3,
+        "precision": 0.75,
+        "f1": 0.4285714285714285
+      }
+    }
+  }
+]
