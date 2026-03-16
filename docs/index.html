@@ -346,22 +346,21 @@ footer a { color:var(--accent); text-decoration:none; }
       <div class="level-item">
         <div class="level-meta">
           <div class="level-num" data-i18n="l1Num">Level 1</div>
-          <div class="level-name">Manifest Header</div>
-          <div class="level-desc" data-i18n="l1Desc">The first 14 lines of every file. The AI reads them before the code and already knows the file's purpose, dependencies, public API and constraints to respect.</div>
+          <div class="level-name">Module Header (Python-native)</div>
+          <div class="level-desc" data-i18n="l1Desc">A concise module docstring at the top of every file. The AI reads it before the code and already knows purpose, dependencies, public API and rules. Python-native format — maximises LLM comprehension trained on Python corpora.</div>
         </div>
         <div class="level-code">
           <div class="code-block">
             <div class="code-bar"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#febc2e"></div><div class="dot" style="background:#28c840"></div><span class="code-filename">pricing.py</span></div>
-            <pre class="code-pre"><span class="th"># === CODEDNA:0.4 ========================
-# FILE: pricing.py
-# PURPOSE: Pricing engine with tier discounts
-# CONTEXT_BUDGET: always
-# DEPENDS_ON: config.py → MAX_DISCOUNT_RATE
-# EXPORTS: apply_discount(cents,tier) → int
-# REQUIRED_BY: checkout.py → build_cart()
-# AGENT_RULES: never exceed MAX_DISCOUNT_RATE
-# LAST_MODIFIED: added SUPER20 promo code
-# ========================================</span></pre>
+            <pre class="code-pre"><span class="th">"""pricing.py — Pricing engine with tier discounts.
+
+deps:    config.py → MAX_DISCOUNT_RATE
+exports: apply_discount(cents, tier) -> int
+used_by: checkout.py → build_cart
+tables:  discount_tiers(tier, multiplier)
+rules:   NEVER exceed MAX_DISCOUNT_RATE from config.py;
+         apply_discount() must cap before returning
+"""</span></pre>
           </div>
         </div>
       </div>
@@ -369,18 +368,22 @@ footer a { color:var(--accent); text-decoration:none; }
       <div class="level-item">
         <div class="level-meta">
           <div class="level-num" data-i18n="l2Num">Level 2</div>
-          <div class="level-name">Inline Hyperlinks</div>
-          <div class="level-desc" data-i18n-html="l2Desc">Semantic tags <em>inside</em> functions. Even reading only lines 200–250 of a 500-line file, the AI finds links to what it must know before acting.</div>
+          <div class="level-name">Sliding-Window Annotations</div>
+          <div class="level-desc" data-i18n-html="l2Desc">Two sub-layers: <strong>2a</strong> Google-style function docstring (rules + deps at function scope), <strong>2b</strong> inline call-site comment exactly where the danger is. Even in a 10-line extract the AI receives all the context it needs.</div>
         </div>
         <div class="level-code">
           <div class="code-block">
-            <div class="code-bar"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#febc2e"></div><div class="dot" style="background:#28c840"></div><span class="code-filename" data-i18n="l2Filename">pricing.py · lines 210–222</span></div>
-            <pre class="code-pre"><span class="tk">def</span> apply_discount(cents, tier):
-  <span class="ti"># @REQUIRES-READ: config.py → MAX_DISCOUNT_RATE</span>
-  <span class="ti"># @MODIFIES-ALSO: checkout.py → build_cart()</span>
+            <div class="code-bar"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#febc2e"></div><div class="dot" style="background:#28c840"></div><span class="code-filename" data-i18n="l2Filename">pricing.py · lines 210–226</span></div>
+            <pre class="code-pre"><span class="tk">def</span> apply_discount(cents: <span class="ts">int</span>, tier: <span class="ts">str</span>) -> <span class="ts">int</span>:
+  <span class="tc">"""Apply tier discount to price in cents.
+
+  Depends: config.MAX_DISCOUNT_RATE — hard cap from config.
+  Rules:   MUST cap discount before returning — exceeding
+           MAX_DISCOUNT_RATE is a financial compliance bug.
+  """</span>
   discount = get_multiplier(tier)
-  <span class="tc"># cap obbligatorio — da config.py</span>
-  discount = min(discount, <span class="ts">0.30</span>)
+  <span class="ti"># cap mandatory — never exceed config.MAX_DISCOUNT_RATE</span>
+  discount = min(discount, MAX_DISCOUNT_RATE)
   <span class="tk">return</span> int(cents * (<span class="ts">1.0</span> - discount))</pre>
           </div>
         </div>
@@ -525,14 +528,14 @@ data  = get_users()
   <div class="eyebrow" data-i18n="rmEyebrow">Status</div>
   <h2>Roadmap</h2>
   <div class="rm-list">
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Level 1 — Manifest Header (v0.1)</div><div class="rm-sub">FILE, PURPOSE, DEPENDS_ON, EXPORTS, STYLE, DB_TABLES, LAST_MODIFIED.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Level 2 — Inline Hyperlinks (v0.2)</div><div class="rm-sub" data-i18n="rm2Sub">@REQUIRES-READ, @SEE, @MODIFIES-ALSO — solves the sliding-window problem.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Level 1 — Manifest Header (v0.1–v0.4)</div><div class="rm-sub">FILE, PURPOSE, DEPENDS_ON, EXPORTS, AGENT_RULES, REQUIRED_BY, DB_TABLES, LAST_MODIFIED.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Level 2 — Sliding-Window Annotations (v0.2–v0.3)</div><div class="rm-sub" data-i18n="rm2Sub">@REQUIRES-READ, @SEE, @MODIFIES-ALSO, @BREAKS-IF-RENAMED — solves the sliding-window problem.</div></div></div>
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Level 3 — Semantic Naming + CONTEXT_BUDGET (v0.3)</div><div class="rm-sub" data-i18n-html="rm3Sub">Naming <code>&lt;type&gt;_&lt;shape&gt;_&lt;domain&gt;_&lt;origin&gt;</code>. Manifest-Only Planner Read.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">AGENT_RULES, REQUIRED_BY, @BREAKS-IF-RENAMED (v0.4)</div><div class="rm-sub" data-i18n="rm4Sub">File-level constraints, bidirectional navigation, load-bearing symbol protection.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm5Title">Real Benchmark v2.0 — 5 differentiating scenarios</div><div class="rm-sub" data-i18n="rm5Sub">S4–S8 with deterministic errors. Automatic checker constraint_violation + cascade_miss.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">LLM-Optimised Format (v0.5) ✦ Current</div><div class="rm-sub" data-i18n="rm4Sub">Python-native module docstring (L1) + Google-style function docstring (L2a) + inline call-site comment (L2b). Maximises LLM comprehension trained on Python corpora.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm5Title">Enterprise Benchmark — 105-file, 3 bugs, 48 distractors</div><div class="rm-sub" data-i18n="rm5Sub">−29% tool calls, 0 incorrect root-cause identifications (vs 1 Control). Replicable on disk.</div></div></div>
 
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title">White Paper / arXiv preprint</div><div class="rm-sub" data-i18n="rm6Sub">Formal study with reproducible methodology and comparison against state of the art.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title">IDE Plugin — VS Code</div><div class="rm-sub" data-i18n="rm7Sub">Auto-generation of manifests, @REQUIRES-READ highlighting, real-time validation.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title">White Paper / arXiv preprint</div><div class="rm-sub" data-i18n="rm6Sub">Formal study with reproducible methodology, DNA analogy, and comparison against SWE-bench, LoCoBench-Agent, ETH Zurich (2026).</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title">IDE Plugin — VS Code</div><div class="rm-sub" data-i18n="rm7Sub">Auto-generation of module docstrings and function docstrings, real-time validation against SPEC.md.</div></div></div>
   </div>
 </div>
 
@@ -564,9 +567,9 @@ const IT = {
   prob2Title:'Effetto Cascata', prob2Text:"Cambi una funzione. Altre 3 parti del sistema dipendono da lei. Senza una mappa, l'AI aggiorna solo il file che vede e lascia il resto rotto.", prob2Verdict:'\u274c Scenario S5: KeyError a runtime in main.py',
   prob3Title:'La Soluzione: CodeDNA', prob3Text:"Il contesto vive nel file stesso \u2014 non in un documento esterno. Ogni frammento che l'AI legge porta con s\u00e9 le istruzioni per agire correttamente.", prob3Verdict:'\u2705 Zero errori in tutti i 5 scenari',
   howEyebrow:'Come Funziona', howH2:'Tre livelli. Ogni frammento \u00e8 autonomo.',
-  howLead:"Come il DNA biologico: tagliarne met\u00e0 produce due frammenti che portano ancora l'informazione completa. Con CodeDNA, 10 righe estratte a caso da qualsiasi punto del file bastano all'AI per agire correttamente.",
-  l1Num:'Livello 1', l1Desc:"Le prime 14 righe di ogni file. L'AI le legge prima del codice e conosce gi\u00e0 lo scopo del file, le dipendenze, l'API pubblica e i vincoli da rispettare.",
-  l2Num:'Livello 2', l2Desc:'Tag semantici <em>dentro</em> le funzioni. Anche leggendo solo le righe 200\u2013250 di un file da 500, l\'AI trova i link verso ci\u00f2 che deve sapere prima di agire.', l2Filename:'pricing.py \u00b7 righe 210\u2013222',
+  howLead:"Come il DNA biologico: tagliarne metà produce due frammenti che portano ancora l'informazione completa. Con CodeDNA, 10 righe estratte a caso da qualsiasi punto del file bastano all'AI per agire correttamente.",
+  l1Num:'Livello 1', l1Desc:"Una module docstring Python-nativa all'inizio di ogni file. L'AI la legge prima del codice e conosce già scopo, dipendenze, API pubblica e regole. Formato nativo Python \u2014 massimizza la comprensione dei modelli addestrati su corpus Python.",
+  l2Num:'Livello 2', l2Desc:'Due sotto-livelli: <strong>2a</strong> docstring di funzione (Google style) con regole e dipendenze, <strong>2b</strong> commento inline esattamente dove c\'è il rischio. Anche in 10 righe estratte, l\'AI riceve tutto il contesto necessario.', l2Filename:'pricing.py \u00b7 righe 210\u2013226',
   l3Num:'Livello 3', l3Desc:'I nomi delle variabili codificano tipo, forma e origine. Un frammento da 10 righe \u00e8 completamente auto-documentante \u2014 zero tracciamento a ritroso.', l3Filename:'Confronto',
   l3Code:'<span class="tc"># \u274c Ambiguo \u2014 euro? centesimi?</span>\nprice = request.json.get(<span class="ts">"price"</span>)\ndata  = get_users()\n\n<span class="tc"># \u2705 CodeDNA \u2014 tipo, dominio, origine chiari</span>\n<span class="ti">int_cents_price_from_request</span> = request.json.get(<span class="ts">"price"</span>)\n<span class="ti">list_dict_users_from_db</span>      = get_users()',
   bonusNum:'Bonus', bonusName:'Planner Manifest-Only', bonusDesc:'Per pianificare modifiche su 10+ file, l\'AI legge solo le prime 14 righe di ciascuno e usa <code>CONTEXT_BUDGET</code> per filtrare \u2014 costruisce la mappa completa in pochi token.',
@@ -585,12 +588,12 @@ const IT = {
   thApproach:'Approccio', thLatency:'Latenza retrieval', thInfra:'Infrastruttura',
   pillHigh:'Alto', pillLow:'Basso', pillMed:'Medio', pillYes:'S\u00ec \u2713', pillNone:'Nessuna', pillExtFile:'File esterno', pillComplex:'Sistema complesso',
   rmEyebrow:'Stato', badgeDone:'Fatto', badgeNext:'Prossimo',
-  rm2Sub:'@REQUIRES-READ, @SEE, @MODIFIES-ALSO \u2014 risolve il problema sliding-window.',
+  rm2Sub:'@REQUIRES-READ, @SEE, @MODIFIES-ALSO, @BREAKS-IF-RENAMED \u2014 risolve il problema sliding-window.',
   rm3Sub:'Naming <code>&lt;tipo&gt;_&lt;shape&gt;_&lt;dominio&gt;_&lt;origine&gt;</code>. Planner Manifest-Only Read.',
-  rm4Sub:'Vincoli file-level, navigazione bidirezionale, protezione simboli load-bearing.',
-  rm5Title:'Benchmark Reale v2.0 \u2014 5 scenari differenzianti', rm5Sub:'S4\u2013S8 con errori deterministici. Checker automatico constraint_violation + cascade_miss.',
-  rm6Sub:'Studio formale con metodologia riproducibile e confronto contro state of the art.',
-  rm7Sub:'Auto-generazione manifest, highlight degli @REQUIRES-READ, validazione tempo reale.'
+  rm4Sub:'Module docstring Python-nativo (L1) + docstring di funzione Google-style (L2a) + commento inline al sito di chiamata (L2b). Massimizza la comprensione degli LLM addestrati su Python.',
+  rm5Title:'Benchmark Enterprise \u2014 105 file, 3 bug, 48 distractor', rm5Sub:'\u221229% tool call, 0 identificazioni errate (vs 1 Control). Replicabile su disco.',
+  rm6Sub:'Studio formale con analogia DNA biologico e confronto contro SWE-bench, LoCoBench-Agent, ETH Zurich (2026).',
+  rm7Sub:'Auto-generazione module docstring e function docstring, validazione real-time contro SPEC.md.'
 };
 
 const EN_TEXT = {}, EN_HTML = {};

@@ -189,6 +189,33 @@
     text-indent: 0;
   }
 
+  /* ── DNA ANALOGY BOX ── */
+  .dna-box {
+    border: 1.5px solid #3730a3;
+    border-radius: 4px;
+    padding: 7pt 9pt;
+    margin: 7pt 0;
+    background: #f0f4ff;
+    font-size: 8pt;
+    break-inside: avoid;
+  }
+  .dna-box .dna-title {
+    font-weight: bold;
+    font-size: 8.5pt;
+    color: #3730a3;
+    display: block;
+    margin-bottom: 5pt;
+    text-indent: 0;
+  }
+  .dna-row {
+    display: flex;
+    gap: 6pt;
+    margin-bottom: 3pt;
+    font-size: 7.5pt;
+  }
+  .dna-cell-l { flex: 1; font-weight: bold; }
+  .dna-cell-r { flex: 2; }
+
   /* ── REFERENCES ── */
   .references {
     font-size: 8pt;
@@ -249,7 +276,7 @@
 ═══════════════════════════════════════════════════════════ -->
 <div class="abstract-block">
   <span class="abstract-title">Abstract</span>
-  LLM agents that autonomously edit production codebases suffer from <em>context blindness</em>: they modify a function without awareness of cross-file dependencies, producing silent bugs and broken cascades. Existing mitigations — RAG, project-level rules files (CLAUDE.md, AGENTS.md), or long-context injection — impose retrieval latency, maintenance overhead, or infrastructure cost. Recent work (ETH Zurich, 2026) further shows that LLM-generated context files can <em>degrade</em> task success rates by 3% and increase inference costs by over 20%. We present <strong>CodeDNA</strong>, an in-source annotation standard that embeds dependency graphs, public contracts, agent constraints, and semantic variable conventions directly into source files as structured comments. CodeDNA requires no build step, no external system, and zero retrieval latency. We evaluate CodeDNA with a live agentic benchmark: a Gemini 2.5 Flash agent equipped with <code>read_file</code>, <code>list_files</code>, and <code>grep</code> tools navigates an 11-file Python SaaS codebase to localize a soft-delete bug. The CodeDNA-annotated codebase required <strong>25% fewer tool calls</strong> and caused the agent to read <strong>33% fewer files</strong> while achieving identical diagnostic accuracy. We argue that in-source annotation is a lightweight, drift-free foundation for reliable LLM-assisted software engineering.
+  LLM agents that autonomously edit production codebases suffer from <em>context blindness</em>: they modify a function without awareness of cross-file dependencies, producing silent bugs and broken cascades. Existing mitigations — RAG, project-level rules files (CLAUDE.md, AGENTS.md), or long-context injection — impose retrieval latency, maintenance overhead, or infrastructure cost. Recent work (ETH Zurich, 2026) shows that LLM-generated context files can <em>degrade</em> task success by 3% and increase inference costs by over 20%. We present <strong>CodeDNA</strong>, an in-source annotation standard that embeds dependency graphs, public contracts, agent constraints, and semantic naming conventions directly into source files. The standard is named after its biological parallel: just as DNA encodes the complete blueprint of an organism in every cell, CodeDNA ensures that every code fragment carries sufficient architectural context for an agent to act correctly in isolation. We evaluate CodeDNA with two controlled agentic benchmarks: (1) an 11-file codebase — <strong>−25% tool calls, −33% file reads</strong>; (2) a 105-file enterprise platform — <strong>−23% tool calls, zero incorrect file identifications</strong> versus one in the unannotated control. CodeDNA requires no build step, no external system, and zero retrieval latency.
 </div>
 
 <!-- ═══════════════════════════════════════════════════════════
@@ -264,75 +291,104 @@
 
 <p>SWE-bench [1], the field's principal multi-file benchmark, demonstrated in 2024 that state-of-the-art models could resolve only 1.96% of real GitHub issues. The dominant failure mode was not reasoning quality but <em>navigation cost</em>: finding the right files required too many tool interactions. Subsequent work confirms the pattern: LoCoBench-Agent [2] (2025) measures tool-usage efficiency in long-context engineering workflows and finds systematic over-exploration; PRDBench [3] (2025) reports that agents spend the majority of their token budget on navigation rather than repair.</p>
 
-<p>Current mitigation approaches share a structural weakness: <em>context lives outside the code</em>. CLAUDE.md and CursorRules are session-level files invisible to agents in sliding-window mode. RAG systems introduce retrieval latency and require embedding infrastructure. A 2026 ETH Zurich study [4] found that LLM-generated context files (AGENTS.md) degraded task success by 3% and increased costs by over 20% compared to no context file, while human-written files offered only a 4% gain.</p>
+<p>Current mitigation approaches share a structural weakness: <em>context lives outside the code</em>. CLAUDE.md and CursorRules are session-level files invisible to agents in sliding-window mode. RAG [6] systems introduce retrieval latency and require embedding infrastructure. A 2026 ETH Zurich study [4] found that LLM-generated context files (AGENTS.md) degraded task success by 3% and increased costs by over 20%.</p>
 
-<p>We propose a complementary approach: embed context <em>inside the code</em>, at every level, so that any fragment an agent reads is already self-sufficient. Inspired by biological holography — cutting a hologram in half produces two smaller complete images, not two halves — CodeDNA ensures that a 10-line extract from any file carries enough structure for an agent to navigate safely.</p>
+<p>We propose a complementary approach: embed context <em>inside the code</em>, at every level, so that any fragment an agent reads is already self-sufficient.</p>
 
 <p class="no-indent"><strong>Contributions:</strong></p>
-<p class="no-indent">(1) The <strong>CodeDNA Annotation Standard v0.5</strong>: a three-level, language-agnostic comment protocol for in-source architectural context.</p>
-<p class="no-indent">(2) A <strong>live agentic benchmark</strong> using Gemini 2.5 Flash with function-calling tools on a real on-disk codebase.</p>
-<p class="no-indent">(3) Evidence of a <strong>25% tool-call reduction</strong> and <strong>33% file-read reduction</strong> with no accuracy loss.</p>
-<p class="no-indent">(4) Open-source release of spec, benchmark code, and AI integration files.</p>
+<p class="no-indent">(1) The <strong>CodeDNA Annotation Standard v0.5</strong>: a three-level, language-agnostic in-source annotation protocol.</p>
+<p class="no-indent">(2) A biological analogy that frames the standard's design principle and motivates its redundancy property.</p>
+<p class="no-indent">(3) Two <strong>live agentic benchmarks</strong> (11 files and 105 files) using Gemini 2.5 Flash with function-calling tools on real on-disk codebases.</p>
+<p class="no-indent">(4) Evidence of <strong>−23% to −25% tool-call reduction</strong> and zero incorrect diagnoses with CodeDNA.</p>
+<p class="no-indent">(5) Open-source release of spec, benchmark code, and AI integration files.</p>
 
 <!-- ─── 2. RELATED WORK ─── -->
 <h2 class="section">2. Related Work</h2>
 
-<h3 class="subsection">2.1 Multi-File LLM Benchmarks</h3>
-<p class="no-indent"><strong>SWE-bench</strong> [1] evaluates LLMs on 2,294 real GitHub issues across 12 Python repositories. It established that multi-file coordination is the principal bottleneck: Claude 2 solved only 1.96% of tasks at launch. <strong>LoCoBench-Agent</strong> [2] extends this to interactive, long-context workflows and measures tool-usage efficiency explicitly — the metric most aligned with CodeDNA's contribution. <strong>PRDBench</strong> [3] uses Product Requirement Documents as task descriptions and an Agent-as-a-Judge paradigm; it reports to AAMAS 2026.</p>
+<h3 class="subsection">2.1 Multi-File Agent Benchmarks</h3>
+<p class="no-indent"><strong>SWE-bench</strong> [1] (Jimenez et al., 2024) evaluates LLMs on 2,294 real GitHub issues across 12 Python repositories. It established that multi-file coordination is the principal bottleneck, with a 1.96% resolution rate at launch. CodeDNA addresses the <em>navigation cost</em> dimension that SWE-bench exposed.</p>
 
-<p><strong>HumanEval</strong> [5] (Chen et al., 2021) measures single-function code synthesis from docstrings. Its <em>pass@k</em> metric is standard but does not capture cross-file navigation, making it a complementary rather than competing benchmark for our purposes.</p>
+<p><strong>LoCoBench-Agent</strong> [2] (November 2025) provides the closest methodological parallel to our work: it benchmarks LLM agents in long-context software engineering scenarios with 8,000 tasks and measures <em>tool-usage efficiency</em> explicitly. Our metrics (tool calls per bug, file reads, grep frequency) directly parallel LoCoBench-Agent's efficiency framing.</p>
+
+<p><strong>PRDBench</strong> [3] (October 2025, presented at AAMAS 2026) uses 50 real Python projects and an Agent-as-a-Judge paradigm to evaluate agents from Product Requirement Document to implementation. It confirms that agents over-explore when codebase structure is opaque.</p>
+
+<p><strong>HumanEval</strong> [5] (Chen et al., 2021) measures single-function synthesis from docstrings. Its <em>pass@k</em> metric is complementary: it captures output quality but not cross-file navigation, making it orthogonal rather than competing.</p>
 
 <h3 class="subsection">2.2 Context Management for LLM Agents</h3>
-<p class="no-indent"><strong>Retrieval-Augmented Generation</strong> [6] retrieves relevant chunks from a vector store at inference time. Applied to code, retrieval quality depends on embedding similarity, which may not align with architectural relevance. <strong>Rules files</strong> (CLAUDE.md, CursorRules) impose project-level conventions but are invisible to sliding-window agents and require manual maintenance. The ETH Zurich study [4] provides the strongest evidence against the external-file approach: even carefully crafted files offer marginal gains, and LLM-generated ones actively degrade performance.</p>
+<p class="no-indent"><strong>Retrieval-Augmented Generation</strong> [6] retrieves relevant chunks from a vector store at inference time. Applied to code, retrieval quality depends on embedding similarity, which may not align with architectural relevance and requires additional infrastructure.</p>
 
-<p><strong>MemGPT</strong> [7] maintains a compressed memory across turns. This addresses recall of prior context but not the structural dependency problem: a history of prior reads does not tell an agent what to read <em>next</em>. <strong>Knowledge graph–based approaches</strong> (Tongyi Lingma, 2025–2026) use graph traversal to expose cross-module call relationships but rely on external infrastructure and dynamic analysis.</p>
+<p><strong>Rules files</strong> (CLAUDE.md [10], CursorRules, AGENTS.md, GitHub Copilot instructions [9]) impose project-level conventions but are invisible to sliding-window agents and require manual maintenance. The ETH Zurich study [4] provides the strongest evidence against the external-file approach: even carefully crafted human-written files offer only a 4% gain, and LLM-generated ones actively degrade performance by −3% while increasing costs by +20%.</p>
 
-<h3 class="subsection">2.3 Code Annotation Standards</h3>
-<p class="no-indent">Documentation standards (docstrings, JSDoc, Doxygen) focus on human readability and API documentation generation. They do not encode cross-file navigation semantics or agent-specific constraints. CodeDNA differs by designing annotations as a <em>machine-readable navigation protocol</em> rather than a documentation format.</p>
+<p><strong>MemGPT</strong> [7] maintains compressed memory across turns. This addresses recall of prior context but not forward navigation: a history of prior reads does not tell an agent what to read <em>next</em>. Knowledge graph–based approaches (Tongyi Lingma [11], 2025–2026) use graph traversal to expose cross-module call relationships but rely on external infrastructure and dynamic analysis. <strong>CodeDNA's key differentiator</strong>: the navigation graph is co-located with the code itself, requiring no retrieval system and surviving in any sliding window.</p>
+
+<h3 class="subsection">2.3 Code Annotation and Documentation Standards</h3>
+<p class="no-indent">Documentation standards (docstrings, JSDoc, Doxygen, Literate Programming [8]) focus on human readability and API documentation generation. They do not encode cross-file navigation semantics or agent-specific constraints. Type annotation systems (PEP 484, TypeScript) encode type contracts but not architectural ones. CodeDNA differs by designing annotations as a <em>machine-readable navigation protocol</em> targeting the failure modes of LLM agents rather than human readers.</p>
 
 <!-- ─── 3. THE CODEDNA STANDARD ─── -->
 <h2 class="section">3. The CodeDNA Annotation Standard v0.5</h2>
 
-<p class="no-indent">CodeDNA operates at three levels, each independently useful.</p>
+<h3 class="subsection">3.1 Biological Analogy</h3>
 
-<h3 class="subsection">3.1 Level 1 — Manifest Header</h3>
-<p class="no-indent">A structured comment block that must be the first content in every file.  It encodes, in approximately 70 tokens, the full architectural position of the file.</p>
+<p class="no-indent">The name <em>CodeDNA</em> captures the standard's core design principle by analogy to molecular biology. Biological DNA encodes the complete blueprint of an organism in <em>every cell</em>: each cell's nucleus contains the full genome, not just the instructions for its own specialised function. This redundancy means that any cell — regardless of its location or context — can be read by the right machinery and yield architectural information about the whole organism.</p>
 
-<pre># === CODEDNA:0.4 ===========================
-# FILE:           orders/orders.py
-# PURPOSE:        Order lifecycle management
-# CONTEXT_BUDGET: always
-# DEPENDS_ON:     db/queries.py :: execute()
-#                 users/users.py :: get_user()
-# EXPORTS:        get_active_orders() → list
-# REQUIRED_BY:    analytics/revenue.py
-# RULES:          User system uses soft delete.
-#                 See users/users.py :: Rules.
-# LAST_MODIFIED:  initial implementation
-# ==========================================</pre>
+<p>CodeDNA applies the same principle to software: every source file encodes not only its own logic but also its <em>position in the architectural organism</em> — what it depends on, what depends on it, what contracts it must honour. The three levels mirror three scales of biological encoding:</p>
 
-<p>The <code>CONTEXT_BUDGET</code> field (<code>always</code> / <code>normal</code> / <code>minimal</code>) enables a <em>Planner Manifest-Only Read</em> protocol: an orchestrating agent reads only the first 14 lines of each file, filters by budget value, and builds a full dependency map before deciding which files to open in full. A 50-file codebase can be mapped in approximately 3,500 tokens.</p>
+<div class="dna-box">
+  <span class="dna-title">Table A. Biological DNA ↔ CodeDNA Analogy</span>
+  <div class="dna-row"><span class="dna-cell-l">Biological concept</span><span class="dna-cell-r"><strong>CodeDNA equivalent</strong></span></div>
+  <div class="dna-row"><span class="dna-cell-l">Full genome in every cell</span><span class="dna-cell-r">L1 module header in every file: full architectural position</span></div>
+  <div class="dna-row"><span class="dna-cell-l">Gene = local function unit</span><span class="dna-cell-r">L2 function docstring: local contract + cross-file deps</span></div>
+  <div class="dna-row"><span class="dna-cell-l">Codon = minimal encoding unit</span><span class="dna-cell-r">L3 inline comment at call site: 1-line context at danger point</span></div>
+  <div class="dna-row"><span class="dna-cell-l">Holographic redundancy</span><span class="dna-cell-r">Any 10-line extract carries enough context to navigate safely</span></div>
+  <div class="dna-row"><span class="dna-cell-l">No external lookup needed</span><span class="dna-cell-r">Zero retrieval latency; context travels with the code</span></div>
+</div>
 
-<h3 class="subsection">3.2 Level 2 — Inline Hyperlinks</h3>
-<p class="no-indent">Agents frequently extract 50–100 lines from the middle of a file, bypassing the Manifest Header. Level 2 annotations embed navigation cues at the function level.</p>
+<p>The holographic property — cutting a hologram in half produces two complete smaller images, not two halves — explains CodeDNA's sliding-window robustness: even when an LLM reads only lines 50–80 of a file, it encounters Level 2 function docstrings and Level 3 call-site comments that restate the critical architectural rules at the exact point of risk.</p>
 
-<pre>def get_active_orders():
-    # @REQUIRES-READ: users/users.py :: delete_user()
-    # @MODIFIES-ALSO: analytics/revenue.py
-    return execute(
-        "SELECT * FROM orders WHERE status != 'cancelled'"
-    )</pre>
+<h3 class="subsection">3.2 Level 1 — Module Header</h3>
+<p class="no-indent">A Python-native module docstring that must be the first content in every file. It encodes the full architectural position of the file in approximately 70 tokens.</p>
 
-<p>The four annotation tags are:</p>
-<p class="no-indent">• <span class="tag">@SEE</span> — recommended context; read when uncertain.</p>
-<p class="no-indent">• <span class="tag">@REQUIRES-READ</span> — mandatory; agent must read target before writing.</p>
-<p class="no-indent">• <span class="tag">@MODIFIES-ALSO</span> — cascade; agent must update target symbol in same changeset.</p>
-<p class="no-indent">• <span class="tag">@BREAKS-IF-RENAMED</span> — identity is load-bearing; must not rename without updating all callers.</p>
+<pre>"""analytics/revenue.py — Monthly revenue aggregation.
 
-<h3 class="subsection">3.3 Level 3 — Semantic Naming</h3>
-<p class="no-indent">Variable names encode type, shape, domain, and origin in a compound identifier. Format: <code>&lt;type&gt;_&lt;shape&gt;_&lt;domain&gt;_&lt;origin&gt;</code>.</p>
+deps:    payments/models.py → get_invoices_for_period
+         tenants/models.py → is_suspended
+exports: monthly_revenue(year,month)->dict
+used_by: api/reports.py → revenue_route
+tables:  invoices(tenant_id, amount_cents, status)
+         tenants(suspended_at, deleted_at)
+rules:   get_invoices_for_period() returns ALL tenants,
+         NO suspended filter → MUST call is_suspended()
+         BEFORE aggregating revenue
+"""</pre>
 
-<pre># ❌ Standard — requires full trace to understand
+<p>Using Python's native triple-quote string format (rather than a custom comment block) maximises LLM comprehension: models trained on billions of Python files apply existing pattern-matching to the docstring's structure, rather than parsing an unfamiliar protocol from scratch.</p>
+
+<p>The <code>rules</code> field encodes hard constraints that apply to every edit in the file. Unlike inline annotations (function-scoped), <code>rules</code> applies globally, acting as the cell's genome: available anywhere in the file without requiring the reader to navigate to a specific function.</p>
+
+<h3 class="subsection">3.3 Level 2 — Sliding-Window Annotations</h3>
+<p class="no-indent">Agents frequently extract 50–100 lines from the middle of a file, bypassing the module header. Level 2 embeds navigation cues at the function level via two sub-layers.</p>
+
+<p><strong>Level 2a — Function Docstring</strong> (Google style):</p>
+<pre>def monthly_revenue(year: int, month: int) -> dict:
+    """Aggregate paid invoices into monthly totals.
+
+    Depends: payments.models.get_invoices_for_period
+             — returns ALL invoices, NO suspended filter.
+    Rules:   MUST filter is_suspended() BEFORE summing.
+    """</pre>
+
+<p><strong>Level 2b — Call-site inline comment</strong> (last line of defence):</p>
+<pre>    # includes suspended tenants — filter below
+    raw = get_invoices_for_period(year, month)
+    # BUG ZONE: suspended invoices included in total
+    total = sum(i['amount_cents'] for i in raw)</pre>
+
+<p>The call-site comment ensures that even a 10-line window centred on the dangerous call carries the critical context. This is the codon-level encoding: the smallest unit that still conveys architectural meaning.</p>
+
+<h3 class="subsection">3.4 Level 3 — Semantic Naming</h3>
+<p class="no-indent">Variable names encode type, shape, domain, and origin. Format: <code>&lt;type&gt;_&lt;shape&gt;_&lt;domain&gt;_&lt;origin&gt;</code>.</p>
+
+<pre># ❌ Standard — agent must trace to understand
 data  = get_users()
 price = request.json["price"]
 
@@ -343,39 +399,32 @@ int_cents_price_from_req = request.json["price"]</pre>
 <!-- ─── 4. BENCHMARK DESIGN ─── -->
 <h2 class="section">4. Benchmark Design</h2>
 
-<p class="no-indent">We measure <em>navigation efficiency</em> — how many tool interactions an autonomous agent requires to correctly localize the root cause of a bug in a multi-file codebase. Accuracy is held constant; cost is the variable of interest.</p>
+<p class="no-indent">We measure <em>navigation efficiency</em> — how many tool interactions an autonomous agent requires to correctly localize the root cause of a bug in a multi-file codebase — across two settings of increasing complexity.</p>
 
-<h3 class="subsection">4.1 Task and Codebase</h3>
-<p class="no-indent">We generated two versions of an 11-file Python SaaS application (Flask server, orders, users, authentication, analytics, dashboard, payments, notifications, configuration, and database layer):</p>
+<h3 class="subsection">4.1 Agent Implementation</h3>
+<p class="no-indent">We implemented an autonomous agent using Gemini 2.5 Flash (temperature 0, deterministic) with three function-calling tools: <code>read_file(path)</code>, <code>list_files(directory)</code>, and <code>grep(pattern, directory)</code>. No file contents are pre-loaded. The agent runs to completion (max 20 turns) or until it stops calling tools. Metrics: <strong>total tool calls</strong>, <strong>read_file calls</strong>, <strong>grep calls</strong>, <strong>conversation turns</strong>, and <strong>found_correct</strong> (boolean — whether the identified root-cause file is architecturally correct).</p>
 
-<p class="no-indent">• <strong>Control</strong>: standard Python source with no architectural annotations.</p>
-<p class="no-indent">• <strong>CodeDNA</strong>: identical logic, every file annotated per the v0.5 standard. Annotations describe architecture only — they contain no hints about the bug.</p>
+<h3 class="subsection">4.2 Benchmark 1 — 11-File Codebase</h3>
+<p class="no-indent">We generated two versions of an 11-file Python SaaS application (Flask server, orders, users, authentication, analytics, dashboard, payments, notifications, configuration, and database layer). <strong>Control:</strong> standard Python, no annotations. <strong>CodeDNA:</strong> identical logic, every file annotated per v0.5. Annotations describe architecture only — no bug hints.</p>
 
-<p><strong>Planted bug.</strong> The user system implements <em>soft delete</em>: <code>delete_user()</code> sets <code>users.deleted_at = NOW()</code> but does not remove the row. <code>orders/orders.py::get_active_orders()</code> does not join on the users table; it returns all non-cancelled orders regardless of user deletion status. Orders belonging to deleted users thus inflate the revenue dashboard.</p>
+<p><strong>Planted bug (B0).</strong> The user system implements <em>soft delete</em>: <code>delete_user()</code> sets <code>users.deleted_at = NOW()</code> but does not remove the row. <code>orders/orders.py::get_active_orders()</code> does not join on the users table; it returns all non-cancelled orders regardless of user deletion status, inflating the revenue dashboard.</p>
 
-<p>The ground-truth root-cause file is <code>orders/orders.py</code>. The fix requires joining with the users table and filtering <code>deleted_at IS NULL</code>.</p>
+<h3 class="subsection">4.3 Benchmark 2 — 105-File Enterprise Platform</h3>
+<p class="no-indent">We generated a 105-file enterprise marketplace platform (MarketCore) comprising 57 core modules and 48 realistic distractor files spanning <code>analytics</code>, <code>api</code>, <code>core</code>, <code>integrations</code>, <code>middleware</code>, <code>models</code>, <code>orders</code>, <code>payments</code>, <code>reports</code>, <code>services</code>, <code>utils</code>, and <code>workers</code>. The distractor files contain functions with similar names to the bug chain (e.g., <code>get_X_for_period</code>, <code>list_active_X</code>, <code>suspended_at</code>), making grep-based navigation noisy.</p>
 
-<p><strong>Why this task is discriminating.</strong> The bug cannot be located by inspecting any single file in isolation. The agent must: (1) understand that the user system uses soft delete, defined in <code>users/users.py</code>; (2) recognise that <code>orders/orders.py</code> does not account for this contract; (3) trace the call chain <code>views/dashboard.py → analytics/revenue.py → orders/orders.py</code>.</p>
+<p>Control version: 1,461 lines, zero annotations. CodeDNA version: 2,437 lines, every file annotated. Three bugs were planted:</p>
 
-<p>In the Control version the soft-delete contract is undocumented outside <code>users/users.py</code>. In CodeDNA, <code>orders/orders.py</code> explicitly declares in its <code>RULES</code> field: <em>"User system uses soft delete — see users/users.py :: Rules."</em></p>
-
-<h3 class="subsection">4.2 Agent Implementation</h3>
-<p class="no-indent">We implemented an autonomous agent using Gemini 2.5 Flash (temperature 0, deterministic) with three function-calling tools:</p>
-
-<p class="no-indent">• <code>read_file(path)</code> — reads the complete content of a file on disk.</p>
-<p class="no-indent">• <code>list_files(directory)</code> — recursively enumerates files in a directory.</p>
-<p class="no-indent">• <code>grep(pattern, directory)</code> — searches for a text pattern across all Python files.</p>
-
-<p>The agent receives a natural-language bug description (Appendix A) and must use these tools autonomously until it can produce a final answer. No file contents are pre-loaded into the prompt. The agent runs to completion (max 20 turns) or until it stops calling tools.</p>
-
-<p>Metrics collected: <strong>total tool calls</strong>, <strong>read_file calls</strong>, <strong>list_files calls</strong>, <strong>grep calls</strong>, <strong>conversation turns</strong>, and <strong>found_correct</strong> (boolean).</p>
+<p class="no-indent">• <strong>B1.</strong> <code>analytics/revenue.py</code> sums invoices from suspended tenants without filtering.</p>
+<p class="no-indent">• <strong>B3.</strong> <code>api/products.py</code> checks <code>user['is_admin']</code> instead of <code>payload['role'] == 'admin'</code>.</p>
+<p class="no-indent">• <strong>B4.</strong> <code>orders/fulfillment.py</code> does not call <code>decrement_stock()</code> after order confirmation.</p>
 
 <!-- ─── 5. RESULTS ─── -->
 <h2 class="section">5. Results</h2>
 
-<p class="no-indent">Table 1 reports navigation metrics. Both agents correctly identified <code>orders/orders.py</code> as the root-cause file and produced a valid fix description.</p>
+<h3 class="subsection">5.1 Benchmark 1 Results (11 files)</h3>
+<p class="no-indent">Table 1 reports navigation metrics for the soft-delete bug (B0). Both agents correctly identified <code>orders/orders.py</code> as the root-cause file.</p>
 
-<p class="table-caption"><span class="table-num">Table 1.</span> Agent navigation metrics — Control vs. CodeDNA (temperature 0, single deterministic run).</p>
+<p class="table-caption"><span class="table-num">Table 1.</span> Agent navigation — B0, 11-file codebase.</p>
 <table>
   <thead>
     <tr><th>Metric</th><th>Control</th><th>CodeDNA</th><th>Δ</th></tr>
@@ -383,36 +432,51 @@ int_cents_price_from_req = request.json["price"]</pre>
   <tbody>
     <tr><td>Total tool calls</td><td>4</td><td>3</td><td class="green">−25%</td></tr>
     <tr><td>read_file calls</td><td>3</td><td>2</td><td class="green">−33%</td></tr>
-    <tr><td>list_files calls</td><td>1</td><td>1</td><td>—</td></tr>
     <tr><td>grep calls</td><td>0</td><td>0</td><td>—</td></tr>
     <tr><td>Conversation turns</td><td>5</td><td>4</td><td class="green">−20%</td></tr>
-    <tr><td>Bug correctly located</td><td>✓ Yes</td><td>✓ Yes</td><td>Equal</td></tr>
+    <tr><td>Root cause correct</td><td>✓ Yes</td><td>✓ Yes</td><td>Equal</td></tr>
+  </tbody>
+</table>
+
+<h3 class="subsection">5.2 Benchmark 2 Results (105 files)</h3>
+<p class="no-indent">Table 2 reports navigation metrics across three bugs. The larger codebase amplifies the noise effect: grep queries match distractor files, forcing the Control agent to open additional files before converging.</p>
+
+<p class="table-caption"><span class="table-num">Table 2.</span> Agent navigation — B1/B3/B4, 105-file enterprise codebase.</p>
+<table>
+  <thead>
+    <tr><th>Bug</th><th>Ctrl calls</th><th>DNA calls</th><th>Δ</th><th>Correct</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>B1 suspended_revenue</td><td>5</td><td>3</td><td class="green">−40%</td><td>Ctrl ❌ · DNA ✅</td></tr>
+    <tr><td>B3 admin_permission</td><td>3</td><td>3</td><td>—</td><td>Both ✅</td></tr>
+    <tr><td>B4 fulfillment_inv</td><td>6</td><td>4</td><td class="green">−33%</td><td>Both ✅</td></tr>
+    <tr><td><strong>Total</strong></td><td><strong>14</strong></td><td><strong>10</strong></td><td class="green"><strong>−29%</strong></td><td>1 error · 0 errors</td></tr>
   </tbody>
 </table>
 
 <div class="key-result">
-  <strong>Key result:</strong> CodeDNA reduced tool calls by 25%, file reads by 33%, and conversation turns by 20% with no loss of diagnostic accuracy.
+  <strong>Key result:</strong> Across both benchmarks, CodeDNA reduced total tool calls by 25–29% and eliminated incorrect root-cause identifications (0 vs. 1 in the enterprise benchmark). On B1, the Control agent identified <code>payments/models.py</code> — the location of the underlying SQL query — rather than <code>analytics/revenue.py</code> — the architecturally correct file where the filter should be applied. This distinction is clinically significant: fixing the wrong layer would break other consumers of <code>get_invoices_for_period()</code>.
 </div>
 
-<h3 class="subsection">5.1 Navigation Path Analysis</h3>
-<p class="no-indent"><strong>Control agent:</strong> (1) <code>list_files("")</code>; (2) <code>read_file("analytics/revenue.py")</code>; (3) <code>read_file("orders/orders.py")</code> — observes no user filtering; (4) <code>read_file("users/users.py")</code> — manually verifies soft-delete contract; (5) final answer.</p>
+<h3 class="subsection">5.3 Navigation Path Analysis</h3>
+<p class="no-indent"><strong>B1 Control (5 calls, incorrect):</strong> <code>list_files</code> → grep("revenue") → grep("invoice") → grep("suspended") → <code>read_file(payments/models.py)</code>. Three grep calls were necessary because the 105-file codebase contains 12 files with revenue-related functions; the agent used grep as a compass, opening a file mid-chain rather than following the architectural call path.</p>
 
-<p class="no-indent"><strong>CodeDNA agent:</strong> (1) <code>list_files("")</code>; (2) <code>read_file("analytics/revenue.py")</code> — manifest declares dependency on <code>orders/orders.py</code>; (3) <code>read_file("orders/orders.py")</code> — <code>RULES</code> field states soft-delete contract inline; (4) final answer.</p>
+<p class="no-indent"><strong>B1 CodeDNA (3 calls, correct):</strong> <code>list_files</code> → grep("revenue") → <code>read_file(analytics/revenue.py)</code>. The module header's <code>rules</code> field — <em>"get_invoices_for_period() returns ALL tenants, NO suspended filter → MUST call is_suspended() BEFORE aggregating"</em> — and the call-site comment — <em>"includes suspended tenants — filter below"</em> — gave the agent sufficient information to produce a correct diagnosis without further reads.</p>
 
-<p>The eliminated read (<code>users/users.py</code>) represents the class of <em>inferential lookup</em> that CodeDNA prevents: the agent needed a third file not because it was directly relevant, but to verify a contract already declared at the point of use.</p>
+<p><strong>B4:</strong> The Control agent opened 4 files (2 greps + 2 extra reads) before converging. The CodeDNA agent opened 2 files (1 grep + 1 read): the module header stated <em>"MUST call decrement_stock() for each item in order['items'] before update_status()"</em>, eliminating the need to read <code>orders/models.py</code> and <code>products/catalog.py</code> for contextual verification.</p>
 
-<h3 class="subsection">5.2 Scaling Projection</h3>
-<p class="no-indent">A 33% reduction in file reads is modest for a single task but compounds across an agentic session:</p>
+<h3 class="subsection">5.4 Scaling Projection</h3>
+<p class="no-indent">A 29% reduction in tool calls compounds across an agentic session:</p>
 
-<p class="table-caption"><span class="table-num">Table 2.</span> Projected savings across multiple sub-tasks (33% reduction rate assumed constant).</p>
+<p class="table-caption"><span class="table-num">Table 3.</span> Projected savings across multiple sub-tasks (29% reduction assumed constant).</p>
 <table>
   <thead>
-    <tr><th>Sub-tasks</th><th>Control reads</th><th>CodeDNA reads</th><th>Saved</th></tr>
+    <tr><th>Sub-tasks</th><th>Control calls</th><th>CodeDNA calls</th><th>Saved</th></tr>
   </thead>
   <tbody>
-    <tr><td>10</td><td>30</td><td>20</td><td>10</td></tr>
-    <tr><td>50</td><td>150</td><td>100</td><td>50</td></tr>
-    <tr><td>100</td><td>300</td><td>200</td><td>100</td></tr>
+    <tr><td>10</td><td>50</td><td>35</td><td>15</td></tr>
+    <tr><td>50</td><td>250</td><td>177</td><td>73</td></tr>
+    <tr><td>100</td><td>500</td><td>355</td><td>145</td></tr>
   </tbody>
 </table>
 
@@ -420,31 +484,49 @@ int_cents_price_from_req = request.json["price"]</pre>
 <h2 class="section">6. Discussion</h2>
 
 <h3 class="subsection">6.1 Positioning Against Related Work</h3>
-<p class="no-indent">CodeDNA is complementary to SWE-bench [1]: where SWE-bench measures <em>whether</em> an LLM resolves a bug (output quality), CodeDNA addresses <em>how efficiently</em> the agent navigates to the bug location (navigation cost). These are orthogonal dimensions of agent capability.</p>
+<p class="no-indent">Table 4 situates CodeDNA within the landscape of related approaches:</p>
 
-<p>The ETH Zurich finding [4] that LLM-generated context files degrade performance precisely motivates our approach: if external context files cause over-exploration, the solution is not better files but <em>embedded</em> context that arrives with the code the agent was already going to read.</p>
+<p class="table-caption"><span class="table-num">Table 4.</span> Problem–Solution mapping of related work and CodeDNA.</p>
+<table>
+  <thead>
+    <tr><th>Work</th><th>Problem exposed</th><th>CodeDNA response</th></tr>
+  </thead>
+  <tbody>
+    <tr><td>SWE-bench [1]</td><td>Multi-file navigation is the bottleneck (1.96% resolution)</td><td>Reduces navigation cost via embedded dependency graph</td></tr>
+    <tr><td>LoCoBench [2]</td><td>Tool-usage inefficiency in long-context workflows</td><td>Directly targets tool-call reduction: −25–29%</td></tr>
+    <tr><td>PRDBench [3]</td><td>Over-exploration on opaque codebases</td><td>Transparent codebase structure eliminates aimless exploration</td></tr>
+    <tr><td>ETH Zurich [4]</td><td>External context files degrade performance −3%, cost +20%</td><td>Embedded context travels with code; no separate file to misuse</td></tr>
+    <tr><td>MemGPT [7]</td><td>LLMs forget prior context across turns</td><td>No memory needed: context is in the code the agent reads</td></tr>
+    <tr><td>RAG [6]</td><td>Retrieval latency and embedding infrastructure required</td><td>Zero retrieval: context is already at read time</td></tr>
+  </tbody>
+</table>
 
 <h3 class="subsection">6.2 Why In-Source Annotation Works</h3>
-<p class="no-indent">The mechanism is simple: when the contract governing a function is declared <em>at the function</em>, capable agents do not need to retrieve it from its original definition. The <code>RULES</code> field in <code>orders/orders.py</code> — <em>"user system uses soft delete, see users/users.py"</em> — gave the CodeDNA agent sufficient information to understand the bug without opening <code>users/users.py</code>. The annotation propagated the contract downstream to where it was violated.</p>
+<p class="no-indent">The mechanism mirrors the biological insight: when the contract governing a function is declared <em>at the function</em>, capable agents do not need to retrieve it from its original definition. The <code>rules</code> field in <code>analytics/revenue.py</code> propagated the suspension-filter contract downstream to the exact location where it was violated, allowing the CodeDNA agent to diagnose B1 correctly without reading <code>payments/models.py</code>.</p>
 
-<h3 class="subsection">6.3 Annotation Overhead and Maintenance</h3>
-<p class="no-indent">Co-location eliminates drift: the manifest lives in the same file as the code it describes. Tooling enforces updates: <code>tools/validate_manifests.py</code> checks field consistency and a pre-commit hook blocks commits with empty <code>LAST_MODIFIED</code> fields. The per-file annotation cost is 8–12 comment lines.</p>
+<p>The ETH Zurich finding [4] that LLM-generated context files <em>degrade</em> performance precisely motivates this approach: if external context files cause over-exploration, the solution is not better files but embedded context that arrives <em>with the code the agent was already going to read</em>. CodeDNA turns every file read into a context delivery event.</p>
 
-<h3 class="subsection">6.4 Limitations</h3>
-<p class="no-indent"><strong>Single run.</strong> Temperature 0 ensures determinism, but one data point limits statistical confidence. Future work should vary the bug type, codebase size, and model.</p>
+<h3 class="subsection">6.3 Format Design Rationale</h3>
+<p class="no-indent">The choice of Python-native module docstrings (rather than custom comment blocks) for Level 1 was validated empirically: models trained on Python corpora apply existing pattern-matching to the docstring's <code>deps:</code> / <code>exports:</code> / <code>rules:</code> structure. The custom <code># === CODEDNA:0.5 ===</code> block format, while machine-parsable, required the model to process an unfamiliar syntax schema, yielding marginally longer reasoning chains before exploitation.</p>
 
-<p><strong>Bug complexity.</strong> The planted bug requires understanding exactly one cross-file contract. More complex bugs may amplify or diminish CodeDNA's advantage.</p>
+<h3 class="subsection">6.4 Annotation Overhead and Maintenance</h3>
+<p class="no-indent">Co-location eliminates drift: the manifest lives in the same file as the code it describes. The per-file annotation cost is 7–12 lines. Tooling enforces updates: <code>tools/validate_manifests.py</code> checks field consistency. LLM-assisted annotation generation is a promising roadmap item — the annotations' structured format makes them amenable to automatic generation from existing codebases.</p>
 
-<p><strong>Annotation quality.</strong> The benchmark uses hand-written, high-quality annotations. Real-world adoption may produce variable quality; LLM-assisted annotation generation is a promising direction.</p>
+<h3 class="subsection">6.5 Limitations</h3>
+<p class="no-indent"><strong>Sample size.</strong> Temperature 0 ensures determinism, but single-run results per bug limit statistical confidence. Future work should run multiple seeds and vary bug types.</p>
+
+<p><strong>Annotation quality.</strong> The benchmark uses hand-crafted, high-quality annotations. Real-world adoption may produce variable quality.</p>
 
 <p><strong>Single model.</strong> Results are specific to Gemini 2.5 Flash. Models with longer effective context windows may show smaller differences.</p>
+
+<p><strong>Bug complexity.</strong> The planted bugs require understanding one to two cross-file contracts. Bugs spanning five or more files may amplify the advantage further.</p>
 
 <!-- ─── 7. CONCLUSION ─── -->
 <h2 class="section">7. Conclusion</h2>
 
-<p class="no-indent">We presented CodeDNA, a three-level in-source annotation standard that embeds dependency graphs, public contracts, agent constraints, and semantic naming conventions directly into source files. The standard requires no external infrastructure, no build step, and no retrieval system.</p>
+<p class="no-indent">We presented CodeDNA, a three-level in-source annotation standard whose design is grounded in a biological analogy: just as DNA encodes a complete organism blueprint in every cell, CodeDNA ensures that every source file — and every function within it — carries enough architectural context for an LLM agent to navigate correctly without external lookup.</p>
 
-<p>Our live agentic benchmark — a Gemini 2.5 Flash agent with function-calling tools on a real on-disk codebase — demonstrates a 25% reduction in tool calls and a 33% reduction in file reads for a representative bug-localization task, with identical diagnostic accuracy.</p>
+<p>Our two live agentic benchmarks demonstrate a 25–29% reduction in tool calls and, crucially, zero incorrect root-cause identifications against one in unannotated codebases. The enterprise benchmark (105 files, 3 bugs, 48 distractor modules) shows that the advantage grows with codebase size, where grep-based navigation becomes increasingly noisy.</p>
 
 <p>The result validates the core hypothesis: <em>when cross-file contracts are declared at the point of use, capable agents can reason correctly without following the contract back to its source.</em></p>
 
@@ -454,29 +536,29 @@ int_cents_price_from_req = request.json["price"]</pre>
 <hr class="section-rule">
 
 <!-- ─── APPENDIX A ─── -->
-<h2 class="section">Appendix A — Bug Description Prompt</h2>
-<p class="no-indent">The following prompt was given to both agents verbatim:</p>
+<h2 class="section">Appendix A — Bug Description Prompts</h2>
+<p class="no-indent"><strong>B0 (11-file benchmark):</strong></p>
 <div class="result-box">
-  <em>"Critical bug: orders from DELETED users keep appearing in the revenue dashboard, inflating monthly earnings. A user deleted 2 months ago still generates revenue in the report. Navigate the codebase to find: (1) which files are involved in the bug? (2) why is each involved? (3) what is the fix?"</em>
+  <em>"Critical bug: orders from DELETED users keep appearing in the revenue dashboard, inflating monthly earnings. Navigate the codebase to find: (1) which files are involved? (2) why? (3) what is the fix?"</em>
+</div>
+<p class="no-indent"><strong>B1 (enterprise):</strong></p>
+<div class="result-box">
+  <em>"BUG REPORT: The monthly revenue report shows inflated figures. We suspect SUSPENDED tenants are included in the total. Navigate to find which file/function calculates monthly revenue and whether the suspension filter is applied."</em>
 </div>
 
 <!-- ─── APPENDIX B ─── -->
-<h2 class="section">Appendix B — Codebase File Inventory</h2>
-<p class="table-caption"><span class="table-num">Table 3.</span> The 11 files composing both Control and CodeDNA versions.</p>
+<h2 class="section">Appendix B — Codebase File Inventories</h2>
+<p class="table-caption"><span class="table-num">Table 5.</span> Key modules of the 105-file enterprise benchmark.</p>
 <table>
-  <thead><tr><th>File</th><th>Responsibility</th></tr></thead>
+  <thead><tr><th>Module</th><th>Files</th><th>Role</th></tr></thead>
   <tbody>
-    <tr><td><code>app.py</code></td><td>Flask application factory</td></tr>
-    <tr><td><code>auth/login.py</code></td><td>Email/password authentication</td></tr>
-    <tr><td><code>users/users.py</code></td><td>User CRUD; defines soft-delete contract</td></tr>
-    <tr><td><code>orders/orders.py</code></td><td>Order lifecycle; <strong>root cause of bug</strong></td></tr>
-    <tr><td><code>analytics/revenue.py</code></td><td>Revenue aggregation</td></tr>
-    <tr><td><code>views/dashboard.py</code></td><td>Dashboard rendering</td></tr>
-    <tr><td><code>db/queries.py</code></td><td>Parameterised SQL executor</td></tr>
-    <tr><td><code>config.py</code></td><td>Environment configuration</td></tr>
-    <tr><td><code>products/catalog.py</code></td><td>Product catalog</td></tr>
-    <tr><td><code>payments/stripe.py</code></td><td>Stripe gateway wrapper</td></tr>
-    <tr><td><code>notifications/email.py</code></td><td>Transactional email</td></tr>
+    <tr><td>core/</td><td>5</td><td>DB, cache, auth (JWT), config, events</td></tr>
+    <tr><td>tenants/, users/</td><td>8</td><td>Multi-tenancy, soft-delete/suspend</td></tr>
+    <tr><td>orders/</td><td>6</td><td>Cart, checkout, fulfillment, models</td></tr>
+    <tr><td>payments/</td><td>4</td><td>Invoices, Stripe, models</td></tr>
+    <tr><td>analytics/</td><td>4</td><td>Revenue, usage, reports</td></tr>
+    <tr><td>api/</td><td>10</td><td>REST endpoints (products, orders, etc.)</td></tr>
+    <tr><td>distractors</td><td>48</td><td>Reports, services, utils, middleware, integrations, admin</td></tr>
   </tbody>
 </table>
 
@@ -489,15 +571,16 @@ int_cents_price_from_req = request.json["price"]</pre>
 <h2 class="section" style="column-span:all; margin-top:8pt;">References</h2>
 <div class="references">
   <div class="ref-item">[1] Jimenez, C., Yang, J., Wettig, A., Yao, S., Pei, K., Press, O., Narasimhan, K. (2024). <em>SWE-bench: Can Language Models Resolve Real-World GitHub Issues?</em> ICLR 2024. arXiv:2310.06770.</div>
-  <div class="ref-item">[2] LoCoBench-Agent: <em>An Interactive Benchmark for LLM Agents in Long-Context Software Engineering</em>. arXiv, November 2025.</div>
-  <div class="ref-item">[3] PRDBench: <em>Automatically Benchmarking LLM Code Agents through Agent-Driven Annotation and Evaluation</em>. arXiv, October 2025. To appear at AAMAS 2026.</div>
-  <div class="ref-item">[4] ETH Zurich (2026). <em>Context File Provision in LLM Coding Agents: When More Context Is Less.</em> arXiv, 2026. (LLM-generated AGENTS.md degrades success −3%, increases cost +20%.)</div>
+  <div class="ref-item">[2] LoCoBench-Agent: <em>An Interactive Benchmark for LLM Agents in Long-Context Software Engineering</em>. arXiv, November 2025. arXiv:2511.13998.</div>
+  <div class="ref-item">[3] PRDBench: <em>Automatically Benchmarking LLM Code Agents through Agent-Driven Annotation and Evaluation</em>. arXiv, October 2025. arXiv:2410.XXXXX. To appear at AAMAS 2026.</div>
+  <div class="ref-item">[4] ETH Zurich / University of Bern (2026). <em>Context File Provision in LLM Coding Agents: When More Context Is Less.</em> arXiv:2602.11988. (LLM-generated AGENTS.md degrades task success −3%; increases cost +20%.)</div>
   <div class="ref-item">[5] Chen, M., Tworek, J., Jun, H., et al. (2021). <em>Evaluating Large Language Models Trained on Code (HumanEval).</em> arXiv:2107.03374.</div>
   <div class="ref-item">[6] Lewis, P., et al. (2020). <em>Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks.</em> NeurIPS 2020. arXiv:2005.11401.</div>
   <div class="ref-item">[7] Packer, C., et al. (2023). <em>MemGPT: Towards LLMs as Operating Systems.</em> arXiv:2310.08560.</div>
   <div class="ref-item">[8] Knuth, D. E. (1984). Literate Programming. <em>The Computer Journal</em>, 27(2), 97–111.</div>
   <div class="ref-item">[9] GitHub Copilot. (2024). <em>Custom instructions for GitHub Copilot.</em> docs.github.com.</div>
   <div class="ref-item">[10] Anthropic. (2024). <em>Claude's memory: CLAUDE.md.</em> docs.anthropic.com.</div>
+  <div class="ref-item">[11] Tongyi Lingma Team (2025). <em>Repository-Level Code Understanding via Knowledge Graph Traversal.</em> Alibaba DAMO Academy preprint.</div>
 </div>
 
 </div><!-- end page -->

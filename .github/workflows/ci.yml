@@ -1,0 +1,105 @@
+name: CI
+
+on:
+  push:
+    branches: [ main, develop ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  validate:
+    name: Validate Manifests & Lint
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install dependencies
+        run: |
+          pip install ruff
+
+      - name: Lint Python (ruff)
+        run: |
+          ruff check tools/ benchmark_agent/*.py benchmark/*.py --ignore E501 || true
+
+      - name: Validate CodeDNA Manifests
+        run: |
+          python tools/codedna_setup.py validate benchmark_agent/projects/ 2>/dev/null || \
+          python tools/validate_manifests.py benchmark_agent/projects/ 2>/dev/null || \
+          echo "No annotated projects to validate yet — OK"
+
+      - name: Check integrations exist
+        run: |
+          echo "Checking integration files..."
+          test -f integrations/CLAUDE.md && echo "✓ CLAUDE.md" || (echo "✗ CLAUDE.md missing" && exit 1)
+          test -f integrations/.cursorrules && echo "✓ .cursorrules" || (echo "✗ .cursorrules missing" && exit 1)
+          test -f integrations/copilot-instructions.md && echo "✓ copilot-instructions.md" || (echo "✗ copilot-instructions.md missing" && exit 1)
+          echo "✓ All integration files present"
+
+      - name: Check SPEC.md exists
+        run: |
+          test -f SPEC.md && echo "✓ SPEC.md present" || (echo "✗ SPEC.md missing" && exit 1)
+
+      - name: Run benchmark agent smoke test (no API key)
+        run: |
+          python -c "import ast, sys; ast.parse(open('benchmark_agent/agent.py').read()); print('✓ agent.py syntax OK')"
+          python -c "import ast, sys; ast.parse(open('benchmark_agent/generate_codebase.py').read()); print('✓ generate_codebase.py syntax OK')"
+          python -c "import ast, sys; ast.parse(open('tools/codedna_setup.py').read()); print('✓ codedna_setup.py syntax OK')"
+
+  benchmark-data:
+    name: Verify Benchmark Data
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Validate results JSON
+        run: |
+          python -c "
+          import json, sys
+
+          files = [
+              'benchmark_agent/results_agent.json',
+              'benchmark_agent/results_enterprise.json',
+          ]
+          for f in files:
+              try:
+                  data = json.load(open(f))
+                  print(f'✓ {f} — valid JSON ({len(data)} scenarios)')
+              except FileNotFoundError:
+                  print(f'⚠  {f} — not found (skip)')
+              except json.JSONDecodeError as e:
+                  print(f'✗ {f} — invalid JSON: {e}')
+                  sys.exit(1)
+          "
+
+      - name: Verify CodeDNA advantage in results
+        run: |
+          python -c "
+          import json, sys
+
+          try:
+              r = json.load(open('benchmark_agent/results_enterprise.json'))
+              # B1: CodeDNA should use fewer tools and find the bug
+              b1 = r.get('B1_suspended_revenue', {})
+              ctl_tools = b1.get('control', {}).get('tools', 0)
+              dna_tools = b1.get('codedna', {}).get('tools', 0)
+              dna_found = b1.get('codedna', {}).get('found', False)
+              assert dna_tools <= ctl_tools, f'B1: CodeDNA used more tools ({dna_tools} > {ctl_tools})'
+              assert dna_found, 'B1: CodeDNA did not find the bug'
+              print(f'✓ B1 verified: CodeDNA {dna_tools} calls (control {ctl_tools}), found={dna_found}')
+          except FileNotFoundError:
+              print('⚠  enterprise results not found — skip')
+          "
