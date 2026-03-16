@@ -1,0 +1,29 @@
+{
+  "control": {
+    "read_file_calls": 3,
+    "list_files_calls": 1,
+    "grep_calls": 0,
+    "total_tool_calls": 4,
+    "turns": 5,
+    "files_read": [
+      "analytics/revenue.py",
+      "orders/orders.py",
+      "users/users.py"
+    ],
+    "greps_done": [],
+    "found_correct": true
+  },
+  "codedna": {
+    "read_file_calls": 2,
+    "list_files_calls": 1,
+    "grep_calls": 0,
+    "total_tool_calls": 3,
+    "turns": 4,
+    "files_read": [
+      "analytics/revenue.py",
+      "orders/orders.py"
+    ],
+    "greps_done": [],
+    "found_correct": true
+  }
+}

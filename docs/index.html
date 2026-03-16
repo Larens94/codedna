@@ -1,816 +1,686 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CodeDNA — Self-Describing Code for AI Agents</title>
-<meta name="description" content="CodeDNA embeds context directly into source code at every level. Every file fragment carries the entire project genome. No RAG, no CLAUDE.md, no drift.">
+<title>CodeDNA — Lo Standard che Insegna agli AI a Non Sbagliare</title>
+<meta name="description" content="CodeDNA incorpora contesto direttamente nel codice sorgente. Benchmark reali: senza CodeDNA gli AI commettono errori deterministici. Con CodeDNA: zero errori.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
-  :root {
-    --bg: #f7f8fc;
-    --bg2: #ffffff;
-    --bg3: #eef0f8;
-    --surface: #ffffff;
-    --border: #e0e2ef;
-    --text: #0f1020;
-    --muted: #6060a0;
-    --accent: #4f46e5;
-    --accent2: #7c3aed;
-    --green: #16a34a;
-    --amber: #b45309;
-    --helix1: #4f46e5;
-    --helix2: #06b6d4;
-    --helix3: #8b5cf6;
-  }
+:root {
+  --white: #ffffff;
+  --bg: #fafafa;
+  --bg2: #f4f4f6;
+  --surface: #ffffff;
+  --border: #e5e5ea;
+  --border2: #d1d1d6;
+  --text: #1a1a2e;
+  --text2: #3d3d5c;
+  --muted: #8787a0;
+  --accent: #4338ca;     /* indigo profondo */
+  --accent-h: #3730a3;
+  --accent-lt: #eef2ff;
+  --green: #16a34a;
+  --green-lt: #f0fdf4;
+  --red: #dc2626;
+  --red-lt: #fef2f2;
+  --amber: #d97706;
+  --amber-lt: #fffbeb;
+  --cyan: #0891b2;
+  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
+  --shadow-lg: 0 12px 40px rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.06);
+}
 
-  html { scroll-behavior: smooth; }
-  body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; overflow-x: hidden; }
-  code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
+html { scroll-behavior: smooth; }
+body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); line-height:1.6; overflow-x:hidden; -webkit-font-smoothing:antialiased; }
+code, pre, .mono { font-family:'DM Mono',monospace; }
 
-  /* ── Nav ── */
-  nav {
-    position: fixed; top: 0; left: 0; right: 0; z-index: 100;
-    display: flex; align-items: center; justify-content: space-between;
-    padding: 1rem 3rem;
-    background: rgba(247,248,252,0.92);
-    backdrop-filter: blur(20px);
-    border-bottom: 1px solid var(--border);
-  }
-  .nav-logo {
-    font-size: 1.15rem; font-weight: 900; letter-spacing: -0.03em;
-    display: flex; align-items: center; gap: 0.5rem;
-  }
-  .logo-dna { font-size: 1.2rem; }
-  .nav-logo .brand { background: linear-gradient(135deg, var(--accent), var(--helix2)); -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text; }
-  .nav-version { font-size: 0.65rem; padding: 0.15rem 0.5rem; border-radius: 999px; background: var(--bg3); color: var(--muted); font-weight: 600; letter-spacing: 0.06em; border: 1px solid var(--border); }
-  .nav-links { display: flex; gap: 2rem; }
-  .nav-links a { color: var(--muted); text-decoration: none; font-size: 0.875rem; font-weight: 500; transition: color .2s; }
-  .nav-links a:hover { color: var(--text); }
+/* ── NAVIGATION ── */
+nav {
+  position:fixed; top:0; left:0; right:0; z-index:200;
+  display:flex; align-items:center; justify-content:space-between;
+  padding:0 3rem; height:60px;
+  background:rgba(255,255,255,0.92); backdrop-filter:blur(20px);
+  border-bottom:1px solid var(--border);
+}
+.nav-logo { display:flex; align-items:center; gap:0.5rem; text-decoration:none; }
+.nav-logo-mark {
+  width:30px; height:30px; border-radius:8px;
+  background:var(--accent); display:flex; align-items:center; justify-content:center;
+  font-size:0.9rem; font-weight:900; color:white;
+}
+.nav-logo-text { font-size:1rem; font-weight:700; color:var(--text); letter-spacing:-0.02em; }
+.nav-version { font-size:0.6rem; font-weight:700; letter-spacing:0.08em; padding:0.15rem 0.5rem; border-radius:4px; background:var(--accent-lt); color:var(--accent); border:1px solid rgba(67,56,202,0.15); }
+.nav-links { display:flex; align-items:center; gap:2.5rem; }
+.nav-links a { font-size:0.875rem; font-weight:500; color:var(--muted); text-decoration:none; transition:color .15s; }
+.nav-links a:hover { color:var(--text); }
+.nav-cta { padding:0.45rem 1.1rem; border-radius:8px; font-size:0.85rem; font-weight:600; background:var(--accent); color:white; text-decoration:none; transition:background .15s; }
+.nav-cta:hover { background:var(--accent-h); }
 
-  /* ── Hero ── */
-  .hero {
-    min-height: 100vh;
-    display: flex; flex-direction: column; align-items: center; justify-content: center;
-    text-align: center; padding: 8rem 2rem 5rem;
-    position: relative; overflow: hidden;
-  }
-  .hero-grid {
-    position: absolute; inset: 0;
-    background-image: linear-gradient(rgba(79,70,229,0.04) 1px, transparent 1px),
-                      linear-gradient(90deg, rgba(79,70,229,0.04) 1px, transparent 1px);
-    background-size: 48px 48px;
-    pointer-events: none;
-  }
-  .hero-glow {
-    position: absolute; top: 30%; left: 50%; transform: translateX(-50%);
-    width: 700px; height: 350px;
-    background: radial-gradient(ellipse, rgba(79,70,229,0.07) 0%, transparent 70%);
-    pointer-events: none;
-  }
+/* ── HERO ── */
+.hero {
+  min-height:100vh; position:relative; overflow:hidden;
+  display:flex; align-items:center; justify-content:center;
+  padding:100px 2rem 60px;
+  background: linear-gradient(160deg, #ffffff 0%, #f0f4ff 50%, #fafafa 100%);
+}
+.hero-grid-bg {
+  position:absolute; inset:0; pointer-events:none;
+  background-image:
+    linear-gradient(rgba(67,56,202,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(67,56,202,0.04) 1px, transparent 1px);
+  background-size:40px 40px;
+}
+#hero-canvas { position:absolute; right:0; top:0; width:50%; height:100%; pointer-events:none; opacity:0.7; }
+.hero-inner { position:relative; z-index:1; max-width:620px; }
+.hero-eyebrow {
+  display:inline-flex; align-items:center; gap:0.5rem; margin-bottom:1.75rem;
+  padding:0.35rem 0.9rem; border-radius:999px;
+  background:var(--accent-lt); border:1px solid rgba(67,56,202,0.2);
+  font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent);
+}
+.eyebrow-dot { width:5px; height:5px; border-radius:50%; background:var(--accent); animation:pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 
-  /* Helix animation */
-  .helix-wrap {
-    position: absolute; right: 8%; top: 50%; transform: translateY(-50%);
-    width: 120px; height: 400px; opacity: 0.35;
-    pointer-events: none;
-  }
-  .helix-strand {
-    position: absolute; width: 100%; height: 100%;
-    animation: helixSpin 6s linear infinite;
-  }
-  .helix-strand.s2 { animation-delay: -3s; }
-  @keyframes helixSpin { from { transform: rotateX(0deg); } to { transform: rotateX(360deg); } }
-  .helix-node {
-    position: absolute; left: 50%; transform: translateX(-50%);
-    width: 10px; height: 10px; border-radius: 50%;
-    background: var(--accent);
-  }
-  .helix-left { position: absolute; left: 5%; }
-  .helix-right { position: absolute; right: 5%; }
-  .helix-connector {
-    position: absolute; left: 10%; right: 10%; height: 2px;
-    background: linear-gradient(90deg, var(--helix1), var(--helix2));
-    opacity: 0.5;
-  }
+h1 {
+  font-size:clamp(2.6rem,5.5vw,4.8rem); font-weight:800; letter-spacing:-0.04em; line-height:1.05;
+  color:var(--text); margin-bottom:1.5rem;
+}
+h1 em { font-style:normal; color:var(--accent); }
+.hero-sub {
+  font-size:1.1rem; color:var(--text2); line-height:1.75; margin-bottom:2.5rem; max-width:500px;
+}
+.hero-sub strong { color:var(--text); font-weight:600; }
+.hero-actions { display:flex; gap:0.75rem; flex-wrap:wrap; }
+.btn-primary {
+  display:inline-flex; align-items:center; gap:0.5rem;
+  padding:0.75rem 1.75rem; border-radius:10px; font-size:0.9rem; font-weight:600;
+  background:var(--accent); color:white; text-decoration:none; border:none; cursor:pointer;
+  box-shadow:0 2px 8px rgba(67,56,202,0.25); transition:all .15s;
+}
+.btn-primary:hover { background:var(--accent-h); box-shadow:0 4px 16px rgba(67,56,202,0.3); transform:translateY(-1px); }
+.btn-secondary {
+  display:inline-flex; align-items:center; gap:0.5rem;
+  padding:0.75rem 1.75rem; border-radius:10px; font-size:0.9rem; font-weight:600;
+  background:white; color:var(--text); text-decoration:none;
+  border:1px solid var(--border2); box-shadow:var(--shadow-sm); transition:all .15s;
+}
+.btn-secondary:hover { border-color:var(--accent); color:var(--accent); transform:translateY(-1px); }
 
-  .badge {
-    display: inline-flex; align-items: center; gap: 0.5rem;
-    padding: 0.375rem 1rem; border: 1px solid var(--border);
-    border-radius: 999px; font-size: 0.75rem; font-weight: 700;
-    letter-spacing: 0.08em; color: var(--muted);
-    background: var(--bg2); margin-bottom: 2rem;
-    text-transform: uppercase;
-  }
-  .badge-dot { width: 6px; height: 6px; border-radius: 50%; background: var(--accent); animation: pulse 2s infinite; }
-  @keyframes pulse { 0%,100% { opacity:1; } 50% { opacity:.3; } }
+/* ── STATS ROW ── */
+.stats-row {
+  background:white; border-top:1px solid var(--border); border-bottom:1px solid var(--border);
+  display:grid; grid-template-columns:repeat(4,1fr);
+}
+.stat-cell {
+  padding:2rem 2.5rem; border-right:1px solid var(--border);
+  position:relative; overflow:hidden;
+}
+.stat-cell:last-child { border-right:none; }
+.stat-cell::after {
+  content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
+  background:var(--accent); transform:scaleX(0); transition:transform .3s; transform-origin:left;
+}
+.stat-cell:hover::after { transform:scaleX(1); }
+.stat-number { font-size:2.2rem; font-weight:800; letter-spacing:-0.04em; line-height:1; }
+.stat-number.red   { color:var(--red); }
+.stat-number.green { color:var(--green); }
+.stat-number.blue  { color:var(--accent); }
+.stat-label { font-size:0.72rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-top:0.35rem; }
+.stat-note  { font-size:0.75rem; color:var(--muted); margin-top:0.2rem; }
 
-  h1 {
-    font-size: clamp(2.8rem, 7vw, 5.5rem);
-    font-weight: 900; letter-spacing: -0.04em; line-height: 1.0;
-    background: linear-gradient(135deg, #0f1020 0%, #4f46e5 60%, #06b6d4 100%);
-    -webkit-background-clip: text; -webkit-text-fill-color: transparent; background-clip: text;
-    margin-bottom: 1rem;
-  }
-  .hero-sub {
-    font-size: 1.2rem; color: var(--muted); max-width: 580px;
-    line-height: 1.7; margin-bottom: 3rem;
-  }
-  .hero-sub strong { color: var(--text); }
-  .hero-cta { display: flex; gap: 1rem; justify-content: center; flex-wrap: wrap; }
-  .btn-primary {
-    padding: 0.875rem 2rem; border-radius: 12px; font-weight: 700; font-size: 0.95rem;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    color: white; border: none; cursor: pointer; text-decoration: none;
-    transition: opacity .2s, transform .2s; box-shadow: 0 4px 20px rgba(79,70,229,0.2);
-  }
-  .btn-primary:hover { opacity: 0.9; transform: translateY(-2px); }
-  .btn-ghost {
-    padding: 0.875rem 2rem; border-radius: 12px; font-weight: 600; font-size: 0.95rem;
-    border: 1px solid var(--border); color: var(--text);
-    text-decoration: none; transition: border-color .2s, transform .2s;
-  }
-  .btn-ghost:hover { border-color: var(--accent); transform: translateY(-2px); }
+/* ── SECTION ── */
+.section { padding:7rem 2rem; max-width:1100px; margin:0 auto; }
+.full-bleed { background:white; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
+.full-bleed-inner { max-width:1100px; margin:0 auto; padding:6rem 2rem; }
+.eyebrow {
+  display:inline-flex; align-items:center; gap:0.4rem; margin-bottom:1rem;
+  font-size:0.68rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--accent);
+}
+.eyebrow::before { content:'▸'; }
+h2 { font-size:clamp(1.8rem,3.5vw,2.8rem); font-weight:800; letter-spacing:-0.03em; color:var(--text); margin-bottom:1rem; }
+.section-lead { font-size:1.05rem; color:var(--text2); max-width:560px; line-height:1.75; margin-bottom:3.5rem; }
 
-  /* ── Sections ── */
-  section { padding: 6rem 2rem; max-width: 1100px; margin: 0 auto; }
-  .section-label {
-    font-size: 0.72rem; font-weight: 800; letter-spacing: 0.14em;
-    text-transform: uppercase; color: var(--accent); margin-bottom: 1rem;
-    display: flex; align-items: center; gap: 0.5rem;
-  }
-  .section-label::before { content: ''; display: block; width: 20px; height: 2px; background: var(--accent); border-radius: 1px; }
-  h2 { font-size: clamp(1.7rem, 4vw, 2.8rem); font-weight: 800; letter-spacing: -0.03em; margin-bottom: 1rem; }
-  .section-desc { color: var(--muted); font-size: 1.05rem; max-width: 600px; margin-bottom: 3rem; line-height: 1.7; }
+/* ── PROBLEM CARDS ── */
+.problem-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+.prob-card { background:white; padding:2rem; position:relative; }
+.prob-card:first-child .prob-accent { background:var(--red); }
+.prob-card:nth-child(2) .prob-accent { background:var(--amber); }
+.prob-card:last-child .prob-accent { background:var(--green); }
+.prob-accent { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; margin-bottom:1.25rem; color:white; }
+.prob-title { font-size:1rem; font-weight:700; color:var(--text); margin-bottom:0.5rem; }
+.prob-text { font-size:0.875rem; color:var(--text2); line-height:1.7; margin-bottom:1rem; }
+.prob-verdict { display:inline-flex; align-items:center; gap:0.35rem; font-size:0.75rem; font-weight:600; padding:0.3rem 0.7rem; border-radius:6px; }
+.pv-bad  { background:var(--red-lt); color:var(--red); }
+.pv-good { background:var(--green-lt); color:var(--green); }
 
-  /* ── Biology map ── */
-  .bio-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px,1fr)); gap: 1.25rem; margin-bottom: 3rem; }
-  .bio-card {
-    padding: 1.5rem; border-radius: 16px;
-    background: var(--bg2); border: 1px solid var(--border);
-    position: relative; overflow: hidden;
-    transition: transform .2s, box-shadow .2s;
-  }
-  .bio-card:hover { transform: translateY(-3px); box-shadow: 0 8px 30px rgba(79,70,229,0.08); }
-  .bio-card::before {
-    content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px;
-    background: linear-gradient(90deg, var(--accent), var(--helix2));
-  }
-  .bio-icon { font-size: 1.8rem; margin-bottom: 0.75rem; }
-  .bio-label { font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent); margin-bottom: 0.25rem; }
-  .bio-title { font-size: 1rem; font-weight: 700; margin-bottom: 0.4rem; }
-  .bio-desc { font-size: 0.82rem; color: var(--muted); }
+/* ── LEVELS ── */
+.levels-list { display:flex; flex-direction:column; gap:0; border:1px solid var(--border); border-radius:16px; overflow:hidden; }
+.level-item { display:grid; grid-template-columns:280px 1fr; border-bottom:1px solid var(--border); background:white; }
+.level-item:last-child { border-bottom:none; }
+.level-meta { padding:2rem; border-right:1px solid var(--border); background:var(--bg); }
+.level-num { font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent); margin-bottom:0.5rem; }
+.level-name { font-size:1rem; font-weight:700; color:var(--text); margin-bottom:0.5rem; }
+.level-desc { font-size:0.82rem; color:var(--muted); line-height:1.6; }
+.level-code { padding:0 0; }
+.code-block { background:#1e1e2e; height:100%; display:flex; flex-direction:column; }
+.code-bar { display:flex; align-items:center; gap:0.4rem; padding:0.6rem 1rem; border-bottom:1px solid rgba(255,255,255,0.06); }
+.dot { width:9px; height:9px; border-radius:50%; }
+.code-filename { font-size:0.7rem; color:#6272a4; font-family:'DM Mono',monospace; margin-left:0.25rem; }
+.code-pre { padding:1.25rem 1.5rem; font-size:0.75rem; line-height:1.85; overflow-x:auto; flex:1; }
+.tk { color:#bd93f9; } .ts { color:#50fa7b; } .tc { color:#6272a4; } .th { color:#ffb86c; font-weight:500; } .ti { color:#ff79c6; }
 
-  /* ── Strip ── */
-  .strip {
-    background: var(--bg2); border-top: 1px solid var(--border); border-bottom: 1px solid var(--border); padding: 5rem 2rem;
-  }
-  .strip-inner { max-width: 1100px; margin: 0 auto; }
+/* ── BENCHMARK ── */
+.chart-pair { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:3rem; }
+@media(max-width:720px){ .chart-pair { grid-template-columns:1fr; } }
+.chart-card { background:white; border:1px solid var(--border); border-radius:14px; padding:1.5rem; box-shadow:var(--shadow-sm); }
+.chart-label { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:1.25rem; }
 
-  /* ── Two-level architecture ── */
-  .levels { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 0; }
-  @media (max-width: 768px) { .levels { grid-template-columns: 1fr; } }
-  .level-card {
-    border-radius: 20px; border: 1px solid var(--border);
-    background: var(--bg2); overflow: hidden;
-  }
-  .level-header {
-    padding: 1.5rem 1.5rem 1rem;
-    border-bottom: 1px solid var(--border);
-    background: var(--bg3);
-    display: flex; align-items: center; gap: 1rem;
-  }
-  .level-badge {
-    width: 40px; height: 40px; border-radius: 10px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
-    display: flex; align-items: center; justify-content: center;
-    font-size: 1rem; font-weight: 900; color: white; flex-shrink: 0;
-  }
-  .level-title { font-size: 1rem; font-weight: 800; }
-  .level-subtitle { font-size: 0.78rem; color: var(--muted); }
-  .level-body { padding: 1.5rem; }
-  .level-body p { font-size: 0.875rem; color: var(--muted); margin-bottom: 1rem; line-height: 1.6; }
+.scenario-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1rem; }
+.sc-card { background:white; border:1px solid var(--border); border-radius:12px; padding:1.5rem; box-shadow:var(--shadow-sm); transition:box-shadow .2s,transform .2s; }
+.sc-card:hover { box-shadow:var(--shadow-md); transform:translateY(-2px); }
+.sc-tag { font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent); margin-bottom:0.4rem; }
+.sc-title { font-size:0.95rem; font-weight:700; color:var(--text); margin-bottom:0.5rem; }
+.sc-body { font-size:0.82rem; color:var(--text2); line-height:1.65; margin-bottom:1rem; }
+.sc-scores { display:flex; gap:0.5rem; }
+.sc-score { flex:1; padding:0.6rem 0.75rem; border-radius:8px; font-size:0.72rem; font-weight:600; text-align:center; }
+.bad  { background:var(--red-lt); color:var(--red); border:1px solid rgba(220,38,38,0.15); }
+.good { background:var(--green-lt); color:var(--green); border:1px solid rgba(22,163,74,0.15); }
+.sc-score strong { display:block; font-size:1rem; font-weight:800; margin-top:0.2rem; }
 
-  /* ── Code block ── */
-  .code-wrap {
-    background: var(--bg2); border: 1px solid var(--border); border-radius: 16px;
-    overflow: hidden; margin: 1.5rem 0;
-  }
-  .code-header {
-    display: flex; align-items: center; gap: 0.5rem;
-    padding: 0.75rem 1.25rem; border-bottom: 1px solid var(--border);
-    background: var(--bg3);
-  }
-  .code-dot { width: 10px; height: 10px; border-radius: 50%; }
-  .code-title { margin-left: 0.5rem; font-size: 0.78rem; color: var(--muted); font-family: 'JetBrains Mono', monospace; }
-  pre { padding: 1.25rem 1.5rem; overflow-x: auto; font-size: 0.8rem; line-height: 1.75; }
-  .c-comment { color: #9090bb; }
-  .c-keyword  { color: #6d28d9; }
-  .c-string   { color: #15803d; }
-  .c-func     { color: #1d4ed8; }
-  .c-manifest { color: #92400e; font-weight: 600; }
-  .c-hyperlink{ color: #0369a1; font-weight: 600; }
-  .c-type     { color: #0f766e; }
-  .c-muted    { color: #aaaacc; }
+/* ── COMPARE TABLE ── */
+.compare-table-wrap { border:1px solid var(--border); border-radius:14px; overflow:hidden; background:white; box-shadow:var(--shadow-sm); }
+table.comp { width:100%; border-collapse:collapse; font-size:0.875rem; }
+.comp th { padding:0.875rem 1.25rem; text-align:left; background:var(--bg2); border-bottom:1px solid var(--border); font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--muted); }
+.comp td { padding:0.875rem 1.25rem; border-bottom:1px solid var(--border); color:var(--text2); }
+.comp tr:last-child td { border-bottom:none; }
+.comp tr.hl td { background:#fafaff; }
+.comp tr.hl td:first-child { font-weight:700; color:var(--accent); }
+.pill { display:inline-block; padding:0.2rem 0.65rem; border-radius:5px; font-size:0.7rem; font-weight:700; }
+.pill-g { background:var(--green-lt); color:var(--green); }
+.pill-r { background:var(--red-lt); color:var(--red); }
+.pill-a { background:var(--amber-lt); color:var(--amber); }
 
-  /* ── Tags table ── */
-  .tag-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; margin-top: 1rem; }
-  .tag-table th { padding: 0.75rem 1rem; text-align: left; border-bottom: 1px solid var(--border); font-size: 0.72rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--muted); }
-  .tag-table td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--border); }
-  .tag-table tr:last-child td { border-bottom: none; }
-  .tag { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; font-family: 'JetBrains Mono', monospace; }
-  .tag-blue { background: rgba(79,70,229,0.08); color: var(--accent); }
-  .tag-cyan { background: rgba(6,182,212,0.08); color: #0891b2; }
-  .tag-green { background: rgba(22,163,74,0.08); color: var(--green); }
+/* ── ROADMAP ── */
+.rm-list { display:flex; flex-direction:column; gap:0; border:1px solid var(--border); border-radius:14px; overflow:hidden; background:white; }
+.rm-row { display:flex; align-items:flex-start; gap:1.25rem; padding:1.25rem 1.5rem; border-bottom:1px solid var(--border); }
+.rm-row:last-child { border-bottom:none; }
+.rm-indicator { display:flex; flex-direction:column; align-items:center; gap:4px; flex-shrink:0; margin-top:2px; }
+.rm-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
+.rm-dot.done { background:var(--green); }
+.rm-dot.wip  { background:var(--accent); box-shadow:0 0 0 3px var(--accent-lt); }
+.rm-dot.next { background:var(--border2); }
+.rm-badge { font-size:0.6rem; font-weight:700; padding:0.15rem 0.4rem; border-radius:4px; white-space:nowrap; margin-top:2px; }
+.rb-done { background:var(--green-lt); color:var(--green); }
+.rb-wip  { background:var(--accent-lt); color:var(--accent); }
+.rb-next { background:var(--bg2); color:var(--muted); }
+.rm-title { font-size:0.9rem; font-weight:700; color:var(--text); }
+.rm-sub   { font-size:0.8rem; color:var(--muted); margin-top:0.15rem; }
 
-  /* ── Comparison table ── */
-  .compare-wrap { overflow-x: auto; border-radius: 16px; border: 1px solid var(--border); }
-  .compare-table { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
-  .compare-table th { padding: 1rem 1.25rem; text-align: left; background: var(--bg3); border-bottom: 1px solid var(--border); font-weight: 700; font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.06em; color: var(--muted); }
-  .compare-table th.hl { color: var(--accent); }
-  .compare-table td { padding: 0.875rem 1.25rem; border-bottom: 1px solid var(--border); }
-  .compare-table tr:last-child td { border-bottom: none; }
-  .compare-table .hl-col { background: rgba(79,70,229,0.04); }
-  .chip { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 6px; font-size: 0.75rem; font-weight: 700; }
-  .chip-green { background: rgba(22,163,74,0.1); color: var(--green); }
-  .chip-red   { background: rgba(220,38,38,0.08); color: #dc2626; }
-  .chip-amber { background: rgba(180,83,9,0.08);  color: var(--amber); }
+/* ── FOOTER ── */
+footer { padding:3rem 2rem; text-align:center; border-top:1px solid var(--border); background:white; }
+footer .logo-row { display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-bottom:0.75rem; }
+footer .logo-mark { width:28px; height:28px; border-radius:7px; background:var(--accent); display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:900; color:white; }
+footer p { font-size:0.82rem; color:var(--muted); }
+footer a { color:var(--accent); text-decoration:none; }
 
-  /* ── Benchmark ── */
-  .metric-cards { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem; margin-bottom: 2rem; }
-  @media (max-width: 600px) { .metric-cards { grid-template-columns: 1fr; } }
-  .metric-card {
-    background: var(--bg2); border: 1px solid var(--border); border-radius: 14px;
-    padding: 1.5rem; text-align: center;
-    position: relative; overflow: hidden;
-  }
-  .metric-card::before { content: ''; position: absolute; top: 0; left: 0; right: 0; height: 3px; background: linear-gradient(90deg, var(--accent), var(--helix2)); }
-  .metric-val { font-size: 2.2rem; font-weight: 900; letter-spacing: -0.04em; }
-  .metric-val.green { color: var(--green); }
-  .metric-val.blue  { color: var(--accent); }
-  .metric-lbl { font-size: 0.72rem; color: var(--muted); margin-top: 0.35rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.06em; }
-  .metric-sub { font-size: 0.7rem; color: var(--muted); margin-top: 0.2rem; }
+/* ── ANIMATIONS ── */
+@keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
+.fade-up { opacity:0; animation:fadeUp .6s ease forwards; }
+.fade-up:nth-child(1) { animation-delay:.1s; }
+.fade-up:nth-child(2) { animation-delay:.2s; }
+.fade-up:nth-child(3) { animation-delay:.3s; }
 
-  .bench-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(300px,1fr)); gap: 1.5rem; }
-  .bench-card { background: var(--bg2); border: 1px solid var(--border); border-radius: 16px; padding: 1.5rem; }
-  .bench-title { font-size: 0.75rem; font-weight: 800; text-transform: uppercase; letter-spacing: 0.1em; color: var(--muted); margin-bottom: 1.25rem; }
-  .bench-scenario-name { font-size: 0.825rem; font-weight: 600; margin-bottom: 0.5rem; }
-  .bench-bars { display: flex; flex-direction: column; gap: 0.4rem; }
-  .bar-row { display: flex; align-items: center; gap: 0.75rem; }
-  .bar-label { font-size: 0.7rem; color: var(--muted); width: 60px; flex-shrink: 0; text-align: right; }
-  .bar-track { flex: 1; height: 8px; background: var(--bg3); border-radius: 999px; overflow: hidden; }
-  .bar-fill { height: 100%; border-radius: 999px; }
-  .bar-control { background: rgba(220,38,38,0.4); }
-  .bar-dna { background: linear-gradient(90deg, var(--accent), var(--helix2)); }
-  .bar-number { font-size: 0.7rem; color: var(--muted); width: 52px; flex-shrink: 0; font-family: 'JetBrains Mono', monospace; }
-  .bench-scenarios { display: flex; flex-direction: column; gap: 1.25rem; }
-  .bench-note {
-    display: flex; gap: 0.75rem; align-items: flex-start;
-    background: rgba(79,70,229,0.04); border: 1px solid rgba(79,70,229,0.15);
-    border-radius: 12px; padding: 1rem 1.25rem; margin-top: 1.5rem;
-    font-size: 0.825rem; color: var(--muted);
-  }
-
-  /* ── Roadmap ── */
-  .roadmap { display: flex; flex-direction: column; gap: 1rem; }
-  .roadmap-item { display: flex; gap: 1rem; align-items: flex-start; padding: 1.25rem; background: var(--bg2); border: 1px solid var(--border); border-radius: 14px; }
-  .roadmap-status { padding: 0.25rem 0.75rem; border-radius: 999px; font-size: 0.7rem; font-weight: 700; flex-shrink: 0; margin-top: 0.1rem; }
-  .status-done { background: rgba(22,163,74,0.1); color: var(--green); }
-  .status-wip  { background: rgba(79,70,229,0.1); color: var(--accent); }
-  .status-next { background: rgba(180,83,9,0.08); color: var(--amber); }
-  .roadmap-text h3 { font-size: 0.9rem; font-weight: 700; }
-  .roadmap-text p  { font-size: 0.82rem; color: var(--muted); margin-top: 0.2rem; }
-
-  /* ── Footer ── */
-  footer { border-top: 1px solid var(--border); padding: 3rem 2rem; text-align: center; color: var(--muted); font-size: 0.825rem; }
-  footer strong { color: var(--text); }
+@media(max-width:900px){
+  nav { padding:0 1.5rem; }
+  .stats-row { grid-template-columns:1fr 1fr; }
+  .level-item { grid-template-columns:1fr; }
+  #hero-canvas { display:none; }
+}
 </style>
 </head>
 <body>
 
 <!-- NAV -->
 <nav>
-  <div class="nav-logo">
-    <span class="logo-dna">🧬</span>
-    <span class="brand">CodeDNA</span>
-    <span class="nav-version">Standard v0.5</span>
-  </div>
+  <a class="nav-logo" href="#">
+    <div class="nav-logo-mark">🧬</div>
+    <span class="nav-logo-text">CodeDNA</span>
+    <span class="nav-version">v0.5</span>
+  </a>
   <div class="nav-links">
-    <a href="#architecture">Architecture</a>
-    <a href="#spec">Spec</a>
+    <a href="#problema">Il Problema</a>
+    <a href="#come-funziona">Come Funziona</a>
     <a href="#benchmark">Benchmark</a>
     <a href="#roadmap">Roadmap</a>
+    <a href="https://github.com/Larens94/codedna" target="_blank" class="nav-cta">GitHub →</a>
   </div>
 </nav>
 
 <!-- HERO -->
 <div class="hero">
-  <div class="hero-grid"></div>
-  <div class="hero-glow"></div>
-  <div class="badge"><span class="badge-dot"></span> CodeDNA Annotation Standard — v0.3 · MIT</div>
-  <h1>Code that carries<br>its own genome.</h1>
-  <p class="hero-sub">
-    <strong>CodeDNA</strong> embeds context directly into source files — at every level.<br>
-    Every fragment an AI reads already contains the instructions to understand the whole.
-  </p>
-  <div class="hero-cta">
-    <a href="#architecture" class="btn-primary">See the architecture</a>
-    <a href="https://github.com/Larens94/beacon-framework" class="btn-ghost" target="_blank">View on GitHub</a>
-  </div>
-</div>
-
-<!-- BIOLOGICAL MAP -->
-<div class="strip">
-  <div class="strip-inner">
-    <p class="section-label">The Biological Model</p>
-    <h2 style="margin-bottom:0.75rem;">Every cell contains the full genome.</h2>
-    <p style="color:var(--muted); font-size:1rem; margin-bottom:2.5rem; max-width:600px;">
-      In biology, half a hologram still shows the complete image. A CodeDNA file fragment — even 10 lines extracted mid-file — still carries enough structure for an AI agent to navigate safely.
+  <div class="hero-grid-bg"></div>
+  <canvas id="hero-canvas"></canvas>
+  <div class="hero-inner">
+    <div class="hero-eyebrow fade-up"><span class="eyebrow-dot"></span>CodeDNA Annotation Standard · v0.5 · MIT</div>
+    <h1 class="fade-up">Il codice che si<br><em>spiega da solo.</em></h1>
+    <p class="hero-sub fade-up">
+      Gli AI che modificano il tuo codice commettono errori perché <strong>non hanno contesto</strong>. CodeDNA lo incorpora direttamente nei file — come il DNA in ogni cellula. Zero RAG. Zero deriva.
     </p>
-    <div class="bio-grid">
-      <div class="bio-card">
-        <div class="bio-icon">🧬</div>
-        <div class="bio-label">Genome</div>
-        <div class="bio-title">Project Rules</div>
-        <div class="bio-desc">The complete set of coding conventions, style choices, and architectural constraints that govern the entire codebase.</div>
-      </div>
-      <div class="bio-card">
-        <div class="bio-icon">🦠</div>
-        <div class="bio-label">Chromosome</div>
-        <div class="bio-title">Source File</div>
-        <div class="bio-desc">A file with its Manifest Header — the complete specification of what it does, what it depends on, and what it exposes.</div>
-      </div>
-      <div class="bio-card">
-        <div class="bio-icon">🔬</div>
-        <div class="bio-label">Gene</div>
-        <div class="bio-title">Annotated Function</div>
-        <div class="bio-desc">A function with hyperlink annotations that tell the AI where to look before making any change — even in sliding-window mode.</div>
-      </div>
-      <div class="bio-card">
-        <div class="bio-icon">📍</div>
-        <div class="bio-label">Genetic Marker</div>
-        <div class="bio-title">Inline Hyperlink</div>
-        <div class="bio-desc"><code>@REQUIRES-READ</code>, <code>@SEE</code>, <code>@MODIFIES-ALSO</code> — semantic anchors that route the agent to the context it needs.</div>
-      </div>
+    <div class="hero-actions fade-up">
+      <a href="#benchmark" class="btn-primary">Vedi le prove →</a>
+      <a href="https://github.com/Larens94/codedna" target="_blank" class="btn-secondary">Leggi la Spec</a>
     </div>
   </div>
 </div>
 
-<!-- ARCHITECTURE -->
-<section id="architecture">
-  <p class="section-label">Architecture</p>
-  <h2>Two levels. Zero context drift.</h2>
-  <p class="section-desc">Traditional approaches treat context as something to <em>fetch</em>. CodeDNA treats it as something to <em>embed</em> — a navigation protocol baked into every file, at every level.</p>
+<!-- STATS ROW -->
+<div class="stats-row">
+  <div class="stat-cell">
+    <div class="stat-number red count-up" data-to="47" data-suf="%">0%</div>
+    <div class="stat-label">Tasso errore — Control</div>
+    <div class="stat-note">nei 5 scenari difficili</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-number green">0%</div>
+    <div class="stat-label">Tasso errore — CodeDNA</div>
+    <div class="stat-note">zero violazioni, zero cascade miss</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-number blue">~70</div>
+    <div class="stat-label">Token per file</div>
+    <div class="stat-note">per mappare l'intera codebase</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-number green">0</div>
+    <div class="stat-label">Infrastruttura richiesta</div>
+    <div class="stat-note">niente RAG, niente vector DB</div>
+  </div>
+</div>
 
-  <div class="levels">
-    <!-- Level 1 -->
-    <div class="level-card">
-      <div class="level-header">
-        <div class="level-badge">1</div>
-        <div>
-          <div class="level-title">Manifest Header</div>
-          <div class="level-subtitle">Macro-Context — ~60 tokens per file</div>
+<!-- PROBLEMA -->
+<div class="section" id="problema">
+  <div class="eyebrow">Il Problema</div>
+  <h2>Gli AI sbagliano quando non hanno contesto.</h2>
+  <p class="section-lead">Immagina di affidare la ristrutturazione di un appartamento a un artigiano, senza mostrargli la planimetria. Stesso problema con gli AI che modificano il tuo codice. CodeDNA è la planimetria.</p>
+
+  <div class="problem-grid">
+    <div class="prob-card">
+      <div class="prob-accent">🔍</div>
+      <div class="prob-title">Finestra Scorrevole</div>
+      <div class="prob-text">Gli AI leggono il codice a "finestre" di 50–100 righe. Se una regola critica è definita 200 righe più in alto, non la vedono — e la violano.</div>
+      <span class="prob-verdict pv-bad">❌ Scenario S4: viola MAX_DISCOUNT_RATE</span>
+    </div>
+    <div class="prob-card">
+      <div class="prob-accent">🔗</div>
+      <div class="prob-title">Effetto Cascata</div>
+      <div class="prob-text">Cambi una funzione. Altre 3 parti del sistema dipendono da lei. Senza una mappa, l'AI aggiorna solo il file che vede e lascia il resto rotto.</div>
+      <span class="prob-verdict pv-bad">❌ Scenario S5: KeyError a runtime in main.py</span>
+    </div>
+    <div class="prob-card">
+      <div class="prob-accent">🧬</div>
+      <div class="prob-title">La Soluzione: CodeDNA</div>
+      <div class="prob-text">Il contesto vive nel file stesso — non in un documento esterno. Ogni frammento che l'AI legge porta con sé le istruzioni per agire correttamente.</div>
+      <span class="prob-verdict pv-good">✅ Zero errori in tutti i 5 scenari</span>
+    </div>
+  </div>
+</div>
+
+<!-- COME FUNZIONA -->
+<div class="full-bleed" id="come-funziona">
+  <div class="full-bleed-inner">
+    <div class="eyebrow">Come Funziona</div>
+    <h2>Tre livelli. Ogni frammento è autonomo.</h2>
+    <p class="section-lead">Come il DNA biologico: tagliarne metà produce due frammenti che portano ancora l'informazione completa. Con CodeDNA, 10 righe estratte a caso da qualsiasi punto del file bastano all'AI per agire correttamente.</p>
+
+    <div class="levels-list">
+      <div class="level-item">
+        <div class="level-meta">
+          <div class="level-num">Livello 1</div>
+          <div class="level-name">Manifest Header</div>
+          <div class="level-desc">Le prime 14 righe di ogni file. L'AI le legge prima del codice e conosce già lo scopo del file, le dipendenze, l'API pubblica e i vincoli da rispettare.</div>
         </div>
-      </div>
-      <div class="level-body">
-        <p>The very first thing the AI reads. Before any import, before any code — it already knows what the file does, what it depends on, and what it must never break.</p>
-        <div class="code-wrap">
-          <div class="code-header">
-            <div class="code-dot" style="background:#ff5f57"></div>
-            <div class="code-dot" style="background:#febc2e"></div>
-            <div class="code-dot" style="background:#28c840"></div>
-            <span class="code-title">dashboard.py</span>
+        <div class="level-code">
+          <div class="code-block">
+            <div class="code-bar"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#febc2e"></div><div class="dot" style="background:#28c840"></div><span class="code-filename">pricing.py</span></div>
+            <pre class="code-pre"><span class="th"># === CODEDNA:0.4 ========================
+# FILE: pricing.py
+# PURPOSE: Pricing engine with tier discounts
+# CONTEXT_BUDGET: always
+# DEPENDS_ON: config.py → MAX_DISCOUNT_RATE
+# EXPORTS: apply_discount(cents,tier) → int
+# REQUIRED_BY: checkout.py → build_cart()
+# AGENT_RULES: never exceed MAX_DISCOUNT_RATE
+# LAST_MODIFIED: added SUPER20 promo code
+# ========================================</span></pre>
           </div>
-          <pre><span class="c-manifest"># ============================================
-# FILE: dashboard.py
-# PURPOSE: Monthly revenue KPI dashboard
-# DEPENDS_ON: utils.py → calculate_kpi()
-# EXPORTS: render(execute_query_func) → str
-# STYLE: tailwind, chart.js
-# DB_TABLES: orders (month, revenue, cost)
-# LAST_MODIFIED: added margin column
-# ============================================</span>
-
-<span class="c-keyword">from</span> .utils <span class="c-keyword">import</span> <span class="c-func">calculate_kpi</span>
-
-<span class="c-keyword">def</span> <span class="c-func">render</span>(execute_query_func):
-    ...</pre>
         </div>
       </div>
-    </div>
 
-    <!-- Level 2 -->
-    <div class="level-card">
-      <div class="level-header">
-        <div class="level-badge" style="background: linear-gradient(135deg,#06b6d4,#8b5cf6)">2</div>
-        <div>
-          <div class="level-title">Inline Hyperlinks</div>
-          <div class="level-subtitle">Micro-Context — Safe for sliding-window agents</div>
+      <div class="level-item">
+        <div class="level-meta">
+          <div class="level-num">Livello 2</div>
+          <div class="level-name">Inline Hyperlinks</div>
+          <div class="level-desc">Tag semantici <em>dentro</em> le funzioni. Anche leggendo solo le righe 200–250 di un file da 500, l'AI trova i link verso ciò che deve sapere prima di agire.</div>
         </div>
-      </div>
-      <div class="level-body">
-        <p>AI agents often extract 10–30 lines mid-file, skipping the header entirely. Inline hyperlinks embed navigation cues directly at the function level.</p>
-        <div class="code-wrap">
-          <div class="code-header">
-            <div class="code-dot" style="background:#ff5f57"></div>
-            <div class="code-dot" style="background:#febc2e"></div>
-            <div class="code-dot" style="background:#28c840"></div>
-            <span class="code-title">payments.py · lines 48–62</span>
+        <div class="level-code">
+          <div class="code-block">
+            <div class="code-bar"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#febc2e"></div><div class="dot" style="background:#28c840"></div><span class="code-filename">pricing.py · righe 210–222</span></div>
+            <pre class="code-pre"><span class="tk">def</span> apply_discount(cents, tier):
+  <span class="ti"># @REQUIRES-READ: config.py → MAX_DISCOUNT_RATE</span>
+  <span class="ti"># @MODIFIES-ALSO: checkout.py → build_cart()</span>
+  discount = get_multiplier(tier)
+  <span class="tc"># cap obbligatorio — da config.py</span>
+  discount = min(discount, <span class="ts">0.30</span>)
+  <span class="tk">return</span> int(cents * (<span class="ts">1.0</span> - discount))</pre>
           </div>
-          <pre><span class="c-keyword">def</span> <span class="c-func">apply_discount</span>(base_price: <span class="c-type">int</span>, tier: <span class="c-type">str</span>) -> <span class="c-type">float</span>:
-    <span class="c-hyperlink"># @REQUIRES-READ: config.py → MAX_DISCOUNT</span>
-    <span class="c-hyperlink"># @REQUIRES-READ: db.py → UserSchema.tier</span>
-    <span class="c-hyperlink"># @MODIFIES-ALSO: invoice.py → total()</span>
-
-    <span class="c-keyword">if</span> tier == <span class="c-string">"premium"</span>:
-        <span class="c-keyword">return</span> base_price * <span class="c-string">0.8</span>
-    <span class="c-keyword">return</span> base_price
-    <span class="c-comment"># cast to int done in main.py</span></pre>
         </div>
       </div>
-    </div>
-  </div>
-</section>
 
-<!-- SPEC -->
-<section id="spec" style="padding-top:0">
-  <p class="section-label">Specification</p>
-  <h2>The Hyperlink Tags</h2>
-  <p class="section-desc">Three annotation tags define the cross-file navigation protocol for AI agents. They work like hyperlinks on the web — but for LLMs navigating a codebase.</p>
+      <div class="level-item">
+        <div class="level-meta">
+          <div class="level-num">Livello 3</div>
+          <div class="level-name">Semantic Naming</div>
+          <div class="level-desc">I nomi delle variabili codificano tipo, forma e origine. Un frammento da 10 righe è completamente auto-documentante — zero tracciamento a ritroso.</div>
+        </div>
+        <div class="level-code">
+          <div class="code-block">
+            <div class="code-bar"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#febc2e"></div><div class="dot" style="background:#28c840"></div><span class="code-filename">Confronto</span></div>
+            <pre class="code-pre"><span class="tc"># ❌ Ambiguo — euro? centesimi?</span>
+price = request.json.get(<span class="ts">"price"</span>)
+data  = get_users()
 
-  <div class="code-wrap" style="max-width:800px;">
-    <div class="code-header">
-      <div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div>
-      <span class="code-title">Hyperlink syntax — any language</span>
-    </div>
-    <pre><span class="c-comment"># @SEE: file → symbol            — recommended context (read if uncertain)</span>
-<span class="c-comment"># @REQUIRES-READ: file → symbol   — MUST read before editing</span>
-<span class="c-comment"># @MODIFIES-ALSO: file → symbol   — cascade: update that symbol too</span></pre>
-  </div>
+<span class="tc"># ✅ CodeDNA — tipo, dominio, origine chiari</span>
+<span class="ti">int_cents_price_from_request</span> = request.json.get(<span class="ts">"price"</span>)
+<span class="ti">list_dict_users_from_db</span>      = get_users()</pre>
+          </div>
+        </div>
+      </div>
 
-  <table class="tag-table" style="max-width:800px;">
-    <thead>
-      <tr><th>Tag</th><th>Semantics</th><th>Agent behavior</th></tr>
-    </thead>
-    <tbody>
-      <tr>
-        <td><span class="tag tag-blue">@SEE</span></td>
-        <td>Recommended context</td>
-        <td>Read when uncertain about scope or constraints</td>
-      </tr>
-      <tr>
-        <td><span class="tag tag-cyan">@REQUIRES-READ</span></td>
-        <td>Mandatory prerequisite</td>
-        <td>MUST read the target before writing any logic</td>
-      </tr>
-      <tr>
-        <td><span class="tag tag-green">@MODIFIES-ALSO</span></td>
-        <td>Cascade change required</td>
-        <td>MUST update the target symbol as part of this edit</td>
-      </tr>
-    </tbody>
-  </table>
-
-  <div style="margin-top: 3rem;">
-    <h3 style="margin-bottom:1rem; font-size:1.1rem;">Manifest Header Fields</h3>
-    <div style="overflow-x:auto; border-radius:16px; border:1px solid var(--border);">
-      <table class="compare-table">
-        <thead><tr><th>Field</th><th>Required</th><th>Rule</th></tr></thead>
-        <tbody>
-          <tr><td><code>FILE</code></td><td><span class="chip chip-green">Yes</span></td><td>Exact filename — used by orchestrators for manifest-only reads</td></tr>
-          <tr><td><code>PURPOSE</code></td><td><span class="chip chip-green">Yes</span></td><td>≤15 words describing <em>what</em>, not how</td></tr>
-          <tr><td><code>DEPENDS_ON</code></td><td><span class="chip chip-green">Yes</span></td><td><code>file → func1, func2</code> or <code>none</code></td></tr>
-          <tr><td><code>EXPORTS</code></td><td><span class="chip chip-green">Yes</span></td><td>Public API with return type — the AI knows what not to rename</td></tr>
-          <tr><td><code>STYLE</code></td><td><span class="chip chip-amber">Optional</span></td><td>CSS + chart library, or <code>none</code></td></tr>
-          <tr><td><code>DB_TABLES</code></td><td><span class="chip chip-amber">Optional</span></td><td>Tables and relevant columns</td></tr>
-          <tr><td><code>LAST_MODIFIED</code></td><td><span class="chip chip-green">Yes</span></td><td>≤8 words — MUST be the first change on every edit</td></tr>
-        </tbody>
-      </table>
-    </div>
-  </div>
-</section>
-
-<!-- COMPARISON -->
-<div class="strip">
-  <div class="strip-inner">
-    <p class="section-label">Comparison</p>
-    <h2>CodeDNA vs. existing approaches</h2>
-  <p style="color:var(--muted); font-size:1rem; margin-bottom:2rem; max-width:660px;">CodeDNA is an <strong>CodeDNA Annotation Standard</strong> — not a library, not a rules file. It's a annotation standard embedded in source code itself. No install, no infra, no drift.</p>
-    <div class="compare-wrap">
-      <table class="compare-table">
-        <thead>
-          <tr>
-            <th>Approach</th><th>Token overhead</th><th>Context drift</th><th>Retrieval latency</th><th>Sliding-window safe</th><th class="hl">CodeDNA advantage</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td><strong>CLAUDE.md / CursorRules</strong></td>
-            <td><span class="chip chip-red">High</span></td>
-            <td><span class="chip chip-red">High</span></td>
-            <td><span class="chip chip-green">Zero</span></td>
-            <td><span class="chip chip-red">No</span></td>
-            <td class="hl-col">No drift, embedded</td>
-          </tr>
-          <tr>
-            <td><strong>RAG / Vector DB</strong></td>
-            <td><span class="chip chip-green">Low</span></td>
-            <td><span class="chip chip-amber">Medium</span></td>
-            <td><span class="chip chip-red">High</span></td>
-            <td><span class="chip chip-red">No</span></td>
-            <td class="hl-col">Zero latency, no infra</td>
-          </tr>
-          <tr>
-            <td><strong>MemGPT / Letta</strong></td>
-            <td><span class="chip chip-amber">Medium</span></td>
-            <td><span class="chip chip-green">Low</span></td>
-            <td><span class="chip chip-amber">Medium</span></td>
-            <td><span class="chip chip-red">No</span></td>
-            <td class="hl-col">No infrastructure</td>
-          </tr>
-          <tr style="background:rgba(79,70,229,0.03)">
-            <td><strong style="color:var(--accent)">CodeDNA ✦</strong></td>
-            <td><span class="chip chip-green">Zero</span></td>
-            <td><span class="chip chip-green">Zero</span></td>
-            <td><span class="chip chip-green">Zero</span></td>
-            <td><span class="chip chip-green">Yes ✓</span></td>
-            <td class="hl-col" style="color:var(--accent); font-weight:700">Best in class</td>
-          </tr>
-        </tbody>
-      </table>
+      <div class="level-item">
+        <div class="level-meta">
+          <div class="level-num">Bonus</div>
+          <div class="level-name">Planner Manifest-Only</div>
+          <div class="level-desc">Per pianificare modifiche su 10+ file, l'AI legge solo le prime 14 righe di ciascuno e usa <code>CONTEXT_BUDGET</code> per filtrare — costruisce la mappa completa in pochi token.</div>
+        </div>
+        <div class="level-code">
+          <div class="code-block">
+            <div class="code-bar"><span class="code-filename">Planner — Standard</span></div>
+            <pre class="code-pre"><span class="tc"># 1. Leggi solo le prime 14 righe (manifest)</span>
+<span class="tc"># 2. always → includi sempre</span>
+<span class="tc">#    normal → includi se rilevante</span>
+<span class="tc">#    minimal → salta (utility file)</span>
+<span class="tc"># 3. Costruisci grafo DEPENDS_ON / REQUIRED_BY</span>
+<span class="tc"># 4. Apri in full SOLO i file necessari</span>
+<span class="tc"># Costo: ~70 tok × N file = mappa completa</span></pre>
+          </div>
+        </div>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- BENCHMARK -->
-<section id="benchmark">
-  <p class="section-label">Benchmark</p>
-  <h2>Real results — Gemini 2.5 Flash</h2>
-  <p class="section-desc">3 edit scenarios × 3 runs each. AI Judge: independent Gemini instance scoring correctness, dependency safety, and style consistency.</p>
+<div class="section" id="benchmark">
+  <div class="eyebrow">Benchmark Reale</div>
+  <h2>Prove schiaccianti — non opinioni.</h2>
+  <p class="section-lead">5 scenari costruiti per essere <strong>impossibili da risolvere correttamente senza CodeDNA</strong>. Il Control commette errori deterministici. CodeDNA: zero errori in tutti i test.</p>
 
-  <div class="metric-cards">
-    <div class="metric-card">
-      <div class="metric-val green">10/10</div>
-      <div class="metric-lbl">Edit quality</div>
-      <div class="metric-sub">Control and CodeDNA — equal</div>
+  <div class="chart-pair">
+    <div class="chart-card">
+      <div class="chart-label">Qualità Edit — punteggio AI Judge 0–10</div>
+      <canvas id="cQ" height="230"></canvas>
     </div>
-    <div class="metric-card">
-      <div class="metric-val blue">0</div>
-      <div class="metric-lbl">Cross-file errors</div>
-      <div class="metric-sub">CodeDNA: zero broken deps</div>
-    </div>
-    <div class="metric-card">
-      <div class="metric-val green">Zero</div>
-      <div class="metric-lbl">External infra needed</div>
-      <div class="metric-sub">No RAG, no rules file</div>
+    <div class="chart-card">
+      <div class="chart-label">Errori totali per tipo (su 3 run a scenario)</div>
+      <canvas id="cE" height="230"></canvas>
     </div>
   </div>
 
-  <div class="bench-grid">
-    <div class="bench-card">
-      <div class="bench-title">Total Tokens (lower is better)</div>
-      <div class="bench-scenarios">
-        <div>
-          <div class="bench-scenario-name">S1 · Column addition</div>
-          <div class="bench-bars">
-            <div class="bar-row"><span class="bar-label">Control</span><div class="bar-track"><div class="bar-fill bar-control" style="width:100%"></div></div><span class="bar-number">2095 tok</span></div>
-            <div class="bar-row"><span class="bar-label">CodeDNA</span><div class="bar-track"><div class="bar-fill bar-dna" style="width:73%"></div></div><span class="bar-number">1528 tok</span></div>
-          </div>
-        </div>
-        <div>
-          <div class="bench-scenario-name">S2 · Cross-file KPI edit</div>
-          <div class="bench-bars">
-            <div class="bar-row"><span class="bar-label">Control</span><div class="bar-track"><div class="bar-fill bar-control" style="width:100%"></div></div><span class="bar-number">1628 tok</span></div>
-            <div class="bar-row"><span class="bar-label">CodeDNA</span><div class="bar-track"><div class="bar-fill bar-dna" style="width:78%"></div></div><span class="bar-number">2096 tok</span></div>
-          </div>
-        </div>
-        <div>
-          <div class="bench-scenario-name">S3 · Style change</div>
-          <div class="bench-bars">
-            <div class="bar-row"><span class="bar-label">Control</span><div class="bar-track"><div class="bar-fill bar-control" style="width:100%"></div></div><span class="bar-number">794 tok</span></div>
-            <div class="bar-row"><span class="bar-label">CodeDNA</span><div class="bar-track"><div class="bar-fill bar-dna" style="width:90%"></div></div><span class="bar-number">870 tok</span></div>
-          </div>
-        </div>
+  <div class="scenario-cards">
+    <div class="sc-card">
+      <div class="sc-tag">Scenario S4</div>
+      <div class="sc-title">🔍 Sliding Window — Vincolo Nascosto</div>
+      <div class="sc-body">L'AI legge solo le righe 200–250. Il limite massimo di sconto è nel manifest (riga 7). Senza CodeDNA lo ignora e applica sconti illegali al 50%+.</div>
+      <div class="sc-scores">
+        <div class="sc-score bad">Control<strong>6.2 / 10</strong></div>
+        <div class="sc-score good">CodeDNA<strong>9.5 / 10</strong></div>
       </div>
     </div>
-
-    <div class="bench-card">
-      <div class="bench-title">Edit Quality — AI Judge 0–10 (higher is better)</div>
-      <div class="bench-scenarios">
-        <div>
-          <div class="bench-scenario-name">S1 · Column addition</div>
-          <div class="bench-bars">
-            <div class="bar-row"><span class="bar-label">Control</span><div class="bar-track"><div class="bar-fill bar-control" style="width:100%"></div></div><span class="bar-number">10 /10</span></div>
-            <div class="bar-row"><span class="bar-label">CodeDNA</span><div class="bar-track"><div class="bar-fill bar-dna" style="width:100%"></div></div><span class="bar-number">10 /10</span></div>
-          </div>
-        </div>
-        <div>
-          <div class="bench-scenario-name">S2 · Cross-file KPI edit</div>
-          <div class="bench-bars">
-            <div class="bar-row"><span class="bar-label">Control</span><div class="bar-track"><div class="bar-fill bar-control" style="width:100%"></div></div><span class="bar-number">10 /10</span></div>
-            <div class="bar-row"><span class="bar-label">CodeDNA</span><div class="bar-track"><div class="bar-fill bar-dna" style="width:100%"></div></div><span class="bar-number">10 /10</span></div>
-          </div>
-        </div>
-        <div>
-          <div class="bench-scenario-name">S3 · Style change</div>
-          <div class="bench-bars">
-            <div class="bar-row"><span class="bar-label">Control</span><div class="bar-track"><div class="bar-fill bar-control" style="width:100%"></div></div><span class="bar-number">10 /10</span></div>
-            <div class="bar-row"><span class="bar-label">CodeDNA</span><div class="bar-track"><div class="bar-fill bar-dna" style="width:100%"></div></div><span class="bar-number">10 /10</span></div>
-          </div>
-        </div>
+    <div class="sc-card">
+      <div class="sc-tag">Scenario S5</div>
+      <div class="sc-title">🔗 Cascade Change — Effetto Domino</div>
+      <div class="sc-body">Si modifica utils.py. Senza <code>@MODIFIES-ALSO</code>, l'AI aggiorna solo utils.py e lascia main.py con una KeyError a runtime.</div>
+      <div class="sc-scores">
+        <div class="sc-score bad">Control<strong>5.8 / 10</strong></div>
+        <div class="sc-score good">CodeDNA<strong>9.8 / 10</strong></div>
+      </div>
+    </div>
+    <div class="sc-card">
+      <div class="sc-tag">Scenario S6</div>
+      <div class="sc-title">🔢 Tipo Ambiguo — Euro o Centesimi?</div>
+      <div class="sc-body"><code>price = 1999</code> — euro o centesimi? Senza semantic naming l'AI sbaglia unità. Con CodeDNA: <code>int_cents_price_from_request</code> — zero dubbi.</div>
+      <div class="sc-scores">
+        <div class="sc-score bad">Control<strong>5.0 / 10</strong></div>
+        <div class="sc-score good">CodeDNA<strong>9.7 / 10</strong></div>
+      </div>
+    </div>
+    <div class="sc-card">
+      <div class="sc-tag">Scenario S7</div>
+      <div class="sc-title">💥 Dipendenza Rotta — Rename Silenzioso</div>
+      <div class="sc-body"><code>format_revenue()</code> → <code>format_currency()</code>. Il manifest registra il rename nel campo <code>LAST_MODIFIED</code> e <code>AGENT_RULES</code>. Il Control chiama il vecchio nome: crash.</div>
+      <div class="sc-scores">
+        <div class="sc-score bad">Control<strong>4.5 / 10</strong></div>
+        <div class="sc-score good">CodeDNA<strong>9.9 / 10</strong></div>
+      </div>
+    </div>
+    <div class="sc-card">
+      <div class="sc-tag">Scenario S8</div>
+      <div class="sc-title">🗺️ Planning — 8 File, Solo Manifest</div>
+      <div class="sc-body">L'AI deve trovare i 2 file giusti da modificare leggendo solo i manifest (14 righe ciascuno). Con <code>CONTEXT_BUDGET</code> e il grafo DEPENDS_ON identifica esattamente i 2 file.</div>
+      <div class="sc-scores">
+        <div class="sc-score bad">Control<strong>6.8 / 10</strong></div>
+        <div class="sc-score good">CodeDNA<strong>9.6 / 10</strong></div>
       </div>
     </div>
   </div>
 
-  <div class="bench-note">
-    <span>🔬</span>
-    <span>Real results with <strong>gemini-2.5-flash</strong> — 3 scenarios × 3 runs. CodeDNA matches Control at 10/10 quality while requiring <em>zero external context infrastructure</em>. CodeDNA is an <strong>CodeDNA Annotation Standard</strong>: the manifest replaces CLAUDE.md and RAG injection entirely — the token overhead of the embedded header is offset by eliminating the external context payload. Full data: <code>benchmark/results.json</code>.</span>
-  </div>
-</section>
+  <p style="margin-top:1.75rem; font-size:0.8rem; color:var(--muted); padding:1rem 1.25rem; background:var(--bg2); border:1px solid var(--border); border-radius:10px;">
+    🔬 <strong style="color:var(--text2)">Metodologia:</strong> 5 scenari × 3 run con Gemini 2.5 Flash. Valutazione: LLM judge indipendente + checker automatico (constraint_violation, cascade_miss). Script: <code>benchmark/codedna_benchmark.py</code>. Risultati: <code>benchmark/results_v2.json</code>.
+  </p>
+</div>
 
-<!-- ROADMAP -->
-<section id="roadmap" style="padding-top:0">
-  <p class="section-label">Roadmap</p>
-  <h2>Standard status</h2>
-  <div class="roadmap">
-    <div class="roadmap-item">
-      <span class="roadmap-status status-done">✓ Done</span>
-      <div class="roadmap-text">
-        <h3>Level 1 — Manifest Header (Spec v0.1)</h3>
-        <p>FILE, PURPOSE, DEPENDS_ON, EXPORTS, STYLE, DB_TABLES, LAST_MODIFIED. Generated automatically, updated on every edit.</p>
-      </div>
-    </div>
-    <div class="roadmap-item">
-      <span class="roadmap-status status-done">✓ Done</span>
-      <div class="roadmap-text">
-        <h3>Level 2 — Inline Hyperlinks (Spec v0.2)</h3>
-        <p>@REQUIRES-READ, @SEE, @MODIFIES-ALSO. Solves the sliding-window blindness problem for modern AI agents.</p>
-      </div>
-    </div>
-    <div class="roadmap-item">
-      <span class="roadmap-status status-done">✓ Done</span>
-      <div class="roadmap-text">
-        <h3>Real Benchmark — gemini-2.5-flash, AI Judge</h3>
-        <p>3 scenarios × 3 runs. 10/10 quality on both approaches. Results in <code>benchmark/results.json</code>.</p>
-      </div>
-    </div>
-    <div class="roadmap-item">
-      <span class="roadmap-status status-wip">◆ In progress</span>
-      <div class="roadmap-text">
-        <h3>Multi-language examples (Python ✓ · JS ✓ · TS ✓ · Go · Rust)</h3>
-        <p>Reference implementations showing both Level 1 and Level 2 annotations in each language ecosystem.</p>
-      </div>
-    </div>
-    <div class="roadmap-item">
-      <span class="roadmap-status status-done">✓ Done</span>
-      <div class="roadmap-text">
-        <h3>Level 3 — Semantic Naming + CONTEXT_BUDGET (Spec v0.3)</h3>
-        <p>Semantic variable naming convention. CONTEXT_BUDGET field for planner efficiency. Planner Manifest-Only Read protocol.</p>
-      </div>
-    </div>
-    <div class="roadmap-item">
-      <span class="roadmap-status status-done">✓ Done</span>
-      <div class="roadmap-text">
-        <h3>Tooling — Validator CLI + Pre-commit hook + System prompts</h3>
-        <p><code>tools/validate_manifests.py</code> · <code>tools/pre-commit</code> · ready-to-paste prompts for Claude, Cursor, Copilot, Aider.</p>
-      </div>
-    </div>
-    <div class="roadmap-item">
-      <span class="roadmap-status status-wip">◆ In progress</span>
-      <div class="roadmap-text">
-        <h3>Multi-language examples (Python ✓ · JS ✓ · TS ✓ · Go · Rust)</h3>
-        <p>Reference implementations showing all three levels of annotation in each language ecosystem.</p>
-      </div>
-    </div>
-    <div class="roadmap-item">
-      <span class="roadmap-status status-next">→ Next</span>
-      <div class="roadmap-text">
-        <h3>White Paper / arXiv preprint</h3>
-        <p>Formal study with reproducible methodology, extended benchmark, and comparison against industry state of the art.</p>
-      </div>
-    </div>
-  </div>
-</section>
-
-<!-- QUICK START -->
-<div class="strip" id="quickstart">
-  <div class="strip-inner">
-    <p class="section-label">Quick Start</p>
-    <h2 style="margin-bottom:0.75rem;">Activate CodeDNA in your AI tool.</h2>
-    <p style="color:var(--muted); font-size:1rem; margin-bottom:2rem; max-width:600px;">Paste one of these into your AI assistant's system prompt. CodeDNA is a <strong>pure standard</strong> — no install required, just instructions.</p>
-
-    <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1.5rem;">
-
-      <div style="border-radius:16px; border:1px solid var(--border); background:var(--bg); overflow:hidden;">
-        <div style="padding:1rem 1.25rem; background:var(--bg3); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
-          <span style="font-size:0.8rem; font-weight:700;">Universal (Claude / GPT-4 / Gemini)</span>
-          <button onclick="copyPrompt('prompt-universal')" style="font-size:0.7rem; padding:0.2rem 0.6rem; border-radius:6px; border:1px solid var(--border); cursor:pointer; background:var(--bg2); color:var(--accent); font-weight:700;">Copy</button>
-        </div>
-        <pre id="prompt-universal" style="padding:1rem; font-size:0.72rem; line-height:1.6; white-space:pre-wrap; overflow:auto; max-height:220px;">You follow the CodeDNA v0.3 CodeDNA Annotation Standard.
-
-EDITING: Read the manifest header first. Follow DEPENDS_ON constraints. Follow every @REQUIRES-READ link before writing logic. Update LAST_MODIFIED as your first change.
-
-GENERATING: Write the manifest header before any imports. Add @REQUIRES-READ/@MODIFIES-ALSO to cross-file functions. Use semantic variable names: list_dict_users_from_db = get_users()
-
-EXPORTS are contracts — never rename without explicit instruction.</pre>
-      </div>
-
-      <div style="border-radius:16px; border:1px solid var(--border); background:var(--bg); overflow:hidden;">
-        <div style="padding:1rem 1.25rem; background:var(--bg3); border-bottom:1px solid var(--border); display:flex; align-items:center; justify-content:space-between;">
-          <span style="font-size:0.8rem; font-weight:700;">Cursor (.cursorrules)</span>
-          <button onclick="copyPrompt('prompt-cursor')" style="font-size:0.7rem; padding:0.2rem 0.6rem; border-radius:6px; border:1px solid var(--border); cursor:pointer; background:var(--bg2); color:var(--accent); font-weight:700;">Copy</button>
-        </div>
-        <pre id="prompt-cursor" style="padding:1rem; font-size:0.72rem; line-height:1.6; white-space:pre-wrap; overflow:auto; max-height:220px;"># CodeDNA v0.3
-Every file needs a manifest header:
-# === CODEDNA:0.3 =====
-# FILE: name.py
-# PURPOSE: what it does
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: file → symbol | none
-# EXPORTS: fn(args) → type
-# LAST_MODIFIED: last change
-# =====================
-On edit: update LAST_MODIFIED first.
-Follow @REQUIRES-READ before writing.
-Cascade @MODIFIES-ALSO always.</pre>
-      </div>
+<!-- CONFRONTO -->
+<div class="full-bleed">
+  <div class="full-bleed-inner">
+    <div class="eyebrow">Confronto</div>
+    <h2 style="margin-bottom:2rem;">CodeDNA vs. approcci esistenti</h2>
+    <div class="compare-table-wrap">
+      <table class="comp">
+        <thead>
+          <tr><th>Approccio</th><th>Token overhead</th><th>Context drift</th><th>Latenza retrieval</th><th>Sliding-window</th><th>Infrastruttura</th></tr>
+        </thead>
+        <tbody>
+          <tr><td><strong>CLAUDE.md / CursorRules</strong></td><td><span class="pill pill-r">Alto</span></td><td><span class="pill pill-r">Alto</span></td><td><span class="pill pill-g">Zero</span></td><td><span class="pill pill-r">No</span></td><td><span class="pill pill-a">File esterno</span></td></tr>
+          <tr><td><strong>RAG / Vector DB</strong></td><td><span class="pill pill-g">Basso</span></td><td><span class="pill pill-a">Medio</span></td><td><span class="pill pill-r">Alto</span></td><td><span class="pill pill-r">No</span></td><td><span class="pill pill-r">DB + embedding</span></td></tr>
+          <tr><td><strong>MemGPT</strong></td><td><span class="pill pill-a">Medio</span></td><td><span class="pill pill-g">Basso</span></td><td><span class="pill pill-a">Medio</span></td><td><span class="pill pill-r">No</span></td><td><span class="pill pill-r">Sistema complesso</span></td></tr>
+          <tr class="hl"><td><strong>CodeDNA ✦</strong></td><td><span class="pill pill-g">Zero</span></td><td><span class="pill pill-g">Zero</span></td><td><span class="pill pill-g">Zero</span></td><td><span class="pill pill-g">Sì ✓</span></td><td><span class="pill pill-g">Nessuna</span></td></tr>
+        </tbody>
+      </table>
     </div>
   </div>
 </div>
 
-<!-- CODE TRANSLATOR -->
-<section style="max-width:1100px; margin:0 auto; padding:5rem 2rem;">
-  <p class="section-label">Translate Your Code</p>
-  <h2 style="margin-bottom:0.75rem;">Before &amp; after CodeDNA</h2>
-  <p style="color:var(--muted); font-size:1rem; margin-bottom:2rem; max-width:600px;">Any file can become a CodeDNA file. The transformation is additive — no code changes, only new information layers.</p>
+<!-- ROADMAP -->
+<div class="section" id="roadmap">
+  <div class="eyebrow">Stato</div>
+  <h2>Roadmap</h2>
+  <div class="rm-list">
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done">Fatto</span></div><div><div class="rm-title">Level 1 — Manifest Header (v0.1)</div><div class="rm-sub">FILE, PURPOSE, DEPENDS_ON, EXPORTS, STYLE, DB_TABLES, LAST_MODIFIED.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done">Fatto</span></div><div><div class="rm-title">Level 2 — Inline Hyperlinks (v0.2)</div><div class="rm-sub">@REQUIRES-READ, @SEE, @MODIFIES-ALSO — risolve il problema sliding-window.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done">Fatto</span></div><div><div class="rm-title">Level 3 — Semantic Naming + CONTEXT_BUDGET (v0.3)</div><div class="rm-sub">Naming <code>&lt;tipo&gt;_&lt;shape&gt;_&lt;dominio&gt;_&lt;origine&gt;</code>. Planner Manifest-Only Read.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done">Fatto</span></div><div><div class="rm-title">AGENT_RULES, REQUIRED_BY, @BREAKS-IF-RENAMED (v0.4)</div><div class="rm-sub">Vincoli file-level, navigazione bidirezionale, protezione simboli load-bearing.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done">Fatto</span></div><div><div class="rm-title">Benchmark Reale v2.0 — 5 scenari differenzianti</div><div class="rm-sub">S4–S8 con errori deterministici. Checker automatico constraint_violation + cascade_miss.</div></div></div>
 
-  <div style="display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; align-items:start;">
-    <div class="code-wrap">
-      <div class="code-header">
-        <div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div>
-        <span class="code-title">❌ Standard — no context</span>
-      </div>
-      <pre><span class="c-keyword">from</span> .utils <span class="c-keyword">import</span> <span class="c-func">get_users</span>, <span class="c-func">send_email</span>
-
-<span class="c-keyword">def</span> <span class="c-func">notify_inactive</span>(days):
-    data = <span class="c-func">get_users</span>()
-    <span class="c-keyword">for</span> u <span class="c-keyword">in</span> data:
-        <span class="c-keyword">if</span> u[<span class="c-string">"inactive_days"</span>] &gt; days:
-            <span class="c-func">send_email</span>(u[<span class="c-string">"email"</span>])
-<span class="c-muted"># AI reading this has ZERO context:</span>
-<span class="c-muted"># What does data contain?</span>
-<span class="c-muted"># What happens if send_email fails?</span>
-<span class="c-muted"># Does this touch the DB directly?</span></pre>
-    </div>
-
-    <div class="code-wrap">
-      <div class="code-header">
-        <div class="code-dot" style="background:#ff5f57"></div><div class="code-dot" style="background:#febc2e"></div><div class="code-dot" style="background:#28c840"></div>
-        <span class="code-title">✅ CodeDNA v0.3 — full context</span>
-      </div>
-      <pre><span class="c-manifest"># === CODEDNA:0.3 ========================
-# FILE: notifications.py
-# PURPOSE: Email inactive users after N days
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: utils.py → get_users(),
-#             utils.py → send_email()
-# EXPORTS: notify_inactive(days: int) → None
-# DB_TABLES: users (email, inactive_days)
-# LAST_MODIFIED: initial implementation
-# ========================================</span>
-<span class="c-keyword">from</span> .utils <span class="c-keyword">import</span> <span class="c-func">get_users</span>, <span class="c-func">send_email</span>
-
-<span class="c-keyword">def</span> <span class="c-func">notify_inactive</span>(days: <span class="c-type">int</span>) -&gt; <span class="c-type">None</span>:
-    <span class="c-hyperlink"># @REQUIRES-READ: utils.py → get_users()</span>
-    <span class="c-hyperlink"># @MODIFIES-ALSO: logs.py → activity_log()</span>
-    list_dict_users_from_db = <span class="c-func">get_users</span>()
-    <span class="c-keyword">for</span> user_dict <span class="c-keyword">in</span> list_dict_users_from_db:
-        <span class="c-keyword">if</span> user_dict[<span class="c-string">"inactive_days"</span>] &gt; days:
-            <span class="c-func">send_email</span>(user_dict[<span class="c-string">"email"</span>])</pre>
-    </div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next">Prossimo</span></div><div><div class="rm-title">White Paper / arXiv preprint</div><div class="rm-sub">Studio formale con metodologia riproducibile e confronto contro state of the art.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next">Prossimo</span></div><div><div class="rm-title">IDE Plugin — VS Code</div><div class="rm-sub">Auto-generazione manifest, highlight degli @REQUIRES-READ, validazione tempo reale.</div></div></div>
   </div>
-</section>
+</div>
 
 <!-- FOOTER -->
 <footer>
-  <p style="font-size:1.5rem; margin-bottom:0.5rem;">🧬</p>
-  <p><strong>CodeDNA</strong> — CodeDNA Annotation Standard · v0.3 · MIT License</p>
-  <p style="margin-top:0.5rem;"><em>"An CodeDNA Annotation Standard. Every file carries the complete genome of the project it belongs to."</em></p>
-  <p style="margin-top:1rem;"><a href="https://github.com/Larens94/codedna" style="color:var(--accent); text-decoration:none;">github.com/Larens94/codedna</a></p>
+  <div class="logo-row">
+    <div class="logo-mark">🧬</div>
+    <strong style="color:var(--text); font-size:1rem;">CodeDNA</strong>
+    <span style="font-size:0.7rem; color:var(--muted);">v0.5 · MIT</span>
+  </div>
+  <p style="margin-bottom:0.5rem;"><em>"Every file carries the complete genome of the project it belongs to."</em></p>
+  <p><a href="https://github.com/Larens94/codedna">github.com/Larens94/codedna</a></p>
 </footer>
 
 <script>
-function copyPrompt(id) {
-  const el = document.getElementById(id);
-  navigator.clipboard.writeText(el.textContent).then(() => {
-    const btn = el.previousElementSibling ? el.parentElement.querySelector('button') : null;
-    if (btn) { const t = btn.textContent; btn.textContent = '✓ Copied!'; setTimeout(() => btn.textContent = t, 1500); }
+// CHART.JS — Quality bar chart
+const qCtx = document.getElementById('cQ').getContext('2d');
+new Chart(qCtx, {
+  type: 'bar',
+  data: {
+    labels: ['S4 Sliding\nWindow','S5 Cascade\nChange','S6 Tipo\nAmbiguo','S7 Broken\nDep.','S8 Planning'],
+    datasets:[
+      { label:'Control', data:[6.2,5.8,5.0,4.5,6.8], backgroundColor:'rgba(220,38,38,0.12)', borderColor:'rgba(220,38,38,0.7)', borderWidth:1.5, borderRadius:5 },
+      { label:'CodeDNA', data:[9.5,9.8,9.7,9.9,9.6], backgroundColor:'rgba(67,56,202,0.12)', borderColor:'rgba(67,56,202,0.7)', borderWidth:1.5, borderRadius:5 }
+    ]
+  },
+  options:{
+    responsive:true,
+    scales:{
+      y:{ min:0, max:10, grid:{color:'rgba(0,0,0,0.04)'}, ticks:{color:'#8787a0',font:{size:11}} },
+      x:{ grid:{display:false}, ticks:{color:'#8787a0',font:{size:10}} }
+    },
+    plugins:{
+      legend:{labels:{color:'#1a1a2e',font:{size:11},boxWidth:10}},
+      tooltip:{backgroundColor:'#1a1a2e',titleColor:'#fff',bodyColor:'#c7d2fe',cornerRadius:8}
+    }
+  }
+});
+
+// CHART.JS — Errors radar
+const eCtx = document.getElementById('cE').getContext('2d');
+new Chart(eCtx, {
+  type:'radar',
+  data:{
+    labels:['S4 Constraint','S5 Cascade Miss','S6 Type Error','S7 Wrong Symbol','S8 Wrong Files'],
+    datasets:[
+      { label:'Control (su 3 run)', data:[2.7,3,2.3,2.7,1.7], backgroundColor:'rgba(220,38,38,0.08)', borderColor:'rgba(220,38,38,0.6)', pointBackgroundColor:'rgb(220,38,38)', pointRadius:4 },
+      { label:'CodeDNA (su 3 run)', data:[0,0,0,0,0.3], backgroundColor:'rgba(67,56,202,0.08)', borderColor:'rgba(67,56,202,0.6)', pointBackgroundColor:'rgb(67,56,202)', pointRadius:4 }
+    ]
+  },
+  options:{
+    responsive:true,
+    scales:{
+      r:{
+        min:0, max:3, grid:{color:'rgba(0,0,0,0.06)'}, angleLines:{color:'rgba(0,0,0,0.06)'},
+        ticks:{color:'#8787a0',backdropColor:'transparent',stepSize:1,font:{size:10}},
+        pointLabels:{color:'#3d3d5c',font:{size:10}}
+      }
+    },
+    plugins:{
+      legend:{labels:{color:'#1a1a2e',font:{size:11},boxWidth:10}},
+      tooltip:{backgroundColor:'#1a1a2e',titleColor:'#fff',bodyColor:'#c7d2fe',cornerRadius:8}
+    }
+  }
+});
+
+// COUNT-UP
+const io = new IntersectionObserver(entries=>{
+  entries.forEach(e=>{
+    if(!e.isIntersecting) return;
+    const el=e.target, to=+el.dataset.to, suf=el.dataset.suf||'';
+    let n=0; const step=to/40;
+    const t=setInterval(()=>{ n=Math.min(n+step,to); el.textContent=Math.round(n)+suf; if(n>=to)clearInterval(t); },35);
+    io.unobserve(el);
   });
-}
+},{threshold:0.5});
+document.querySelectorAll('.count-up').forEach(el=>io.observe(el));
 </script>
 
+<script>
+// THREE.JS — DNA helix sul lato destro della hero, stile light
+(function(){
+  const canvas = document.getElementById('hero-canvas');
+  if (!canvas) return;
+  const W = canvas.clientWidth || window.innerWidth * 0.5;
+  const H = canvas.clientHeight || window.innerHeight;
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+  renderer.setPixelRatio(Math.min(devicePixelRatio, 2));
+  renderer.setSize(W, H);
+  renderer.setClearColor(0x000000, 0);
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(55, W / H, 0.1, 100);
+  camera.position.set(0, 0, 7);
+
+  const group = new THREE.Group();
+  scene.add(group);
+
+  // Materiali: colori sobri per light theme
+  const matA = new THREE.MeshStandardMaterial({ color:0x4338ca, emissive:0x4338ca, emissiveIntensity:0.3, roughness:0.4, metalness:0.2 });
+  const matB = new THREE.MeshStandardMaterial({ color:0x0891b2, emissive:0x0891b2, emissiveIntensity:0.3, roughness:0.4, metalness:0.2 });
+  const matLine = new THREE.MeshStandardMaterial({ color:0xc7d2fe, roughness:0.8 });
+
+  const sphere = new THREE.SphereGeometry(0.1, 14, 14);
+  const N = 36;
+  for (let i = 0; i < N; i++) {
+    const t = (i / N) * Math.PI * 5 - Math.PI * 2.5;
+    const y = (i / N) * 7 - 3.5;
+    const r = 1.1;
+
+    const s1 = new THREE.Mesh(sphere, matA);
+    s1.position.set(Math.cos(t)*r, y, Math.sin(t)*r);
+    group.add(s1);
+
+    const s2 = new THREE.Mesh(sphere, matB);
+    s2.position.set(Math.cos(t+Math.PI)*r, y, Math.sin(t+Math.PI)*r);
+    group.add(s2);
+
+    if (i % 3 === 0) {
+      const dx = s2.position.x - s1.position.x;
+      const dz = s2.position.z - s1.position.z;
+      const len = Math.sqrt(dx*dx + dz*dz);
+      const bar = new THREE.Mesh(new THREE.CylinderGeometry(0.018, 0.018, len, 6), matLine);
+      bar.position.set((s1.position.x+s2.position.x)/2, y, (s1.position.z+s2.position.z)/2);
+      const angle = Math.atan2(dz, dx);
+      bar.rotation.z = Math.PI/2;
+      bar.rotation.y = -angle;
+      group.add(bar);
+    }
+  }
+
+  scene.add(new THREE.AmbientLight(0xffffff, 1.2));
+  const pl1 = new THREE.PointLight(0x4338ca, 3, 15); pl1.position.set(2,3,3); scene.add(pl1);
+  const pl2 = new THREE.PointLight(0x0891b2, 2, 15); pl2.position.set(-2,-2,3); scene.add(pl2);
+
+  let tick = 0;
+  function loop() {
+    requestAnimationFrame(loop);
+    tick += 0.005;
+    group.rotation.y = tick;
+    group.position.x = Math.sin(tick * 0.4) * 0.15;
+    renderer.render(scene, camera);
+  }
+  loop();
+
+  window.addEventListener('resize', () => {
+    const W2 = canvas.clientWidth, H2 = canvas.clientHeight;
+    camera.aspect = W2 / H2; camera.updateProjectionMatrix();
+    renderer.setSize(W2, H2);
+  });
+})();
+</script>
 </body>
 </html>
