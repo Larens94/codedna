@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="it">
+<html lang="en">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CodeDNA — Lo Standard che Insegna agli AI a Non Sbagliare</title>
-<meta name="description" content="CodeDNA incorpora contesto direttamente nel codice sorgente. Benchmark reali: senza CodeDNA gli AI commettono errori deterministici. Con CodeDNA: zero errori.">
+<title>CodeDNA — The Standard That Teaches AI Not to Make Mistakes</title>
+<meta name="description" content="CodeDNA embeds context directly in source code. Real benchmarks: without CodeDNA, AI makes deterministic errors. With CodeDNA: zero errors.">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
@@ -62,6 +62,8 @@ nav {
 .nav-links a:hover { color:var(--text); }
 .nav-cta { padding:0.45rem 1.1rem; border-radius:8px; font-size:0.85rem; font-weight:600; background:var(--accent); color:white; text-decoration:none; transition:background .15s; }
 .nav-cta:hover { background:var(--accent-h); }
+.lang-toggle { padding:0.35rem 0.85rem; border-radius:8px; font-size:0.78rem; font-weight:600; background:transparent; color:var(--muted); border:1px solid var(--border2); cursor:pointer; transition:all .15s; margin-left:0.25rem; font-family:inherit; }
+.lang-toggle:hover { border-color:var(--accent); color:var(--accent); }
 
 /* ── HERO ── */
 .hero {
@@ -255,11 +257,12 @@ footer a { color:var(--accent); text-decoration:none; }
     <span class="nav-version">v0.5</span>
   </a>
   <div class="nav-links">
-    <a href="#problema">Il Problema</a>
-    <a href="#come-funziona">Come Funziona</a>
+    <a href="#problema" data-i18n="navProblem">The Problem</a>
+    <a href="#come-funziona" data-i18n="navHow">How It Works</a>
     <a href="#benchmark">Benchmark</a>
     <a href="#roadmap">Roadmap</a>
     <a href="https://github.com/Larens94/codedna" target="_blank" class="nav-cta">GitHub →</a>
+    <button class="lang-toggle" id="lang-toggle" onclick="toggleLang()">🌐 IT</button>
   </div>
 </nav>
 
@@ -269,13 +272,13 @@ footer a { color:var(--accent); text-decoration:none; }
   <canvas id="hero-canvas"></canvas>
   <div class="hero-inner">
     <div class="hero-eyebrow fade-up"><span class="eyebrow-dot"></span>CodeDNA Annotation Standard · v0.5 · MIT</div>
-    <h1 class="fade-up">Il codice che si<br><em>spiega da solo.</em></h1>
-    <p class="hero-sub fade-up">
-      Gli AI che modificano il tuo codice commettono errori perché <strong>non hanno contesto</strong>. CodeDNA lo incorpora direttamente nei file — come il DNA in ogni cellula. Zero RAG. Zero deriva.
+    <h1 class="fade-up" data-i18n-html="h1">The code that<br><em>explains itself.</em></h1>
+    <p class="hero-sub fade-up" data-i18n-html="heroSub">
+      AI tools editing your code make mistakes because they have <strong>no context</strong>. CodeDNA embeds it directly in the files — like DNA in every cell. Zero RAG. Zero drift.
     </p>
     <div class="hero-actions fade-up">
-      <a href="#benchmark" class="btn-primary">Vedi le prove →</a>
-      <a href="https://github.com/Larens94/codedna" target="_blank" class="btn-secondary">Leggi la Spec</a>
+      <a href="#benchmark" class="btn-primary" data-i18n="heroCta1">See the evidence →</a>
+      <a href="https://github.com/Larens94/codedna" target="_blank" class="btn-secondary" data-i18n="heroCta2">Read the Spec</a>
     </div>
   </div>
 </div>
@@ -284,50 +287,50 @@ footer a { color:var(--accent); text-decoration:none; }
 <div class="stats-row">
   <div class="stat-cell">
     <div class="stat-number red count-up" data-to="47" data-suf="%">0%</div>
-    <div class="stat-label">Tasso errore — Control</div>
-    <div class="stat-note">nei 5 scenari difficili</div>
+    <div class="stat-label" data-i18n="stat1Label">Error Rate — Control</div>
+    <div class="stat-note" data-i18n="stat1Note">across 5 hard scenarios</div>
   </div>
   <div class="stat-cell">
     <div class="stat-number green">0%</div>
-    <div class="stat-label">Tasso errore — CodeDNA</div>
-    <div class="stat-note">zero violazioni, zero cascade miss</div>
+    <div class="stat-label" data-i18n="stat2Label">Error Rate — CodeDNA</div>
+    <div class="stat-note" data-i18n="stat2Note">zero violations, zero cascade miss</div>
   </div>
   <div class="stat-cell">
     <div class="stat-number blue">~70</div>
-    <div class="stat-label">Token per file</div>
-    <div class="stat-note">per mappare l'intera codebase</div>
+    <div class="stat-label" data-i18n="stat3Label">Tokens per file</div>
+    <div class="stat-note" data-i18n="stat3Note">to map the entire codebase</div>
   </div>
   <div class="stat-cell">
     <div class="stat-number green">0</div>
-    <div class="stat-label">Infrastruttura richiesta</div>
-    <div class="stat-note">niente RAG, niente vector DB</div>
+    <div class="stat-label" data-i18n="stat4Label">Infrastructure required</div>
+    <div class="stat-note" data-i18n="stat4Note">no RAG, no vector DB</div>
   </div>
 </div>
 
 <!-- PROBLEMA -->
 <div class="section" id="problema">
-  <div class="eyebrow">Il Problema</div>
-  <h2>Gli AI sbagliano quando non hanno contesto.</h2>
-  <p class="section-lead">Immagina di affidare la ristrutturazione di un appartamento a un artigiano, senza mostrargli la planimetria. Stesso problema con gli AI che modificano il tuo codice. CodeDNA è la planimetria.</p>
+  <div class="eyebrow" data-i18n="probEyebrow">The Problem</div>
+  <h2 data-i18n="probH2">AI makes mistakes when it lacks context.</h2>
+  <p class="section-lead" data-i18n="probLead">Imagine asking a contractor to renovate your apartment without showing them the floor plan. Same problem with AI editing your code. CodeDNA is the floor plan.</p>
 
   <div class="problem-grid">
     <div class="prob-card">
       <div class="prob-accent">🔍</div>
-      <div class="prob-title">Finestra Scorrevole</div>
-      <div class="prob-text">Gli AI leggono il codice a "finestre" di 50–100 righe. Se una regola critica è definita 200 righe più in alto, non la vedono — e la violano.</div>
-      <span class="prob-verdict pv-bad">❌ Scenario S4: viola MAX_DISCOUNT_RATE</span>
+      <div class="prob-title" data-i18n="prob1Title">Sliding Window</div>
+      <div class="prob-text" data-i18n="prob1Text">AI reads code in windows of 50–100 lines. If a critical rule is defined 200 lines above, they don't see it — and they break it.</div>
+      <span class="prob-verdict pv-bad" data-i18n="prob1Verdict">❌ Scenario S4: violates MAX_DISCOUNT_RATE</span>
     </div>
     <div class="prob-card">
       <div class="prob-accent">🔗</div>
-      <div class="prob-title">Effetto Cascata</div>
-      <div class="prob-text">Cambi una funzione. Altre 3 parti del sistema dipendono da lei. Senza una mappa, l'AI aggiorna solo il file che vede e lascia il resto rotto.</div>
-      <span class="prob-verdict pv-bad">❌ Scenario S5: KeyError a runtime in main.py</span>
+      <div class="prob-title" data-i18n="prob2Title">Cascade Effect</div>
+      <div class="prob-text" data-i18n="prob2Text">You change a function. Three other parts of the system depend on it. Without a map, the AI updates only the file it sees and leaves the rest broken.</div>
+      <span class="prob-verdict pv-bad" data-i18n="prob2Verdict">❌ Scenario S5: KeyError at runtime in main.py</span>
     </div>
     <div class="prob-card">
       <div class="prob-accent">🧬</div>
-      <div class="prob-title">La Soluzione: CodeDNA</div>
-      <div class="prob-text">Il contesto vive nel file stesso — non in un documento esterno. Ogni frammento che l'AI legge porta con sé le istruzioni per agire correttamente.</div>
-      <span class="prob-verdict pv-good">✅ Zero errori in tutti i 5 scenari</span>
+      <div class="prob-title" data-i18n="prob3Title">The Solution: CodeDNA</div>
+      <div class="prob-text" data-i18n="prob3Text">Context lives in the file itself — not in an external document. Every snippet the AI reads carries the instructions to act correctly.</div>
+      <span class="prob-verdict pv-good" data-i18n="prob3Verdict">✅ Zero errors across all 5 scenarios</span>
     </div>
   </div>
 </div>
@@ -335,16 +338,16 @@ footer a { color:var(--accent); text-decoration:none; }
 <!-- COME FUNZIONA -->
 <div class="full-bleed" id="come-funziona">
   <div class="full-bleed-inner">
-    <div class="eyebrow">Come Funziona</div>
-    <h2>Tre livelli. Ogni frammento è autonomo.</h2>
-    <p class="section-lead">Come il DNA biologico: tagliarne metà produce due frammenti che portano ancora l'informazione completa. Con CodeDNA, 10 righe estratte a caso da qualsiasi punto del file bastano all'AI per agire correttamente.</p>
+    <div class="eyebrow" data-i18n="howEyebrow">How It Works</div>
+    <h2 data-i18n="howH2">Three levels. Every snippet is self-contained.</h2>
+    <p class="section-lead" data-i18n="howLead">Like biological DNA: cutting it in half produces two fragments that still carry the complete information. With CodeDNA, 10 random lines from anywhere in a file are enough for the AI to act correctly.</p>
 
     <div class="levels-list">
       <div class="level-item">
         <div class="level-meta">
-          <div class="level-num">Livello 1</div>
+          <div class="level-num" data-i18n="l1Num">Level 1</div>
           <div class="level-name">Manifest Header</div>
-          <div class="level-desc">Le prime 14 righe di ogni file. L'AI le legge prima del codice e conosce già lo scopo del file, le dipendenze, l'API pubblica e i vincoli da rispettare.</div>
+          <div class="level-desc" data-i18n="l1Desc">The first 14 lines of every file. The AI reads them before the code and already knows the file's purpose, dependencies, public API and constraints to respect.</div>
         </div>
         <div class="level-code">
           <div class="code-block">
@@ -365,13 +368,13 @@ footer a { color:var(--accent); text-decoration:none; }
 
       <div class="level-item">
         <div class="level-meta">
-          <div class="level-num">Livello 2</div>
+          <div class="level-num" data-i18n="l2Num">Level 2</div>
           <div class="level-name">Inline Hyperlinks</div>
-          <div class="level-desc">Tag semantici <em>dentro</em> le funzioni. Anche leggendo solo le righe 200–250 di un file da 500, l'AI trova i link verso ciò che deve sapere prima di agire.</div>
+          <div class="level-desc" data-i18n-html="l2Desc">Semantic tags <em>inside</em> functions. Even reading only lines 200–250 of a 500-line file, the AI finds links to what it must know before acting.</div>
         </div>
         <div class="level-code">
           <div class="code-block">
-            <div class="code-bar"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#febc2e"></div><div class="dot" style="background:#28c840"></div><span class="code-filename">pricing.py · righe 210–222</span></div>
+            <div class="code-bar"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#febc2e"></div><div class="dot" style="background:#28c840"></div><span class="code-filename" data-i18n="l2Filename">pricing.py · lines 210–222</span></div>
             <pre class="code-pre"><span class="tk">def</span> apply_discount(cents, tier):
   <span class="ti"># @REQUIRES-READ: config.py → MAX_DISCOUNT_RATE</span>
   <span class="ti"># @MODIFIES-ALSO: checkout.py → build_cart()</span>
@@ -385,18 +388,18 @@ footer a { color:var(--accent); text-decoration:none; }
 
       <div class="level-item">
         <div class="level-meta">
-          <div class="level-num">Livello 3</div>
+          <div class="level-num" data-i18n="l3Num">Level 3</div>
           <div class="level-name">Semantic Naming</div>
-          <div class="level-desc">I nomi delle variabili codificano tipo, forma e origine. Un frammento da 10 righe è completamente auto-documentante — zero tracciamento a ritroso.</div>
+          <div class="level-desc" data-i18n="l3Desc">Variable names encode type, shape and origin. A 10-line snippet is completely self-documenting — zero backward tracing.</div>
         </div>
         <div class="level-code">
           <div class="code-block">
-            <div class="code-bar"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#febc2e"></div><div class="dot" style="background:#28c840"></div><span class="code-filename">Confronto</span></div>
-            <pre class="code-pre"><span class="tc"># ❌ Ambiguo — euro? centesimi?</span>
+            <div class="code-bar"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#febc2e"></div><div class="dot" style="background:#28c840"></div><span class="code-filename" data-i18n="l3Filename">Comparison</span></div>
+            <pre class="code-pre" data-i18n-html="l3Code"><span class="tc"># ❌ Ambiguous — euros? cents?</span>
 price = request.json.get(<span class="ts">"price"</span>)
 data  = get_users()
 
-<span class="tc"># ✅ CodeDNA — tipo, dominio, origine chiari</span>
+<span class="tc"># ✅ CodeDNA — type, domain, origin are clear</span>
 <span class="ti">int_cents_price_from_request</span> = request.json.get(<span class="ts">"price"</span>)
 <span class="ti">list_dict_users_from_db</span>      = get_users()</pre>
           </div>
@@ -405,20 +408,20 @@ data  = get_users()
 
       <div class="level-item">
         <div class="level-meta">
-          <div class="level-num">Bonus</div>
-          <div class="level-name">Planner Manifest-Only</div>
-          <div class="level-desc">Per pianificare modifiche su 10+ file, l'AI legge solo le prime 14 righe di ciascuno e usa <code>CONTEXT_BUDGET</code> per filtrare — costruisce la mappa completa in pochi token.</div>
+          <div class="level-num" data-i18n="bonusNum">Bonus</div>
+          <div class="level-name" data-i18n="bonusName">Manifest-Only Planner</div>
+          <div class="level-desc" data-i18n-html="bonusDesc">To plan changes across 10+ files, the AI reads only the first 14 lines of each and uses <code>CONTEXT_BUDGET</code> to filter — building the full map in very few tokens.</div>
         </div>
         <div class="level-code">
           <div class="code-block">
             <div class="code-bar"><span class="code-filename">Planner — Standard</span></div>
-            <pre class="code-pre"><span class="tc"># 1. Leggi solo le prime 14 righe (manifest)</span>
-<span class="tc"># 2. always → includi sempre</span>
-<span class="tc">#    normal → includi se rilevante</span>
-<span class="tc">#    minimal → salta (utility file)</span>
-<span class="tc"># 3. Costruisci grafo DEPENDS_ON / REQUIRED_BY</span>
-<span class="tc"># 4. Apri in full SOLO i file necessari</span>
-<span class="tc"># Costo: ~70 tok × N file = mappa completa</span></pre>
+            <pre class="code-pre" data-i18n-html="plannerCode"><span class="tc"># 1. Read only the first 14 lines (manifest)</span>
+<span class="tc"># 2. always → always include</span>
+<span class="tc">#    normal → include if relevant</span>
+<span class="tc">#    minimal → skip (utility file)</span>
+<span class="tc"># 3. Build DEPENDS_ON / REQUIRED_BY graph</span>
+<span class="tc"># 4. Open in full ONLY the required files</span>
+<span class="tc"># Cost: ~70 tok × N files = complete map</span></pre>
           </div>
         </div>
       </div>
@@ -428,17 +431,17 @@ data  = get_users()
 
 <!-- BENCHMARK -->
 <div class="section" id="benchmark">
-  <div class="eyebrow">Benchmark Reale</div>
-  <h2>Prove schiaccianti — non opinioni.</h2>
-  <p class="section-lead">5 scenari costruiti per essere <strong>impossibili da risolvere correttamente senza CodeDNA</strong>. Il Control commette errori deterministici. CodeDNA: zero errori in tutti i test.</p>
+  <div class="eyebrow" data-i18n="bmkEyebrow">Real Benchmark</div>
+  <h2 data-i18n="bmkH2">Crushing evidence — not opinions.</h2>
+  <p class="section-lead" data-i18n-html="bmkLead">5 scenarios built to be <strong>impossible to solve correctly without CodeDNA</strong>. The Control makes deterministic errors. CodeDNA: zero errors across all tests.</p>
 
   <div class="chart-pair">
     <div class="chart-card">
-      <div class="chart-label">Qualità Edit — punteggio AI Judge 0–10</div>
+      <div class="chart-label" data-i18n="chartQLabel">Edit Quality — AI Judge score 0–10</div>
       <canvas id="cQ" height="230"></canvas>
     </div>
     <div class="chart-card">
-      <div class="chart-label">Errori totali per tipo (su 3 run a scenario)</div>
+      <div class="chart-label" data-i18n="chartELabel">Total errors by type (over 3 runs per scenario)</div>
       <canvas id="cE" height="230"></canvas>
     </div>
   </div>
@@ -446,8 +449,8 @@ data  = get_users()
   <div class="scenario-cards">
     <div class="sc-card">
       <div class="sc-tag">Scenario S4</div>
-      <div class="sc-title">🔍 Sliding Window — Vincolo Nascosto</div>
-      <div class="sc-body">L'AI legge solo le righe 200–250. Il limite massimo di sconto è nel manifest (riga 7). Senza CodeDNA lo ignora e applica sconti illegali al 50%+.</div>
+      <div class="sc-title" data-i18n="s4Title">🔍 Sliding Window — Hidden Constraint</div>
+      <div class="sc-body" data-i18n="s4Body">The AI reads only lines 200–250. The max discount limit is in the manifest (line 7). Without CodeDNA it ignores it and applies illegal discounts of 50%+.</div>
       <div class="sc-scores">
         <div class="sc-score bad">Control<strong>6.2 / 10</strong></div>
         <div class="sc-score good">CodeDNA<strong>9.5 / 10</strong></div>
@@ -455,8 +458,8 @@ data  = get_users()
     </div>
     <div class="sc-card">
       <div class="sc-tag">Scenario S5</div>
-      <div class="sc-title">🔗 Cascade Change — Effetto Domino</div>
-      <div class="sc-body">Si modifica utils.py. Senza <code>@MODIFIES-ALSO</code>, l'AI aggiorna solo utils.py e lascia main.py con una KeyError a runtime.</div>
+      <div class="sc-title" data-i18n="s5Title">🔗 Cascade Change — Domino Effect</div>
+      <div class="sc-body" data-i18n-html="s5Body">utils.py is modified. Without <code>@MODIFIES-ALSO</code>, the AI only updates utils.py and leaves main.py with a runtime KeyError.</div>
       <div class="sc-scores">
         <div class="sc-score bad">Control<strong>5.8 / 10</strong></div>
         <div class="sc-score good">CodeDNA<strong>9.8 / 10</strong></div>
@@ -464,8 +467,8 @@ data  = get_users()
     </div>
     <div class="sc-card">
       <div class="sc-tag">Scenario S6</div>
-      <div class="sc-title">🔢 Tipo Ambiguo — Euro o Centesimi?</div>
-      <div class="sc-body"><code>price = 1999</code> — euro o centesimi? Senza semantic naming l'AI sbaglia unità. Con CodeDNA: <code>int_cents_price_from_request</code> — zero dubbi.</div>
+      <div class="sc-title" data-i18n="s6Title">🔢 Ambiguous Type — Euros or Cents?</div>
+      <div class="sc-body" data-i18n-html="s6Body"><code>price = 1999</code> — euros or cents? Without semantic naming the AI gets the unit wrong. With CodeDNA: <code>int_cents_price_from_request</code> — zero ambiguity.</div>
       <div class="sc-scores">
         <div class="sc-score bad">Control<strong>5.0 / 10</strong></div>
         <div class="sc-score good">CodeDNA<strong>9.7 / 10</strong></div>
@@ -473,8 +476,8 @@ data  = get_users()
     </div>
     <div class="sc-card">
       <div class="sc-tag">Scenario S7</div>
-      <div class="sc-title">💥 Dipendenza Rotta — Rename Silenzioso</div>
-      <div class="sc-body"><code>format_revenue()</code> → <code>format_currency()</code>. Il manifest registra il rename nel campo <code>LAST_MODIFIED</code> e <code>AGENT_RULES</code>. Il Control chiama il vecchio nome: crash.</div>
+      <div class="sc-title" data-i18n="s7Title">💥 Broken Dependency — Silent Rename</div>
+      <div class="sc-body" data-i18n-html="s7Body"><code>format_revenue()</code> → <code>format_currency()</code>. The manifest records the rename in <code>LAST_MODIFIED</code> and <code>AGENT_RULES</code>. The Control calls the old name: crash.</div>
       <div class="sc-scores">
         <div class="sc-score bad">Control<strong>4.5 / 10</strong></div>
         <div class="sc-score good">CodeDNA<strong>9.9 / 10</strong></div>
@@ -482,8 +485,8 @@ data  = get_users()
     </div>
     <div class="sc-card">
       <div class="sc-tag">Scenario S8</div>
-      <div class="sc-title">🗺️ Planning — 8 File, Solo Manifest</div>
-      <div class="sc-body">L'AI deve trovare i 2 file giusti da modificare leggendo solo i manifest (14 righe ciascuno). Con <code>CONTEXT_BUDGET</code> e il grafo DEPENDS_ON identifica esattamente i 2 file.</div>
+      <div class="sc-title" data-i18n="s8Title">🗺️ Planning — 8 Files, Manifest Only</div>
+      <div class="sc-body" data-i18n-html="s8Body">The AI must find the 2 right files to change by reading only the manifests (14 lines each). Using <code>CONTEXT_BUDGET</code> and the DEPENDS_ON graph it identifies exactly the 2 files.</div>
       <div class="sc-scores">
         <div class="sc-score bad">Control<strong>6.8 / 10</strong></div>
         <div class="sc-score good">CodeDNA<strong>9.6 / 10</strong></div>
@@ -491,26 +494,26 @@ data  = get_users()
     </div>
   </div>
 
-  <p style="margin-top:1.75rem; font-size:0.8rem; color:var(--muted); padding:1rem 1.25rem; background:var(--bg2); border:1px solid var(--border); border-radius:10px;">
-    🔬 <strong style="color:var(--text2)">Metodologia:</strong> 5 scenari × 3 run con Gemini 2.5 Flash. Valutazione: LLM judge indipendente + checker automatico (constraint_violation, cascade_miss). Script: <code>benchmark/codedna_benchmark.py</code>. Risultati: <code>benchmark/results_v2.json</code>.
+  <p style="margin-top:1.75rem; font-size:0.8rem; color:var(--muted); padding:1rem 1.25rem; background:var(--bg2); border:1px solid var(--border); border-radius:10px;" data-i18n-html="methodology">
+    🔬 <strong style="color:var(--text2)">Methodology:</strong> 5 scenarios × 3 runs with Gemini 2.5 Flash. Evaluation: independent LLM judge + automatic checker (constraint_violation, cascade_miss). Script: <code>benchmark/codedna_benchmark.py</code>. Results: <code>benchmark/results_v2.json</code>.
   </p>
 </div>
 
 <!-- CONFRONTO -->
 <div class="full-bleed">
   <div class="full-bleed-inner">
-    <div class="eyebrow">Confronto</div>
-    <h2 style="margin-bottom:2rem;">CodeDNA vs. approcci esistenti</h2>
+    <div class="eyebrow" data-i18n="cmpEyebrow">Comparison</div>
+    <h2 style="margin-bottom:2rem;" data-i18n="cmpH2">CodeDNA vs. existing approaches</h2>
     <div class="compare-table-wrap">
       <table class="comp">
         <thead>
-          <tr><th>Approccio</th><th>Token overhead</th><th>Context drift</th><th>Latenza retrieval</th><th>Sliding-window</th><th>Infrastruttura</th></tr>
+          <tr><th data-i18n="thApproach">Approach</th><th>Token overhead</th><th>Context drift</th><th data-i18n="thLatency">Retrieval latency</th><th>Sliding-window</th><th data-i18n="thInfra">Infrastructure</th></tr>
         </thead>
         <tbody>
-          <tr><td><strong>CLAUDE.md / CursorRules</strong></td><td><span class="pill pill-r">Alto</span></td><td><span class="pill pill-r">Alto</span></td><td><span class="pill pill-g">Zero</span></td><td><span class="pill pill-r">No</span></td><td><span class="pill pill-a">File esterno</span></td></tr>
-          <tr><td><strong>RAG / Vector DB</strong></td><td><span class="pill pill-g">Basso</span></td><td><span class="pill pill-a">Medio</span></td><td><span class="pill pill-r">Alto</span></td><td><span class="pill pill-r">No</span></td><td><span class="pill pill-r">DB + embedding</span></td></tr>
-          <tr><td><strong>MemGPT</strong></td><td><span class="pill pill-a">Medio</span></td><td><span class="pill pill-g">Basso</span></td><td><span class="pill pill-a">Medio</span></td><td><span class="pill pill-r">No</span></td><td><span class="pill pill-r">Sistema complesso</span></td></tr>
-          <tr class="hl"><td><strong>CodeDNA ✦</strong></td><td><span class="pill pill-g">Zero</span></td><td><span class="pill pill-g">Zero</span></td><td><span class="pill pill-g">Zero</span></td><td><span class="pill pill-g">Sì ✓</span></td><td><span class="pill pill-g">Nessuna</span></td></tr>
+          <tr><td><strong>CLAUDE.md / CursorRules</strong></td><td><span class="pill pill-r" data-i18n="pillHigh">High</span></td><td><span class="pill pill-r" data-i18n="pillHigh">High</span></td><td><span class="pill pill-g">Zero</span></td><td><span class="pill pill-r">No</span></td><td><span class="pill pill-a" data-i18n="pillExtFile">External file</span></td></tr>
+          <tr><td><strong>RAG / Vector DB</strong></td><td><span class="pill pill-g" data-i18n="pillLow">Low</span></td><td><span class="pill pill-a" data-i18n="pillMed">Medium</span></td><td><span class="pill pill-r" data-i18n="pillHigh">High</span></td><td><span class="pill pill-r">No</span></td><td><span class="pill pill-r">DB + embedding</span></td></tr>
+          <tr><td><strong>MemGPT</strong></td><td><span class="pill pill-a" data-i18n="pillMed">Medium</span></td><td><span class="pill pill-g" data-i18n="pillLow">Low</span></td><td><span class="pill pill-a" data-i18n="pillMed">Medium</span></td><td><span class="pill pill-r">No</span></td><td><span class="pill pill-r" data-i18n="pillComplex">Complex system</span></td></tr>
+          <tr class="hl"><td><strong>CodeDNA ✦</strong></td><td><span class="pill pill-g">Zero</span></td><td><span class="pill pill-g">Zero</span></td><td><span class="pill pill-g">Zero</span></td><td><span class="pill pill-g" data-i18n="pillYes">Yes ✓</span></td><td><span class="pill pill-g" data-i18n="pillNone">None</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -519,17 +522,17 @@ data  = get_users()
 
 <!-- ROADMAP -->
 <div class="section" id="roadmap">
-  <div class="eyebrow">Stato</div>
+  <div class="eyebrow" data-i18n="rmEyebrow">Status</div>
   <h2>Roadmap</h2>
   <div class="rm-list">
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done">Fatto</span></div><div><div class="rm-title">Level 1 — Manifest Header (v0.1)</div><div class="rm-sub">FILE, PURPOSE, DEPENDS_ON, EXPORTS, STYLE, DB_TABLES, LAST_MODIFIED.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done">Fatto</span></div><div><div class="rm-title">Level 2 — Inline Hyperlinks (v0.2)</div><div class="rm-sub">@REQUIRES-READ, @SEE, @MODIFIES-ALSO — risolve il problema sliding-window.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done">Fatto</span></div><div><div class="rm-title">Level 3 — Semantic Naming + CONTEXT_BUDGET (v0.3)</div><div class="rm-sub">Naming <code>&lt;tipo&gt;_&lt;shape&gt;_&lt;dominio&gt;_&lt;origine&gt;</code>. Planner Manifest-Only Read.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done">Fatto</span></div><div><div class="rm-title">AGENT_RULES, REQUIRED_BY, @BREAKS-IF-RENAMED (v0.4)</div><div class="rm-sub">Vincoli file-level, navigazione bidirezionale, protezione simboli load-bearing.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done">Fatto</span></div><div><div class="rm-title">Benchmark Reale v2.0 — 5 scenari differenzianti</div><div class="rm-sub">S4–S8 con errori deterministici. Checker automatico constraint_violation + cascade_miss.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Level 1 — Manifest Header (v0.1)</div><div class="rm-sub">FILE, PURPOSE, DEPENDS_ON, EXPORTS, STYLE, DB_TABLES, LAST_MODIFIED.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Level 2 — Inline Hyperlinks (v0.2)</div><div class="rm-sub" data-i18n="rm2Sub">@REQUIRES-READ, @SEE, @MODIFIES-ALSO — solves the sliding-window problem.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Level 3 — Semantic Naming + CONTEXT_BUDGET (v0.3)</div><div class="rm-sub" data-i18n-html="rm3Sub">Naming <code>&lt;type&gt;_&lt;shape&gt;_&lt;domain&gt;_&lt;origin&gt;</code>. Manifest-Only Planner Read.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">AGENT_RULES, REQUIRED_BY, @BREAKS-IF-RENAMED (v0.4)</div><div class="rm-sub" data-i18n="rm4Sub">File-level constraints, bidirectional navigation, load-bearing symbol protection.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm5Title">Real Benchmark v2.0 — 5 differentiating scenarios</div><div class="rm-sub" data-i18n="rm5Sub">S4–S8 with deterministic errors. Automatic checker constraint_violation + cascade_miss.</div></div></div>
 
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next">Prossimo</span></div><div><div class="rm-title">White Paper / arXiv preprint</div><div class="rm-sub">Studio formale con metodologia riproducibile e confronto contro state of the art.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next">Prossimo</span></div><div><div class="rm-title">IDE Plugin — VS Code</div><div class="rm-sub">Auto-generazione manifest, highlight degli @REQUIRES-READ, validazione tempo reale.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title">White Paper / arXiv preprint</div><div class="rm-sub" data-i18n="rm6Sub">Formal study with reproducible methodology and comparison against state of the art.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title">IDE Plugin — VS Code</div><div class="rm-sub" data-i18n="rm7Sub">Auto-generation of manifests, @REQUIRES-READ highlighting, real-time validation.</div></div></div>
   </div>
 </div>
 
@@ -545,15 +548,95 @@ data  = get_users()
 </footer>
 
 <script>
+// ── I18N ──
+const IT = {
+  navProblem:'Il Problema', navHow:'Come Funziona',
+  h1:'Il codice che si<br><em>spiega da solo.</em>',
+  heroSub:'Gli AI che modificano il tuo codice commettono errori perch\u00e9 <strong>non hanno contesto</strong>. CodeDNA lo incorpora direttamente nei file \u2014 come il DNA in ogni cellula. Zero RAG. Zero deriva.',
+  heroCta1:'Vedi le prove \u2192', heroCta2:'Leggi la Spec',
+  stat1Label:'Tasso errore \u2014 Control', stat1Note:'nei 5 scenari difficili',
+  stat2Label:'Tasso errore \u2014 CodeDNA', stat2Note:'zero violazioni, zero cascade miss',
+  stat3Label:'Token per file', stat3Note:"per mappare l'intera codebase",
+  stat4Label:'Infrastruttura richiesta', stat4Note:'niente RAG, niente vector DB',
+  probEyebrow:'Il Problema', probH2:'Gli AI sbagliano quando non hanno contesto.',
+  probLead:"Immagina di affidare la ristrutturazione di un appartamento a un artigiano, senza mostrargli la planimetria. Stesso problema con gli AI che modificano il tuo codice. CodeDNA \u00e8 la planimetria.",
+  prob1Title:'Finestra Scorrevole', prob1Text:'Gli AI leggono il codice a \"finestre\" di 50\u201360 righe. Se una regola critica \u00e8 definita 200 righe pi\u00f9 in alto, non la vedono \u2014 e la violano.', prob1Verdict:'\u274c Scenario S4: viola MAX_DISCOUNT_RATE',
+  prob2Title:'Effetto Cascata', prob2Text:"Cambi una funzione. Altre 3 parti del sistema dipendono da lei. Senza una mappa, l'AI aggiorna solo il file che vede e lascia il resto rotto.", prob2Verdict:'\u274c Scenario S5: KeyError a runtime in main.py',
+  prob3Title:'La Soluzione: CodeDNA', prob3Text:"Il contesto vive nel file stesso \u2014 non in un documento esterno. Ogni frammento che l'AI legge porta con s\u00e9 le istruzioni per agire correttamente.", prob3Verdict:'\u2705 Zero errori in tutti i 5 scenari',
+  howEyebrow:'Come Funziona', howH2:'Tre livelli. Ogni frammento \u00e8 autonomo.',
+  howLead:"Come il DNA biologico: tagliarne met\u00e0 produce due frammenti che portano ancora l'informazione completa. Con CodeDNA, 10 righe estratte a caso da qualsiasi punto del file bastano all'AI per agire correttamente.",
+  l1Num:'Livello 1', l1Desc:"Le prime 14 righe di ogni file. L'AI le legge prima del codice e conosce gi\u00e0 lo scopo del file, le dipendenze, l'API pubblica e i vincoli da rispettare.",
+  l2Num:'Livello 2', l2Desc:'Tag semantici <em>dentro</em> le funzioni. Anche leggendo solo le righe 200\u2013250 di un file da 500, l\'AI trova i link verso ci\u00f2 che deve sapere prima di agire.', l2Filename:'pricing.py \u00b7 righe 210\u2013222',
+  l3Num:'Livello 3', l3Desc:'I nomi delle variabili codificano tipo, forma e origine. Un frammento da 10 righe \u00e8 completamente auto-documentante \u2014 zero tracciamento a ritroso.', l3Filename:'Confronto',
+  l3Code:'<span class="tc"># \u274c Ambiguo \u2014 euro? centesimi?</span>\nprice = request.json.get(<span class="ts">"price"</span>)\ndata  = get_users()\n\n<span class="tc"># \u2705 CodeDNA \u2014 tipo, dominio, origine chiari</span>\n<span class="ti">int_cents_price_from_request</span> = request.json.get(<span class="ts">"price"</span>)\n<span class="ti">list_dict_users_from_db</span>      = get_users()',
+  bonusNum:'Bonus', bonusName:'Planner Manifest-Only', bonusDesc:'Per pianificare modifiche su 10+ file, l\'AI legge solo le prime 14 righe di ciascuno e usa <code>CONTEXT_BUDGET</code> per filtrare \u2014 costruisce la mappa completa in pochi token.',
+  plannerCode:'<span class="tc"># 1. Leggi solo le prime 14 righe (manifest)</span>\n<span class="tc"># 2. always \u2192 includi sempre</span>\n<span class="tc">#    normal \u2192 includi se rilevante</span>\n<span class="tc">#    minimal \u2192 salta (utility file)</span>\n<span class="tc"># 3. Costruisci grafo DEPENDS_ON / REQUIRED_BY</span>\n<span class="tc"># 4. Apri in full SOLO i file necessari</span>\n<span class="tc"># Costo: ~70 tok \u00d7 N file = mappa completa</span>',
+  bmkEyebrow:'Benchmark Reale', bmkH2:'Prove schiaccianti \u2014 non opinioni.',
+  bmkLead:'5 scenari costruiti per essere <strong>impossibili da risolvere correttamente senza CodeDNA</strong>. Il Control commette errori deterministici. CodeDNA: zero errori in tutti i test.',
+  chartQLabel:'Qualit\u00e0 Edit \u2014 punteggio AI Judge 0\u201310',
+  chartELabel:'Errori totali per tipo (su 3 run a scenario)',
+  s4Title:'\ud83d\udd0d Sliding Window \u2014 Vincolo Nascosto', s4Body:'L\'AI legge solo le righe 200\u2013250. Il limite massimo di sconto \u00e8 nel manifest (riga 7). Senza CodeDNA lo ignora e applica sconti illegali al 50%+.',
+  s5Title:'\ud83d\udd17 Cascade Change \u2014 Effetto Domino', s5Body:'Si modifica utils.py. Senza <code>@MODIFIES-ALSO</code>, l\'AI aggiorna solo utils.py e lascia main.py con una KeyError a runtime.',
+  s6Title:'\ud83d\udd22 Tipo Ambiguo \u2014 Euro o Centesimi?', s6Body:'<code>price = 1999</code> \u2014 euro o centesimi? Senza semantic naming l\'AI sbaglia unit\u00e0. Con CodeDNA: <code>int_cents_price_from_request</code> \u2014 zero dubbi.',
+  s7Title:'\ud83d\udca5 Dipendenza Rotta \u2014 Rename Silenzioso', s7Body:'<code>format_revenue()</code> \u2192 <code>format_currency()</code>. Il manifest registra il rename nel campo <code>LAST_MODIFIED</code> e <code>AGENT_RULES</code>. Il Control chiama il vecchio nome: crash.',
+  s8Title:'\ud83d\uddfa\ufe0f Planning \u2014 8 File, Solo Manifest', s8Body:'L\'AI deve trovare i 2 file giusti da modificare leggendo solo i manifest (14 righe ciascuno). Con <code>CONTEXT_BUDGET</code> e il grafo DEPENDS_ON identifica esattamente i 2 file.',
+  methodology:'\ud83d\udd2c <strong style="color:var(--text2)">Metodologia:</strong> 5 scenari \u00d7 3 run con Gemini 2.5 Flash. Valutazione: LLM judge indipendente + checker automatico (constraint_violation, cascade_miss). Script: <code>benchmark/codedna_benchmark.py</code>. Risultati: <code>benchmark/results_v2.json</code>.',
+  cmpEyebrow:'Confronto', cmpH2:'CodeDNA vs. approcci esistenti',
+  thApproach:'Approccio', thLatency:'Latenza retrieval', thInfra:'Infrastruttura',
+  pillHigh:'Alto', pillLow:'Basso', pillMed:'Medio', pillYes:'S\u00ec \u2713', pillNone:'Nessuna', pillExtFile:'File esterno', pillComplex:'Sistema complesso',
+  rmEyebrow:'Stato', badgeDone:'Fatto', badgeNext:'Prossimo',
+  rm2Sub:'@REQUIRES-READ, @SEE, @MODIFIES-ALSO \u2014 risolve il problema sliding-window.',
+  rm3Sub:'Naming <code>&lt;tipo&gt;_&lt;shape&gt;_&lt;dominio&gt;_&lt;origine&gt;</code>. Planner Manifest-Only Read.',
+  rm4Sub:'Vincoli file-level, navigazione bidirezionale, protezione simboli load-bearing.',
+  rm5Title:'Benchmark Reale v2.0 \u2014 5 scenari differenzianti', rm5Sub:'S4\u2013S8 con errori deterministici. Checker automatico constraint_violation + cascade_miss.',
+  rm6Sub:'Studio formale con metodologia riproducibile e confronto contro state of the art.',
+  rm7Sub:'Auto-generazione manifest, highlight degli @REQUIRES-READ, validazione tempo reale.'
+};
+
+const EN_TEXT = {}, EN_HTML = {};
+let currentLang = 'en';
+
+function setLang(l) {
+  currentLang = l;
+  document.documentElement.lang = l;
+  localStorage.setItem('lang', l);
+  const btn = document.getElementById('lang-toggle');
+  if (btn) btn.textContent = l === 'en' ? '\ud83c\udf10 IT' : '\ud83c\udf10 EN';
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.dataset.i18n;
+    el.textContent = (l === 'it' && IT[k]) ? IT[k] : (EN_TEXT[k] || el.textContent);
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const k = el.dataset.i18nHtml;
+    el.innerHTML = (l === 'it' && IT[k]) ? IT[k] : (EN_HTML[k] || el.innerHTML);
+  });
+  updateCharts(l);
+}
+
+function toggleLang() { setLang(currentLang === 'en' ? 'it' : 'en'); }
+
+document.addEventListener('DOMContentLoaded', function() {
+  document.querySelectorAll('[data-i18n]').forEach(el => EN_TEXT[el.dataset.i18n] = el.textContent);
+  document.querySelectorAll('[data-i18n-html]').forEach(el => EN_HTML[el.dataset.i18nHtml] = el.innerHTML);
+  const saved = localStorage.getItem('lang');
+  if (saved && saved !== 'en') setLang(saved);
+});
+</script>
+
+<script>
 // CHART.JS — Quality bar chart
 const qCtx = document.getElementById('cQ').getContext('2d');
-new Chart(qCtx, {
+const chartLabels = {
+  en: { bar:['S4 Sliding\nWindow','S5 Cascade\nChange','S6 Ambiguous\nType','S7 Broken\nDep.','S8 Planning'], radar:['S4 Constraint','S5 Cascade Miss','S6 Type Error','S7 Wrong Symbol','S8 Wrong Files'], ctl:'Control', dna:'CodeDNA', ctlR:'Control (3 runs)', dnaR:'CodeDNA (3 runs)' },
+  it:  { bar:['S4 Sliding\nWindow','S5 Cascade\nChange','S6 Tipo\nAmbiguo','S7 Broken\nDep.','S8 Planning'],    radar:['S4 Constraint','S5 Cascade Miss','S6 Type Error','S7 Wrong Symbol','S8 Wrong Files'], ctl:'Control', dna:'CodeDNA', ctlR:'Control (su 3 run)', dnaR:'CodeDNA (su 3 run)' }
+};
+window.chartQ = new Chart(qCtx, {
   type: 'bar',
   data: {
-    labels: ['S4 Sliding\nWindow','S5 Cascade\nChange','S6 Tipo\nAmbiguo','S7 Broken\nDep.','S8 Planning'],
+    labels: chartLabels.en.bar,
     datasets:[
-      { label:'Control', data:[6.2,5.8,5.0,4.5,6.8], backgroundColor:'rgba(220,38,38,0.12)', borderColor:'rgba(220,38,38,0.7)', borderWidth:1.5, borderRadius:5 },
-      { label:'CodeDNA', data:[9.5,9.8,9.7,9.9,9.6], backgroundColor:'rgba(67,56,202,0.12)', borderColor:'rgba(67,56,202,0.7)', borderWidth:1.5, borderRadius:5 }
+      { label:chartLabels.en.ctl, data:[6.2,5.8,5.0,4.5,6.8], backgroundColor:'rgba(220,38,38,0.12)', borderColor:'rgba(220,38,38,0.7)', borderWidth:1.5, borderRadius:5 },
+      { label:chartLabels.en.dna, data:[9.5,9.8,9.7,9.9,9.6], backgroundColor:'rgba(67,56,202,0.12)', borderColor:'rgba(67,56,202,0.7)', borderWidth:1.5, borderRadius:5 }
     ]
   },
   options:{
@@ -571,13 +654,13 @@ new Chart(qCtx, {
 
 // CHART.JS — Errors radar
 const eCtx = document.getElementById('cE').getContext('2d');
-new Chart(eCtx, {
+window.chartE = new Chart(eCtx, {
   type:'radar',
   data:{
-    labels:['S4 Constraint','S5 Cascade Miss','S6 Type Error','S7 Wrong Symbol','S8 Wrong Files'],
+    labels:chartLabels.en.radar,
     datasets:[
-      { label:'Control (su 3 run)', data:[2.7,3,2.3,2.7,1.7], backgroundColor:'rgba(220,38,38,0.08)', borderColor:'rgba(220,38,38,0.6)', pointBackgroundColor:'rgb(220,38,38)', pointRadius:4 },
-      { label:'CodeDNA (su 3 run)', data:[0,0,0,0,0.3], backgroundColor:'rgba(67,56,202,0.08)', borderColor:'rgba(67,56,202,0.6)', pointBackgroundColor:'rgb(67,56,202)', pointRadius:4 }
+      { label:chartLabels.en.ctlR, data:[2.7,3,2.3,2.7,1.7], backgroundColor:'rgba(220,38,38,0.08)', borderColor:'rgba(220,38,38,0.6)', pointBackgroundColor:'rgb(220,38,38)', pointRadius:4 },
+      { label:chartLabels.en.dnaR, data:[0,0,0,0,0.3], backgroundColor:'rgba(67,56,202,0.08)', borderColor:'rgba(67,56,202,0.6)', pointBackgroundColor:'rgb(67,56,202)', pointRadius:4 }
     ]
   },
   options:{
@@ -595,6 +678,22 @@ new Chart(eCtx, {
     }
   }
 });
+
+function updateCharts(l) {
+  const cl = chartLabels[l] || chartLabels.en;
+  if (window.chartQ) {
+    window.chartQ.data.labels = cl.bar;
+    window.chartQ.data.datasets[0].label = cl.ctl;
+    window.chartQ.data.datasets[1].label = cl.dna;
+    window.chartQ.update();
+  }
+  if (window.chartE) {
+    window.chartE.data.labels = cl.radar;
+    window.chartE.data.datasets[0].label = cl.ctlR;
+    window.chartE.data.datasets[1].label = cl.dnaR;
+    window.chartE.update();
+  }
+}
 
 // COUNT-UP
 const io = new IntersectionObserver(entries=>{

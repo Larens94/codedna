@@ -1,0 +1,44 @@
+{
+  "B1_suspended_revenue": {
+    "control": {
+      "tools": 4,
+      "reads": 2,
+      "greps": 1,
+      "found": false
+    },
+    "codedna": {
+      "tools": 5,
+      "reads": 3,
+      "greps": 1,
+      "found": true
+    }
+  },
+  "B3_admin_permission": {
+    "control": {
+      "tools": 3,
+      "reads": 2,
+      "greps": 0,
+      "found": true
+    },
+    "codedna": {
+      "tools": 3,
+      "reads": 2,
+      "greps": 0,
+      "found": true
+    }
+  },
+  "B4_fulfillment_inventory": {
+    "control": {
+      "tools": 5,
+      "reads": 2,
+      "greps": 2,
+      "found": true
+    },
+    "codedna": {
+      "tools": 4,
+      "reads": 2,
+      "greps": 1,
+      "found": true
+    }
+  }
+}
