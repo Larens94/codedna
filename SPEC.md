@@ -23,11 +23,11 @@ Together, they make every code fragment self-sufficient: an AI extracting any pa
 ## 2. Goals
 
 - **Zero token overhead**: context lives in the file, not the prompt
-- **Zero drift**: annotations are co-located with what they describe
+- **Minimal drift**: annotations are co-located with what they describe, reducing (but not eliminating) synchronisation risk
 - **Zero retrieval latency**: no vector DB, no network call
 - **Sliding-window safe**: Level 2 sub-layers guide agents that skip the header
 - **Planner efficient**: docstring-only reads give a full codebase map in ~70 tok/file
-- **Language agnostic**: docstring / comment-based protocol works in any language
+- **Language adaptable**: docstring / comment-based protocol designed to work across languages (currently validated on Python)
 - **Agent-first**: designed for agentic code generation workflows — the agent writes and maintains the annotations, not the human; marginal annotation cost approaches zero
 - **Human readable**: developers benefit as much as AI agents
 
