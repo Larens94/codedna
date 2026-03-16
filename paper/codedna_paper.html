@@ -380,7 +380,6 @@ rules:   get_invoices_for_period() returns ALL tenants,
 <p><strong>Level 2b — Call-site inline comment</strong> (last line of defence):</p>
 <pre>    # includes suspended tenants — filter below
     raw = get_invoices_for_period(year, month)
-    # BUG ZONE: suspended invoices included in total
     total = sum(i['amount_cents'] for i in raw)</pre>
 
 <p>The call-site comment ensures that even a 10-line window centred on the dangerous call carries the critical context. This is the codon-level encoding: the smallest unit that still conveys architectural meaning.</p>

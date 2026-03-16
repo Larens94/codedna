@@ -28,7 +28,7 @@ API_KEY      = os.getenv("GEMINI_API_KEY", "")
 MODEL_ID     = "gemini-2.5-flash"
 
 SYSTEM_PROMPT = """You are an expert software engineer debugging a Python codebase.
-Your task: read the problem description and find the root cause by navigating the codebase.
+Your task: read the problem description and find ALL the files that require modification to implement a complete fix.
 
 Tools available:
 - list_files(directory): list files in a directory
@@ -37,11 +37,12 @@ Tools available:
 
 Strategy:
 1. Start by listing the root directory to understand the structure
-2. Identify which modules are most likely related to the problem
-3. Read the relevant files and trace the issue
-4. Report: which file(s) contain the root cause and what the fix should be
+2. Identify the core files related to the problem
+3. Trace the execution path: read the relevant files to understand how they work
+4. Crucially: If a file defines dependencies or lists where it is used, EXPLORE those related files to ensure your fix is complete. A complete fix often requires changing test files, backend-specific files, or related utilities alongside the root cause.
+5. Report: provide a comprehensive list of EVERY file you think needs modification, and what the fix should be.
 
-Be efficient. Read only what you need. Stop when you have identified the root cause.
+Do not stop at finding just the first root cause. Make sure you map the full architectural boundary of the problem.
 """
 
 TOOLS_DECL = [
@@ -86,7 +87,7 @@ TOOLS_DECL = [
 def make_fns(repo_root: Path) -> tuple[dict[str, Callable], dict]:
     log = {"tool_calls": 0, "files_read": [], "greps": []}
 
-    def list_files(directory: str = ".") -> str:
+    def list_files(directory: str = ".", **kwargs) -> str:
         log["tool_calls"] += 1
         target = repo_root / directory
         if not target.exists():
@@ -98,7 +99,7 @@ def make_fns(repo_root: Path) -> tuple[dict[str, Callable], dict]:
             items.append(f"{'[DIR] ' if item.is_dir() else '      '}{item.name}")
         return "\n".join(items) or "(empty)"
 
-    def read_file(path: str) -> str:
+    def read_file(path: str, **kwargs) -> str:
         log["tool_calls"] += 1
         target = repo_root / path
         if not target.exists():
@@ -106,7 +107,7 @@ def make_fns(repo_root: Path) -> tuple[dict[str, Callable], dict]:
         log["files_read"].append(path)
         return target.read_text(encoding="utf-8", errors="replace")[:4000]
 
-    def grep(pattern: str, directory: str = ".") -> str:
+    def grep(pattern: str, directory: str = ".", **kwargs) -> str:
         log["tool_calls"] += 1
         log["greps"].append(pattern)
         target = repo_root / directory
@@ -143,6 +144,10 @@ def run_agent(problem: str, repo_root: Path, client, max_turns: int = 15) -> dic
             config=config,
         )
         candidate = response.candidates[0]
+        if not candidate.content:
+            print("  [!] Risposta vuota dal modello (forse blocco di sicurezza o max tokens). Interruzione anticipata.", flush=True)
+            break
+            
         history.append(candidate.content)
 
         tool_calls_this_turn = [

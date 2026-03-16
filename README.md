@@ -108,15 +108,7 @@ def get_active_orders() -> list[dict]:
 
 ```python
     orders = execute("SELECT * FROM orders WHERE status != 'cancelled'")
-    # BUG ZONE: includes orders for deleted users — must JOIN users.deleted_at IS NULL
 ```
-
-| Tag (compatible, still valid) | Meaning | Agent must... |
-|---|---|---|
-| `@SEE` | Recommended context | Read when uncertain |
-| `@REQUIRES-READ` | Mandatory prerequisite | Read before writing any logic |
-| `@MODIFIES-ALSO` | Cascade required | Update target in same changeset |
-| `@BREAKS-IF-RENAMED` | Identity is load-bearing | Never rename without updating all callers |
 
 ### Level 3 — Semantic Naming *(Cognitive compression)*
 

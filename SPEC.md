@@ -152,11 +152,10 @@ rules:   get_invoices_for_period() returns ALL tenants, NO suspended filter →
 
 AI agents operating in *sliding window* mode extract partial file content (e.g., lines 50–80) to reduce token consumption. This bypasses the Level 1 header entirely. Level 2 ensures that the **body of every critical function is self-documenting**, even when read in isolation.
 
-Level 2 has two sub-layers:
-- **2a — Function Docstring**: Google-style docstring summarizing dependencies and rules
-- **2b — Call-site Inline Comment**: comment on the exact line where a dangerous call happens
+Level 2 relies on:
+- **Function Docstring**: Google-style docstring summarizing dependencies and rules
 
-### 4.2a Level 2a — Function Docstring (Google style)
+### 4.2 Level 2 — Function Docstring (Google style)
 
 Add a structured docstring to any function that:
 - calls a dependency with a non-obvious contract
@@ -173,53 +172,11 @@ def monthly_revenue(year: int, month: int) -> dict:
     Returns: {year, month, total_cents, by_tenant: {id: [invoices]}}
     """
 ```
-
-### 4.2b Level 2b — Call-site Inline Comment (sliding-window safe)
-
-Annotate the **exact line** of a dangerous call. This is the last line of defense: even if the model sees only 10 lines around the call, it receives the critical context.
-
-```python
     invoices = get_invoices_for_period(year, month)  # includes suspended tenants — filter below
-    total = sum(i['amount_cents'] for i in invoices)  # BUG ZONE: no suspension filter applied
+    total = sum(i['amount_cents'] for i in invoices)
 ```
 
-### 4.3 Legacy Tags (still valid)
 
-The `@SEE`, `@REQUIRES-READ`, `@MODIFIES-ALSO`, `@BREAKS-IF-RENAMED` tag syntax is still valid for explicit machine-readable annotations:
-
-```python
-def apply_discount(base_price: int, user_tier: str) -> float:
-    # @REQUIRES-READ: config.py → MAX_DISCOUNT_ALLOWED
-    # @REQUIRES-READ: db.py → UserSchema (valid values for user_tier)
-    # @MODIFIES-ALSO: invoice.py → calculate_total()
-
-    if user_tier == "premium":
-        return base_price * 0.8
-    return base_price
-```
-
-### 4.4 `@BREAKS-IF-RENAMED` Tag
-
-Use this on any symbol whose **name is load-bearing** — serialized to JSON/DB, referenced in config files, or called by string (`getattr`, `importlib`):
-
-```python
-def format_currency(n: float) -> str:  # @BREAKS-IF-RENAMED: name serialized in API response schema
-    return f"€{n:,.0f}".replace(",", ".")
-
-REPORT_VIEW = "monthly_revenue"  # @BREAKS-IF-RENAMED: key stored in users.saved_views table
-```
-
-**Agent behavior**: when asked to rename, the agent must first search all `REQUIRED_BY` callers and external config/DB references before applying the rename.
-
-### 4.5 Inline Context Anchors
-
-For individual lines with non-obvious constraints:
-
-```python
-BTN_COLOR = "#3B82F6"  # @SEE: style.css → --brand-primary (must stay in sync)
-rows = execute_query(sql)  # @REQUIRES-READ: schema.sql → orders (column types)
-int_cents_price_from_request = request.json["price"]  # @SEE: api_spec.md → price is always in cents
-```
 
 ---
 
@@ -303,7 +260,6 @@ When an AI agent must plan edits across a multi-file codebase, it should:
 3. For cross-file functions, add a Google-style function docstring with `Depends:` and `Rules:`.
 4. At dangerous call sites, add inline: `# includes X — filter Y below`.
 5. Apply semantic naming to data-carrying variables.
-6. Add `@BREAKS-IF-RENAMED` to any symbol serialized externally.
 
 ### 7.3 On EDIT
 1. **First step**: re-read `rules:` and the `Depends:` / `Rules:` of the function you are editing.
@@ -350,5 +306,5 @@ The version of the standard being used is tracked in the repo tag (`v0.5`).
 | 0.1 | 2026-03-16 | Initial draft — Level 1 Manifest Header (`# === CODEDNA:0.1 ===` format) |
 | 0.2 | 2026-03-16 | Level 2 Inline Hyperlinks (`@REQUIRES-READ`, `@SEE`, `@MODIFIES-ALSO`), biological model |
 | 0.3 | 2026-03-16 | Level 3 Semantic Naming, `CONTEXT_BUDGET` field, Planner Manifest-Only Read protocol |
-| 0.4 | 2026-03-16 | `AGENT_RULES` field, `REQUIRED_BY` field, `@BREAKS-IF-RENAMED` tag, objective `CONTEXT_BUDGET` criteria, type prefix table |
-| **0.5** | **2026-03-16** | **Python-native module docstring format (replaces custom `# ===` block). Level 2 split into 2a (Google-style function docstring) and 2b (call-site inline comment). `rules:` replaces `AGENT_RULES`, `used_by:` replaces `REQUIRED_BY`, `deps:` replaces `DEPENDS_ON`. Agent-first framing: marginal annotation cost ≈ zero in agentic workflows. Legacy `@`-tags remain valid.** |
+| 0.4 | 2026-03-16 | `AGENT_RULES` field, `REQUIRED_BY` field, `CONTEXT_BUDGET` criteria, type prefix table |
+| **0.5** | **2026-03-16** | **Python-native module docstring format (replaces custom `# ===` block). Level 2 split into 2a (Google-style function docstring) and 2b (call-site inline comment). `rules:` replaces `AGENT_RULES`, `used_by:` replaces `REQUIRED_BY`, `deps:` replaces `DEPENDS_ON`. Agent-first framing: marginal annotation cost ≈ zero in agentic workflows.** |

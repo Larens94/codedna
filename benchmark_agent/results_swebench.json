@@ -1,0 +1,235 @@
+[
+  {
+    "instance_id": "django__django-14480",
+    "repo": "django/django",
+    "ground_truth_files": [
+      "django/db/backends/base/features.py",
+      "django/db/backends/mysql/features.py",
+      "django/db/models/expressions.py",
+      "django/db/models/query.py",
+      "django/db/models/query_utils.py",
+      "django/db/models/sql/__init__.py",
+      "django/db/models/sql/where.py"
+    ],
+    "control": {
+      "tool_calls": 7,
+      "files_read": [
+        "django/db/models/query_utils.py",
+        "django/db/models/sql/query.py",
+        "django/db/models/sql/where.py"
+      ],
+      "n_files_read": 3,
+      "greps": [],
+      "final_response": "```python\n# Connection types\nAND = \"AND\"\nOR = \"OR\"\nXOR = \"XOR\"  # Add this line\n\n\nclass WhereNode(tree.Node):\n    # ... (existing attributes and methods)\n\n    def as_sql(self, compiler, connection):\n        result = []\n        result_params = []\n\n        # ... (existing logic for AND and OR)\n\n        if self.connector == XOR:  # Add this block for XOR\n            if len(self.children) != 2:\n                raise ValueError(\"XOR operator only supports two children.\")\n\n            child1, child2 = self.children\n            sql1, params1 = compiler.compile(child1)\n            sql2, params2 = comp",
+      "file_accuracy": 0.5
+    },
+    "codedna": {
+      "tool_calls": 5,
+      "files_read": [
+        "django/db/models/query_utils.py"
+      ],
+      "n_files_read": 1,
+      "greps": [],
+      "final_response": "```python\nclass Q(tree.Node):\n    \"\"\"\n    Encapsulate filters as objects that can then be combined logically (using\n    `&` and `|`).\n    \"\"\"\n\n    # Connection types\n    AND = \"AND\"\n    OR = \"OR\"\n    XOR = \"XOR\" # Add this line\n    default = AND\n    conditional = True\n\n    # ... (rest of the __init__ and _combine methods remain the same)\n\n    def __or__(self, other):\n        \"\"\"Return Q(self OR other). Delegates to _combine(other, Q.OR).\"\"\"\n        return self._combine(other, self.OR)\n\n    def __and__(self, other):\n        \"\"\"Return Q(self AND other). Delegates to _combine(other, Q.AND).\"\"\"\n  ",
+      "file_accuracy": 0.16666666666666666
+    },
+    "delta_tool_calls": 2,
+    "delta_file_accuracy": -0.33333333333333337
+  },
+  {
+    "instance_id": "django__django-13495",
+    "repo": "django/django",
+    "ground_truth_files": [
+      "django/db/backends/base/operations.py",
+      "django/db/backends/mysql/operations.py",
+      "django/db/backends/oracle/operations.py",
+      "django/db/backends/postgresql/operations.py",
+      "django/db/backends/sqlite3/base.py",
+      "django/db/backends/sqlite3/operations.py",
+      "django/db/models/functions/datetime.py"
+    ],
+    "control": {
+      "tool_calls": 11,
+      "files_read": [
+        "django/db/models/functions/datetime.py",
+        "django/db/models/functions/datetime.py",
+        "django/db/models/functions/datetime.py"
+      ],
+      "n_files_read": 1,
+      "greps": [
+        "class Trunc",
+        "datetime_trunc_sql",
+        "date_trunc_sql"
+      ],
+      "final_response": "```python\n        def as_sql(self, compiler, connection):\n            sql, params = compiler.compile(self.lhs)\n            # Use the original source field type to determine if timezone conversion is needed.\n            # If the source was a DateTimeField and tzinfo is provided, always use datetime_trunc_sql.\n            if isinstance(self._source_output_field, DateTimeField):\n                tzname = self.get_tzname()\n                sql = connection.ops.datetime_trunc_sql(self.kind, sql, tzname)\n            elif isinstance(self.lhs.output_field, DateField):\n                sql = connection.op",
+      "file_accuracy": 0.3333333333333333
+    },
+    "codedna": {
+      "tool_calls": 7,
+      "files_read": [
+        "django/db/models/functions/datetime.py",
+        "django/db/models/functions/datetime.py",
+        "django/db/models/functions/datetime.py"
+      ],
+      "n_files_read": 1,
+      "greps": [
+        "class Trunc("
+      ],
+      "final_response": "The root cause of the problem is in the file `django/db/models/functions/datetime.py`.\n\nSpecifically, within the `TruncBase.as_sql()` method, the `tzname` parameter is only taken into account when the `output_field` is a `DateTimeField`. When the `output_field` is a `DateField`, the `date_trunc_sql()` method is called on the database connection operations without passing the `tzname`, thus ignoring the timezone information.\n\nThe fix should involve:\n1.  Modifying `TruncBase.as_sql()` to always resolve the `tzname` using `self.get_tzname()`.\n2.  Passing this resolved `tzname` to both `connection",
+      "file_accuracy": 0.3333333333333333
+    },
+    "delta_tool_calls": 4,
+    "delta_file_accuracy": 0.0
+  },
+  {
+    "instance_id": "django__django-12508",
+    "repo": "django/django",
+    "ground_truth_files": [
+      "django/core/management/base.py",
+      "django/core/management/commands/dbshell.py",
+      "django/db/backends/base/client.py",
+      "django/db/backends/mysql/client.py",
+      "django/db/backends/mysql/creation.py",
+      "django/db/backends/oracle/client.py",
+      "django/db/backends/postgresql/client.py",
+      "django/db/backends/sqlite3/client.py"
+    ],
+    "control": {
+      "tool_calls": 12,
+      "files_read": [
+        "django/core/management/commands/dbshell.py",
+        "django/core/management/commands/dbshell.py",
+        "django/db/backends/base/client.py",
+        "django/db/backends/postgresql/client.py",
+        "django/db/backends/oracle/client.py",
+        "django/db/backends/sqlite3/client.py",
+        "django/db/backends/mysql/client.py"
+      ],
+      "n_files_read": 6,
+      "greps": [
+        "dbshell",
+        "dbshell",
+        "runshell"
+      ],
+      "final_response": "The root cause of the problem is that the `dbshell` management command in Django, and the underlying database client implementations, do not currently support a direct argument for executing SQL commands. The `runshell()` methods in each database backend are designed to open an interactive shell, not to execute a single SQL statement.\n\nThe fix requires modifications in two main areas:\n\n1.  **`django/core/management/commands/dbshell.py`**:\n    *   Add a new argument `-c` or `--command` to the `add_arguments` method. This argument will store the SQL command to be executed.\n    *   Modify the `ha",
+      "file_accuracy": 0.5
+    },
+    "codedna": {
+      "tool_calls": 3,
+      "files_read": [
+        "django/core/management/commands/dbshell.py"
+      ],
+      "n_files_read": 1,
+      "greps": [
+        "dbshell"
+      ],
+      "final_response": "The root cause of the problem is that the `dbshell` command in `django/core/management/commands/dbshell.py` does not currently support a `-c` or `--command` argument to directly execute SQL. Furthermore, the `runshell()` method in the database backend clients (e.g., `django/db/backends/postgresql/client.py`, `django/db/backends/oracle/client.py`, `django/db/backends/sqlite3/client.py`, and likely `django/db/backends/mysql/client.py`) does not accept any parameters to pass a SQL command for execution.\n\n**Files containing the root cause:**\n\n*   `django/core/management/commands/dbshell.py`\n*   `d",
+      "file_accuracy": 0.25
+    },
+    "delta_tool_calls": 9,
+    "delta_file_accuracy": -0.25
+  },
+  {
+    "instance_id": "django__django-11991",
+    "repo": "django/django",
+    "ground_truth_files": [
+      "django/contrib/gis/db/backends/postgis/schema.py",
+      "django/contrib/postgres/indexes.py",
+      "django/db/backends/base/features.py",
+      "django/db/backends/base/schema.py",
+      "django/db/backends/postgresql/features.py",
+      "django/db/backends/postgresql/schema.py",
+      "django/db/models/base.py",
+      "django/db/models/constraints.py",
+      "django/db/models/indexes.py"
+    ],
+    "control": {
+      "tool_calls": 13,
+      "files_read": [
+        "django/db/models/indexes.py",
+        "django/db/backends/base/schema.py",
+        "django/db/backends/base/schema.py",
+        "django/db/backends/postgresql/schema.py"
+      ],
+      "n_files_read": 3,
+      "greps": [
+        "def create_index",
+        "_create_index_sql"
+      ],
+      "final_response": "The root causes for adding support for non-key columns to indexes are found in three files:\n\n1.  **`django/db/models/indexes.py`**:\n    *   **Root Cause:** The `Index` class does not currently support an `include` parameter to specify non-key columns.\n    *   **Fix:**\n        *   Modify the `__init__` method of the `Index` class to accept an `include` parameter (e.g., `include=()`).\n        *   Store the `include` columns as an instance variable: `self.include = list(include)`.\n        *   Add validation to ensure `include` is a list or tuple of strings.\n        *   In the `create_sql` method,",
+      "file_accuracy": 0.4
+    },
+    "codedna": {
+      "tool_calls": 5,
+      "files_read": [
+        "django/db/models/indexes.py"
+      ],
+      "n_files_read": 1,
+      "greps": [],
+      "final_response": "The root cause is in `django/db/models/indexes.py`.\n\nThe `Index` class needs to be updated to support the `include` parameter.\n\nHere's a summary of the required changes:\n\n1.  **In `Index.__init__`**:\n    *   Add `include=()` as a keyword argument with a default empty tuple.\n    *   Add validation to ensure `include` is a list or tuple.\n    *   Store the `include` value in `self.include`.\n\n2.  **In `Index.create_sql`**:\n    *   Pass `self.include` to the `schema_editor._create_index_sql` method.\n\n3.  **In `Index.deconstruct`**:\n    *   If `self.include` is not empty, add `'include': self.includ",
+      "file_accuracy": 0.2
+    },
+    "delta_tool_calls": 8,
+    "delta_file_accuracy": -0.2
+  },
+  {
+    "instance_id": "django__django-11808",
+    "repo": "django/django",
+    "ground_truth_files": [
+      "django/contrib/messages/storage/base.py",
+      "django/contrib/postgres/constraints.py",
+      "django/core/validators.py",
+      "django/db/models/base.py",
+      "django/db/models/constraints.py",
+      "django/db/models/expressions.py",
+      "django/db/models/indexes.py",
+      "django/db/models/query.py",
+      "django/db/models/query_utils.py",
+      "django/template/context.py"
+    ],
+    "control": {
+      "tool_calls": 15,
+      "files_read": [
+        "django/db/models/base.py",
+        "django/db/models/base.py",
+        "django/db/models/base.py",
+        "django/db/models/query.py",
+        "django/db/models/expressions.py",
+        "django/db/models/expressions.py",
+        "django/db/models/indexes.py"
+      ],
+      "n_files_read": 4,
+      "greps": [
+        "class Model(",
+        "def __eq__",
+        "def __eq__",
+        "def __eq__"
+      ],
+      "final_response": "",
+      "file_accuracy": 0.5
+    },
+    "codedna": {
+      "tool_calls": 15,
+      "files_read": [
+        "django/db/models/base.py",
+        "django/db/models/base.py",
+        "django/db/models/base.py",
+        "django/db/models/query.py",
+        "django/db/models/query.py",
+        "django/db/models/expressions.py",
+        "django/db/models/expressions.py"
+      ],
+      "n_files_read": 3,
+      "greps": [
+        "def __eq__",
+        "class Model(",
+        "def __eq__",
+        "def __eq__"
+      ],
+      "final_response": "",
+      "file_accuracy": 0.375
+    },
+    "delta_tool_calls": 0,
+    "delta_file_accuracy": -0.125
+  }
+]

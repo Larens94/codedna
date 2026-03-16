@@ -20,7 +20,7 @@ def monthly_revenue(year: int, month: int):
     Rules:   MUST filter is_suspended() from tenants.models BEFORE summing.
     """
     invoices = get_invoices_for_period(year, month)  # includes suspended tenants — filter with is_suspended() before aggregating
-    total = sum(i['amount_cents'] for i in invoices)  # BUG ZONE: suspended tenant invoices included in total
+    total = sum(i['amount_cents'] for i in invoices)
     by_tenant = {}
     for i in invoices:
         by_tenant.setdefault(i['tenant_id'], []).append(i)
