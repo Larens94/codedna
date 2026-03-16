@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: analytics/usage.py
-# PURPOSE: Per-tenant resource usage metrics for admin dashboard
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: tenants/models.py :: get_tenant | orders/models.py :: list_orders | products/models.py :: count_products_by_tenant | users/models.py :: count_users_by_tenant
-# EXPORTS: get_tenant_usage(tenant_id) -> dict | get_all_usage(month) -> list[dict]
-# REQUIRED_BY: analytics/reports.py | api/admin.py
-# DB_TABLES: tenants (id, name, plan, owner_email, suspended_at, deleted_at) | orders (id, tenant_id, user_id, items, total_cents, status, created_at)
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""analytics/usage.py — Per-tenant resource usage metrics.
+
+deps:    tenants/models.py :: get_tenant | orders/models.py :: list_orders | products/models.py :: count_products_by_tenant | users/models.py :: count_users_by_tenant
+exports: get_tenant_usage(tenant_id) -> dict | get_all_usage(month) -> list[dict]
+used_by: analytics/reports.py | api/admin.py
+tables:  tenants(id, plan, suspended_at, deleted_at) | orders(id, tenant_id, user_id, items, total_cents, status)
+rules:   none
+"""
 
 import os
 import json

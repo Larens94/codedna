@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: notifications/scheduler.py
-# PURPOSE: Scheduler logic for notifications
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: notifications/email.py | analytics/revenue.py :: monthly_revenue
-# EXPORTS: schedule_monthly_report() -> None | schedule_payment_reminders() -> None
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""notifications/scheduler.py — Scheduler module.
+
+deps:    notifications/email.py | analytics/revenue.py :: monthly_revenue
+exports: schedule_monthly_report() -> None | schedule_payment_reminders() -> None
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

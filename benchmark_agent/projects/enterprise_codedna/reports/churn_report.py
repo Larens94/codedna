@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: reports/churn_report.py
-# PURPOSE: Churn Report logic for reports
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: get_churned_tenants_for_period() -> list[dict] | get_suspension_stats() -> dict
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""reports/churn_report.py — Churn Report module.
+
+deps:    core/db.py :: execute
+exports: get_churned_tenants_for_period() -> list[dict] | get_suspension_stats() -> dict
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

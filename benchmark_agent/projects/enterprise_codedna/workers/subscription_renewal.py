@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: workers/subscription_renewal.py
-# PURPOSE: Subscription Renewal logic for workers
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: renew_expiring() -> list[dict] | notify_upcoming_renewals() -> None
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""workers/subscription_renewal.py — Subscription Renewal module.
+
+deps:    core/db.py :: execute
+exports: renew_expiring() -> list[dict] | notify_upcoming_renewals() -> None
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

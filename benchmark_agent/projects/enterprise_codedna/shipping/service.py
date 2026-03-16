@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: shipping/service.py
-# PURPOSE: Service logic for shipping
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: shipping/models.py | shipping/carriers.py :: book_shipment | orders/models.py :: update_status
-# EXPORTS: ship_order(order_id, carrier) -> dict | get_tracking_info(order_id) -> dict
-# REQUIRED_BY: none
-# DB_TABLES: orders (id, tenant_id, user_id, items, total_cents, status, created_at)
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""shipping/service.py — Service module.
+
+deps:    shipping/models.py | shipping/carriers.py :: book_shipment | orders/models.py :: update_status
+exports: ship_order(order_id, carrier) -> dict | get_tracking_info(order_id) -> dict
+used_by: none
+tables:  orders(id, tenant_id, user_id, items, total_cents, status)
+rules:   none
+"""
 
 import os
 import json

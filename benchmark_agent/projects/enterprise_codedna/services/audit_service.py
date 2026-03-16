@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: services/audit_service.py
-# PURPOSE: Audit Service logic for services
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: log_action() -> None | get_audit_log_for_period() -> list[dict] | get_user_actions() -> list[dict]
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""services/audit_service.py — Audit Service module.
+
+deps:    core/db.py :: execute
+exports: log_action() -> None | get_audit_log_for_period() -> list[dict] | get_user_actions() -> list[dict]
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: shipping/models.py
-# PURPOSE: Models logic for shipping
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute | core/db.py :: execute_one
-# EXPORTS: create_shipment(order_id, carrier, tracking) -> dict | get_shipment(order_id) -> dict | None | update_tracking(shipment_id, status) -> None
-# REQUIRED_BY: shipping/service.py | shipping/tracking.py
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""shipping/models.py — Models module.
+
+deps:    core/db.py :: execute | core/db.py :: execute_one
+exports: create_shipment(order_id, carrier, tracking) -> dict | get_shipment(order_id) -> dict | None | update_tracking(shipment_id, status) -> None
+used_by: shipping/service.py | shipping/tracking.py
+tables:  none
+rules:   none
+"""
 
 import os
 import json

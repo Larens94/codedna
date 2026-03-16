@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: analytics/funnel.py
-# PURPOSE: Funnel logic for analytics
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: cart_to_checkout_rate(tenant_id, days) -> float | checkout_to_order_rate(tenant_id, days) -> float
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""analytics/funnel.py — Funnel module.
+
+deps:    core/db.py :: execute
+exports: cart_to_checkout_rate(tenant_id, days) -> float | checkout_to_order_rate(tenant_id, days) -> float
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

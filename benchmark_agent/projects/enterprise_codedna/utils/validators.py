@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: utils/validators.py
-# PURPOSE: Validators logic for utils
-# CONTEXT_BUDGET: minimal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: validate_email() -> bool | validate_plan() -> bool | validate_currency_amount() -> bool
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""utils/validators.py — Validators module.
+
+deps:    core/db.py :: execute
+exports: validate_email() -> bool | validate_plan() -> bool | validate_currency_amount() -> bool
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: admin/user_management.py
-# PURPOSE: User Management logic for admin
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: list_all_users() -> dict | get_suspended_users() -> list[dict] | deactivate_all_tenant_users() -> int
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""admin/user_management.py — User Management module.
+
+deps:    core/db.py :: execute
+exports: list_all_users() -> dict | get_suspended_users() -> list[dict] | deactivate_all_tenant_users() -> int
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

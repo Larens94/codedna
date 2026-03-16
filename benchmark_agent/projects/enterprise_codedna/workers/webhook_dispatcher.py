@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: workers/webhook_dispatcher.py
-# PURPOSE: Webhook Dispatcher logic for workers
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: dispatch_all() -> None | dispatch_for_tenant() -> None
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""workers/webhook_dispatcher.py — Webhook Dispatcher module.
+
+deps:    core/db.py :: execute
+exports: dispatch_all() -> None | dispatch_for_tenant() -> None
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

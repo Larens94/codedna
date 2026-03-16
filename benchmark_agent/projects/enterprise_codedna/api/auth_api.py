@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: api/auth_api.py
-# PURPOSE: Auth Api logic for api
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: users/auth.py :: login | users/auth.py :: logout | core/auth.py :: verify_token
-# EXPORTS: auth_bp (Flask Blueprint)
-# REQUIRED_BY: app.py
-# DB_TABLES: users (id, tenant_id, email, name, role, active, last_login)
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""api/auth_api.py — Auth Api module.
+
+deps:    users/auth.py :: login | users/auth.py :: logout | core/auth.py :: verify_token
+exports: auth_bp (Flask Blueprint)
+used_by: app.py
+tables:  users(id, tenant_id, email, role, active)
+rules:   none
+"""
 
 import os
 import json

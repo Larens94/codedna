@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: workers/report_generator.py
-# PURPOSE: Report Generator logic for workers
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: analytics/reports.py :: full_monthly_report | notifications/email.py
-# EXPORTS: generate_and_send(year, month) -> None
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""workers/report_generator.py — Report Generator module.
+
+deps:    analytics/reports.py :: full_monthly_report | notifications/email.py
+exports: generate_and_send(year, month) -> None
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

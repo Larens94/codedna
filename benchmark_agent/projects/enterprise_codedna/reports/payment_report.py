@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: reports/payment_report.py
-# PURPOSE: Payment Report logic for reports
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: get_payments_for_period() -> list[dict] | get_failed_payments() -> list[dict]
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""reports/payment_report.py — Payment Report module.
+
+deps:    core/db.py :: execute
+exports: get_payments_for_period() -> list[dict] | get_failed_payments() -> list[dict]
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

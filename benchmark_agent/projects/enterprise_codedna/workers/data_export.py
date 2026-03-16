@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: workers/data_export.py
-# PURPOSE: Data Export logic for workers
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: export_tenant_data() -> dict | scheduled_export() -> None
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""workers/data_export.py — Data Export module.
+
+deps:    core/db.py :: execute
+exports: export_tenant_data() -> dict | scheduled_export() -> None
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: models/feature_flag_model.py
-# PURPOSE: Feature Flag Model logic for models
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: get_flags() -> dict | is_enabled() -> bool | set_flag() -> None
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""models/feature_flag_model.py — Feature Flag Model module.
+
+deps:    core/db.py :: execute
+exports: get_flags() -> dict | is_enabled() -> bool | set_flag() -> None
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: models/integration_model.py
-# PURPOSE: Integration Model logic for models
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: get_integrations() -> list[dict] | list_active_integrations() -> list[dict] | create_integration() -> dict
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""models/integration_model.py — Integration Model module.
+
+deps:    core/db.py :: execute
+exports: get_integrations() -> list[dict] | list_active_integrations() -> list[dict] | create_integration() -> dict
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

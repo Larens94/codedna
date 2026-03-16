@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: models/discount_model.py
-# PURPOSE: Discount Model logic for models
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: get_discount() -> dict|None | list_active_discounts() -> list[dict] | create_discount() -> dict | deactivate_discount() -> None
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""models/discount_model.py — Discount Model module.
+
+deps:    core/db.py :: execute
+exports: get_discount() -> dict|None | list_active_discounts() -> list[dict] | create_discount() -> dict | deactivate_discount() -> None
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

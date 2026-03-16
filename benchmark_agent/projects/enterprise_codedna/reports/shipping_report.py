@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: reports/shipping_report.py
-# PURPOSE: Shipping Report logic for reports
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: get_shipments_for_period() -> list[dict] | get_delayed_shipments() -> list[dict]
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""reports/shipping_report.py — Shipping Report module.
+
+deps:    core/db.py :: execute
+exports: get_shipments_for_period() -> list[dict] | get_delayed_shipments() -> list[dict]
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

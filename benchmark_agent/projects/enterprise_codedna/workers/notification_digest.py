@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: workers/notification_digest.py
-# PURPOSE: Notification Digest logic for workers
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: send_daily_digest() -> None | send_weekly_summary() -> None
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""workers/notification_digest.py — Notification Digest module.
+
+deps:    core/db.py :: execute
+exports: send_daily_digest() -> None | send_weekly_summary() -> None
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

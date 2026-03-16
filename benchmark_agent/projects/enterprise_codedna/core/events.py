@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: core/events.py
-# PURPOSE: Events logic for core
-# CONTEXT_BUDGET: always
-# DEPENDS_ON: core/cache.py | core/db.py
-# EXPORTS: emit(event_name, payload) -> None | subscribe(event_name, handler) -> None
-# REQUIRED_BY: products/service.py | orders/fulfillment.py | payments/webhooks.py
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""core/events.py — Events module.
+
+deps:    core/cache.py | core/db.py
+exports: emit(event_name, payload) -> None | subscribe(event_name, handler) -> None
+used_by: products/service.py | orders/fulfillment.py | payments/webhooks.py
+tables:  none
+rules:   none
+"""
 
 import os
 import json

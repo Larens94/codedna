@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: products/catalog.py
-# PURPOSE: Catalog logic for products
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: products/models.py :: list_products | core/cache.py :: cache_get | core/cache.py :: cache_set
-# EXPORTS: get_catalog(tenant_id, filters) -> list[dict] | get_product_detail(product_id) -> dict | get_featured(tenant_id) -> list[dict]
-# REQUIRED_BY: api/products.py
-# DB_TABLES: products (id, tenant_id, name, sku, price_cents, stock_qty, deleted_at)
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""products/catalog.py — Catalog module.
+
+deps:    products/models.py :: list_products | core/cache.py :: cache_get | core/cache.py :: cache_set
+exports: get_catalog(tenant_id, filters) -> list[dict] | get_product_detail(product_id) -> dict | get_featured(tenant_id) -> list[dict]
+used_by: api/products.py
+tables:  products(id, tenant_id, price_cents, stock_qty, deleted_at)
+rules:   none
+"""
 
 import os
 import json

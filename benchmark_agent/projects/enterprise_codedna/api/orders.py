@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: api/orders.py
-# PURPOSE: Orders logic for api
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: orders/checkout.py :: checkout | orders/models.py :: list_orders | core/auth.py :: require_auth
-# EXPORTS: orders_bp (Flask Blueprint)
-# REQUIRED_BY: app.py
-# DB_TABLES: orders (id, tenant_id, user_id, items, total_cents, status, created_at)
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""api/orders.py — Orders module.
+
+deps:    orders/checkout.py :: checkout | orders/models.py :: list_orders | core/auth.py :: require_auth
+exports: orders_bp (Flask Blueprint)
+used_by: app.py
+tables:  orders(id, tenant_id, user_id, items, total_cents, status)
+rules:   none
+"""
 
 import os
 import json

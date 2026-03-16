@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: services/search_service.py
-# PURPOSE: Search Service logic for services
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: search_products() -> list[dict] | search_orders() -> list[dict] | search_tenants_admin() -> list[dict]
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""services/search_service.py — Search Service module.
+
+deps:    core/db.py :: execute
+exports: search_products() -> list[dict] | search_orders() -> list[dict] | search_tenants_admin() -> list[dict]
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

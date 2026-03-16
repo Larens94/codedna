@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: notifications/email.py
-# PURPOSE: Email logic for notifications
-# CONTEXT_BUDGET: always
-# DEPENDS_ON: core/config.py :: SMTP_HOST | core/config.py :: LOW_STOCK_THRESHOLD
-# EXPORTS: send_welcome(email, name) -> None | send_suspension_notice(email, tenant_id, reason) -> None | send_invoice_email(tenant_id, invoice) -> None | send_payment_failed(email, invoice_id) -> None | send_low_stock_alert(tenant_id, product_id, current_qty) -> None
-# REQUIRED_BY: tenants/service.py | users/service.py | notifications/scheduler.py
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""notifications/email.py — Email module.
+
+deps:    core/config.py :: SMTP_HOST | core/config.py :: LOW_STOCK_THRESHOLD
+exports: send_welcome(email, name) -> None | send_suspension_notice(email, tenant_id, reason) -> None | send_invoice_email(tenant_id, invoice) -> None | send_payment_failed(email, invoice_id) -> None
+used_by: tenants/service.py | users/service.py | notifications/scheduler.py
+tables:  none
+rules:   none
+"""
 
 import os
 import json

@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: middleware/tenant_resolver.py
-# PURPOSE: Tenant Resolver logic for middleware
-# CONTEXT_BUDGET: minimal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: resolve_tenant() -> dict|None | inject_tenant_context() -> callable
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""middleware/tenant_resolver.py — Tenant Resolver module.
+
+deps:    core/db.py :: execute
+exports: resolve_tenant() -> dict|None | inject_tenant_context() -> callable
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

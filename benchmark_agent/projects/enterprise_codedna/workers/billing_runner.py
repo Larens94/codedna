@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: workers/billing_runner.py
-# PURPOSE: Billing Runner logic for workers
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: tenants/billing.py :: bill_all_tenants
-# EXPORTS: run(year, month) -> list[dict]
-# REQUIRED_BY: none
-# DB_TABLES: tenants (id, name, plan, owner_email, suspended_at, deleted_at)
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""workers/billing_runner.py — Billing Runner module.
+
+deps:    tenants/billing.py :: bill_all_tenants
+exports: run(year, month) -> list[dict]
+used_by: none
+tables:  tenants(id, plan, suspended_at, deleted_at)
+rules:   none
+"""
 
 import os
 import json

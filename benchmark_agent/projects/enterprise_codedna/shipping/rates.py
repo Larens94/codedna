@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: shipping/rates.py
-# PURPOSE: Rates logic for shipping
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: shipping/carriers.py :: get_rates
-# EXPORTS: compare_rates(origin, destination, weight_kg) -> list[dict] | cheapest_rate(origin, destination, weight_kg) -> dict
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""shipping/rates.py — Rates module.
+
+deps:    shipping/carriers.py :: get_rates
+exports: compare_rates(origin, destination, weight_kg) -> list[dict] | cheapest_rate(origin, destination, weight_kg) -> dict
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

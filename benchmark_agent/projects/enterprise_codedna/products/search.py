@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: products/search.py
-# PURPOSE: Search logic for products
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: products/models.py :: list_products | core/cache.py :: cache_get
-# EXPORTS: search(tenant_id, query) -> list[dict] | suggest(tenant_id, prefix) -> list[str]
-# REQUIRED_BY: none
-# DB_TABLES: products (id, tenant_id, name, sku, price_cents, stock_qty, deleted_at)
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""products/search.py — Search module.
+
+deps:    products/models.py :: list_products | core/cache.py :: cache_get
+exports: search(tenant_id, query) -> list[dict] | suggest(tenant_id, prefix) -> list[str]
+used_by: none
+tables:  products(id, tenant_id, price_cents, stock_qty, deleted_at)
+rules:   none
+"""
 
 import os
 import json

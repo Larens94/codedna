@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: integrations/crm_sync.py
-# PURPOSE: Crm Sync logic for integrations
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: sync_tenant_to_crm() -> None | list_active_crm_syncs() -> list[dict]
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""integrations/crm_sync.py — Crm Sync module.
+
+deps:    core/db.py :: execute
+exports: sync_tenant_to_crm() -> None | list_active_crm_syncs() -> list[dict]
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

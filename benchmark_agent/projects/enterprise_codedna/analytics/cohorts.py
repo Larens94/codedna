@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: analytics/cohorts.py
-# PURPOSE: Cohorts logic for analytics
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute | tenants/models.py :: list_active_tenants
-# EXPORTS: cohort_retention(months) -> list[dict] | churn_rate(year, month) -> float
-# REQUIRED_BY: analytics/reports.py
-# DB_TABLES: tenants (id, name, plan, owner_email, suspended_at, deleted_at)
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""analytics/cohorts.py — Cohorts module.
+
+deps:    core/db.py :: execute | tenants/models.py :: list_active_tenants
+exports: cohort_retention(months) -> list[dict] | churn_rate(year, month) -> float
+used_by: analytics/reports.py
+tables:  tenants(id, plan, suspended_at, deleted_at)
+rules:   none
+"""
 
 import os
 import json

@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: payments/refunds.py
-# PURPOSE: Refunds logic for payments
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: payments/stripe.py :: refund_charge | payments/models.py :: get_invoice | orders/models.py :: update_status
-# EXPORTS: process_refund(invoice_id, amount_cents) -> dict | full_refund(order_id) -> dict
-# REQUIRED_BY: none
-# DB_TABLES: orders (id, tenant_id, user_id, items, total_cents, status, created_at)
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""payments/refunds.py — Refunds module.
+
+deps:    payments/stripe.py :: refund_charge | payments/models.py :: get_invoice | orders/models.py :: update_status
+exports: process_refund(invoice_id, amount_cents) -> dict | full_refund(order_id) -> dict
+used_by: none
+tables:  orders(id, tenant_id, user_id, items, total_cents, status)
+rules:   none
+"""
 
 import os
 import json

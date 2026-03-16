@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: workers/cleanup.py
-# PURPOSE: Cleanup logic for workers
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute | core/cache.py :: cache_del
-# EXPORTS: cleanup_expired_carts() -> int | cleanup_old_events() -> int
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""workers/cleanup.py — Cleanup module.
+
+deps:    core/db.py :: execute | core/cache.py :: cache_del
+exports: cleanup_expired_carts() -> int | cleanup_old_events() -> int
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

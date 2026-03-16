@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: reports/daily_sales.py
-# PURPOSE: Daily Sales logic for reports
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: get_sales_for_period() -> list[dict] | get_daily_totals() -> dict
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""reports/daily_sales.py — Daily Sales module.
+
+deps:    core/db.py :: execute
+exports: get_sales_for_period() -> list[dict] | get_daily_totals() -> dict
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

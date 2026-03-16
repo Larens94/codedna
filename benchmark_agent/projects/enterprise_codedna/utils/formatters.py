@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: utils/formatters.py
-# PURPOSE: Formatters logic for utils
-# CONTEXT_BUDGET: minimal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: format_currency() -> str | format_period() -> str | format_tenant_id() -> str
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""utils/formatters.py — Formatters module.
+
+deps:    core/db.py :: execute
+exports: format_currency() -> str | format_period() -> str | format_tenant_id() -> str
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

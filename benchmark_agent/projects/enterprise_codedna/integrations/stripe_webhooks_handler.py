@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: integrations/stripe_webhooks_handler.py
-# PURPOSE: Stripe Webhooks Handler logic for integrations
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: on_payment_succeeded() -> None | on_subscription_cancelled() -> None | get_webhook_logs_for_period() -> list[dict]
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""integrations/stripe_webhooks_handler.py — Stripe Webhooks Handler module.
+
+deps:    core/db.py :: execute
+exports: on_payment_succeeded() -> None | on_subscription_cancelled() -> None | get_webhook_logs_for_period() -> list[dict]
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

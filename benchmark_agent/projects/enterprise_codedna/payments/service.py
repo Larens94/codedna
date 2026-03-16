@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: payments/service.py
-# PURPOSE: Service logic for payments
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: payments/invoices.py :: create_invoice | payments/stripe.py :: charge_card | payments/models.py :: mark_paid
-# EXPORTS: collect_payment(invoice_id, payment_method) -> dict | refund_payment(invoice_id, amount_cents) -> dict
-# REQUIRED_BY: orders/returns.py
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""payments/service.py — Service module.
+
+deps:    payments/invoices.py :: create_invoice | payments/stripe.py :: charge_card | payments/models.py :: mark_paid
+exports: collect_payment(invoice_id, payment_method) -> dict | refund_payment(invoice_id, amount_cents) -> dict
+used_by: orders/returns.py
+tables:  none
+rules:   none
+"""
 
 import os
 import json

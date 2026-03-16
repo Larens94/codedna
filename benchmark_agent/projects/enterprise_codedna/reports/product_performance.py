@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: reports/product_performance.py
-# PURPOSE: Product Performance logic for reports
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: get_top_products() -> list[dict] | get_products_for_period() -> list[dict]
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""reports/product_performance.py — Product Performance module.
+
+deps:    core/db.py :: execute
+exports: get_top_products() -> list[dict] | get_products_for_period() -> list[dict]
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

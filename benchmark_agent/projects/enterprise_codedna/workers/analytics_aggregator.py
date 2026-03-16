@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: workers/analytics_aggregator.py
-# PURPOSE: Analytics Aggregator logic for workers
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: aggregate_daily_revenue() -> dict | aggregate_monthly_cohorts() -> None
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""workers/analytics_aggregator.py — Analytics Aggregator module.
+
+deps:    core/db.py :: execute
+exports: aggregate_daily_revenue() -> dict | aggregate_monthly_cohorts() -> None
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

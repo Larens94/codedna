@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: products/pricing.py
-# PURPOSE: Pricing logic for products
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: products/models.py :: get_product | tenants/models.py :: get_tenant
-# EXPORTS: get_price(product_id, tenant_id) -> int | apply_volume_discount(base_price, qty) -> int | get_price_with_tax(product_id) -> int
-# REQUIRED_BY: orders/checkout.py
-# DB_TABLES: products (id, tenant_id, name, sku, price_cents, stock_qty, deleted_at) | tenants (id, name, plan, owner_email, suspended_at, deleted_at)
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""products/pricing.py — Pricing module.
+
+deps:    products/models.py :: get_product | tenants/models.py :: get_tenant
+exports: get_price(product_id, tenant_id) -> int | apply_volume_discount(base_price, qty) -> int | get_price_with_tax(product_id) -> int
+used_by: orders/checkout.py
+tables:  products(id, tenant_id, price_cents, stock_qty, deleted_at) | tenants(id, plan, suspended_at, deleted_at)
+rules:   none
+"""
 
 import os
 import json

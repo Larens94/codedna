@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: api/webhooks.py
-# PURPOSE: Webhooks logic for api
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: payments/webhooks.py :: handle_stripe_webhook
-# EXPORTS: webhooks_bp (Flask Blueprint)
-# REQUIRED_BY: app.py
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""api/webhooks.py — Webhooks module.
+
+deps:    payments/webhooks.py :: handle_stripe_webhook
+exports: webhooks_bp (Flask Blueprint)
+used_by: app.py
+tables:  none
+rules:   none
+"""
 
 import os
 import json

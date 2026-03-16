@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: payments/webhooks.py
-# PURPOSE: Webhooks logic for payments
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: payments/models.py :: mark_paid | payments/invoices.py :: void_invoice | core/events.py :: emit
-# EXPORTS: handle_stripe_webhook(payload, signature) -> None
-# REQUIRED_BY: api/webhooks.py
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""payments/webhooks.py — Webhooks module.
+
+deps:    payments/models.py :: mark_paid | payments/invoices.py :: void_invoice | core/events.py :: emit
+exports: handle_stripe_webhook(payload, signature) -> None
+used_by: api/webhooks.py
+tables:  none
+rules:   none
+"""
 
 import os
 import json

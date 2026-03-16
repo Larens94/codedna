@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: core/config.py
-# PURPOSE: Environment config and global constants
-# CONTEXT_BUDGET: always
-# DEPENDS_ON: none
-# EXPORTS: DB_URL | REDIS_URL | STRIPE_KEY | TAX_RATE | CURRENCY | MAX_SEATS | JWT_SECRET | SMTP_HOST | LOW_STOCK_THRESHOLD
-# REQUIRED_BY: core/db.py | core/cache.py | core/auth.py
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""core/config.py — Environment variables and global constants.
+
+deps:    none
+exports: DB_URL | REDIS_URL | STRIPE_KEY | TAX_RATE
+used_by: core/db.py | core/cache.py | core/auth.py
+tables:  none
+rules:   none
+"""
 
 import os
 import json

@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: users/auth.py
-# PURPOSE: Auth logic for users
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: users/models.py :: get_user_by_email | core/auth.py :: sign_token | core/cache.py :: cache_set
-# EXPORTS: login(email, password) -> dict | logout(token) -> None | refresh(token) -> str
-# REQUIRED_BY: api/auth_api.py | api/auth_api.py
-# DB_TABLES: users (id, tenant_id, email, name, role, active, last_login)
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""users/auth.py — Auth module.
+
+deps:    users/models.py :: get_user_by_email | core/auth.py :: sign_token | core/cache.py :: cache_set
+exports: login(email, password) -> dict | logout(token) -> None | refresh(token) -> str
+used_by: api/auth_api.py | api/auth_api.py
+tables:  users(id, tenant_id, email, role, active)
+rules:   none
+"""
 
 import os
 import json

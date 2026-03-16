@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: users/service.py
-# PURPOSE: Service logic for users
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: users/models.py | tenants/limits.py :: check_seat_limit | notifications/email.py :: send_welcome
-# EXPORTS: invite_user(tenant_id, email, name, role) -> dict | deactivate(user_id) -> None | change_role(user_id, new_role) -> None
-# REQUIRED_BY: none
-# DB_TABLES: users (id, tenant_id, email, name, role, active, last_login) | tenants (id, name, plan, owner_email, suspended_at, deleted_at)
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""users/service.py — Service module.
+
+deps:    users/models.py | tenants/limits.py :: check_seat_limit | notifications/email.py :: send_welcome
+exports: invite_user(tenant_id, email, name, role) -> dict | deactivate(user_id) -> None | change_role(user_id, new_role) -> None
+used_by: none
+tables:  users(id, tenant_id, email, role, active) | tenants(id, plan, suspended_at, deleted_at)
+rules:   none
+"""
 
 import os
 import json

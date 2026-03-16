@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: services/discount_service.py
-# PURPOSE: Discount Service logic for services
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: get_active_discounts() -> list[dict] | apply_discount() -> int | validate_discount_code() -> bool
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""services/discount_service.py — Discount Service module.
+
+deps:    core/db.py :: execute
+exports: get_active_discounts() -> list[dict] | apply_discount() -> int | validate_discount_code() -> bool
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

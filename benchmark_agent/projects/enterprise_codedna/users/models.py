@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: users/models.py
-# PURPOSE: User CRUD; role is string field not boolean flag
-# CONTEXT_BUDGET: always
-# DEPENDS_ON: core/db.py :: execute | core/db.py :: execute_one
-# EXPORTS: get_user(id) -> dict | None | get_user_by_email(email) -> dict | None | create_user(tenant_id, email, name, role) -> dict | update_user(id, data) -> dict | deactivate_user(id) -> None | count_users_by_tenant(tenant_id) -> int
-# REQUIRED_BY: tenants/limits.py | users/auth.py | users/service.py
-# DB_TABLES: users (id, tenant_id, email, name, role, active, last_login)
-# AGENT_RULES: role is STRING ('admin'/'owner'/'member'/'viewer'); no boolean is_admin field exists
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""users/models.py — User CRUD; role is string, no boolean is_admin field.
+
+deps:    core/db.py :: execute | core/db.py :: execute_one
+exports: get_user(id) -> dict | None | get_user_by_email(email) -> dict | None | create_user(tenant_id, email, name, role) -> dict | update_user(id, data) -> dict
+used_by: tenants/limits.py | users/auth.py | users/service.py
+tables:  users(id, tenant_id, email, role, active)
+rules:   role is STRING 'admin' not boolean; check user['role'] == 'admin' never user['is_admin']
+"""
 
 import os
 import json

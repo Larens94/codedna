@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: core/auth.py
-# PURPOSE: JWT sign/verify and role-based access decorators
-# CONTEXT_BUDGET: always
-# DEPENDS_ON: core/config.py :: JWT_SECRET
-# EXPORTS: sign_token(user_id, role, tenant_id) -> str | verify_token(token) -> dict | require_auth (decorator) | require_admin (decorator)
-# REQUIRED_BY: users/auth.py | api/products.py | api/orders.py
-# DB_TABLES: none
-# AGENT_RULES: JWT payload fields: user_id, role, tenant_id. role values: admin/owner/member/viewer
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""core/auth.py — JWT sign/verify; role field is string admin/owner/member/viewer.
+
+deps:    core/config.py :: JWT_SECRET
+exports: sign_token(user_id, role, tenant_id) -> str | verify_token(token) -> dict | require_auth (decorator) | require_admin (decorator)
+used_by: users/auth.py | api/products.py | api/orders.py
+tables:  none
+rules:   JWT payload: {user_id, role, tenant_id}; role values: admin/owner/member/viewer; no is_admin field
+"""
 
 import os
 import json

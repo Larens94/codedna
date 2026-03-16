@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: api/discounts_api.py
-# PURPOSE: Discounts Api logic for api
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: create_discount_route() -> None | validate_discount_route() -> None
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""api/discounts_api.py — Discounts Api module.
+
+deps:    core/db.py :: execute
+exports: create_discount_route() -> None | validate_discount_route() -> None
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

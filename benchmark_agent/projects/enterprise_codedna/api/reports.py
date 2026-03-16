@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: api/reports.py
-# PURPOSE: Reports logic for api
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: analytics/reports.py :: full_monthly_report | core/auth.py :: require_admin
-# EXPORTS: reports_bp (Flask Blueprint)
-# REQUIRED_BY: app.py
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""api/reports.py — Reports module.
+
+deps:    analytics/reports.py :: full_monthly_report | core/auth.py :: require_admin
+exports: reports_bp (Flask Blueprint)
+used_by: app.py
+tables:  none
+rules:   none
+"""
 
 import os
 import json

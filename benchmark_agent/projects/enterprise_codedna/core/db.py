@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: core/db.py
-# PURPOSE: PostgreSQL connection and parameterized query helpers
-# CONTEXT_BUDGET: always
-# DEPENDS_ON: core/config.py :: DB_URL
-# EXPORTS: execute(sql, params) -> list[dict] | execute_one(sql, params) -> dict | None | transaction()
-# REQUIRED_BY: core/events.py | tenants/models.py | tenants/models.py
-# DB_TABLES: none
-# AGENT_RULES: always use parameterized queries; never interpolate user input into SQL
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""core/db.py — PostgreSQL helpers; always use parameterized queries.
+
+deps:    core/config.py :: DB_URL
+exports: execute(sql, params) -> list[dict] | execute_one(sql, params) -> dict | None | transaction()
+used_by: core/events.py | tenants/models.py | tenants/models.py
+tables:  none
+rules:   none
+"""
 
 import os
 import json

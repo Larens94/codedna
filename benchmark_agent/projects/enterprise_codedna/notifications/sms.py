@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: notifications/sms.py
-# PURPOSE: Sms logic for notifications
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/config.py
-# EXPORTS: send_sms(phone, message) -> None | send_otp(phone) -> str
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""notifications/sms.py — Sms module.
+
+deps:    core/config.py
+exports: send_sms(phone, message) -> None | send_otp(phone) -> str
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

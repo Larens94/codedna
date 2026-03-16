@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: middleware/cors_handler.py
-# PURPOSE: Cors Handler logic for middleware
-# CONTEXT_BUDGET: minimal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: add_cors_headers() -> object
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""middleware/cors_handler.py — Cors Handler module.
+
+deps:    core/db.py :: execute
+exports: add_cors_headers() -> object
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

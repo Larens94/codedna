@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: payments/stripe.py
-# PURPOSE: Stripe logic for payments
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/config.py :: STRIPE_KEY
-# EXPORTS: charge_card(amount_cents, payment_method) -> dict | refund_charge(charge_id, amount_cents) -> dict | create_customer(email, name) -> str
-# REQUIRED_BY: payments/service.py | payments/refunds.py
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""payments/stripe.py — Stripe module.
+
+deps:    core/config.py :: STRIPE_KEY
+exports: charge_card(amount_cents, payment_method) -> dict | refund_charge(charge_id, amount_cents) -> dict | create_customer(email, name) -> str
+used_by: payments/service.py | payments/refunds.py
+tables:  none
+rules:   none
+"""
 
 import os
 import json

@@ -42,35 +42,43 @@ A blank line must follow the closing delimiter before the first import or code s
 
 ### 3.2 Format
 
+The Manifest Header is written as a **Python module docstring** (triple-quoted string). This format is already deeply embedded in LLM training data, which makes it significantly more effective than a custom comment block — models apply existing pattern recognition instead of processing unfamiliar syntax.
+
+```python
+"""<filename> — <one-line purpose, max 15 words>.
+
+deps:    <file> → <symbol1>, <symbol2> | none
+exports: <symbol(signature)> → <return_type> | none
+used_by: <file> → <symbol> | none
+tables:  <table>(<col1>, <col2>) | none
+rules:   <hard constraints for AI agents; what to do and what to avoid> | none
+"""
 ```
-# === CODEDNA:0.4 =============================================
-# FILE: <filename>
-# PURPOSE: <one-line description, max 15 words>
-# CONTEXT_BUDGET: <always | normal | minimal>
-# DEPENDS_ON: <file> → <symbol1>, <symbol2> | none
-# EXPORTS: <symbol(signature)> → <return type>
-# REQUIRED_BY: <file> → <symbol> | none
-# STYLE: <css framework>, <chart library> | none
-# DB_TABLES: <table> (<col1>, <col2>) | none
-# AGENT_RULES: <comma-separated constraints for AI agents> | none
-# LAST_MODIFIED: <8-word max description of last change>
-# ==============================================================
+
+**For JavaScript / TypeScript / Go / Rust** (no native triple-string docstring), use a JSDoc-style block comment:
+
+```javascript
+/**
+ * <filename> — <one-line purpose>.
+ *
+ * deps:    <file> → <symbol>
+ * exports: <symbol(signature)> → <return_type>
+ * used_by: <file> → <symbol>
+ * tables:  <table>(<col1>, <col2>)
+ * rules:   <hard constraints for AI agents>
+ */
 ```
 
 ### 3.3 Fields
 
 | Field | Required | Rule |
 |---|---|---|
-| `FILE` | ✅ | Exact filename including extension |
-| `PURPOSE` | ✅ | ≤15 words, describes *what*, not *how* |
-| `CONTEXT_BUDGET` | ✅ | `always` / `normal` / `minimal` — see §3.4 |
-| `DEPENDS_ON` | ✅ | `file → func1, func2` or `none` |
-| `EXPORTS` | ✅ | Public API with signatures |
-| `REQUIRED_BY` | — | Inverse of DEPENDS_ON; who relies on this file's exports |
-| `STYLE` | — | CSS + chart library, or `none` |
-| `DB_TABLES` | — | Tables and relevant columns, or `none` |
-| `AGENT_RULES` | — | Hard constraints agents must follow (e.g. "never hardcode prices") |
-| `LAST_MODIFIED` | ✅ | ≤8 words; updated on every edit as first change |
+| first line | ✅ | `<filename> — <purpose>` (≤15 words, describes *what*, not *how*) |
+| `deps` | ✅ | `file → func1, func2` or `none` |
+| `exports` | ✅ | Public API with signatures |
+| `used_by` | — | Inverse of deps; who calls this file's exports |
+| `tables` | — | Tables and relevant columns, or `none` |
+| `rules` | — | Hard constraints for AI agents (e.g. "never re-apply TAX_RATE") |
 
 ### 3.4 CONTEXT_BUDGET Values
 
@@ -107,73 +115,84 @@ Common uses:
 
 ### 3.7 Examples by Language
 
-**Python / Ruby / Shell**
+**Python**
 ```python
-# === CODEDNA:0.4 ==============================================
-# FILE: dashboard.py
-# PURPOSE: Monthly revenue KPI dashboard with chart and table
-# CONTEXT_BUDGET: always
-# DEPENDS_ON: utils.py → calculate_kpi(), format_currency()
-# EXPORTS: render(execute_query_func) → HTML string
-# REQUIRED_BY: app.py → register_views()
-# STYLE: tailwind, chart.js
-# DB_TABLES: orders (month, revenue, cost)
-# AGENT_RULES: never hardcode colors; use STYLE tokens only
-# LAST_MODIFIED: added margin column to table
-# ==============================================================
+"""analytics/revenue.py — Monthly/annual revenue aggregation from paid invoices.
+
+deps:    payments/models.py → get_invoices_for_period | tenants/models.py → is_suspended
+exports: monthly_revenue(year,month)->dict | annual_summary(year)->list[dict]
+used_by: api/reports.py → revenue_route | workers/report_generator.py → generate
+tables:  invoices(tenant_id, amount_cents, status) | tenants(suspended_at, deleted_at)
+rules:   get_invoices_for_period() returns ALL tenants, NO suspended filter →
+         callers MUST call is_suspended() BEFORE aggregating revenue
+"""
 ```
 
-**JavaScript / TypeScript / Go / Rust**
+**JavaScript / TypeScript**
 ```javascript
-// === CODEDNA:0.4 =============================================
-// FILE: authService.ts
-// PURPOSE: JWT authentication and session management
-// CONTEXT_BUDGET: always
-// DEPENDS_ON: db.ts → getUser(), config.ts → JWT_SECRET
-// EXPORTS: login(credentials) → Promise<Token>, verify(token) → User
-// REQUIRED_BY: router.ts → authMiddleware()
-// STYLE: none
-// DB_TABLES: users (id, email, password_hash)
-// AGENT_RULES: never log tokens or passwords; use redact() from logger.ts
-// LAST_MODIFIED: added refresh token rotation
-// =============================================================
+/**
+ * authService.ts — JWT authentication and session management.
+ *
+ * deps:    db.ts → getUser() | config.ts → JWT_SECRET
+ * exports: login(credentials)->Promise<Token> | verify(token)->User
+ * used_by: router.ts → authMiddleware()
+ * tables:  users(id, email, password_hash, role)
+ * rules:   never log tokens or passwords; role field is string not boolean
+ */
 ```
 
 **SQL**
 ```sql
--- === CODEDNA:0.4 ============================================
--- FILE: monthly_revenue.sql
--- PURPOSE: Aggregated monthly revenue by category and region
--- CONTEXT_BUDGET: minimal
--- DEPENDS_ON: none
--- EXPORTS: (month, category, revenue, cost)
--- REQUIRED_BY: none
--- DB_TABLES: orders, order_items, products
--- AGENT_RULES: always filter cancelled orders (status != 'cancelled')
--- LAST_MODIFIED: filtered out cancelled orders
--- ============================================================
+-- monthly_revenue.sql — Aggregated monthly revenue by category and region.
+--
+-- deps:    none
+-- exports: (month, category, revenue, cost)
+-- tables:  orders, order_items, products
+-- rules:   always filter cancelled orders (status != 'cancelled')
 ```
 
 ---
 
-## 4. Level 2 — Inline Hyperlinks
+## 4. Level 2 — Sliding-Window Annotations
 
 ### 4.1 Motivation
 
-AI agents operating in *sliding window* mode extract partial file content (e.g., lines 50–80) to reduce token consumption. This bypasses the Manifest Header entirely. Level 2 hyperlinks ensure that even a partial read delivers enough directional context.
+AI agents operating in *sliding window* mode extract partial file content (e.g., lines 50–80) to reduce token consumption. This bypasses the Level 1 header entirely. Level 2 ensures that the **body of every critical function is self-documenting**, even when read in isolation.
 
-### 4.2 Annotation Tags
+Level 2 has two sub-layers:
+- **2a — Function Docstring**: Google-style docstring summarizing dependencies and rules
+- **2b — Call-site Inline Comment**: comment on the exact line where a dangerous call happens
 
-| Tag | Semantics | Agent behavior |
-|---|---|---|
-| `@SEE: file → symbol` | Recommended context | Read when uncertain |
-| `@REQUIRES-READ: file → symbol` | Mandatory prerequisite | MUST read before editing |
-| `@MODIFIES-ALSO: file → symbol` | Cascade change required | MUST update that symbol too |
-| `@BREAKS-IF-RENAMED: reason` | Symbol identity is load-bearing | MUST NOT rename without updating all references |
+### 4.2a Level 2a — Function Docstring (Google style)
 
-### 4.3 Placement
+Add a structured docstring to any function that:
+- calls a dependency with a non-obvious contract
+- has a rule that an AI agent could violate without context
+- is part of a multi-file workflow
 
-Annotations go **inside the function**, before the first executable line:
+```python
+def monthly_revenue(year: int, month: int) -> dict:
+    """Aggregate paid invoices into monthly revenue total.
+
+    Depends: payments.models.get_invoices_for_period — returns ALL invoices, NO suspended filter.
+    Rules:   MUST filter is_suspended() from tenants.models BEFORE summing.
+             Failure to filter inflates revenue with suspended-tenant invoices.
+    Returns: {year, month, total_cents, by_tenant: {id: [invoices]}}
+    """
+```
+
+### 4.2b Level 2b — Call-site Inline Comment (sliding-window safe)
+
+Annotate the **exact line** of a dangerous call. This is the last line of defense: even if the model sees only 10 lines around the call, it receives the critical context.
+
+```python
+    invoices = get_invoices_for_period(year, month)  # includes suspended tenants — filter below
+    total = sum(i['amount_cents'] for i in invoices)  # BUG ZONE: no suspension filter applied
+```
+
+### 4.3 Legacy Tags (still valid)
+
+The `@SEE`, `@REQUIRES-READ`, `@MODIFIES-ALSO`, `@BREAKS-IF-RENAMED` tag syntax is still valid for explicit machine-readable annotations:
 
 ```python
 def apply_discount(base_price: int, user_tier: str) -> float:

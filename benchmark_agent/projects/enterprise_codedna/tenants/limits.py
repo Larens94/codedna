@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: tenants/limits.py
-# PURPOSE: Limits logic for tenants
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: tenants/models.py :: get_tenant | users/models.py :: count_users_by_tenant | products/models.py :: count_products_by_tenant
-# EXPORTS: check_seat_limit(tenant_id) -> bool | check_product_limit(tenant_id) -> bool | get_limits(tenant_id) -> dict
-# REQUIRED_BY: users/service.py | products/service.py
-# DB_TABLES: tenants (id, name, plan, owner_email, suspended_at, deleted_at) | users (id, tenant_id, email, name, role, active, last_login)
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""tenants/limits.py — Limits module.
+
+deps:    tenants/models.py :: get_tenant | users/models.py :: count_users_by_tenant | products/models.py :: count_products_by_tenant
+exports: check_seat_limit(tenant_id) -> bool | check_product_limit(tenant_id) -> bool | get_limits(tenant_id) -> dict
+used_by: users/service.py | products/service.py
+tables:  tenants(id, plan, suspended_at, deleted_at) | users(id, tenant_id, email, role, active)
+rules:   none
+"""
 
 import os
 import json

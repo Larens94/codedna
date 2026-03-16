@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: payments/models.py
-# PURPOSE: Models logic for payments
-# CONTEXT_BUDGET: always
-# DEPENDS_ON: core/db.py :: execute | core/db.py :: execute_one
-# EXPORTS: get_invoice(id) -> dict | None | get_invoices_by_tenant(tenant_id) -> list[dict] | get_invoices_for_period(year, month) -> list[dict] | create_invoice_record(order_id, tenant_id, amount_cents, status) -> dict | mark_paid(invoice_id, charge_id) -> None
-# REQUIRED_BY: payments/invoices.py | payments/service.py | payments/webhooks.py
-# DB_TABLES: none
-# AGENT_RULES: get_invoices_for_period does NOT filter suspended tenants; callers must filter if needed
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""payments/models.py — Invoice CRUD; get_invoices_for_period has no tenant filter.
+
+deps:    core/db.py :: execute | core/db.py :: execute_one
+exports: get_invoice(id) -> dict | None | get_invoices_by_tenant(tenant_id) -> list[dict] | get_invoices_for_period(year, month) -> list[dict] | create_invoice_record(order_id, tenant_id, amount_cents, status) -> dict
+used_by: payments/invoices.py | payments/service.py | payments/webhooks.py
+tables:  none
+rules:   get_invoices_for_period() no suspended_at filter → callers that aggregate revenue must filter
+"""
 
 import os
 import json

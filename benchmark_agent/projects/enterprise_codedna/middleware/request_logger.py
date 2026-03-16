@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: middleware/request_logger.py
-# PURPOSE: Request Logger logic for middleware
-# CONTEXT_BUDGET: minimal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: log_request() -> None | get_slow_requests() -> list[dict]
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""middleware/request_logger.py — Request Logger module.
+
+deps:    core/db.py :: execute
+exports: log_request() -> None | get_slow_requests() -> list[dict]
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

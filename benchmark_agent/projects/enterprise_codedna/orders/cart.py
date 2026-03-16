@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: orders/cart.py
-# PURPOSE: Redis-backed cart with stock check on item add
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: products/models.py :: get_product | products/inventory.py :: check_stock | core/cache.py :: cache_get | core/cache.py :: cache_set
-# EXPORTS: add_item(session_id, product_id, qty) -> dict | remove_item(session_id, product_id) -> None | get_cart(session_id) -> dict | clear_cart(session_id) -> None
-# REQUIRED_BY: orders/checkout.py
-# DB_TABLES: orders (id, tenant_id, user_id, items, total_cents, status, created_at) | products (id, tenant_id, name, sku, price_cents, stock_qty, deleted_at)
-# AGENT_RULES: T1: discount_code field must be stored in cart dict for checkout to apply
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""orders/cart.py — Redis-backed cart with stock check before add.
+
+deps:    products/models.py :: get_product | products/inventory.py :: check_stock | core/cache.py :: cache_get | core/cache.py :: cache_set
+exports: add_item(session_id, product_id, qty) -> dict | remove_item(session_id, product_id) -> None | get_cart(session_id) -> dict | clear_cart(session_id) -> None
+used_by: orders/checkout.py
+tables:  orders(id, tenant_id, user_id, items, total_cents, status) | products(id, tenant_id, price_cents, stock_qty, deleted_at)
+rules:   T1: store discount_code in cart dict for checkout to apply at order creation
+"""
 
 import os
 import json

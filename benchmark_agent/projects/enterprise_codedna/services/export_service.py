@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: services/export_service.py
-# PURPOSE: Export Service logic for services
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: export_invoices_csv() -> str | export_tenants_csv() -> str
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""services/export_service.py — Export Service module.
+
+deps:    core/db.py :: execute
+exports: export_invoices_csv() -> str | export_tenants_csv() -> str
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

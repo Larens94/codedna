@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: app.py
-# PURPOSE: App logic for 
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: api/products.py | api/orders.py | api/reports.py | api/admin.py | api/webhooks.py | api/auth_api.py
-# EXPORTS: create_app() -> Flask
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""app.py — App module.
+
+deps:    api/products.py | api/orders.py | api/reports.py | api/admin.py | api/webhooks.py | api/auth_api.py
+exports: create_app() -> Flask
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

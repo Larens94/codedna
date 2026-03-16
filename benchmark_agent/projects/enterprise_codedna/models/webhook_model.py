@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: models/webhook_model.py
-# PURPOSE: Webhook Model logic for models
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: list_webhooks() -> list[dict] | get_webhook_deliveries_for_period() -> list[dict] | create_webhook() -> dict
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""models/webhook_model.py — Webhook Model module.
+
+deps:    core/db.py :: execute
+exports: list_webhooks() -> list[dict] | get_webhook_deliveries_for_period() -> list[dict] | create_webhook() -> dict
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: workers/indexer.py
-# PURPOSE: Indexer logic for workers
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: products/models.py :: list_products | tenants/models.py :: list_active_tenants
-# EXPORTS: index_all() -> None | index_tenant(tenant_id) -> None
-# REQUIRED_BY: none
-# DB_TABLES: products (id, tenant_id, name, sku, price_cents, stock_qty, deleted_at) | tenants (id, name, plan, owner_email, suspended_at, deleted_at)
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""workers/indexer.py — Indexer module.
+
+deps:    products/models.py :: list_products | tenants/models.py :: list_active_tenants
+exports: index_all() -> None | index_tenant(tenant_id) -> None
+used_by: none
+tables:  products(id, tenant_id, price_cents, stock_qty, deleted_at) | tenants(id, plan, suspended_at, deleted_at)
+rules:   none
+"""
 
 import os
 import json

@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: models/session_model.py
-# PURPOSE: Session Model logic for models
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: get_session() -> dict|None | list_active_sessions() -> list[dict] | create_session() -> dict | invalidate_session() -> None
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""models/session_model.py — Session Model module.
+
+deps:    core/db.py :: execute
+exports: get_session() -> dict|None | list_active_sessions() -> list[dict] | create_session() -> dict | invalidate_session() -> None
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

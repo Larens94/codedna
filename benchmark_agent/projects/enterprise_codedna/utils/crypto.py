@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: utils/crypto.py
-# PURPOSE: Crypto logic for utils
-# CONTEXT_BUDGET: minimal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: hash_password() -> str | verify_password() -> bool | generate_token() -> str
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""utils/crypto.py — Crypto module.
+
+deps:    core/db.py :: execute
+exports: hash_password() -> str | verify_password() -> bool | generate_token() -> str
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

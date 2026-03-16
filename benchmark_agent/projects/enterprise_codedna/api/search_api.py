@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: api/search_api.py
-# PURPOSE: Search Api logic for api
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: search_route() -> None | suggest_route() -> None
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""api/search_api.py — Search Api module.
+
+deps:    core/db.py :: execute
+exports: search_route() -> None | suggest_route() -> None
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

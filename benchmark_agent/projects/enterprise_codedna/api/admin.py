@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: api/admin.py
-# PURPOSE: Admin logic for api
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: tenants/service.py :: suspend | tenants/service.py :: reactivate | analytics/usage.py :: get_tenant_usage | core/auth.py :: require_admin
-# EXPORTS: admin_bp (Flask Blueprint)
-# REQUIRED_BY: app.py
-# DB_TABLES: tenants (id, name, plan, owner_email, suspended_at, deleted_at)
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""api/admin.py — Admin module.
+
+deps:    tenants/service.py :: suspend | tenants/service.py :: reactivate | analytics/usage.py :: get_tenant_usage | core/auth.py :: require_admin
+exports: admin_bp (Flask Blueprint)
+used_by: app.py
+tables:  tenants(id, plan, suspended_at, deleted_at)
+rules:   none
+"""
 
 import os
 import json

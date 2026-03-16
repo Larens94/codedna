@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: integrations/zapier_webhook.py
-# PURPOSE: Zapier Webhook logic for integrations
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: trigger_zapier() -> None | get_zap_triggers_for_period() -> list[dict]
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""integrations/zapier_webhook.py — Zapier Webhook module.
+
+deps:    core/db.py :: execute
+exports: trigger_zapier() -> None | get_zap_triggers_for_period() -> list[dict]
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

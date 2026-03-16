@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: api/integrations_api.py
-# PURPOSE: Integrations Api logic for api
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: list_integrations_route() -> None | create_integration_route() -> None
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""api/integrations_api.py — Integrations Api module.
+
+deps:    core/db.py :: execute
+exports: list_integrations_route() -> None | create_integration_route() -> None
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

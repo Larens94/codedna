@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: orders/models.py
-# PURPOSE: Models logic for orders
-# CONTEXT_BUDGET: always
-# DEPENDS_ON: core/db.py :: execute | core/db.py :: execute_one
-# EXPORTS: get_order(id) -> dict | None | list_orders(tenant_id, status) -> list[dict] | create_order(tenant_id, user_id, items, total_cents) -> dict | update_status(order_id, status) -> None | get_orders_for_period(year, month) -> list[dict]
-# REQUIRED_BY: orders/checkout.py | orders/fulfillment.py | orders/fulfillment.py
-# DB_TABLES: orders (id, tenant_id, user_id, items, total_cents, status, created_at)
-# AGENT_RULES: get_orders_for_period does NOT filter suspended tenants
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""orders/models.py — Order CRUD; get_orders_for_period has no suspended filter.
+
+deps:    core/db.py :: execute | core/db.py :: execute_one
+exports: get_order(id) -> dict | None | list_orders(tenant_id, status) -> list[dict] | create_order(tenant_id, user_id, items, total_cents) -> dict | update_status(order_id, status) -> None
+used_by: orders/checkout.py | orders/fulfillment.py | orders/fulfillment.py
+tables:  orders(id, tenant_id, user_id, items, total_cents, status)
+rules:   get_orders_for_period() no suspended_at filter → callers must filter if needed
+"""
 
 import os
 import json

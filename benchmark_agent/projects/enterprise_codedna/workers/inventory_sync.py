@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: workers/inventory_sync.py
-# PURPOSE: Inventory Sync logic for workers
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: products/inventory.py :: get_stock | core/db.py :: execute
-# EXPORTS: sync_all() -> None | sync_tenant(tenant_id) -> None
-# REQUIRED_BY: none
-# DB_TABLES: products (id, tenant_id, name, sku, price_cents, stock_qty, deleted_at)
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""workers/inventory_sync.py — Inventory Sync module.
+
+deps:    products/inventory.py :: get_stock | core/db.py :: execute
+exports: sync_all() -> None | sync_tenant(tenant_id) -> None
+used_by: none
+tables:  products(id, tenant_id, price_cents, stock_qty, deleted_at)
+rules:   none
+"""
 
 import os
 import json

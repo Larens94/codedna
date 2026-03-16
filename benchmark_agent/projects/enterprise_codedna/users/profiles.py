@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: users/profiles.py
-# PURPOSE: Profiles logic for users
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: users/models.py :: get_user | users/models.py :: update_user | core/cache.py :: cache_set
-# EXPORTS: get_profile(user_id) -> dict | update_profile(user_id, data) -> dict | update_avatar(user_id, url) -> None
-# REQUIRED_BY: none
-# DB_TABLES: users (id, tenant_id, email, name, role, active, last_login)
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""users/profiles.py — Profiles module.
+
+deps:    users/models.py :: get_user | users/models.py :: update_user | core/cache.py :: cache_set
+exports: get_profile(user_id) -> dict | update_profile(user_id, data) -> dict | update_avatar(user_id, url) -> None
+used_by: none
+tables:  users(id, tenant_id, email, role, active)
+rules:   none
+"""
 
 import os
 import json

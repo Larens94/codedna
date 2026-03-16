@@ -1,138 +1,172 @@
-# CodeDNA
+# 🧬 CodeDNA — Annotation Standard v0.5
 
-> *Every file contains the entire project's genome. The AI reads one cell and understands the whole organism.*
+> *Every file contains the entire project's genome. The AI reads one fragment and understands the whole.*
 
-**CodeDNA** is an **CodeDNA Annotation Standard** that embeds context directly into source code — at every level. Like biological DNA, a single fragment contains enough information to understand the whole.
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
+[![Version](https://img.shields.io/badge/CodeDNA-v0.5-6366f1)](./SPEC.md)
+[![arXiv](https://img.shields.io/badge/paper-arXiv-b31b1b)](./paper/codedna_paper.pdf)
 
-No external memory. No vector databases. No context files that drift out of sync.
+**Compatible with:**
+[![Cursor](https://img.shields.io/badge/Cursor-000000?logo=cursor&logoColor=white)](./integrations/.cursorrules)
+[![Claude Code](https://img.shields.io/badge/Claude_Code-D97757?logo=anthropic&logoColor=white)](./integrations/CLAUDE.md)
+[![GitHub Copilot](https://img.shields.io/badge/GitHub_Copilot-000000?logo=github&logoColor=white)](./integrations/copilot-instructions.md)
+[![Windsurf](https://img.shields.io/badge/Windsurf-0891b2?logoColor=white)](./integrations/.cursorrules)
+[![ChatGPT](https://img.shields.io/badge/ChatGPT-74aa9c?logo=openai&logoColor=white)](./QUICKSTART.md)
+[![Gemini](https://img.shields.io/badge/Gemini-4285F4?logo=google&logoColor=white)](./QUICKSTART.md)
 
----
+**CodeDNA** embeds architectural context **directly into source files**. Like biological DNA — cut a hologram in half and you get two smaller complete images. Extract 10 lines from a CodeDNA file and those 10 lines still carry enough context for an AI agent to act correctly.
 
-## The Biological Analogy
+**No RAG. No vector DB. No external rules files. Zero drift.**
 
-| Biology | CodeDNA |
-|---|---|
-| **Genome** | The complete set of project rules and conventions |
-| **Chromosome** | A source file with its Manifest Header |
-| **Gene** | A fully annotated function |
-| **Genetic Marker** | An inline hyperlink (`@REQUIRES-READ`, `@SEE`) |
-
-Just as cutting a hologram in half gives you two complete (if smaller) images, extracting 10 lines from a CodeDNA file gives you 10 lines that still carry enough context to act safely.
-
----
-
-## The Two-Level Architecture
-
-### Level 1 — The Genome (Manifest Header)
-
-Every file starts with a **Manifest Header**: a compact, machine-readable block read by the AI *before* any code. In ~60 tokens, it answers:
-
-- **What does this file do?** (`PURPOSE`)
-- **What must I never break?** (`DEPENDS_ON`)
-- **What do others rely on from me?** (`EXPORTS`)
-- **What style must I maintain?** (`STYLE`)
-- **Which database tables do I touch?** (`DB_TABLES`)
-- **What was the last change?** (`LAST_MODIFIED`)
-
-```python
-# ==============================================================
-# FILE: dashboard.py
-# PURPOSE: Monthly revenue KPI dashboard with chart and table
-# DEPENDS_ON: utils.py → calculate_kpi(), format_currency()
-# EXPORTS: render(execute_query_func) → HTML string
-# STYLE: tailwind, chart.js
-# DB_TABLES: orders (month, revenue, cost)
-# LAST_MODIFIED: added margin column to table
-# ==============================================================
-```
-
-### Level 2 — The Genetic Markers (Inline Hyperlinks)
-
-Modern AI agents often extract code in **sliding windows** — reading only lines 50–80 to edit a function, skipping the file header entirely. CodeDNA solves this with **inline hyperlinks** embedded at the function level:
-
-```python
-def apply_discount(base_price: int, user_tier: str) -> float:
-    # @REQUIRES-READ: config.py → MAX_DISCOUNT_ALLOWED (must not exceed this limit)
-    # @REQUIRES-READ: db.py → UserSchema (valid values for user_tier)
-    # @MODIFIES-ALSO: invoice.py → calculate_total() (recalculates if discount changes)
-
-    if user_tier == "premium":
-        return base_price * 0.8  # cast to int done in main.py
-    return base_price
-```
-
-When an agent reads this fragment, it knows exactly what to look up before making any change. It's **Hyperlinking for LLMs** — the agent follows the links, gathers context, then acts.
-
-#### Hyperlink Annotations
-
-| Tag | Semantics |
-|---|---|
-| `@SEE: file → symbol` | Recommended context — helpful but not blocking |
-| `@REQUIRES-READ: file → symbol` | Mandatory — agent MUST read this before editing |
-| `@MODIFIES-ALSO: file → symbol` | If you change this, go change that too |
+![CodeDNA Site — Animated DNA Hero](./docs/hero.png)
 
 ---
 
-## Why It Works
+## ⚡ 2-Minute Setup
 
-**Standard approach**: context lives outside the code (CLAUDE.md, RAG, MemGPT).  
-Every prompt must fetch, inject, and pay the token cost for it.
+**Pick your AI tool and paste:**
 
-**CodeDNA approach**: context lives *inside* the code, at every level.  
-The AI reads it for free as part of reading the file.
-
-```
-Token overhead:    Zero   — context is in the file, not the prompt
-Context drift:     Zero   — the header is co-located with the code it describes
-Retrieval latency: Zero   — no lookup, no embedding, no network call
-Sliding window:    Solved — inline hyperlinks guide the agent even on partial reads
-```
-
----
-
-## Benchmark (Real Results — gemini-2.5-flash)
-
-3 edit scenarios × 3 runs each. Judge: independent Gemini instance.
-
-| Metric | Control | CodeDNA |
+| Tool | File to create | Source |
 |---|---|---|
-| Edit quality (AI Judge) | **10 / 10** | **10 / 10** |
-| Cross-file errors | baseline | **0** |
-| External context system required | Yes | **No** |
+| Cursor | `.cursorrules` | [`integrations/.cursorrules`](./integrations/.cursorrules) |
+| Claude Code | `CLAUDE.md` | [`integrations/CLAUDE.md`](./integrations/CLAUDE.md) |
+| GitHub Copilot | `.github/copilot-instructions.md` | [`integrations/copilot-instructions.md`](./integrations/copilot-instructions.md) |
+| Antigravity / Custom | System prompt | See [QUICKSTART.md](./QUICKSTART.md) |
+| Any other LLM | Any of the above | See [QUICKSTART.md](./QUICKSTART.md) |
 
-CodeDNA matches quality without any external context infrastructure.  
-Full results: [`benchmark/results.json`](./benchmark/results.json)
+Then annotate your first file → see [QUICKSTART.md](./QUICKSTART.md)
 
 ---
 
-## Language Support
+## 📊 Benchmark — Real Agent Results
 
-CodeDNA works with any language that supports single-line comments:
+A real **Gemini 2.5 Flash agent** with function-calling tools (`read_file`, `list_files`, `grep`) navigated two versions of the same codebase to find bugs. **Identical task. Identical model. Only difference: CodeDNA annotations.**
+
+### Agent Navigation Benchmark — Simple Codebase (11 files)
+
+| Metric | Control | CodeDNA | Improvement |
+|---|---|---|---|
+| Total tool calls | 4 | 3 | **−25%** |
+| Files read | 3 | 2 | **−33%** |
+| Conversation turns | 5 | 4 | **−20%** |
+| Bug found | ✅ Yes | ✅ Yes | Equal accuracy |
+
+### Enterprise Benchmark — Large Multi-Domain Codebase
+
+3 real-world bug scenarios. Control = no annotations. CodeDNA = standard v0.5 headers.
+
+| Bug Scenario | Control Tools | CodeDNA Tools | Control Found? | CodeDNA Found? |
+|---|---|---|---|---|
+| **B1** Suspended tenants in revenue | 4 | 3 | ❌ **No** | ✅ **Yes** |
+| **B3** Admin permission bypass | 3 | 3 | ✅ Yes | ✅ Yes |
+| **B4** Fulfillment inventory race | 6 | 4 | ✅ Yes | ✅ Yes |
+| **Average** | **4.3** | **3.3** | **67%** | **100%** |
+
+> **B1 is the decisive scenario**: the Control agent used more tool calls and still failed to identify the root cause. CodeDNA used fewer calls and succeeded.
+
+Full data: [`benchmark_agent/results_agent.json`](./benchmark_agent/results_agent.json) · [`benchmark_agent/results_enterprise.json`](./benchmark_agent/results_enterprise.json)
+
+---
+
+## 🧬 The Three Levels
+
+### Level 1 — Manifest Header *(Macro-context: ~70 tokens)*
+
+The first 14 lines of every file. The AI reads this before any code and already knows the file's purpose, dependencies, public API, and constraints it must respect.
+
+```python
+# === CODEDNA:0.4 =============================================
+# FILE:           orders/orders.py
+# PURPOSE:        Order lifecycle management
+# CONTEXT_BUDGET: always
+# DEPENDS_ON:     db/queries.py :: execute()
+#                 users/users.py :: get_user()
+# EXPORTS:        get_active_orders() → list[dict]
+#                 create_order(user_id, items) → None
+# REQUIRED_BY:    analytics/revenue.py :: get_revenue_rows()
+# AGENT_RULES:    User system uses soft delete.
+#                 Never join orders without filtering deleted_at.
+# LAST_MODIFIED:  added soft-delete filter
+# =============================================================
+```
+
+### Level 2 — Inline Hyperlinks *(Micro-context: per-function)*
+
+AI agents often read files in **sliding windows** — lines 200–250, skipping the header. Inline hyperlinks solve this by embedding navigation cues at each function.
+
+```python
+def get_active_orders():
+    # @REQUIRES-READ: users/users.py :: delete_user() — soft delete semantics
+    # @MODIFIES-ALSO: analytics/revenue.py :: get_revenue_rows()
+    return execute("SELECT * FROM orders WHERE status != 'cancelled'")
+```
+
+| Tag | Meaning | Agent must... |
+|---|---|---|
+| `@SEE` | Recommended context | Read when uncertain |
+| `@REQUIRES-READ` | Mandatory prerequisite | Read before writing any logic |
+| `@MODIFIES-ALSO` | Cascade required | Update target in same changeset |
+| `@BREAKS-IF-RENAMED` | Identity is load-bearing | Never rename without updating all callers |
+
+### Level 3 — Semantic Naming *(Cognitive compression)*
+
+Variable names encode type, shape, domain, and origin. Any 10-line extract is self-documenting.
+
+```python
+# ❌ Standard — agent must trace the entire call chain
+data  = get_users()
+price = request.json["price"]
+
+# ✅ CodeDNA — readable in any context window
+list_dict_users_from_db  = get_users()
+int_cents_price_from_req = request.json["price"]
+```
+
+### Bonus — Planner Manifest-Only Read Protocol
+
+To plan edits across 10+ files, read only the first 14 lines of each (≈70 tokens × N files), filter by `CONTEXT_BUDGET`, build a `DEPENDS_ON` graph, then open only the relevant files in full.
+
+---
+
+## 🌐 Language Support
+
+CodeDNA works in every language that supports single-line comments:
 
 | Language | Comment style |
 |---|---|
 | Python, Ruby, Shell | `# KEY: value` |
 | JavaScript, TypeScript, Go, Rust, C | `// KEY: value` |
 | SQL | `-- KEY: value` |
+| HTML | `<!-- KEY: value -->` |
 
 ---
 
-## Repository Structure
+## 📁 Repository Structure
 
 ```
 codedna/
 ├── README.md               ← you are here
-├── SPEC.md                 ← full technical specification
-├── CONTRIBUTING.md         ← how to add language examples
-├── LICENSE                 ← MIT
+├── QUICKSTART.md           ← 2-minute setup for every AI tool
+├── SPEC.md                 ← full technical specification v0.5
+├── integrations/
+│   ├── CLAUDE.md               ← Claude Code system prompt
+│   ├── .cursorrules             ← Cursor rules file
+│   └── copilot-instructions.md ← GitHub Copilot instructions
+├── benchmark_agent/
+│   ├── agent.py                ← live Gemini agent with function calling
+│   ├── generate_codebase.py    ← generates control + codedna codebases
+│   ├── run_benchmark.py        ← runs the benchmark
+│   ├── results_agent.json      ← simple benchmark results
+│   └── results_enterprise.json ← enterprise benchmark results
 ├── examples/
-│   ├── python/             ← Python with Manifest + Hyperlinks
-│   ├── javascript/         ← JavaScript example
-│   └── typescript/         ← TypeScript example
-└── benchmark/
-    ├── codedna_benchmark.py    ← reproducible benchmark
-    ├── results.json            ← real Gemini results
-    └── index.html              ← protocol landing page
+│   ├── python/
+│   ├── javascript/
+│   └── typescript/
+├── benchmark/              ← older LLM-judge benchmark (v1)
+├── paper/                  ← scientific paper (arXiv preprint)
+│   └── codedna_paper.pdf
+└── tools/
+    └── validate_manifests.py
 ```
 
 ---
@@ -140,8 +174,6 @@ codedna/
 ## Contributing
 
 See [`CONTRIBUTING.md`](./CONTRIBUTING.md). Examples in any language are welcome.
-
----
 
 ## License
 

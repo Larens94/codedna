@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: admin/support_tools.py
-# PURPOSE: Support Tools logic for admin
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: impersonate_tenant() -> str | reset_tenant_cache() -> None | get_system_health() -> dict
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""admin/support_tools.py — Support Tools module.
+
+deps:    core/db.py :: execute
+exports: impersonate_tenant() -> str | reset_tenant_cache() -> None | get_system_health() -> dict
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

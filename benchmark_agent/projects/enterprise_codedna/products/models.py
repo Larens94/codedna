@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: products/models.py
-# PURPOSE: Models logic for products
-# CONTEXT_BUDGET: always
-# DEPENDS_ON: core/db.py :: execute | core/db.py :: execute_one
-# EXPORTS: get_product(id) -> dict | None | list_products(tenant_id, filters) -> list[dict] | create_product(tenant_id, data) -> dict | update_product(id, data) -> dict | delete_product(id) -> None | count_products_by_tenant(tenant_id) -> int
-# REQUIRED_BY: tenants/limits.py | products/catalog.py | products/pricing.py
-# DB_TABLES: products (id, tenant_id, name, sku, price_cents, stock_qty, deleted_at)
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""products/models.py — Models module.
+
+deps:    core/db.py :: execute | core/db.py :: execute_one
+exports: get_product(id) -> dict | None | list_products(tenant_id, filters) -> list[dict] | create_product(tenant_id, data) -> dict | update_product(id, data) -> dict
+used_by: tenants/limits.py | products/catalog.py | products/pricing.py
+tables:  products(id, tenant_id, price_cents, stock_qty, deleted_at)
+rules:   none
+"""
 
 import os
 import json

@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: tenants/models.py
-# PURPOSE: Tenant CRUD with soft-suspend and soft-delete
-# CONTEXT_BUDGET: always
-# DEPENDS_ON: core/db.py :: execute | core/db.py :: execute_one
-# EXPORTS: get_tenant(id) -> dict | None | list_active_tenants() -> list[dict] | create_tenant(name, plan, owner_email) -> dict | suspend_tenant(id) -> None | reactivate_tenant(id) -> None | delete_tenant(id) -> None | is_suspended(tenant) -> bool
-# REQUIRED_BY: tenants/service.py | tenants/limits.py | tenants/billing.py
-# DB_TABLES: tenants (id, name, plan, owner_email, suspended_at, deleted_at)
-# AGENT_RULES: suspend = soft (suspended_at=NOW()); delete = soft (deleted_at=NOW()); rows stay in DB
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""tenants/models.py — Tenant CRUD with soft-suspend and soft-delete.
+
+deps:    core/db.py :: execute | core/db.py :: execute_one
+exports: get_tenant(id) -> dict | None | list_active_tenants() -> list[dict] | create_tenant(name, plan, owner_email) -> dict | suspend_tenant(id) -> None
+used_by: tenants/service.py | tenants/limits.py | tenants/billing.py
+tables:  tenants(id, plan, suspended_at, deleted_at)
+rules:   soft-suspend: suspended_at=NOW() row stays in DB; soft-delete: deleted_at=NOW(); queries that aggregate must filter both
+"""
 
 import os
 import json

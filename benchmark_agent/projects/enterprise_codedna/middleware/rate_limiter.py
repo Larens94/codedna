@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: middleware/rate_limiter.py
-# PURPOSE: Rate Limiter logic for middleware
-# CONTEXT_BUDGET: minimal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: check_rate_limit() -> bool | get_limit_status() -> dict
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""middleware/rate_limiter.py — Rate Limiter module.
+
+deps:    core/db.py :: execute
+exports: check_rate_limit() -> bool | get_limit_status() -> dict
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

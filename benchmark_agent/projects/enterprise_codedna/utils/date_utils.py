@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: utils/date_utils.py
-# PURPOSE: Date Utils logic for utils
-# CONTEXT_BUDGET: minimal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: first_day_of_month() -> str | last_day_of_month() -> str | parse_date() -> object
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""utils/date_utils.py — Date Utils module.
+
+deps:    core/db.py :: execute
+exports: first_day_of_month() -> str | last_day_of_month() -> str | parse_date() -> object
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

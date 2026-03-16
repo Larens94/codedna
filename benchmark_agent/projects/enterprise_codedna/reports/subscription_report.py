@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: reports/subscription_report.py
-# PURPOSE: Subscription Report logic for reports
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: get_subscriptions_for_period() -> list[dict] | list_active_subscriptions() -> list[dict]
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""reports/subscription_report.py — Subscription Report module.
+
+deps:    core/db.py :: execute
+exports: get_subscriptions_for_period() -> list[dict] | list_active_subscriptions() -> list[dict]
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

@@ -1,14 +1,11 @@
-# === CODEDNA:0.5 ==============================================
-# FILE: integrations/slack_notifier.py
-# PURPOSE: Slack Notifier logic for integrations
-# CONTEXT_BUDGET: normal
-# DEPENDS_ON: core/db.py :: execute
-# EXPORTS: send_slack() -> None | notify_new_order() -> None
-# REQUIRED_BY: none
-# DB_TABLES: none
-# AGENT_RULES: none
-# LAST_MODIFIED: initial generation
-# ==============================================================
+"""integrations/slack_notifier.py — Slack Notifier module.
+
+deps:    core/db.py :: execute
+exports: send_slack() -> None | notify_new_order() -> None
+used_by: none
+tables:  none
+rules:   none
+"""
 
 import os
 import json

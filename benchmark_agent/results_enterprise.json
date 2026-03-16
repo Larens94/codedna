@@ -7,9 +7,9 @@
       "found": false
     },
     "codedna": {
-      "tools": 5,
-      "reads": 3,
-      "greps": 1,
+      "tools": 3,
+      "reads": 2,
+      "greps": 0,
       "found": true
     }
   },
@@ -29,9 +29,9 @@
   },
   "B4_fulfillment_inventory": {
     "control": {
-      "tools": 5,
-      "reads": 2,
-      "greps": 2,
+      "tools": 6,
+      "reads": 4,
+      "greps": 1,
       "found": true
     },
     "codedna": {
