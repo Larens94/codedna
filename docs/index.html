@@ -296,7 +296,7 @@
   <div class="nav-logo">
     <span class="logo-dna">🧬</span>
     <span class="brand">CodeDNA</span>
-    <span class="nav-version">Protocol v0.3</span>
+    <span class="nav-version">Standard v0.5</span>
   </div>
   <div class="nav-links">
     <a href="#architecture">Architecture</a>
@@ -310,7 +310,7 @@
 <div class="hero">
   <div class="hero-grid"></div>
   <div class="hero-glow"></div>
-  <div class="badge"><span class="badge-dot"></span> LLM Navigation Protocol — v0.3 · MIT</div>
+  <div class="badge"><span class="badge-dot"></span> CodeDNA Annotation Standard — v0.3 · MIT</div>
   <h1>Code that carries<br>its own genome.</h1>
   <p class="hero-sub">
     <strong>CodeDNA</strong> embeds context directly into source files — at every level.<br>
@@ -498,7 +498,7 @@
   <div class="strip-inner">
     <p class="section-label">Comparison</p>
     <h2>CodeDNA vs. existing approaches</h2>
-  <p style="color:var(--muted); font-size:1rem; margin-bottom:2rem; max-width:660px;">CodeDNA is an <strong>LLM Navigation Protocol</strong> — not a library, not a rules file. It's a communication contract embedded in source code itself. No install, no infra, no drift.</p>
+  <p style="color:var(--muted); font-size:1rem; margin-bottom:2rem; max-width:660px;">CodeDNA is an <strong>CodeDNA Annotation Standard</strong> — not a library, not a rules file. It's a annotation standard embedded in source code itself. No install, no infra, no drift.</p>
     <div class="compare-wrap">
       <table class="compare-table">
         <thead>
@@ -627,14 +627,14 @@
 
   <div class="bench-note">
     <span>🔬</span>
-    <span>Real results with <strong>gemini-2.5-flash</strong> — 3 scenarios × 3 runs. CodeDNA matches Control at 10/10 quality while requiring <em>zero external context infrastructure</em>. CodeDNA is an <strong>LLM Navigation Protocol</strong>: the manifest replaces CLAUDE.md and RAG injection entirely — the token overhead of the embedded header is offset by eliminating the external context payload. Full data: <code>benchmark/results.json</code>.</span>
+    <span>Real results with <strong>gemini-2.5-flash</strong> — 3 scenarios × 3 runs. CodeDNA matches Control at 10/10 quality while requiring <em>zero external context infrastructure</em>. CodeDNA is an <strong>CodeDNA Annotation Standard</strong>: the manifest replaces CLAUDE.md and RAG injection entirely — the token overhead of the embedded header is offset by eliminating the external context payload. Full data: <code>benchmark/results.json</code>.</span>
   </div>
 </section>
 
 <!-- ROADMAP -->
 <section id="roadmap" style="padding-top:0">
   <p class="section-label">Roadmap</p>
-  <h2>Protocol status</h2>
+  <h2>Standard status</h2>
   <div class="roadmap">
     <div class="roadmap-item">
       <span class="roadmap-status status-done">✓ Done</span>
@@ -700,7 +700,7 @@
   <div class="strip-inner">
     <p class="section-label">Quick Start</p>
     <h2 style="margin-bottom:0.75rem;">Activate CodeDNA in your AI tool.</h2>
-    <p style="color:var(--muted); font-size:1rem; margin-bottom:2rem; max-width:600px;">Paste one of these into your AI assistant's system prompt. CodeDNA is a <strong>pure protocol</strong> — no install required, just instructions.</p>
+    <p style="color:var(--muted); font-size:1rem; margin-bottom:2rem; max-width:600px;">Paste one of these into your AI assistant's system prompt. CodeDNA is a <strong>pure standard</strong> — no install required, just instructions.</p>
 
     <div style="display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1.5rem;">
 
@@ -709,7 +709,7 @@
           <span style="font-size:0.8rem; font-weight:700;">Universal (Claude / GPT-4 / Gemini)</span>
           <button onclick="copyPrompt('prompt-universal')" style="font-size:0.7rem; padding:0.2rem 0.6rem; border-radius:6px; border:1px solid var(--border); cursor:pointer; background:var(--bg2); color:var(--accent); font-weight:700;">Copy</button>
         </div>
-        <pre id="prompt-universal" style="padding:1rem; font-size:0.72rem; line-height:1.6; white-space:pre-wrap; overflow:auto; max-height:220px;">You follow the CodeDNA v0.3 LLM Navigation Protocol.
+        <pre id="prompt-universal" style="padding:1rem; font-size:0.72rem; line-height:1.6; white-space:pre-wrap; overflow:auto; max-height:220px;">You follow the CodeDNA v0.3 CodeDNA Annotation Standard.
 
 EDITING: Read the manifest header first. Follow DEPENDS_ON constraints. Follow every @REQUIRES-READ link before writing logic. Update LAST_MODIFIED as your first change.
 
@@ -797,8 +797,8 @@ Cascade @MODIFIES-ALSO always.</pre>
 <!-- FOOTER -->
 <footer>
   <p style="font-size:1.5rem; margin-bottom:0.5rem;">🧬</p>
-  <p><strong>CodeDNA</strong> — LLM Navigation Protocol · v0.3 · MIT License</p>
-  <p style="margin-top:0.5rem;"><em>"An LLM Navigation Protocol. Every file carries the complete genome of the project it belongs to."</em></p>
+  <p><strong>CodeDNA</strong> — CodeDNA Annotation Standard · v0.3 · MIT License</p>
+  <p style="margin-top:0.5rem;"><em>"An CodeDNA Annotation Standard. Every file carries the complete genome of the project it belongs to."</em></p>
   <p style="margin-top:1rem;"><a href="https://github.com/Larens94/codedna" style="color:var(--accent); text-decoration:none;">github.com/Larens94/codedna</a></p>
 </footer>
 

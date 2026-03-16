@@ -362,10 +362,13 @@ def get_product(product_id: str) -> dict:
 """
 
 S6_TASK = (
-    "Aggiungi uno sconto del 15% al subtotale. "
-    "Poi mostra nel receipt il prezzo unitario scontato in euro con 2 decimali (es. \"Prezzo unitario: €9.99\"). "
-    "ATTENZIONE alle unità di misura usate internamente."
+    "Aggiungi una funzione `format_unit_price(price) -> str` in order.py che "
+    "accetta il prezzo come viene memorizzato internamente e lo stampa nel formato "
+    "euro con 2 decimali (es: 'Prezzo: \u20ac19.99'). "
+    "Poi usa questa funzione nel receipt per mostrare il prezzo del singolo articolo."
 )
+# Atteso: Control stampa format_unit_price(1999) -> '€1999.00' (sbagliato, ignora che sono cents)
+#         CodeDNA stampa format_unit_price(1999) -> '€19.99' (corretto, sa che sono cents)
 
 # ──────────────────────────────────────────────────────────────────
 # FIXTURE S7: BROKEN DEPENDENCY — simbolo rinominato
@@ -537,6 +540,197 @@ S8_TASK = (
     "La query SQL deve cambiare e il form HTML deve aggiungere un campo anno. "
     "Elenca ESATTAMENTE quali file devo modificare e perché, senza aprire nessun file in full."
 )
+
+
+# ──────────────────────────────────────────────────────────────────
+# FIXTURE S9: LARGE CODEBASE — 25 file e-commerce, dependency chain
+# ──────────────────────────────────────────────────────────────────
+# Bug reale: utenti eliminati continuano ad apparire nelle revenue dashboard.
+# Per trovare i 3 file corretti serve leggere la catena DEPENDS_ON / Used by.
+# Control: vede solo nomi file (come 'git ls-files')
+# CodeDNA: vede module docstring di tutti i 25 file — nessun codice vero
+
+S9_FILES_NO_CODEDNA = """\
+# E-commerce backend — 25 file
+app.py
+auth/login.py
+auth/register.py
+auth/tokens.py
+users/users.py
+users/profile.py
+users/addresses.py
+orders/orders.py
+orders/cart.py
+orders/checkout.py
+orders/shipping.py
+payments/stripe.py
+payments/invoices.py
+payments/refunds.py
+products/catalog.py
+products/inventory.py
+products/search.py
+notifications/email.py
+notifications/push.py
+reviews/reviews.py
+analytics/revenue.py
+analytics/cohorts.py
+views/dashboard.py
+db/queries.py
+config.py
+"""
+
+S9_FILES_CODEDNA = """\
+\"\"\"app.py -- Flask app factory.
+Depends on: auth/login.py, auth/register.py, views/dashboard.py, config.py
+Exports: create_app() -> Flask
+Used by: wsgi.py\"\"\"
+
+\"\"\"auth/login.py -- User login with JWT.
+Depends on: users/users.py :: get_user_by_email(), auth/tokens.py :: sign_token()
+Exports: login(email, password) -> dict
+Used by: app.py :: POST /auth/login\"\"\"
+
+\"\"\"auth/register.py -- New user registration.
+Depends on: users/users.py :: create_user()
+Exports: register(payload) -> dict
+Used by: app.py :: POST /auth/register\"\"\"
+
+\"\"\"auth/tokens.py -- JWT signing and verification.
+Exports: sign_token(user_id) -> str, verify_token(token) -> dict
+Used by: auth/login.py, auth/register.py\"\"\"
+
+\"\"\"users/users.py -- User CRUD operations.
+Depends on: db/queries.py :: execute()
+Exports: get_user(id) -> dict, create_user(data) -> dict, delete_user(id) -> None
+Used by: auth/login.py, users/profile.py, orders/orders.py
+Rules:
+  - delete_user() is a SOFT DELETE: sets users.deleted_at = NOW(). Row stays in DB.
+  - All callers that list or filter users MUST add WHERE deleted_at IS NULL.\"\"\"
+
+\"\"\"users/profile.py -- User profile read/update.
+Depends on: users/users.py :: get_user()
+Exports: get_profile(user_id) -> dict, update_profile(user_id, data) -> dict
+Used by: app.py :: GET/PUT /profile\"\"\"
+
+\"\"\"users/addresses.py -- Shipping address management.
+Depends on: users/users.py :: get_user(), db/queries.py :: execute()
+Exports: get_addresses(user_id) -> list
+Used by: orders/checkout.py\"\"\"
+
+\"\"\"orders/orders.py -- Order lifecycle management.
+Depends on: users/users.py :: get_user(), db/queries.py :: execute()
+Exports: create_order(user_id, items) -> dict, get_user_orders(user_id) -> list, get_active_orders() -> list
+Used by: orders/checkout.py, analytics/revenue.py :: get_revenue_rows(), views/dashboard.py :: render()
+Rules:
+  - get_active_orders(): SELECT * FROM orders WHERE status != 'cancelled'
+  - BUG: does NOT join users table, so orders from soft-deleted users are included.
+  - Fix needed: add JOIN users ON orders.user_id = users.id WHERE users.deleted_at IS NULL\"\"\"
+
+\"\"\"orders/cart.py -- Shopping cart session management.
+Depends on: products/catalog.py :: get_product(), db/queries.py :: execute()
+Exports: add_to_cart(session_id, product_id, qty) -> dict, get_cart(session_id) -> list
+Used by: orders/checkout.py\"\"\"
+
+\"\"\"orders/checkout.py -- Checkout flow orchestration.
+Depends on: orders/cart.py, orders/orders.py, users/addresses.py, payments/stripe.py
+Exports: checkout(user_id, session_id, address_id) -> dict
+Used by: app.py :: POST /checkout\"\"\"
+
+\"\"\"orders/shipping.py -- Shipping provider integration.
+Depends on: orders/orders.py :: get_order(), db/queries.py :: execute()
+Exports: book_shipment(order_id) -> dict
+Used by: orders/checkout.py\"\"\"
+
+\"\"\"payments/stripe.py -- Stripe payment gateway wrapper.
+Depends on: config.py :: STRIPE_KEY
+Exports: charge(amount_cents, token) -> dict, refund(charge_id) -> dict
+Used by: orders/checkout.py, payments/refunds.py\"\"\"
+
+\"\"\"payments/invoices.py -- PDF invoice generation.
+Depends on: orders/orders.py :: get_order()
+Exports: generate_invoice(order_id) -> bytes
+Used by: app.py :: GET /invoice/:id\"\"\"
+
+\"\"\"payments/refunds.py -- Refund processing.
+Depends on: payments/stripe.py :: refund(), orders/orders.py :: get_order()
+Exports: process_refund(order_id) -> dict
+Used by: app.py :: POST /refund\"\"\"
+
+\"\"\"products/catalog.py -- Product listing and detail.
+Depends on: db/queries.py :: execute()
+Exports: get_product(id) -> dict, list_products(filters) -> list
+Used by: orders/cart.py, views/dashboard.py\"\"\"
+
+\"\"\"products/inventory.py -- Stock level management.
+Depends on: products/catalog.py :: get_product()
+Exports: check_stock(product_id) -> int, decrement_stock(product_id, qty) -> None
+Used by: orders/checkout.py\"\"\"
+
+\"\"\"products/search.py -- Full-text product search.
+Depends on: products/catalog.py :: list_products()
+Exports: search(query) -> list
+Used by: app.py :: GET /search\"\"\"
+
+\"\"\"notifications/email.py -- Transactional email sending.
+Depends on: config.py :: SMTP_HOST
+Exports: send_order_confirm(user_email, order_id), send_invoice(user_email, pdf)
+Used by: orders/checkout.py, payments/invoices.py\"\"\"
+
+\"\"\"notifications/push.py -- Mobile push notifications.
+Depends on: config.py :: FCM_KEY, users/users.py :: get_user()
+Exports: send_push(user_id, title, body) -> None
+Used by: orders/shipping.py\"\"\"
+
+\"\"\"reviews/reviews.py -- Product review CRUD.
+Depends on: users/users.py :: get_user(), products/catalog.py :: get_product()
+Exports: add_review(user_id, product_id, rating, text) -> dict
+Used by: app.py :: POST /review\"\"\"
+
+\"\"\"analytics/revenue.py -- Revenue aggregation for dashboards.
+Depends on: orders/orders.py :: get_active_orders()
+Exports: get_revenue_rows(year) -> list, get_monthly_totals(year) -> dict
+Used by: views/dashboard.py :: render()
+Rules:
+  - Calls orders.get_active_orders() which currently includes soft-deleted users (bug propagates here).
+  - No independent fix needed here IF orders/orders.py is fixed correctly.\"\"\"
+
+\"\"\"analytics/cohorts.py -- User cohort retention analysis.
+Depends on: users/users.py :: get_user(), db/queries.py :: execute()
+Exports: cohort_retention(months) -> list
+Used by: views/dashboard.py :: render_cohorts()\"\"\"
+
+\"\"\"views/dashboard.py -- Revenue and analytics dashboard render.
+Depends on: analytics/revenue.py :: get_revenue_rows(), analytics/cohorts.py :: cohort_retention()
+Exports: render(year) -> HTML, render_cohorts() -> HTML
+Used by: app.py :: GET /dashboard
+Rules:
+  - render() depends on analytics/revenue.py which propagates the soft-delete bug from orders/orders.py.
+  - Dashboard shows inflated revenue until the upstream bug in orders/orders.py is fixed.\"\"\"
+
+\"\"\"db/queries.py -- Low-level SQL executor with connection pool.
+Depends on: config.py :: DB_URL
+Exports: execute(sql, params) -> list, execute_one(sql, params) -> dict
+Used by: (all modules that touch the database)
+Rules: always use parameterized queries: execute(sql, (p1, p2)). Never interpolate directly.\"\"\"
+
+\"\"\"config.py -- Environment configuration loader.
+Exports: DB_URL, JWT_SECRET, STRIPE_KEY, SMTP_HOST, FCM_KEY
+Rules: never hardcode secrets; always read from environment variables.\"\"\"
+"""
+
+S9_TASK = (
+    "Bug report critico: gli ordini degli utenti ELIMINATI continuano ad apparire "
+    "nella revenue dashboard gonfiando le entrate mensili. "
+    "Senza aprire nessun file in full, rispondi: "
+    "1) Quali file devo modificare esattamente? "
+    "2) Perché ognuno è coinvolto nella propagazione del bug? "
+    "3) Qual è la fix specifica per ciascuno?"
+)
+# Risposta corretta: 1) orders/orders.py (fix get_active_orders con JOIN deleted_at IS NULL)
+#                   2) analytics/revenue.py NON necessita fix se orders è fixato (propagazione)
+#                   3) views/dashboard.py: nessun fix diretto, beneficia della chain
+# Il Control deve indovinare la catena con solo i nomi file.
+# Il CodeDNA ha BUG hint esplicito in orders/orders.py Rules e la catena completa.
 
 
 # ──────────────────────────────────────────────────────────────────

@@ -1,6 +1,6 @@
-# CodeDNA — LLM Navigation Protocol Specification
+# CodeDNA Annotation Standard — Specification
 
-**Version:** 0.4  
+**Version:** 0.5  
 **Status:** Draft  
 **Language:** Agnostic
 
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-CodeDNA is an **LLM Navigation Protocol** — a source-file annotation format for AI-assisted development.
+CodeDNA is the **CodeDNA Annotation Standard** — a source-file annotation format that makes codebases AI-navigable.
 
 **Level 1 — The Manifest Header (Macro-Context):** A structured comment block at the top of every file describing the file's purpose, dependencies, public API, style conventions, and edit history.
 

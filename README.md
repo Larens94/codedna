@@ -2,7 +2,7 @@
 
 > *Every file contains the entire project's genome. The AI reads one cell and understands the whole organism.*
 
-**CodeDNA** is an **LLM Navigation Protocol** that embeds context directly into source code — at every level. Like biological DNA, a single fragment contains enough information to understand the whole.
+**CodeDNA** is an **CodeDNA Annotation Standard** that embeds context directly into source code — at every level. Like biological DNA, a single fragment contains enough information to understand the whole.
 
 No external memory. No vector databases. No context files that drift out of sync.
 
