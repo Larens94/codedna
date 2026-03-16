@@ -10,13 +10,13 @@
 
 CodeDNA is the **CodeDNA Annotation Standard** — a source-file annotation format that makes codebases AI-navigable.
 
-**Level 1 — The Manifest Header (Macro-Context):** A structured comment block at the top of every file describing the file's purpose, dependencies, public API, style conventions, and edit history.
+**Level 1 — Module Header (Macro-Context):** A Python-native module docstring at the top of every file, encoding the file's purpose, dependencies, public API, and hard constraints for AI agents.
 
-**Level 2 — Inline Hyperlinks (Micro-Context):** Semantic annotations embedded at the function and variable level, enabling AI agents to navigate the codebase even when reading only partial file content via sliding windows.
+**Level 2 — Sliding-Window Annotations (Micro-Context):** Two sub-layers — (2a) Google-style function docstrings summarising cross-file deps and rules, and (2b) inline call-site comments at dangerous call points — ensuring agents reading only partial file content still receive critical context.
 
-**Level 3 — Semantic Naming (Cognitive Compression):** Variable and function naming conventions that encode type, origin, and shape directly into the identifier, eliminating the need to trace data flows.
+**Level 3 — Semantic Naming (Cognitive Compression):** Variable naming conventions that encode type, origin, and shape directly into the identifier, eliminating the need to trace data flows.
 
-Together, they make every code fragment self-sufficient: an AI extracting any part of a CodeDNA file finds enough context to act correctly without external lookup.
+Together, they make every code fragment self-sufficient: an AI extracting any part of a CodeDNA file finds enough context to act correctly without external lookup. This is CodeDNA's *holographic property* — named after the biological analogy: just as DNA encodes the entire organism blueprint in every cell, every CodeDNA file carries complete architectural context in every fragment.
 
 ---
 
@@ -25,9 +25,10 @@ Together, they make every code fragment self-sufficient: an AI extracting any pa
 - **Zero token overhead**: context lives in the file, not the prompt
 - **Zero drift**: annotations are co-located with what they describe
 - **Zero retrieval latency**: no vector DB, no network call
-- **Sliding-window safe**: Level 2 hyperlinks guide agents that skip the header
-- **Planner efficient**: manifest-only reads give a full codebase map in ~60 tok/file
-- **Language agnostic**: comment-based protocol works in any language
+- **Sliding-window safe**: Level 2 sub-layers guide agents that skip the header
+- **Planner efficient**: docstring-only reads give a full codebase map in ~70 tok/file
+- **Language agnostic**: docstring / comment-based protocol works in any language
+- **Agent-first**: designed for agentic code generation workflows — the agent writes and maintains the annotations, not the human; marginal annotation cost approaches zero
 - **Human readable**: developers benefit as much as AI agents
 
 ---
@@ -80,38 +81,30 @@ rules:   <hard constraints for AI agents; what to do and what to avoid> | none
 | `tables` | — | Tables and relevant columns, or `none` |
 | `rules` | — | Hard constraints for AI agents (e.g. "never re-apply TAX_RATE") |
 
-### 3.4 CONTEXT_BUDGET Values
+### 3.4 `rules:` Field
 
-| Value | Semantics | Criteria | Planner behavior |
-|---|---|---|---|
-| `always` | Core file — always needed | Imported by ≥ 3 other files OR defines the main entry point | Include in every planning context |
-| `normal` | Standard file | Feature-specific logic; imported by 1–2 files | Include when relevant to the task |
-| `minimal` | Utility / rarely changes | Pure helpers; ≤ 5 declared dependents; no side effects | Skip unless explicitly referenced |
-
-This field enables **Planner Manifest-Only Read mode** (§6): the planner reads only the first 14 lines of each file, uses `CONTEXT_BUDGET` to filter, and builds a full architectural map in as little as 60 tokens per file.
-
-### 3.5 AGENT_RULES Field
-
-`AGENT_RULES` encodes hard constraints that apply agent-wide for this file. Unlike inline annotations (which are function-scoped), `AGENT_RULES` applies to **every edit** in the file.
-
-```python
-# AGENT_RULES: never hardcode monetary values; always read config.py → MAX_DISCOUNT_RATE
-```
+The `rules:` field encodes hard constraints that apply agent-wide for this file. Unlike Level 2 function docstrings (which are function-scoped), `rules:` applies to **every edit** in the file — it is the file's genome: readable anywhere without navigating to a specific function.
 
 Common uses:
 - Monetary constraints: `never hardcode prices; use config.py → PRICE_CONSTANTS`
-- Encoding constraints: `all strings are UTF-8; never use latin-1`
 - DB constraints: `always use parameterized queries; never concatenate SQL`
+- Cross-file contracts: `MUST call is_suspended() before aggregating revenue (no filter in upstream function)`
 
-### 3.6 REQUIRED_BY Field (Inverse Dependency)
+### 3.5 `used_by:` Field (Inverse Dependency)
 
-`REQUIRED_BY` is the inverse of `DEPENDS_ON`. It enables top-down navigation: when reading `utils.py`, the agent immediately knows which callers depend on its exports.
+`used_by:` is the inverse of `deps:`. It enables top-down navigation: when reading `utils.py`, the agent immediately knows which callers depend on its exports.
 
 ```python
-# REQUIRED_BY: main.py → render(), api.py → endpoint_report()
+"""utils/format.py — Currency and date formatting helpers.
+
+deps:    none
+exports: format_currency(n) -> str | format_date(d) -> str
+used_by: views/dashboard.py → render | api/reports.py → revenue_route
+"""
 ```
 
-**Agent behaviour on edit**: when modifying an `EXPORTS` symbol, the agent must check every file listed in `REQUIRED_BY` and apply `@MODIFIES-ALSO` cascade.
+**Agent behaviour on edit**: when modifying an `exports:` symbol, check every file listed in `used_by:` and update callers as needed.
+
 
 ### 3.7 Examples by Language
 
@@ -281,12 +274,12 @@ Purely local computation variables (`i`, `tmp`, `acc`) do not need renaming.
 
 When an AI agent must plan edits across a multi-file codebase, it should:
 
-1. Read only the **first 14 lines** of each file (the manifest)
-2. Filter by `CONTEXT_BUDGET`:
-   - Include `always` files unconditionally
-   - Include `normal` files if they match the task domain
-   - Skip `minimal` files unless explicitly referenced in `DEPENDS_ON`
-3. Build a dependency graph from `DEPENDS_ON`, `EXPORTS`, and `REQUIRED_BY`
+1. Read only the **module docstring** of each file (first 8–12 lines)
+2. Filter by relevance:
+   - Include files whose `rules:` field mentions the task domain
+   - Include files that appear in another file's `deps:` for this task
+   - Skip others unless explicitly referenced
+3. Build a dependency graph from `deps:`, `exports:`, and `used_by:`
 4. Identify the **minimum set of files** that must be read in full
 5. Load only those files for the edit phase
 
@@ -297,38 +290,39 @@ When an AI agent must plan edits across a multi-file codebase, it should:
 ## 7. AI Interaction Protocol
 
 ### 7.1 On READ (edit mode)
-1. Parse the Manifest Header (Level 1)
-2. Note `DEPENDS_ON` → must not break these
-3. Note `EXPORTS` → must not rename or remove (check `@BREAKS-IF-RENAMED` tags)
-4. Note `AGENT_RULES` → hard constraints for every edit in this file
-5. Follow `@REQUIRES-READ` tags before writing
+1. Parse the module docstring (Level 1) — first 8–12 lines.
+2. Note `deps:` → these are contracts you must not break.
+3. Note `exports:` → must not rename or remove without explicit instruction.
+4. Note `rules:` → hard constraints for every edit in this file; read **before writing any logic**.
+5. For any function you are about to modify: read its `Depends:` / `Rules:` docstring first.
+6. Read call-site inline comments at any dangerous call you are near.
 
 ### 7.2 On WRITE (generate mode)
-1. Generate the Manifest Header as the **first output block** (v0.4 format)
-2. Set `CONTEXT_BUDGET` using criteria in §3.4
-3. Add `@REQUIRES-READ` / `@SEE` / `@MODIFIES-ALSO` to cross-file functions
-4. Add `@BREAKS-IF-RENAMED` to any symbol serialized externally
-5. Apply Semantic Naming to data-carrying variables
-6. Populate `REQUIRED_BY` if you know the callers
+1. Generate the module docstring as the **first output block**, before any imports.
+2. Populate all fields: `deps`, `exports`, `used_by`, `tables`, `rules`.
+3. For cross-file functions, add a Google-style function docstring with `Depends:` and `Rules:`.
+4. At dangerous call sites, add inline: `# includes X — filter Y below`.
+5. Apply semantic naming to data-carrying variables.
+6. Add `@BREAKS-IF-RENAMED` to any symbol serialized externally.
 
 ### 7.3 On EDIT
-1. **First change**: update `LAST_MODIFIED` in the manifest header
-2. Check `AGENT_RULES` — apply file-level constraints before writing
-3. Read all `@REQUIRES-READ` links before writing logic
-4. After editing, cascade `@MODIFIES-ALSO` changes
-5. If renaming a symbol, check `@BREAKS-IF-RENAMED` and update all `REQUIRED_BY` callers
+1. **First step**: re-read `rules:` and the `Depends:` / `Rules:` of the function you are editing.
+2. Apply all file-level constraints before writing.
+3. After editing, cascade any `Modifies:` or call-site-annotated cascade targets.
+4. If renaming an `exports:` symbol: update all `used_by:` callers.
+5. If the `rules:` field needs to reflect the change, update it.
+
 
 ---
 
 ## 8. Validation
 
 Run `tools/validate_manifests.py` to check:
-- Every file has a manifest header
+- Every file has a module docstring with the CodeDNA fields
 - All required fields are present and non-empty
-- `FILE` field matches the actual filename
-- `DEPENDS_ON` symbols exist in the referenced files' `EXPORTS`
-- `REQUIRED_BY` is consistent with `DEPENDS_ON` in the referenced files
-- `LAST_MODIFIED` is not empty
+- First line matches the pattern `<filename> — <purpose>`
+- `deps:` symbols exist in the referenced files' `exports:`
+- `used_by:` is consistent with `deps:` in the referenced files
 
 Pre-commit hook available in `tools/pre-commit`.
 
@@ -336,11 +330,16 @@ Pre-commit hook available in `tools/pre-commit`.
 
 ## 9. Versioning
 
-Declared in the delimiter line:
+Declared in the module docstring first line:
 
 ```python
-# === CODEDNA:0.4 =============================================
+"""filename.py — <purpose>.
+
+deps: ...
+"""
 ```
+
+The version of the standard being used is tracked in the repo tag (`v0.5`).
 
 ---
 
@@ -348,7 +347,8 @@ Declared in the delimiter line:
 
 | Version | Date | Notes |
 |---|---|---|
-| 0.1 | 2026-03-16 | Initial draft — Level 1 Manifest Header |
-| 0.2 | 2026-03-16 | Level 2 Inline Hyperlinks, biological model |
-| 0.3 | 2026-03-16 | Level 3 Semantic Naming, CONTEXT_BUDGET field, Planner Manifest-Only Read protocol |
+| 0.1 | 2026-03-16 | Initial draft — Level 1 Manifest Header (`# === CODEDNA:0.1 ===` format) |
+| 0.2 | 2026-03-16 | Level 2 Inline Hyperlinks (`@REQUIRES-READ`, `@SEE`, `@MODIFIES-ALSO`), biological model |
+| 0.3 | 2026-03-16 | Level 3 Semantic Naming, `CONTEXT_BUDGET` field, Planner Manifest-Only Read protocol |
 | 0.4 | 2026-03-16 | `AGENT_RULES` field, `REQUIRED_BY` field, `@BREAKS-IF-RENAMED` tag, objective `CONTEXT_BUDGET` criteria, type prefix table |
+| **0.5** | **2026-03-16** | **Python-native module docstring format (replaces custom `# ===` block). Level 2 split into 2a (Google-style function docstring) and 2b (call-site inline comment). `rules:` replaces `AGENT_RULES`, `used_by:` replaces `REQUIRED_BY`, `deps:` replaces `DEPENDS_ON`. Agent-first framing: marginal annotation cost ≈ zero in agentic workflows. Legacy `@`-tags remain valid.** |

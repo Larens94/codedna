@@ -1,4 +1,4 @@
-# CodeDNA v0.3 — Protocol for Claude Code
+# CodeDNA v0.5 — Protocol for Claude Code
 
 This project uses the **CodeDNA** annotation standard. Follow these rules on every file operation.
 
@@ -6,57 +6,72 @@ This project uses the **CodeDNA** annotation standard. Follow these rules on eve
 
 ## Reading files
 
-1. Read the `# === CODEDNA:0.3` manifest header **before** reading any code.
-2. Parse `DEPENDS_ON` — these are symbols you **must never break**.
-3. Parse `EXPORTS` — these are symbols you **must never rename or remove** without explicit instruction.
-4. Follow every `# @REQUIRES-READ: file → symbol` annotation before writing logic in that function.
-5. After editing, follow every `# @MODIFIES-ALSO: file → symbol` and cascade the change.
+1. Read the **module docstring** at the top of every Python file before reading any code.
+2. Parse `deps:` — these are symbols you **must never break**.
+3. Parse `exports:` — these are symbols you **must never rename or remove** without explicit instruction.
+4. For any function with a `Depends:` / `Rules:` docstring, read and respect those before writing logic.
+5. After editing, apply every cascade mentioned in `Modifies:` or inline call-site comments.
 
 ## Writing new files
 
-Every new source file **must begin** with a CodeDNA manifest header:
+Every new Python source file **must begin** with a CodeDNA module docstring:
 
-```
-# === CODEDNA:0.3 =============================================
-# FILE: <exact filename with extension>
-# PURPOSE: <what it does, max 15 words>
-# CONTEXT_BUDGET: <always | normal | minimal>
-# DEPENDS_ON: <file → symbol, symbol> | none
-# EXPORTS: <symbol(args) → return_type>
-# STYLE: <css-framework, chart-lib> | none
-# DB_TABLES: <table (col1, col2)> | none
-# LAST_MODIFIED: <max 8 words describing last change>
-# ==============================================================
+```python
+"""filename.py — <what it does, ≤15 words>.
+
+deps:    other_file.py → symbol | none
+exports: public_function(arg) -> return_type
+used_by: consumer_file.py → consumer_function
+tables:  table_name(col1, col2) | none
+rules:   <hard constraint agents must never violate>
+"""
 ```
 
-**CONTEXT_BUDGET rules:**
-- `always` — core file, always include in planning context
-- `normal` — standard file, include when relevant
-- `minimal` — utility file, skip unless directly referenced
+Field guide:
+
+| Field | Required | Rule |
+|---|---|---|
+| First line | ✅ | `filename.py — <purpose ≤15 words>` |
+| `deps:` | ✅ | `file → symbol` or `none` |
+| `exports:` | ✅ | Public API with return type |
+| `used_by:` | — | Who calls this file's exports |
+| `tables:` | — | DB tables accessed |
+| `rules:` | — | Hard constraints scoped to this file |
+
+## Writing critical functions
+
+For functions that cross file boundaries, add a Google-style docstring:
+
+```python
+def my_function(arg: type) -> return_type:
+    """Short description.
+
+    Depends: other_file.symbol — what contract it imposes.
+    Rules:   What the agent MUST or MUST NOT do here.
+    """
+```
+
+And annotate the exact dangerous call:
+
+```python
+    raw = get_data_from_source()  # includes X — filter Y below
+```
 
 ## Editing files
 
-1. **First change**: update `LAST_MODIFIED` in the manifest header.
-2. Read all `@REQUIRES-READ` links before writing logic.
-3. After your edit, apply all `@MODIFIES-ALSO` changes in the same response.
-4. Never remove `EXPORTS` symbols — they are contracts used by `DEPENDS_ON` in other files.
+1. **First change**: update `rules:` or add a `# modified: <what changed>` comment if the rules change.
+2. Read all `Depends:` / `Rules:` fields in the docstring before writing logic.
+3. After your edit, apply all cascade targets mentioned in `Modifies:` and call-site comments.
+4. Never remove `exports:` symbols — they are contracts used by `deps:` in other files.
 
 ## Planning across multiple files
 
-Use manifest-only read mode: read only the first 12–15 lines (the manifest) of each file to build an architectural map before deciding which files to open fully.
+Use manifest-only read mode: read only the module docstring (first 8–12 lines) of each file to build an architectural map before deciding which files to open fully.
 
-Filter by `CONTEXT_BUDGET`:
-- `always` → always include
-- `normal` → include if relevant to task
-- `minimal` → skip unless referenced in `DEPENDS_ON`
-
-## Inline hyperlink tags
-
-| Tag | Meaning |
-|---|---|
-| `@SEE: file → symbol` | Read this if uncertain |
-| `@REQUIRES-READ: file → symbol` | Read BEFORE writing any logic here |
-| `@MODIFIES-ALSO: file → symbol` | After editing this, update that symbol too |
+Filter by priority:
+- File has `rules:` field mentioning the task domain → always include
+- File appears in another file's `deps:` for this task → include
+- Otherwise → skip unless referenced
 
 ## Semantic naming convention
 

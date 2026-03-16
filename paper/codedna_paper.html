@@ -509,17 +509,19 @@ int_cents_price_from_req = request.json["price"]</pre>
 <h3 class="subsection">6.3 Format Design Rationale</h3>
 <p class="no-indent">The choice of Python-native module docstrings (rather than custom comment blocks) for Level 1 was validated empirically: models trained on Python corpora apply existing pattern-matching to the docstring's <code>deps:</code> / <code>exports:</code> / <code>rules:</code> structure. The custom <code># === CODEDNA:0.5 ===</code> block format, while machine-parsable, required the model to process an unfamiliar syntax schema, yielding marginally longer reasoning chains before exploitation.</p>
 
-<h3 class="subsection">6.4 Annotation Overhead and Maintenance</h3>
-<p class="no-indent">Co-location eliminates drift: the manifest lives in the same file as the code it describes. The per-file annotation cost is 7–12 lines. Tooling enforces updates: <code>tools/validate_manifests.py</code> checks field consistency. LLM-assisted annotation generation is a promising roadmap item — the annotations' structured format makes them amenable to automatic generation from existing codebases.</p>
+<h3 class="subsection">6.4 Annotation Overhead and the Agentic Workflow Framing</h3>
+<p class="no-indent">A common objection to annotation standards is the overhead of writing and maintaining them. For CodeDNA, this objection must be evaluated in context. CodeDNA is designed for <em>agentic code generation workflows</em> — environments in which an LLM agent both generates and modifies source files. In this setting, the agent itself produces the module headers and function docstrings as a natural byproduct of generation. The human developer does not annotate 500 files manually; the coding agent leaves its architectural memory in-place as it writes. The marginal cost of annotation approaches zero.</p>
+<p>This framing also redefines what CodeDNA <em>is</em>: not a standard that asks developers to write more comments, but a convention that gives agents a structured format in which to record their own local architectural understanding. The standard converts agent-generated code from a passive output into an active, self-describing navigation graph for the next agent that reads it.</p>
+<p>A secondary observation is that CodeDNA's structured fields (<code>deps:</code>, <code>rules:</code>, <code>Depends:</code>) do not require new syntax — they live inside Python-native docstrings. Many codebases already have docstrings; CodeDNA adds <em>navigation intent</em> to documentation that already exists. The distinction between a standard docstring and a CodeDNA docstring is not syntactic but semantic: the latter must be <em>machine-oriented and navigation-oriented</em>, not merely human-readable.</p>
 
 <h3 class="subsection">6.5 Limitations</h3>
-<p class="no-indent"><strong>Sample size.</strong> Temperature 0 ensures determinism, but single-run results per bug limit statistical confidence. Future work should run multiple seeds and vary bug types.</p>
+<p class="no-indent"><strong>Sample size.</strong> Temperature 0 ensures determinism, but single-run results per bug limit statistical confidence. Future work should run multiple seeds, vary bug types, and evaluate on full SWE-bench tasks with real-agent toolchains (Devin-style, Cursor, GPT-tools loop).</p>
 
-<p><strong>Annotation quality.</strong> The benchmark uses hand-crafted, high-quality annotations. Real-world adoption may produce variable quality.</p>
+<p><strong>Annotation synchronization.</strong> The primary maintenance challenge is not <em>writing</em> annotations (in agentic workflows the cost is near-zero) but ensuring they remain <em>consistent</em> with the code over time. If an agent modifies a function without updating the enclosing <code>rules:</code> or <code>Depends:</code> fields, the annotation becomes misleading — potentially worse than no annotation. This shifts the research problem from production cost to <em>consistency enforcement</em>: pre-commit hooks, CI validation, and agent-side re-annotation obligations are the correct mitigations. Future integrations should treat annotation drift as a first-class failure mode.</p>
 
-<p><strong>Single model.</strong> Results are specific to Gemini 2.5 Flash. Models with longer effective context windows may show smaller differences.</p>
+<p><strong>Single model.</strong> Results are specific to Gemini 2.5 Flash. Models with longer effective context windows may show smaller differences on small codebases; results on 105-file codebases are more representative of real-world conditions.</p>
 
-<p><strong>Bug complexity.</strong> The planted bugs require understanding one to two cross-file contracts. Bugs spanning five or more files may amplify the advantage further.</p>
+<p><strong>Bug complexity.</strong> The planted bugs each require understanding one or two cross-file contracts. Bugs spanning five or more architectural layers may amplify the advantage further — a hypothesis that the enterprise benchmark (3 bugs, 48 distractors) provides initial evidence for.</p>
 
 <!-- ─── 7. CONCLUSION ─── -->
 <h2 class="section">7. Conclusion</h2>

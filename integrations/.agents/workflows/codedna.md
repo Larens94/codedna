@@ -1,47 +1,59 @@
 ---
-description: CodeDNA v0.3 — how to read, write, and edit files in this project
+description: CodeDNA v0.5 — how to read, write, and edit Python files in this project
 ---
 
-# CodeDNA v0.3 Protocol
+# CodeDNA v0.5 Protocol
 
-This project uses CodeDNA. Every source file carries its own context.
+This project uses CodeDNA. Every source file carries its own context in a Python-native module docstring.
 
 ## Reading a file
 
-1. Read the `# === CODEDNA:0.3` manifest header first (first 12–15 lines)
-2. Note `DEPENDS_ON` → symbols you must not break
-3. Note `EXPORTS` → symbols you must not rename or remove
-4. `CONTEXT_BUDGET: always` = always include in planning; `normal` = when relevant; `minimal` = skip unless referenced
+1. Read the **module docstring** at the top of the file first (first 8–12 lines)
+2. Note `deps:` → symbols you must not break
+3. Note `exports:` → symbols you must not rename or remove
+4. Note `rules:` → hard constraints that apply everywhere in this file
+5. For any function, check its Google-style docstring for `Depends:` and `Rules:`
 
 ## Editing a file
 
-1. Update `LAST_MODIFIED` as your very first change
-2. For each function with `@REQUIRES-READ`: read the target before writing logic
-3. For each function with `@MODIFIES-ALSO`: apply that change too, in the same session
-4. Do not change `EXPORTS` signatures without explicit user instruction
+1. Before writing any logic: re-read `rules:` in the module docstring and `Rules:` in the function docstring
+2. Apply all cascade changes mentioned in `Modifies:` sections and call-site comments
+3. Do not change `exports:` signatures without explicit user instruction
 
 ## Creating a file
 
-Every new source file must start with:
+Every new Python source file must start with:
 
+```python
+"""filename.py — <what it does, ≤15 words>.
+
+deps:    other_file.py → symbol | none
+exports: public_function(arg) -> return_type
+used_by: consumer_file.py → consumer_function
+tables:  table_name(col1, col2) | none
+rules:   <hard constraint agents must never violate>
+"""
 ```
-# === CODEDNA:0.3 =============================================
-# FILE: <exact filename.ext>
-# PURPOSE: <what it does, ≤15 words>
-# CONTEXT_BUDGET: <always | normal | minimal>
-# DEPENDS_ON: <file → symbol, symbol> | none
-# EXPORTS: <symbol(args) → return_type>
-# STYLE: <css-framework, chart-lib> | none
-# DB_TABLES: <table (col1, col2)> | none
-# LAST_MODIFIED: <≤8 words describing first commit>
-# ==============================================================
+
+## Critical functions
+
+For functions that cross file boundaries, add:
+
+```python
+def my_function(arg: type) -> return_type:
+    """Short description.
+
+    Depends: other_file.symbol — what contract it imposes.
+    Rules:   What the agent MUST or MUST NOT do here.
+    """
+    raw = get_external_data()  # includes X — filter Y below
 ```
 
 ## Planning across a codebase
 
-Read only the manifest (first 12 lines) of each file. Build a dependency graph from DEPENDS_ON/EXPORTS. Load only the relevant files in full.
+Read only the module docstring (first 8–12 lines) of each file. Build a dependency graph from `deps:`/`exports:`. Load only the relevant files in full.
 
-## Inline hyperlink tags
+## Inline hyperlink tags (still valid)
 
 ```python
 def my_function():

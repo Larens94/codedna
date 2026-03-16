@@ -13,18 +13,25 @@ Add to your **system prompt** or your project's agent configuration:
 ```
 You follow the CodeDNA v0.5 Annotation Standard (github.com/Larens94/codedna).
 
-ON READ: parse the Manifest Header first (first 14 lines). Check AGENT_RULES before
-writing. Follow every DEPENDS_ON edge. Follow every @REQUIRES-READ before writing logic.
+ON READ: parse the module docstring first (first 8–12 lines). Check `rules:` before
+writing. Follow every `deps:` edge. Read `Depends:` / `Rules:` in function docstrings
+before writing logic in that function.
 
-ON WRITE: generate the manifest header (CODEDNA:0.4 format) before any imports.
-Set CONTEXT_BUDGET (always/normal/minimal). Add @REQUIRES-READ and @MODIFIES-ALSO
-to functions that cross file boundaries. Tag load-bearing symbols with @BREAKS-IF-RENAMED.
-Use semantic naming: list_dict_users_from_db = get_users().
+ON WRITE: every new Python file must start with a module docstring:
+  """filename.py — <purpose ≤15 words>.
+  deps:    other.py → symbol | none
+  exports: function(arg) -> type
+  used_by: consumer.py → function
+  tables:  table(col) | none
+  rules:   <hard constraint never to violate>
+  """
+  For cross-file functions, add a Google-style docstring with Depends: and Rules:.
+  At the dangerous call site, add: # includes X — filter Y below
 
-ON EDIT: first change = update LAST_MODIFIED. Then cascade all @MODIFIES-ALSO targets.
+ON EDIT: first re-read `rules:` and `Rules:`. Then cascade all Modifies: targets.
 
 EXPORTS are public contracts — never rename without explicit instruction and updating
-all REQUIRED_BY callers.
+all `used_by` callers.
 ```
 
 ---
@@ -37,23 +44,22 @@ Create `.cursorrules` at the root of your project:
 # CodeDNA v0.5 — cursor rules
 
 ON READ
-- Parse the Manifest Header (first 14 lines) before reading code.
-- Respect AGENT_RULES as hard constraints.
-- Follow all DEPENDS_ON references before editing.
-- Follow every @REQUIRES-READ annotation before writing logic.
+- Parse the module docstring (first 8–12 lines) before reading code.
+- Respect `rules:` as hard constraints.
+- Follow all `deps:` references before editing.
+- Read `Depends:` / `Rules:` in function docstrings before writing logic.
 
 ON WRITE
-- Generate the CODEDNA:0.4 manifest header before any imports.
-- Set CONTEXT_BUDGET: always | normal | minimal.
-- Add @REQUIRES-READ and @MODIFIES-ALSO to cross-file functions.
-- Tag load-bearing symbols with @BREAKS-IF-RENAMED.
+- Begin every new Python file with a module docstring (deps/exports/used_by/tables/rules).
+- For cross-file functions, add Google-style docstring with Depends: and Rules:.
+- At the dangerous call site, add inline: # includes X — filter Y.
 - Use semantic naming: list_dict_users_from_db = get_users()
 
 ON EDIT
-- First change must always be: update LAST_MODIFIED (≤8 words).
-- Then propagate all @MODIFIES-ALSO cascade targets.
+- First re-read `rules:` and any `Rules:` in function docstrings.
+- Propagate all cascade targets mentioned in Modifies: and call-site comments.
 
-NEVER rename EXPORTS without explicit instruction and updating all REQUIRED_BY callers.
+NEVER rename `exports:` symbols without explicit instruction and updating all `used_by` callers.
 ```
 
 Or copy the full version: [`integrations/.cursorrules`](./integrations/.cursorrules)
@@ -70,22 +76,21 @@ Create `CLAUDE.md` at the root of your project:
 This project follows the CodeDNA Annotation Standard (github.com/Larens94/codedna).
 
 ## On every READ
-1. Parse the Manifest Header (first 14 lines) before reading code
-2. Respect AGENT_RULES as absolute constraints
-3. Follow DEPENDS_ON references before editing
-4. Follow every @REQUIRES-READ before writing logic
+1. Parse the module docstring (first 8–12 lines) before reading code
+2. Respect `rules:` as absolute constraints
+3. Follow `deps:` references before editing
+4. Read `Depends:` / `Rules:` in function docstrings before writing logic there
 
 ## On every WRITE (new file)
-1. Generate CODEDNA:0.4 manifest header before imports
-2. Set CONTEXT_BUDGET: always / normal / minimal
-3. Add @REQUIRES-READ and @MODIFIES-ALSO to cross-file functions
-4. Tag load-bearing symbols with @BREAKS-IF-RENAMED
-5. Use semantic naming: list_dict_users_from_db = get_users()
+1. Begin with a module docstring: deps / exports / used_by / tables / rules
+2. For critical cross-file functions: add Google-style docstring with Depends: and Rules:
+3. At the dangerous call site: add inline comment describing what to filter
+4. Use semantic naming: list_dict_users_from_db = get_users()
 
 ## On every EDIT
-1. First line to change: LAST_MODIFIED (≤8 words describing the change)
-2. Propagate all @MODIFIES-ALSO targets
-3. Never rename EXPORTS without updating all REQUIRED_BY callers
+1. Re-read `rules:` and `Rules:` before writing any logic
+2. Propagate all Modifies: targets and call-site-annotated cascades
+3. Never rename `exports:` without updating all `used_by` callers
 ```
 
 Or copy the full version: [`integrations/CLAUDE.md`](./integrations/CLAUDE.md)
@@ -99,16 +104,16 @@ Create `.github/copilot-instructions.md`:
 ```markdown
 # CodeDNA v0.5 Instructions
 
-This repository uses the CodeDNA Annotation Standard.
+This repository uses the CodeDNA Annotation Standard (Python-native format).
 
-When reading files: check the Manifest Header first (first 14 lines).
-Respect AGENT_RULES. Follow @REQUIRES-READ before writing logic.
+When reading files: parse the module docstring first (first 8–12 lines).
+Respect `rules:`. Read `Depends:` / `Rules:` in function docstrings before writing logic.
 
-When writing new files: start with the CODEDNA:0.4 manifest header.
-Set CONTEXT_BUDGET. Add @REQUIRES-READ and @MODIFIES-ALSO to cross-file calls.
+When writing new files: start with a module docstring (deps/exports/used_by/tables/rules).
+For cross-file functions: add Google-style docstring. At dangerous calls: add inline comment.
 
-When editing: first update LAST_MODIFIED. Then propagate @MODIFIES-ALSO.
-Never rename EXPORTS without updating REQUIRED_BY callers.
+When editing: re-read `rules:` first. Then propagate Modifies: cascades.
+Never rename `exports:` without updating `used_by` callers.
 ```
 
 Or copy the full version: [`integrations/copilot-instructions.md`](./integrations/copilot-instructions.md)
@@ -122,10 +127,10 @@ Create `.windsurfrules` at the root of your project (same format as Cursor):
 ```
 # CodeDNA v0.5
 
-ON READ: parse Manifest Header first. Respect AGENT_RULES. Follow @REQUIRES-READ.
-ON WRITE: generate CODEDNA:0.4 header. Set CONTEXT_BUDGET. Add @REQUIRES-READ
-  and @MODIFIES-ALSO to cross-file functions. Use semantic naming.
-ON EDIT: update LAST_MODIFIED first. Propagate @MODIFIES-ALSO. Never rename EXPORTS.
+ON READ: parse module docstring first. Respect `rules:`. Read `Depends:`/`Rules:` in functions.
+ON WRITE: begin new files with module docstring. Add Google-style function docstring for
+  cross-file deps. Add call-site inline comment at dangerous calls. Use semantic naming.
+ON EDIT: re-read `rules:` first. Propagate Modifies: cascades. Never rename `exports:`.
 ```
 
 ---
@@ -138,12 +143,14 @@ Paste this as system prompt or at the start of your conversation:
 You follow the CodeDNA v0.5 Annotation Standard.
 
 Rules:
-1. READ: always parse the Manifest Header (first 14 lines). Respect AGENT_RULES hard constraints.
-2. CROSS-FILE: follow every @REQUIRES-READ before writing; propagate every @MODIFIES-ALSO.
-3. WRITE: new files start with CODEDNA:0.4 manifest. Set CONTEXT_BUDGET (always/normal/minimal).
-4. EDIT: first change = update LAST_MODIFIED. Then cascade @MODIFIES-ALSO targets.
-5. NAMING: use semantic names — list_dict_users_from_db = get_users(), int_cents_price_from_req = ...
-6. CONTRACTS: never rename EXPORTS without updating all REQUIRED_BY callers.
+1. READ: always parse the module docstring (first 8–12 lines). Respect `rules:` hard constraints.
+2. CROSS-FILE: read `Depends:` / `Rules:` in function docstrings before writing logic there.
+3. WRITE: new files start with module docstring (deps/exports/used_by/tables/rules).
+   Cross-file functions: add Google-style docstring with Depends: and Rules:.
+   Dangerous calls: add inline: # includes X — filter Y.
+4. EDIT: re-read `rules:` first. Cascade all Modifies: targets.
+5. NAMING: list_dict_users_from_db = get_users(), int_cents_price_from_req = ...
+6. CONTRACTS: never rename `exports:` without updating all `used_by` callers.
 
 Full spec: github.com/Larens94/codedna/blob/main/SPEC.md
 ```
@@ -154,7 +161,7 @@ Full spec: github.com/Larens94/codedna/blob/main/SPEC.md
 
 Ask your AI tool:
 
-> *"Annotate this file following the CodeDNA v0.5 standard (github.com/Larens94/codedna). Add the CODEDNA:0.4 manifest header and any @REQUIRES-READ / @MODIFIES-ALSO inline hyperlinks where functions cross file boundaries."*
+> *"Annotate this file following the CodeDNA v0.5 standard (github.com/Larens94/codedna). Add the module docstring header and Google-style function docstrings for any cross-file function calls."*
 
 Or use the validate tool to check existing annotations:
 
@@ -164,43 +171,48 @@ python tools/validate_manifests.py ./your_project/
 
 ---
 
-## The Manifest Header (reference)
+## The Module Docstring (reference)
 
 ```python
-# === CODEDNA:0.4 =============================================
-# FILE:           filename.py
-# PURPOSE:        ≤15 words describing what this file does
-# CONTEXT_BUDGET: always | normal | minimal
-# DEPENDS_ON:     other_file.py :: function_name()
-# EXPORTS:        public_function(arg) → return_type
-# REQUIRED_BY:    consumer_file.py :: consumer_function()
-# AGENT_RULES:    hard constraint agents must never violate
-# LAST_MODIFIED:  ≤8 words describing the last change
-# =============================================================
+"""filename.py — <≤15 words describing what this file does>.
+
+deps:    other_file.py → symbol | none
+exports: public_function(arg) -> return_type
+used_by: consumer_file.py → consumer_function
+tables:  table_name(col1, col2) | none
+rules:   <hard constraint agents must never violate>
+"""
 ```
 
 | Field | Required | Rule |
 |---|---|---|
-| `FILE` | ✅ | Exact filename |
-| `PURPOSE` | ✅ | ≤15 words, what not how |
-| `CONTEXT_BUDGET` | ✅ | `always` / `normal` / `minimal` |
-| `DEPENDS_ON` | ✅ | `file :: symbol` or `none` |
-| `EXPORTS` | ✅ | Public API with return type |
-| `REQUIRED_BY` | — | Who consumes this file's exports |
-| `AGENT_RULES` | — | Hard constraints scoped to this file |
-| `LAST_MODIFIED` | ✅ | ≤8 words; first change on every edit |
+| First line | ✅ | `filename.py — <purpose ≤15 words>` |
+| `deps:` | ✅ | `file → symbol` or `none` |
+| `exports:` | ✅ | Public API with return type |
+| `used_by:` | — | Who calls this file's exports |
+| `tables:` | — | DB tables accessed |
+| `rules:` | — | Hard constraints scoped to this file |
 
 ---
 
-## Inline Hyperlinks (reference)
+## Sliding-Window Annotations (reference)
+
+**Level 2a — Function docstring:**
 
 ```python
-def my_function():
-    # @REQUIRES-READ: config.py :: MAX_RATE    — read before writing logic
-    # @MODIFIES-ALSO: report.py :: build_row() — cascade: update this too
-    # @SEE: schema.py :: OrderModel            — helpful context
-    # @BREAKS-IF-RENAMED: used by report.py via reflection
-    pass
+def my_function(arg: type) -> return_type:
+    """Short description.
+
+    Depends: config.MAX_RATE — read before writing logic.
+    Rules:   MUST cap value before returning; exceed = compliance bug.
+    Modifies: report.py → build_row  — update after changing this.
+    """
+```
+
+**Level 2b — Call-site inline comment:**
+
+```python
+    raw = get_all_orders()  # includes cancelled orders — filter status != 'cancelled' below
 ```
 
 ---

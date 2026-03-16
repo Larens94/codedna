@@ -1,26 +1,27 @@
-# CodeDNA v0.3
+# CodeDNA v0.5
 
-This project uses CodeDNA. Every source file begins with a manifest header.
+This project uses CodeDNA. Every Python file begins with a module docstring.
 
 On EDIT:
-- Update LAST_MODIFIED first
-- Read DEPENDS_ON before changing signatures
-- Follow @REQUIRES-READ before writing logic
-- Apply @MODIFIES-ALSO changes in same session
+- Re-read `rules:` before writing any logic
+- Read `deps:` before changing function signatures
+- Read `Depends:` / `Rules:` in function docstrings before writing logic there
+- Apply `Modifies:` cascade targets in the same edit session
 
 On CREATE:
-- Write manifest header before imports
-- Set CONTEXT_BUDGET: always (core) | normal (standard) | minimal (utility)
-- Add @REQUIRES-READ/@MODIFIES-ALSO to cross-file functions
+- Write module docstring before any imports (deps/exports/used_by/tables/rules)
+- For cross-file functions: add Google-style docstring with Depends: and Rules:
+- At dangerous calls: add inline comment # includes X — filter Y below
+- Use semantic naming: list_dict_users_from_db = get_users()
 
-EXPORTS are contracts — never rename without instruction.
+`exports:` are contracts — never rename without explicit instruction and updating all `used_by:` callers.
 
-Manifest format:
-# === CODEDNA:0.3 ===
-# FILE: name.ext
-# PURPOSE: ≤15 words
-# CONTEXT_BUDGET: always|normal|minimal
-# DEPENDS_ON: file → symbol | none
-# EXPORTS: fn(args) → type
-# LAST_MODIFIED: ≤8 words
-# ==================
+Module docstring format:
+"""filename.py — <purpose ≤15 words>.
+
+deps:    file.py → symbol | none
+exports: fn(args) -> type
+used_by: consumer.py → fn
+tables:  table(col) | none
+rules:   <hard constraint>
+"""

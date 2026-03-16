@@ -1,26 +1,31 @@
-# CodeDNA v0.3
+# CodeDNA v0.5
 
-This project uses the CodeDNA annotation standard.
+This project uses the CodeDNA annotation standard (Python-native docstring format).
 
-Every source file begins with:
-# === CODEDNA:0.3 =============================================
-# FILE: filename.ext
-# PURPOSE: what it does (≤15 words)  
-# CONTEXT_BUDGET: always | normal | minimal
-# DEPENDS_ON: file → symbol | none
-# EXPORTS: symbol(args) → return_type
-# LAST_MODIFIED: ≤8 words
-# ==============================================================
+## Module docstring format (required in every Python file)
 
-EDITING RULES:
-1. Update LAST_MODIFIED first
-2. Check DEPENDS_ON before changing function signatures  
-3. Follow @REQUIRES-READ annotations before writing logic
-4. Apply @MODIFIES-ALSO cascades in the same edit
+```python
+"""filename.py — <what it does, ≤15 words>.
 
-GENERATION RULES:
-1. Manifest header before any imports
-2. @REQUIRES-READ on cross-file functions
-3. Semantic variable names: list_dict_X_from_db not data
+deps:    other_file.py → symbol | none
+exports: public_function(arg) -> return_type
+used_by: consumer_file.py → consumer_function
+tables:  table_name(col1, col2) | none
+rules:   <hard constraint agents must never violate>
+"""
+```
 
-EXPORTS = contracts. Do not rename without explicit instruction.
+## Editing rules
+
+1. Re-read `rules:` before writing any logic — never violate these constraints
+2. Follow `deps:` before changing function signatures
+3. Read `Depends:` / `Rules:` in function docstrings before writing logic there
+4. Apply `Modifies:` cascade targets in the same edit session
+5. Never rename `exports:` symbols without explicit instruction
+
+## Generation rules
+
+1. Write module docstring before any imports
+2. For cross-file functions: add Google-style docstring with `Depends:` and `Rules:`
+3. At dangerous call sites: add inline `# includes X — filter Y below`
+4. Use semantic variable names: `list_dict_orders_from_db` not `data`

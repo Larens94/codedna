@@ -1,6 +1,6 @@
 # CodeDNA — AI System Prompts
 
-Ready-to-paste system prompts that configure any AI coding assistant to follow the **CodeDNA v0.3 CodeDNA Annotation Standard**.
+Ready-to-paste system prompts that configure any AI coding assistant to follow the **CodeDNA v0.5 Annotation Standard** (Python-native format).
 
 ---
 
@@ -9,25 +9,32 @@ Ready-to-paste system prompts that configure any AI coding assistant to follow t
 Paste this into your AI assistant's system prompt or project instructions:
 
 ```
-You are operating under the **CodeDNA v0.3 CodeDNA Annotation Standard**.
+You are operating under the **CodeDNA v0.5 Annotation Standard** (Python-native format).
 
 READING FILES:
-- Read the CodeDNA manifest header (lines starting with # === CODEDNA) before reading any code.
-- Parse DEPENDS_ON: these are symbols you must never break.
-- Parse EXPORTS: these are symbols you must never rename or remove.
-- Follow every @REQUIRES-READ annotation before writing any logic.
-- After editing, follow every @MODIFIES-ALSO annotation and cascade changes.
+- Read the module docstring at the top of every Python file before reading any code.
+- Parse `deps:` — symbols you must never break.
+- Parse `exports:` — symbols you must never rename or remove.
+- Read `Depends:` and `Rules:` in function docstrings before writing logic there.
+- Apply all cascade changes mentioned in `Modifies:` and call-site inline comments.
 
 WRITING FILES:
-- Every new file must begin with a CodeDNA manifest header.
-- Include all fields: FILE, PURPOSE, CONTEXT_BUDGET, DEPENDS_ON, EXPORTS, STYLE (or none), DB_TABLES (or none), LAST_MODIFIED.
-- Add @REQUIRES-READ/@SEE/@MODIFIES-ALSO to functions that have cross-file dependencies.
-- Use semantic variable naming for data-carrying variables: list_dict_users_from_db = get_users()
+- Every new Python file must begin with a module docstring:
+  """filename.py — <what it does, ≤15 words>.
+  deps:    file → symbol | none
+  exports: function(arg) -> return_type
+  used_by: consumer.py → function
+  tables:  table(col) | none
+  rules:   <hard constraint never to violate>
+  """
+- For cross-file functions, add a Google-style docstring with Depends: and Rules:.
+- At the dangerous call site, add: # includes X — filter Y below
+- Use semantic variable naming: list_dict_users_from_db = get_users()
 
 EDITING FILES:
-- Your FIRST change must always update the LAST_MODIFIED field.
-- Do not change EXPORTS unless explicitly asked — other files depend on them.
-- Do not remove DEPENDS_ON entries — they are contracts, not just comments.
+- Your FIRST step: re-read `rules:` and `Rules:` in affected functions.
+- Do not change `exports:` unless explicitly asked — other files depend on them.
+- Cascade all Modifies: targets mentioned in docstrings and call-site comments.
 ```
 
 ---
@@ -39,26 +46,29 @@ Create `.cursorrules` at your repo root:
 ```
 # CodeDNA Annotation Standard v0.5
 
-## Manifest Header (required in every file)
-Every source file must begin with a CodeDNA manifest:
-```
-# === CODEDNA:0.3 =============================================
-# FILE: <exact filename>
-# PURPOSE: <what it does, max 15 words>
-# CONTEXT_BUDGET: <always | normal | minimal>
-# DEPENDS_ON: <file → symbol> or none
-# EXPORTS: <symbol(args) → type>
-# STYLE: <framework> or none
-# DB_TABLES: <table (cols)> or none
-# LAST_MODIFIED: <last change, max 8 words>
-# ==============================================================
-```
+## Module Docstring (required in every Python file)
+Every source file must begin with:
+"""filename.py — <what it does, ≤15 words>.
+deps:    file → symbol | none
+exports: function(arg) -> return_type
+used_by: consumer.py → function
+tables:  table(col) | none
+rules:   <hard constraint>
+"""
+
+## Function Docstring (required for cross-file functions)
+def fn(arg: type) -> type:
+    """Description.
+    Depends: file.symbol — contract.
+    Rules:   MUST/MUST NOT ...
+    """
+    raw = get_data()  # includes X — filter Y below
 
 ## On every edit
-1. Update LAST_MODIFIED first (always)
-2. Read DEPENDS_ON before making changes
-3. Follow @REQUIRES-READ annotations before writing logic
-4. Cascade @MODIFIES-ALSO annotations after your change
+1. Re-read `rules:` first (always)
+2. Follow `deps:` before making changes
+3. Read Depends: / Rules: in function docstrings before writing logic
+4. Cascade all Modifies: targets after your change
 
 ## Variable naming
 Data-carrying variables use: <type>_<shape>_<domain>_<origin>
@@ -70,14 +80,15 @@ Example: list_dict_orders_from_db = db.query(sql)
 ## Claude Projects (Project Instructions)
 
 ```
-Project uses **CodeDNA v0.3 CodeDNA Annotation Standard**. Rules:
+Project uses **CodeDNA v0.5 Annotation Standard** (Python-native format). Rules:
 
-1. Every file starts with `# === CODEDNA:0.3` manifest block.
-2. Required manifest fields: FILE, PURPOSE, CONTEXT_BUDGET, DEPENDS_ON, EXPORTS, LAST_MODIFIED.
-3. When editing: update LAST_MODIFIED first. Read DEPENDS_ON. Follow @REQUIRES-READ links.
-4. When generating: write manifest first, then code. Add @REQUIRES-READ/@MODIFIES-ALSO to cross-file functions.
-5. EXPORTS are contracts — never rename or remove without explicit instruction.
-6. CONTEXT_BUDGET: always=core file, normal=standard, minimal=utility/rarely changes.
+1. Every Python file starts with a module docstring (deps/exports/used_by/tables/rules).
+2. When editing: re-read `rules:` first. Follow deps:. Cascade Modifies: targets.
+3. When generating: write module docstring first, then imports, then code.
+   Cross-file functions: add Google-style docstring with Depends: and Rules:.
+   Dangerous calls: annotate inline: # includes X — filter Y.
+4. `exports:` are contracts — never rename or remove without explicit instruction.
+5. Use semantic naming: list_dict_users_from_db = get_users()
 ```
 
 ---
@@ -87,23 +98,23 @@ Project uses **CodeDNA v0.3 CodeDNA Annotation Standard**. Rules:
 Create `.github/copilot-instructions.md`:
 
 ```markdown
-# CodeDNA v0.3
+# CodeDNA v0.5
 
-This codebase uses the **CodeDNA CodeDNA Annotation Standard**.
+This codebase uses the **CodeDNA Annotation Standard** (Python-native format).
 
-## Manifest header
-Required at the top of every source file. Fields: FILE, PURPOSE, CONTEXT_BUDGET, DEPENDS_ON, EXPORTS, [STYLE], [DB_TABLES], LAST_MODIFIED.
+## Module docstring
+Required at the top of every Python file: deps / exports / used_by / tables / rules.
 
 ## When you edit a file
-- Update LAST_MODIFIED as your first change
-- Check DEPENDS_ON before modifying function signatures
-- Follow @REQUIRES-READ annotations before implementing logic
-- Update all @MODIFIES-ALSO targets after your change
+- Re-read `rules:` as your first step
+- Check `deps:` before modifying function signatures
+- Read `Depends:` / `Rules:` in function docstrings before implementing logic
+- Cascade all Modifies: targets
 
 ## When you create a file
-- Write the manifest header before any imports
-- Set CONTEXT_BUDGET appropriately (always/normal/minimal)
-- Add inline @REQUIRES-READ and @MODIFIES-ALSO to cross-file functions
+- Write the module docstring before any imports
+- Add Google-style function docstring for cross-file deps
+- Add inline comment at dangerous call sites: # includes X — filter Y
 ```
 
 ---
@@ -111,7 +122,7 @@ Required at the top of every source file. Fields: FILE, PURPOSE, CONTEXT_BUDGET,
 ## Aider (`--system-prompt`)
 
 ```bash
-aider --system-prompt "$(cat tools/system-prompts.md | grep -A 20 '## Universal' | tail -n +3)"
+aider --system-prompt "$(cat tools/system-prompts.md | grep -A 30 '## Universal' | tail -n +3)"
 ```
 
 Or save the universal prompt to a file and use:
@@ -125,9 +136,9 @@ aider --system-prompt-file tools/codedna-system-prompt.txt
 
 To verify your AI assistant is following CodeDNA:
 
-1. Ask it to create a new file
-2. Check that the first lines are the `# === CODEDNA:0.3` header
-3. Ask it to edit an existing CodeDNA file
-4. Check that LAST_MODIFIED was updated as the first change
+1. Ask it to create a new Python file
+2. Check that the first block is a module docstring with `deps:`/`exports:`/`rules:` fields
+3. Ask it to edit an existing CodeDNA file that has a `rules:` constraint
+4. Check that it reads and respects the `rules:` field before writing
 
 If it passes both checks, CodeDNA is active. ✅

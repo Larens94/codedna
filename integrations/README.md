@@ -99,15 +99,15 @@ cp integrations/.agents/workflows/codedna.md .agents/workflows/codedna.md
 
 | Before | After |
 |---|---|
-| AI creates files with no metadata | Every file gets a manifest header |
-| AI edits break cross-file deps | AI reads DEPENDS_ON before editing |
-| AI skips related files | AI follows @REQUIRES-READ links |
-| Style drift between views | STYLE field enforces consistency |
+| AI creates files with no metadata | Every file gets a module docstring (deps/exports/rules) |
+| AI edits break cross-file deps | AI reads `deps:` and `Depends:` before editing |
+| AI skips related files | AI follows `deps:` graph and function-level `Depends:` |
+| No constraint memory in long files | `rules:` in docstring repeats at every function scope |
 
 ---
 
 ## Verify it's working
 
-Ask your AI tool to create a new file. The first output block should be the `# === CODEDNA:0.3` manifest header, before any imports.
+Ask your AI tool to create a new Python file. The first block should be the module docstring with `deps:`, `exports:`, and `rules:` fields, before any imports.
 
 If it starts with imports instead — paste the integration file content directly into the system prompt or chat context.

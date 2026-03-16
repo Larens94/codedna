@@ -72,38 +72,46 @@ Full data: [`benchmark_agent/results_agent.json`](./benchmark_agent/results_agen
 
 ## 🧬 The Three Levels
 
-### Level 1 — Manifest Header *(Macro-context: ~70 tokens)*
+### Level 1 — Module Header *(Macro-context: ~70 tokens)*
 
-The first 14 lines of every file. The AI reads this before any code and already knows the file's purpose, dependencies, public API, and constraints it must respect.
-
-```python
-# === CODEDNA:0.4 =============================================
-# FILE:           orders/orders.py
-# PURPOSE:        Order lifecycle management
-# CONTEXT_BUDGET: always
-# DEPENDS_ON:     db/queries.py :: execute()
-#                 users/users.py :: get_user()
-# EXPORTS:        get_active_orders() → list[dict]
-#                 create_order(user_id, items) → None
-# REQUIRED_BY:    analytics/revenue.py :: get_revenue_rows()
-# AGENT_RULES:    User system uses soft delete.
-#                 Never join orders without filtering deleted_at.
-# LAST_MODIFIED:  added soft-delete filter
-# =============================================================
-```
-
-### Level 2 — Inline Hyperlinks *(Micro-context: per-function)*
-
-AI agents often read files in **sliding windows** — lines 200–250, skipping the header. Inline hyperlinks solve this by embedding navigation cues at each function.
+A Python-native module docstring at the top of every file. The AI reads this before any code and immediately knows the file's purpose, dependencies, public API, and the rules it must respect. Using Python's standard docstring format maximises LLM comprehension — models trained on billions of Python files apply existing pattern-matching to the structured fields.
 
 ```python
-def get_active_orders():
-    # @REQUIRES-READ: users/users.py :: delete_user() — soft delete semantics
-    # @MODIFIES-ALSO: analytics/revenue.py :: get_revenue_rows()
-    return execute("SELECT * FROM orders WHERE status != 'cancelled'")
+"""orders/orders.py — Order lifecycle management.
+
+deps:    db/queries.py → execute | users/users.py → get_user
+exports: get_active_orders() -> list[dict] | create_order(user_id, items) -> None
+used_by: analytics/revenue.py → get_revenue_rows
+tables:  orders(user_id, status, created_at) | users(deleted_at)
+rules:   User system uses soft delete — NEVER return orders for users
+         where users.deleted_at IS NOT NULL. Always JOIN on users.
+"""
 ```
 
-| Tag | Meaning | Agent must... |
+### Level 2 — Sliding-Window Annotations *(Micro-context: per-function)*
+
+AI agents often read files in **sliding windows** — lines 200–250, skipping the header. Level 2 solves this with two sub-layers:
+
+**2a — Function docstring** (Google style) — embeds deps and rules at function scope:
+
+```python
+def get_active_orders() -> list[dict]:
+    """Return all non-cancelled orders for active (non-deleted) users.
+
+    Depends: users.get_user — soft-delete contract: filter deleted_at IS NOT NULL.
+    Rules:   MUST JOIN users and filter deleted_at before returning results.
+             Failure to filter inflates revenue reports with deleted-user orders.
+    """
+```
+
+**2b — Call-site inline comment** — last line of defence, present at the exact danger point:
+
+```python
+    orders = execute("SELECT * FROM orders WHERE status != 'cancelled'")
+    # BUG ZONE: includes orders for deleted users — must JOIN users.deleted_at IS NULL
+```
+
+| Tag (compatible, still valid) | Meaning | Agent must... |
 |---|---|---|
 | `@SEE` | Recommended context | Read when uncertain |
 | `@REQUIRES-READ` | Mandatory prerequisite | Read before writing any logic |
@@ -126,7 +134,7 @@ int_cents_price_from_req = request.json["price"]
 
 ### Bonus — Planner Manifest-Only Read Protocol
 
-To plan edits across 10+ files, read only the first 14 lines of each (≈70 tokens × N files), filter by `CONTEXT_BUDGET`, build a `DEPENDS_ON` graph, then open only the relevant files in full.
+To plan edits across 10+ files, read only the module docstring of each (≈70 tokens × N files), build a `deps` → `exports` graph, then open only the relevant files in full.
 
 ---
 
@@ -170,6 +178,20 @@ codedna/
 └── tools/
     └── validate_manifests.py
 ```
+
+---
+
+## 💬 A note from the author
+
+This is my first paper. I'm not a researcher — I'm a developer who is genuinely passionate about AI and how it interacts with code.
+
+I built CodeDNA because I kept running into the same problem: AI agents making mistakes not because they were wrong, but because they had no context. I wondered: what if the context was already *in the file*? What if every snippet the agent read was self-sufficient?
+
+I'm sharing this with complete humility. The benchmark is real, the data is reproducible, and the spec is open. Maybe it's useful to you. Maybe it sparks a better idea. Either way, I hope it contributes something.
+
+If you find it helpful, try it, break it, improve it — or just tell me what you think. Feedback from people who actually use it is the only way this gets better.
+
+— Fabrizio
 
 ---
 
