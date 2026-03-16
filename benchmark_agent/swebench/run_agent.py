@@ -1,14 +1,15 @@
 """
-swebench/run_agent.py — Esegue l'agente Gemini su Control vs CodeDNA per ogni task.
+swebench/run_agent.py — Runs Gemini agent on Control vs CodeDNA for each task.
 
 deps:    google-genai (google.genai), tasks.json, projects_swebench/*/control and codedna/
-exports: results_swebench.json — metriche complete per task/versione
-rules:   Run control FIRST, then codedna, same session.
+exports: results_swebench.json — complete metrics per task/version
+rules:   Run control FIRST, then codedna, same process but independent conversations.
          Agent receives ONLY the problem_statement — no knowledge of CodeDNA benchmark.
 """
 
 import json
 import os
+import re
 import sys
 import subprocess
 from pathlib import Path
@@ -26,6 +27,10 @@ PROJECTS_DIR = Path(__file__).parent.parent / "projects_swebench"
 RESULTS_FILE = Path(__file__).parent.parent / "results_swebench.json"
 API_KEY      = os.getenv("GEMINI_API_KEY", "")
 MODEL_ID     = "gemini-2.5-flash"
+
+# Truncation limits (documented experimental parameters)
+READ_FILE_LIMIT = 8000   # characters returned per read_file call
+GREP_LIMIT      = 4000   # characters returned per grep call
 
 SYSTEM_PROMPT = """You are an expert software engineer debugging a Python codebase.
 Your task: read the problem description and find ALL the files that require modification to implement a complete fix.
@@ -85,7 +90,7 @@ TOOLS_DECL = [
 
 
 def make_fns(repo_root: Path) -> tuple[dict[str, Callable], dict]:
-    log = {"tool_calls": 0, "files_read": [], "greps": []}
+    log = {"tool_calls": 0, "files_read": [], "greps": [], "total_chars_consumed": 0}
 
     def list_files(directory: str = ".", **kwargs) -> str:
         log["tool_calls"] += 1
@@ -97,7 +102,9 @@ def make_fns(repo_root: Path) -> tuple[dict[str, Callable], dict]:
             if item.name.startswith(".") or item.name == "__pycache__":
                 continue
             items.append(f"{'[DIR] ' if item.is_dir() else '      '}{item.name}")
-        return "\n".join(items) or "(empty)"
+        result = "\n".join(items) or "(empty)"
+        log["total_chars_consumed"] += len(result)
+        return result
 
     def read_file(path: str, **kwargs) -> str:
         log["tool_calls"] += 1
@@ -105,7 +112,9 @@ def make_fns(repo_root: Path) -> tuple[dict[str, Callable], dict]:
         if not target.exists():
             return f"File not found: {path}"
         log["files_read"].append(path)
-        return target.read_text(encoding="utf-8", errors="replace")[:4000]
+        result = target.read_text(encoding="utf-8", errors="replace")[:READ_FILE_LIMIT]
+        log["total_chars_consumed"] += len(result)
+        return result
 
     def grep(pattern: str, directory: str = ".", **kwargs) -> str:
         log["tool_calls"] += 1
@@ -115,7 +124,9 @@ def make_fns(repo_root: Path) -> tuple[dict[str, Callable], dict]:
             ["grep", "-rn", "--include=*.py", pattern, str(target)],
             capture_output=True, text=True
         )
-        return r.stdout[:2000] or "(no matches)"
+        result = r.stdout[:GREP_LIMIT] or "(no matches)"
+        log["total_chars_consumed"] += len(result)
+        return result
 
     fns = {"list_files": list_files, "read_file": read_file, "grep": grep}
     return fns, log
@@ -145,9 +156,9 @@ def run_agent(problem: str, repo_root: Path, client, max_turns: int = 15) -> dic
         )
         candidate = response.candidates[0]
         if not candidate.content:
-            print("  [!] Risposta vuota dal modello (forse blocco di sicurezza o max tokens). Interruzione anticipata.", flush=True)
+            print("  [!] Empty response from model (safety filter or max tokens). Early stop.", flush=True)
             break
-            
+
         history.append(candidate.content)
 
         tool_calls_this_turn = [
@@ -178,20 +189,36 @@ def run_agent(problem: str, repo_root: Path, client, max_turns: int = 15) -> dic
         history.append(gtypes.Content(role="tool", parts=tool_results))
 
     return {
-        "tool_calls":  log["tool_calls"],
-        "files_read":  log["files_read"],
-        "n_files_read": len(set(log["files_read"])),
-        "greps":        log["greps"],
-        "final_response": final_text[:600],
+        "tool_calls":          log["tool_calls"],
+        "files_read":          log["files_read"],
+        "n_files_read":        len(set(log["files_read"])),
+        "greps":               log["greps"],
+        "total_chars_consumed": log["total_chars_consumed"],
+        "final_response":      final_text[:1200],
     }
 
 
-def file_accuracy(files_read: list[str], ground_truth: list[str]) -> float:
-    if not ground_truth:
-        return 0.0
-    read  = {Path(f).name for f in files_read}
-    truth = {Path(f).name for f in ground_truth}
-    return len(read & truth) / len(truth)
+def extract_proposed_files(final_text: str) -> set[str]:
+    """Extract .py file paths mentioned in the agent's final textual response."""
+    return set(re.findall(r'[\w/]+\.py', final_text))
+
+
+def file_metrics(files: set[str], ground_truth: list[str]) -> dict:
+    """Compute recall, precision, and F1 using full relative paths.
+    
+    - recall:    what fraction of ground-truth files did the agent touch?
+    - precision: what fraction of files touched were actually relevant?
+    - f1:        harmonic mean of recall and precision
+    """
+    truth = set(ground_truth)
+    if not truth:
+        return {"recall": 0.0, "precision": 0.0, "f1": 0.0}
+    
+    hits = files & truth
+    recall    = len(hits) / len(truth)       if truth else 0.0
+    precision = len(hits) / len(files)       if files else 0.0
+    f1        = (2 * precision * recall) / (precision + recall) if (precision + recall) else 0.0
+    return {"recall": recall, "precision": precision, "f1": f1}
 
 
 def main():
@@ -219,13 +246,21 @@ def main():
         print(f"\n{'='*60}")
         print(f"Task: {iid}  ({len(gt)} ground-truth files)")
 
-        print("  → CONTROL ...")
+        # --- CONTROL ---
+        print("  → CONTROL ...", flush=True)
         ctrl = run_agent(problem, ctrl_dir, client)
-        ctrl["file_accuracy"] = file_accuracy(ctrl["files_read"], gt)
+        ctrl_read_set  = set(ctrl["files_read"])
+        ctrl_proposed  = extract_proposed_files(ctrl["final_response"])
+        ctrl["metrics_read"]     = file_metrics(ctrl_read_set, gt)
+        ctrl["metrics_proposed"] = file_metrics(ctrl_proposed, gt)
 
-        print("  → CODEDNA ...")
+        # --- CODEDNA ---
+        print("  → CODEDNA ...", flush=True)
         cdna = run_agent(problem, cdna_dir, client)
-        cdna["file_accuracy"] = file_accuracy(cdna["files_read"], gt)
+        cdna_read_set  = set(cdna["files_read"])
+        cdna_proposed  = extract_proposed_files(cdna["final_response"])
+        cdna["metrics_read"]     = file_metrics(cdna_read_set, gt)
+        cdna["metrics_proposed"] = file_metrics(cdna_proposed, gt)
 
         r = {
             "instance_id":       iid,
@@ -233,12 +268,18 @@ def main():
             "ground_truth_files": gt,
             "control":           ctrl,
             "codedna":           cdna,
-            "delta_tool_calls":  ctrl["tool_calls"] - cdna["tool_calls"],
-            "delta_file_accuracy": cdna["file_accuracy"] - ctrl["file_accuracy"],
         }
 
-        print(f"  Control: {ctrl['tool_calls']} calls, acc={ctrl['file_accuracy']:.0%}")
-        print(f"  CodeDNA: {cdna['tool_calls']} calls, acc={cdna['file_accuracy']:.0%}")
+        cr = ctrl["metrics_read"]
+        dr = cdna["metrics_read"]
+        cp = ctrl["metrics_proposed"]
+        dp = cdna["metrics_proposed"]
+        print(f"  Control: {ctrl['tool_calls']} calls, {ctrl['total_chars_consumed']} chars | "
+              f"read(R={cr['recall']:.0%} P={cr['precision']:.0%} F1={cr['f1']:.0%}) | "
+              f"proposed(R={cp['recall']:.0%} P={cp['precision']:.0%} F1={cp['f1']:.0%})")
+        print(f"  CodeDNA: {cdna['tool_calls']} calls, {cdna['total_chars_consumed']} chars | "
+              f"read(R={dr['recall']:.0%} P={dr['precision']:.0%} F1={dr['f1']:.0%}) | "
+              f"proposed(R={dp['recall']:.0%} P={dp['precision']:.0%} F1={dp['f1']:.0%})")
         results.append(r)
 
     with open(RESULTS_FILE, "w") as f:

@@ -1,8 +1,8 @@
 """
-swebench/analyze.py — Analizza i risultati e genera tabella e statistiche.
+swebench/analyze.py — Analyze results and generate table + statistics.
 
-deps:    results_swebench.json (output di run_agent.py)
-exports: stampa tabella risultati + statistiche aggregate
+deps:    results_swebench.json (output of run_agent.py)
+exports: prints results table + aggregated statistics
 rules:   Report results honestly — include ALL tasks, even negative ones.
 """
 
@@ -26,56 +26,113 @@ def main():
         print("No results to analyze.")
         return
 
-    print("\n" + "="*90)
-    print("CodeDNA vs Control — SWE-bench Benchmark Results")
-    print("="*90)
-    print(f"\n{'Task':<40} {'Ctrl Calls':>10} {'DNA Calls':>10} {'Δ Calls':>8} "
-          f"{'Ctrl Acc':>9} {'DNA Acc':>8} {'Δ Acc':>7}")
+    n = len(results)
+
+    # ── Table 1: Tool Calls & Chars ──
+    print("\n" + "="*100)
+    print("CodeDNA vs Control — SWE-bench File Localization Benchmark")
+    print("="*100)
+
+    print(f"\n{'Task':<40} {'Ctrl Calls':>10} {'DNA Calls':>10} {'Δ':>5} "
+          f"{'Ctrl Chars':>11} {'DNA Chars':>10}")
     print("-"*90)
 
     for r in results:
         ctrl = r["control"]
         cdna = r["codedna"]
-        delta_calls = cdna["tool_calls"] - ctrl["tool_calls"]
-        delta_acc = cdna["file_accuracy"] - ctrl["file_accuracy"]
+        dc = cdna["tool_calls"] - ctrl["tool_calls"]
         print(f"{r['instance_id'][:39]:<40} "
               f"{ctrl['tool_calls']:>10} {cdna['tool_calls']:>10} "
-              f"{delta_calls:>+8} "
-              f"{ctrl['file_accuracy']:>9.0%} {cdna['file_accuracy']:>8.0%} "
-              f"{pct(delta_acc):>7}")
+              f"{dc:>+5} "
+              f"{ctrl['total_chars_consumed']:>11,} {cdna['total_chars_consumed']:>10,}")
 
-    print("-"*90)
-
-    # Aggregates
-    n = len(results)
+    # Aggregates for table 1
     avg_ctrl_calls = sum(r["control"]["tool_calls"] for r in results) / n
     avg_cdna_calls = sum(r["codedna"]["tool_calls"] for r in results) / n
-    avg_ctrl_acc = sum(r["control"]["file_accuracy"] for r in results) / n
-    avg_cdna_acc = sum(r["codedna"]["file_accuracy"] for r in results) / n
-    pct_reduction_calls = (avg_ctrl_calls - avg_cdna_calls) / avg_ctrl_calls if avg_ctrl_calls else 0
-
+    avg_ctrl_chars = sum(r["control"]["total_chars_consumed"] for r in results) / n
+    avg_cdna_chars = sum(r["codedna"]["total_chars_consumed"] for r in results) / n
+    print("-"*90)
     print(f"{'AVERAGE':<40} {avg_ctrl_calls:>10.1f} {avg_cdna_calls:>10.1f} "
-          f"{avg_cdna_calls-avg_ctrl_calls:>+8.1f} "
-          f"{avg_ctrl_acc:>9.0%} {avg_cdna_acc:>8.0%} "
-          f"{pct(avg_cdna_acc - avg_ctrl_acc):>7}")
+          f"{avg_cdna_calls-avg_ctrl_calls:>+5.1f} "
+          f"{avg_ctrl_chars:>11,.0f} {avg_cdna_chars:>10,.0f}")
+
+    # ── Table 2: File Metrics (Read-based) ──
+    print(f"\n{'─'*90}")
+    print(f"  FILE METRICS (based on files read via read_file tool)")
+    print(f"{'─'*90}")
+    print(f"\n{'Task':<40} {'Ctrl R':>7} {'DNA R':>7} {'Δ R':>6} "
+          f"{'Ctrl P':>7} {'DNA P':>7} "
+          f"{'Ctrl F1':>8} {'DNA F1':>8}")
+    print("-"*90)
+
+    for r in results:
+        cr = r["control"]["metrics_read"]
+        dr = r["codedna"]["metrics_read"]
+        print(f"{r['instance_id'][:39]:<40} "
+              f"{cr['recall']:>7.0%} {dr['recall']:>7.0%} {pct(dr['recall']-cr['recall']):>6} "
+              f"{cr['precision']:>7.0%} {dr['precision']:>7.0%} "
+              f"{cr['f1']:>8.0%} {dr['f1']:>8.0%}")
+
+    avg_cr = sum(r["control"]["metrics_read"]["recall"] for r in results) / n
+    avg_dr = sum(r["codedna"]["metrics_read"]["recall"] for r in results) / n
+    avg_cp = sum(r["control"]["metrics_read"]["precision"] for r in results) / n
+    avg_dp = sum(r["codedna"]["metrics_read"]["precision"] for r in results) / n
+    avg_cf1 = sum(r["control"]["metrics_read"]["f1"] for r in results) / n
+    avg_df1 = sum(r["codedna"]["metrics_read"]["f1"] for r in results) / n
+    print("-"*90)
+    print(f"{'AVERAGE':<40} "
+          f"{avg_cr:>7.0%} {avg_dr:>7.0%} {pct(avg_dr-avg_cr):>6} "
+          f"{avg_cp:>7.0%} {avg_dp:>7.0%} "
+          f"{avg_cf1:>8.0%} {avg_df1:>8.0%}")
+
+    # ── Table 3: File Metrics (Proposed in final response) ──
+    print(f"\n{'─'*90}")
+    print(f"  FILE METRICS (based on files proposed in final text response)")
+    print(f"{'─'*90}")
+    print(f"\n{'Task':<40} {'Ctrl R':>7} {'DNA R':>7} {'Δ R':>6} "
+          f"{'Ctrl P':>7} {'DNA P':>7} "
+          f"{'Ctrl F1':>8} {'DNA F1':>8}")
+    print("-"*90)
+
+    for r in results:
+        cr = r["control"]["metrics_proposed"]
+        dr = r["codedna"]["metrics_proposed"]
+        print(f"{r['instance_id'][:39]:<40} "
+              f"{cr['recall']:>7.0%} {dr['recall']:>7.0%} {pct(dr['recall']-cr['recall']):>6} "
+              f"{cr['precision']:>7.0%} {dr['precision']:>7.0%} "
+              f"{cr['f1']:>8.0%} {dr['f1']:>8.0%}")
+
+    avg_cr_p = sum(r["control"]["metrics_proposed"]["recall"] for r in results) / n
+    avg_dr_p = sum(r["codedna"]["metrics_proposed"]["recall"] for r in results) / n
+    avg_cp_p = sum(r["control"]["metrics_proposed"]["precision"] for r in results) / n
+    avg_dp_p = sum(r["codedna"]["metrics_proposed"]["precision"] for r in results) / n
+    avg_cf1_p = sum(r["control"]["metrics_proposed"]["f1"] for r in results) / n
+    avg_df1_p = sum(r["codedna"]["metrics_proposed"]["f1"] for r in results) / n
+    print("-"*90)
+    print(f"{'AVERAGE':<40} "
+          f"{avg_cr_p:>7.0%} {avg_dr_p:>7.0%} {pct(avg_dr_p-avg_cr_p):>6} "
+          f"{avg_cp_p:>7.0%} {avg_dp_p:>7.0%} "
+          f"{avg_cf1_p:>8.0%} {avg_df1_p:>8.0%}")
+
+    # ── Summary ──
+    pct_reduction = (avg_ctrl_calls - avg_cdna_calls) / avg_ctrl_calls if avg_ctrl_calls else 0
+    codedna_better_f1 = sum(1 for r in results
+                           if r["codedna"]["metrics_read"]["f1"] > r["control"]["metrics_read"]["f1"])
 
     print(f"\n📊 Summary ({n} tasks):")
-    print(f"   Tool calls:     Control avg {avg_ctrl_calls:.1f} → CodeDNA avg {avg_cdna_calls:.1f} "
-          f"({pct_reduction_calls:.0%} reduction)")
-    print(f"   File accuracy:  Control avg {avg_ctrl_acc:.0%} → CodeDNA avg {avg_cdna_acc:.0%}")
+    print(f"   Tool calls:    Control avg {avg_ctrl_calls:.1f} → CodeDNA avg {avg_cdna_calls:.1f} "
+          f"({pct_reduction:.0%} reduction)")
+    print(f"   Chars consumed: Control avg {avg_ctrl_chars:,.0f} → CodeDNA avg {avg_cdna_chars:,.0f}")
+    print(f"   Read Recall:   Control avg {avg_cr:.0%} → CodeDNA avg {avg_dr:.0%}")
+    print(f"   Read F1:       Control avg {avg_cf1:.0%} → CodeDNA avg {avg_df1:.0%}")
+    print(f"   CodeDNA better F1: {codedna_better_f1}/{n} tasks")
 
-    # Tasks where CodeDNA won
-    codedna_better_calls = sum(1 for r in results if r["codedna"]["tool_calls"] < r["control"]["tool_calls"])
-    codedna_better_acc = sum(1 for r in results if r["codedna"]["file_accuracy"] > r["control"]["file_accuracy"])
-    print(f"   CodeDNA fewer calls: {codedna_better_calls}/{n} tasks")
-    print(f"   CodeDNA better accuracy: {codedna_better_acc}/{n} tasks")
-
-    # Paper-ready numbers
     print(f"\n📄 Paper-ready sentence:")
-    print(f'   "On {n} real SWE-bench tasks from the Flask ecosystem, CodeDNA reduced '
-          f'agent tool calls by {pct_reduction_calls:.0%} '
-          f'(from {avg_ctrl_calls:.1f} to {avg_cdna_calls:.1f} per task) and improved '
-          f'cross-file navigation accuracy from {avg_ctrl_acc:.0%} to {avg_cdna_acc:.0%}."')
+    print(f'   "On {n} real SWE-bench tasks from the Django ecosystem, CodeDNA '
+          f'improved file localization recall from {avg_cr:.0%} to {avg_dr:.0%} '
+          f'and F1 from {avg_cf1:.0%} to {avg_df1:.0%}, '
+          f'while reducing tool calls by {pct_reduction:.0%} '
+          f'(from {avg_ctrl_calls:.1f} to {avg_cdna_calls:.1f} per task)."')
 
 if __name__ == "__main__":
     main()
