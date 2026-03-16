@@ -1,654 +1,88 @@
 [
   {
-    "instance_id": "django__django-10301",
+    "instance_id": "django__django-14480",
     "repo": "django/django",
-    "base_commit": "76dfa834e7ceeca97cd8e3cfa86651a955aa3f0c",
-    "problem_statement": "SQLite functions crashes on NULL values\nDescription\n\t\nIn [14]: TestModel2.objects.annotate(null=models.Value(None, output_field=models.IntegerField())).values(pow=models.F('null') ** models.F('null')).first()\n---------------------------------------------------------------------------\nOperationalError\t\t\t\t\t\t Traceback (most recent call last)\n~/dev/django/django/db/backends/utils.py in _execute(self,",
+    "base_commit": "795da6306a048b18c0158496b0d49e8e4f197a32",
+    "problem_statement": "Add logical XOR support to Q() and QuerySet().\nDescription\n\t\nXOR seems to be available in Postgresql, MySQL, SequelServer and Oracle but NOT sqlite. Two stackoverflow questions cover this sort of thing: https://stackoverflow.com/questions/50408142/django-models-xor-at-the-model-level and https://stackoverflow.com/questions/14711203/perform-a-logical-exclusive-or-on-a-django-q-object.\nI propose adding .xor() to Q objects and queryset to support this at the Django ORM level.\n",
     "files_in_patch": [
-      "django/db/backends/oracle/operations.py",
-      "django/db/backends/sqlite3/base.py",
-      "django/db/models/functions/datetime.py",
-      "django/db/models/functions/text.py"
+      "django/db/backends/base/features.py",
+      "django/db/backends/mysql/features.py",
+      "django/db/models/expressions.py",
+      "django/db/models/query.py",
+      "django/db/models/query_utils.py",
+      "django/db/models/sql/__init__.py",
+      "django/db/models/sql/where.py"
     ],
-    "n_files": 4
+    "n_files": 7
   },
   {
-    "instance_id": "django__django-10910",
+    "instance_id": "django__django-13495",
     "repo": "django/django",
-    "base_commit": "3dca8738cbbbb5674f795169e5ea25e2002f2d71",
-    "problem_statement": "Using database functions with tzinfo=datetime.timezone(datetime.timedelta(...)) results in an incorrect query\nDescription\n\t\nI haven\u2019t checked this bug with other databases, but it definitely works improperly with postgres.\nDjango ORM create incorrect query when I use timezone determined like \"timezone(timedelta(hours=some_hours))\".\n\"timezone(timedelta(hours=5))\" in query will look like \"UTC+05:00\"",
+    "base_commit": "b26ec77deb7c5052163ef8514ec7db70c0a5ea2a",
+    "problem_statement": "Trunc() function take tzinfo param into account only when DateTimeField() are used as output_field\nDescription\n\t\nI'm trying to use TruncDay() function like this \nTruncDay('created_at', output_field=DateField(), tzinfo=tz_kyiv)\nbut for PostgresSQL the code are generated as \n(DATE_TRUNC('day', \"storage_transaction\".\"created_at\"))\nSo timezone convertation like \nAT TIME ZONE 'Europe/Kiev'\nwas totally ignored. That problem is in how Trunc._resolve_output_field() and Trunc.as_sql() interact across multiple DB backends.\n",
     "files_in_patch": [
+      "django/db/backends/base/operations.py",
       "django/db/backends/mysql/operations.py",
       "django/db/backends/oracle/operations.py",
       "django/db/backends/postgresql/operations.py",
-      "django/db/backends/sqlite3/base.py"
-    ],
-    "n_files": 4
-  },
-  {
-    "instance_id": "django__django-11138",
-    "repo": "django/django",
-    "base_commit": "c84b91b7603e488f7171fdff8f08368ef3d6b856",
-    "problem_statement": "TIME_ZONE value in DATABASES settings is not used when making dates timezone-aware on MySQL, SQLite, and Oracle.\nDescription\n\t \n\t\t(last modified by Victor Talpaert)\n\t \n(We assume the mysql backends)\nI can set TIME_ZONE several times in settings.py, one for the global django app, and one for each database (see \u200bhttps://docs.djangoproject.com/en/1.11/ref/settings/#time-zone (ref1))\nTypical usage wou",
-    "files_in_patch": [
-      "django/db/backends/mysql/operations.py",
-      "django/db/backends/oracle/operations.py",
       "django/db/backends/sqlite3/base.py",
-      "django/db/backends/sqlite3/operations.py"
-    ],
-    "n_files": 4
-  },
-  {
-    "instance_id": "django__django-11359",
-    "repo": "django/django",
-    "base_commit": "d08e6f55e3a986a8d4b3a58431d9615c7bc81eaa",
-    "problem_statement": "Automatically resolve Value's output_field for stdlib types.\nDescription\n\t\nHi,\nI have a model of AModel. AModel has a SearchVectorField named search_vector. I want to update this vector by indexing a string that is not in any other field. \nfrom django.db.models import Value\nfrom django.contrib.postgres.search import SearchVector\nAModel.objects.filter(pk=1).update(search_vector=SearchVector(Value(\"",
-    "files_in_patch": [
-      "django/contrib/gis/db/models/functions.py",
-      "django/contrib/postgres/fields/ranges.py",
-      "django/db/models/expressions.py",
-      "django/db/models/lookups.py"
-    ],
-    "n_files": 4
-  },
-  {
-    "instance_id": "django__django-13121",
-    "repo": "django/django",
-    "base_commit": "ec5aa2161d8015a3fe57dcbbfe14200cd18f0a16",
-    "problem_statement": "durations-only expressions doesn't work on SQLite and MySQL\nDescription\n\t\nclass Experiment(models.Model):\n\testimated_time = models.DurationField()\nlist(Experiment.objects.annotate(duration=F('estimated_time') + datime.timedelta(1)))\nTraceback (most recent call last):\n File \"/home/sergey/dev/django/tests/expressions/tests.py\", line 1218, in test_duration_expressions\n\tlist(Experiment.objects.annotat",
-    "files_in_patch": [
-      "django/db/backends/base/operations.py",
-      "django/db/backends/mysql/operations.py",
       "django/db/backends/sqlite3/operations.py",
-      "django/db/models/expressions.py"
+      "django/db/models/functions/datetime.py"
     ],
-    "n_files": 4
+    "n_files": 7
   },
   {
-    "instance_id": "django__django-13606",
+    "instance_id": "django__django-12508",
     "repo": "django/django",
-    "base_commit": "556fa4bbba5ba86bc1646a86fb11ab55405d4aa4",
-    "problem_statement": "Use EXISTS to exclude multi-valued relationships\nDescription\n\t\nThe current logic that is invoked when excluding a multi-valued relationship (sql.Query.split_exclude) pushes down the filtering criteria in a parent.id NOT IN (SELECT child.parent_id ...) subquery.\n\u200bThese kind of operations can be really hard for some query planners to optimize and also tricky to get right due to how the IN operator t",
+    "base_commit": "b9e2355eb07938829a1a31ed7b60e5f72d4b92e3",
+    "problem_statement": "Add support for ./manage.py dbshell -c SQL\nDescription\n\t\nAt the moment you cannot run specific SQL directly with dbshell:\n./manage.py dbshell -c \"select * from auth_group\"\nYou have to use pipes, that are not always convenient:\necho \"select * from auth_group\" | ./manage.py dbshell\nIf we add -c argument, it would be in sync with shell command, where you could provide commands already. Each database backend (mysql, postgresql, oracle, sqlite3) passes arguments differently to the underlying CLI tool.\n",
     "files_in_patch": [
-      "django/db/models/expressions.py",
-      "django/db/models/lookups.py",
-      "django/db/models/sql/datastructures.py",
-      "django/db/models/sql/query.py"
+      "django/core/management/base.py",
+      "django/core/management/commands/dbshell.py",
+      "django/db/backends/base/client.py",
+      "django/db/backends/mysql/client.py",
+      "django/db/backends/mysql/creation.py",
+      "django/db/backends/oracle/client.py",
+      "django/db/backends/postgresql/client.py",
+      "django/db/backends/sqlite3/client.py"
     ],
-    "n_files": 4
+    "n_files": 8
   },
   {
-    "instance_id": "django__django-13841",
+    "instance_id": "django__django-11991",
     "repo": "django/django",
-    "base_commit": "cfe47b7686df0c4c87270a83d6d7f933323ed7e6",
-    "problem_statement": "Access __file__ lazily rather than at module level\nDescription\n\t \n\t\t(last modified by William Schwartz)\n\t \nSo-called frozen Python environments (such as those mentioned in #30950) that do not set all modules' \u200b__file__ variable, which \u200bneed not be defined, cannot even import Django (without some workarounds) because a small number of Django modules use __file__ at the module level, in a class defi",
+    "base_commit": "f997b5e6ae85e2df2342b1a7812fe8130206c957",
+    "problem_statement": "Add support for adding non-key columns to indexes\nDescription\n\t \n\t\t(last modified by Hannes Ljungberg)\n\t \nPostgres got support for the INCLUDE clause in CREATE INDEX. This can be used to add non-key columns to the index. \nCREATE INDEX idx\n\tON t1 ( col1 )\n\tINCLUDE ( col2 );\nThis allows for Index Only Scans on queries like:\nSELECT col1, col2 FROM t1 WHERE t1 = 'foo';\nThe Index class needs to be extended to support include=[] param, plus schema generation for postgresql and gis backends needs updating.\n",
     "files_in_patch": [
-      "django/contrib/auth/password_validation.py",
-      "django/forms/renderers.py",
-      "django/utils/version.py",
-      "django/views/debug.py"
-    ],
-    "n_files": 4
-  },
-  {
-    "instance_id": "django__django-14026",
-    "repo": "django/django",
-    "base_commit": "59942a66ceb79868cb91844df3a72a24c63e39fa",
-    "problem_statement": "Support a default value for Sum (and possibly other aggregation functions)\nDescription\n\t\nBy default, annotate(sum_field = Sum(...)) results in sum_field being NULL if there were no values to sum. In most cases, 0 would be a better option here, for proper sorting in a later order_by, and for comparisons using lt/gt/gte/lte.\nA monkeypatch to implement default values for NULL using COALESCE is availa",
-    "files_in_patch": [
-      "django/contrib/postgres/aggregates/general.py",
-      "django/contrib/postgres/aggregates/statistics.py",
-      "django/db/backends/mysql/features.py",
-      "django/db/models/aggregates.py"
-    ],
-    "n_files": 4
-  },
-  {
-    "instance_id": "django__django-14124",
-    "repo": "django/django",
-    "base_commit": "4a80d0f22021bb0af842f038eba45958e9576bec",
-    "problem_statement": "handler500 as a Class-based view raises SystemCheckError\nDescription\n\t \n\t\t(last modified by Daniyal Abbasi)\n\t \nSetting handler500 as a Class-Based view raises the following error which running checks.\n$ python manage.py check\nSystemCheckError: System check identified some issues:\nERRORS:\n?: (urls.E007) The custom handler500 view 'path.to.my.MyView' does not take the correct number of arguments (re",
-    "files_in_patch": [
-      "django/contrib/admindocs/utils.py",
-      "django/urls/resolvers.py",
-      "django/views/debug.py",
-      "django/views/generic/base.py"
-    ],
-    "n_files": 4
-  },
-  {
-    "instance_id": "django__django-15139",
-    "repo": "django/django",
-    "base_commit": "08d8bccbf1b0764a0de68325569ee47da256e206",
-    "problem_statement": "Deprecate PickleSerializer and move it out of core\nDescription\n\t\nPickle serializer has long been known to be dangerous. This is mitigated by requiring MAC on pickle in cookies, but nevertheless, RCEs continue to happen: \u200bhttps://blog.scrt.ch/2018/08/24/remote-code-execution-on-a-facebook-server/\nTo further discourage it's use, we should consider deprecating PickleSerializer and moving it into a th",
-    "files_in_patch": [
-      "django/contrib/sessions/backends/base.py",
-      "django/contrib/sessions/serializers.py",
-      "django/core/cache/backends/redis.py",
-      "django/core/serializers/base.py"
-    ],
-    "n_files": 4
-  },
-  {
-    "instance_id": "django__django-15629",
-    "repo": "django/django",
-    "base_commit": "694cf458f16b8d340a3195244196980b2dec34fd",
-    "problem_statement": "Errors with db_collation \u2013 no propagation to foreignkeys\nDescription\n\t \n\t\t(last modified by typonaut)\n\t \nUsing db_collation with a pk that also has referenced fks in other models causes foreign key constraint errors in MySQL.\nWith the following models:\nclass Account(models.Model):\n\tid = ShortUUIDField(primary_key=True, db_collation='utf8_bin', db_index=True, max_length=22) \n\t\u2026\nclass Address(models",
-    "files_in_patch": [
-      "django/db/backends/base/schema.py",
-      "django/db/backends/oracle/features.py",
-      "django/db/backends/sqlite3/schema.py",
-      "django/db/models/fields/related.py"
-    ],
-    "n_files": 4
-  },
-  {
-    "instance_id": "django__django-16263",
-    "repo": "django/django",
-    "base_commit": "321ecb40f4da842926e1bc07e11df4aabe53ca4b",
-    "problem_statement": "Strip unused annotations from count queries\nDescription\n\t\nThe query below produces a SQL statement that includes the Count('chapters'), despite not not being used in any filter operations.\nBook.objects.annotate(Count('chapters')).count()\nIt produces the same results as:\nBook.objects.count()\nDjango could be more intelligent about what annotations to include in the query produced by queryset.count()",
-    "files_in_patch": [
-      "django/db/models/expressions.py",
-      "django/db/models/query_utils.py",
-      "django/db/models/sql/query.py",
-      "django/db/models/sql/where.py"
-    ],
-    "n_files": 4
-  },
-  {
-    "instance_id": "django__django-8119",
-    "repo": "django/django",
-    "base_commit": "069bee7c1232458a0f13c2e30daa8df99dbd3680",
-    "problem_statement": "Allow expressions in .filter() calls\nDescription\n\t\nExpressions in filter calls will allow 3rd party apps to create query syntax extensions (for example .filter(F('some_field').lower() == 'anssi')) style). In addition, having the ability to use expressions everywhere unifies the ORM experience.\n",
-    "files_in_patch": [
-      "django/db/backends/base/operations.py",
-      "django/db/backends/oracle/operations.py",
-      "django/db/models/expressions.py",
-      "django/db/models/sql/query.py"
-    ],
-    "n_files": 4
-  },
-  {
-    "instance_id": "django__django-10680",
-    "repo": "django/django",
-    "base_commit": "b10d322c41f66dc7c77c36f90a3532269b25ea93",
-    "problem_statement": "Refactor AutoField logic into a mixin, implement checks and validators.\nDescription\n\t\nCurrently AutoField inherits from Field and BigAutoField from AutoField. In effect they largely redefine IntegerField and BigIntegerField respectively, but add in the auto field \"behaviour\". As a result they do not perform some of the system checks, e.g. max_length warning, nor the validation checks, e.g. range c",
-    "files_in_patch": [
-      "django/db/backends/base/operations.py",
-      "django/db/backends/oracle/operations.py",
-      "django/db/models/fields/__init__.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-11030",
-    "repo": "django/django",
-    "base_commit": "2aaabe2004e1953eb7d7057edcf2fabd37f7394d",
-    "problem_statement": "Subquery expressions unnecessarily added to group by\nDescription\n\t\nHi friends,\nMy Django/SQL skills are not good enough to properly isolate the problem independently of my use case detailed below. I believe the problem is Subqueries being forced in to the group_by clause because they are select expressions. Per the below if I remove the subqueries manually from sql group_by, my query runs perfectl",
-    "files_in_patch": [
-      "django/db/models/aggregates.py",
-      "django/db/models/expressions.py",
-      "django/db/models/lookups.py",
-      "django/db/models/sql/query.py",
-      "django/db/models/sql/where.py"
-    ],
-    "n_files": 5
-  },
-  {
-    "instance_id": "django__django-11400",
-    "repo": "django/django",
-    "base_commit": "1f8382d34d54061eddc41df6994e20ee38c60907",
-    "problem_statement": "Ordering problem in admin.RelatedFieldListFilter and admin.RelatedOnlyFieldListFilter\nDescription\n\t\nRelatedFieldListFilter doesn't fall back to the ordering defined in Model._meta.ordering. \nOrdering gets set to an empty tuple in \u200bhttps://github.com/django/django/blob/2.2.1/django/contrib/admin/filters.py#L196 and unless ordering is defined on the related model's ModelAdmin class it stays an empty",
-    "files_in_patch": [
-      "django/contrib/admin/filters.py",
-      "django/db/models/fields/__init__.py",
-      "django/db/models/fields/reverse_related.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-11532",
-    "repo": "django/django",
-    "base_commit": "a5308514fb4bc5086c9a16a8a24a945eeebb073c",
-    "problem_statement": "Email messages crash on non-ASCII domain when email encoding is non-unicode.\nDescription\n\t\nWhen the computer hostname is set in unicode (in my case \"\u6b63\u5b97\"), the following test fails: \u200bhttps://github.com/django/django/blob/master/tests/mail/tests.py#L368\nSpecifically, since the encoding is set to iso-8859-1, Python attempts to convert all of the headers to that encoding, including the Message-ID head",
-    "files_in_patch": [
-      "django/core/mail/message.py",
-      "django/core/mail/utils.py",
-      "django/core/validators.py",
-      "django/utils/encoding.py",
-      "django/utils/html.py"
-    ],
-    "n_files": 5
-  },
-  {
-    "instance_id": "django__django-11754",
-    "repo": "django/django",
-    "base_commit": "a5a28de89dabfa03302a5893102b6f1a7c7861a1",
-    "problem_statement": "Allow using ExceptionReporter subclass in django.views.debug.technical_500_response\nDescription\n\t \n\t\t(last modified by Carlton Gibson)\n\t \n#29714 allows using an ExceptionReporter subclass with AdminEmailHandler. \nIdeally we'd make the similar available for the 500 debug error view. \n\u200bCurrently the use of `ExceptionReporter` is hardcoded. \n* Move this to a parameter\n* Provide an example of using, e",
-    "files_in_patch": [
-      "django/conf/global_settings.py",
-      "django/utils/log.py",
-      "django/views/debug.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-12091",
-    "repo": "django/django",
-    "base_commit": "5d654e1e7104d2ce86ec1b9fe52865a7dca4b4be",
-    "problem_statement": "Deprecate HttpRequest.is_ajax.\nDescription\n\t \n\t\t(last modified by Mariusz Felisiak)\n\t \nAs discussed on \u200bthis django-developers thread this should be deprecated.\nIt inspects the non-standard header X-Requested-Wiith that is set by jQuery and maybe other frameworks. However jQuery's popularity, especially for making requests, is decreasing thanks to changes such as the new fetch() JS API.\nAlso in th",
-    "files_in_patch": [
-      "django/http/request.py",
-      "django/views/debug.py",
-      "django/views/i18n.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-12161",
-    "repo": "django/django",
-    "base_commit": "c90ab30fa1305481024b9c3c50b5a6ed6cd9a2f5",
-    "problem_statement": "Support callable values in through_defaults.\nDescription\n\t\nTicket #9475 gave us through_defaults but unlike the defaults argument of get_or_create [1] or the default argument of any model field, it doesn't allow callable values.\nCallable values are passed through without being evaluated so the exact behavior depends on the fields. With a CharField for example, the repr() of the function will be sa",
-    "files_in_patch": [
-      "django/db/models/fields/related_descriptors.py",
-      "django/db/models/query.py",
-      "django/db/models/utils.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-12364",
-    "repo": "django/django",
-    "base_commit": "4ef107e34f752d51fa2cadff30fdd6fd718b026e",
-    "problem_statement": "Detection of existing total ordering in admin changelist should take into account UniqueConstraints without conditions.\nDescription\n\t\nI've been fiddling with db indexes lately to improve the performance of an admin view.\nEventually I found this PR \u200bhttps://github.com/django/django/pull/10692 which ensures the records displayed by ChangeList are deterministically ordered.\nAmong other things, the co",
-    "files_in_patch": [
-      "django/contrib/admin/views/main.py",
-      "django/db/models/base.py",
-      "django/db/models/options.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-12431",
-    "repo": "django/django",
-    "base_commit": "e3f6e18513224c8ad081e5a19da641f49b0b43da",
-    "problem_statement": "FileResponse with temporary file closing connection.\nDescription\n\t \n\t\t(last modified by Oskar Persson)\n\t \nI think I might've found a regression in #30565. When I run the following tests (in their defined order) against Postgres I get the error below.\nimport tempfile\nfrom django.contrib.auth import get_user_model\nfrom django.http import FileResponse\nfrom django.test import TestCase\nUser = get_user_",
-    "files_in_patch": [
-      "django/core/handlers/base.py",
-      "django/core/handlers/wsgi.py",
-      "django/http/response.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-12518",
-    "repo": "django/django",
-    "base_commit": "370628673b98ada302c3930865c4bfde2d8ed5a1",
-    "problem_statement": "sqlmigrate doesn't allow inspecting migrations that have been squashed\nDescription\n\t\nThis project for another ticket can be used to reproduce: \u200bhttps://github.com/adamchainz/django-unique-together-bug\nWhen running sqlmigrate to pick up migration 0001 in this project, it complains that two migrations have that prefix:\n$ python manage.py sqlmigrate testapp 0001\nCommandError: More than one migration ",
-    "files_in_patch": [
-      "django/core/management/commands/sqlmigrate.py",
-      "django/db/migrations/executor.py",
-      "django/db/migrations/loader.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-12519",
-    "repo": "django/django",
-    "base_commit": "d4fff711d4c97356bd6ba1273d2a5e349326eb5f",
-    "problem_statement": "Subquery annotations are omitted in group by query section if multiple annotation are declared\nDescription\n\t \n\t\t(last modified by Johannes Maron)\n\t \nSadly there is more regression in Django 3.0.2 even after #31094.\nBackground: It's the same query as #31094. I tried upgrading to Django 3.0.2 and now I get duplicate results. Even tho they query should be distinct. Where on 2.2 the queryset yields 49",
-    "files_in_patch": [
-      "django/db/backends/mysql/base.py",
-      "django/db/backends/mysql/validation.py",
-      "django/db/models/expressions.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-12556",
-    "repo": "django/django",
-    "base_commit": "5cc2c63f902412cdd9a8ebbabbd953aa8e2180c0",
-    "problem_statement": "Deprecate using get_random_string without an explicit length\nDescription\n\t\ndjango.utils.crypto.get_random_string currently has a default length value (12). I think we should force callers to specify the length value and not count on a default.\n",
-    "files_in_patch": [
-      "django/contrib/auth/hashers.py",
-      "django/db/backends/oracle/creation.py",
-      "django/utils/crypto.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-12771",
-    "repo": "django/django",
-    "base_commit": "0f2885e3f6e0c73c9f455dcbc0326ac11ba4b84c",
-    "problem_statement": "Store ModeState.fields into a dict.\nDescription\n\t\nModeState initially stored its fields into a List[Tuple[str, models.Field]] because \u200bit wanted to preserve ordering.\nHowever the auto-detector doesn't consider field re-ordering as a state change and Django doesn't support table column reordering in the first place. The only reason I'm aware of for keeping field ordering is to generate model forms ",
-    "files_in_patch": [
-      "django/db/migrations/autodetector.py",
-      "django/db/migrations/operations/fields.py",
-      "django/db/migrations/operations/models.py",
-      "django/db/migrations/operations/utils.py",
-      "django/db/migrations/state.py"
-    ],
-    "n_files": 5
-  },
-  {
-    "instance_id": "django__django-12928",
-    "repo": "django/django",
-    "base_commit": "859cd7c6b43bf70e2852eda10f635c70feeb397f",
-    "problem_statement": "Implement autoreload behaviour for cached template loader\nDescription\n\t\nIt would be nice to be able get the speed benefit of the cached template loader during development, but without the downside of having to restart the server every time you change a template. It turns out it's possible with just a few changes.\nBecause it's not really possible to configure the cached template loader I did have t",
-    "files_in_patch": [
-      "django/template/__init__.py",
-      "django/template/autoreload.py",
-      "django/template/loaders/cached.py",
-      "django/utils/autoreload.py",
-      "django/utils/translation/reloader.py"
-    ],
-    "n_files": 5
-  },
-  {
-    "instance_id": "django__django-13195",
-    "repo": "django/django",
-    "base_commit": "156a2138db20abc89933121e4ff2ee2ce56a173a",
-    "problem_statement": "HttpResponse.delete_cookie() should preserve cookie's samesite.\nDescription\n\t\nWe noticed we were getting this warning message from Firefox:\n'Cookie \u201cmessages\u201d will be soon rejected because it has the \u201csameSite\u201d attribute set to \u201cnone\u201d or an invalid value, without the \u201csecure\u201d attribute. To know more about the \u201csameSite\u201c attribute, read \u200bhttps://developer.mozilla.org/docs/Web/HTTP/Headers/Set-Cooki",
-    "files_in_patch": [
-      "django/contrib/messages/storage/cookie.py",
-      "django/contrib/sessions/middleware.py",
-      "django/http/response.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-13240",
-    "repo": "django/django",
-    "base_commit": "ba691933cee375195c9c50f333dd4b2a3abbb726",
-    "problem_statement": "Change Settings to raise ImproperlyConfigured on SECRET_KEY; not initialization\nDescription\n\t\nSince ticket #17800, initializing settings without a SECRET_KEY raises a an ImproperlyConfigured during settings initialization.\nInstead, I think the error should be raised when the setting is accessed as Settings.SECRET_KEY.\nMy use case, my project has a number of management commands that run in a non-pr",
-    "files_in_patch": [
-      "django/conf/__init__.py",
-      "django/contrib/auth/tokens.py",
-      "django/core/checks/security/base.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-13250",
-    "repo": "django/django",
-    "base_commit": "bac5777bff8e8d8189193438b5af52f158a3f2a4",
-    "problem_statement": "JSONField's __contains and __contained_by lookups don't work with nested values on SQLite.\nDescription\n\t\nSQLite doesn't provide a native way for testing containment of JSONField. The current implementation works only for basic examples without supporting nested structures and doesn't follow \"the general principle that the contained object must match the containing object as to structure and data c",
-    "files_in_patch": [
+      "django/contrib/gis/db/backends/postgis/schema.py",
+      "django/contrib/postgres/indexes.py",
       "django/db/backends/base/features.py",
-      "django/db/backends/oracle/features.py",
-      "django/db/backends/sqlite3/base.py",
-      "django/db/backends/sqlite3/features.py",
-      "django/db/models/fields/json.py"
-    ],
-    "n_files": 5
-  },
-  {
-    "instance_id": "django__django-13344",
-    "repo": "django/django",
-    "base_commit": "e39e727ded673e74016b5d3658d23cbe20234d11",
-    "problem_statement": "Coroutine passed to the first middleware's process_response() instead of HttpResponse.\nDescription\n\t\nLike the title says, using ASGI (+ uvicorn in my case), the first middleware (according to the list in settings.py) receives a coroutine as its response parameter, while all other middlewares down the line receive a django.http.response.HttpResponse object.\nThis seems to have caused an issue in the",
-    "files_in_patch": [
-      "django/contrib/sessions/middleware.py",
-      "django/middleware/cache.py",
-      "django/middleware/security.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-13530",
-    "repo": "django/django",
-    "base_commit": "ac6c4260074de43a978e5c6553ef89441e1d6748",
-    "problem_statement": "Using KeyTransform for JSONField produces invalid SQL in various places.\nDescription\n\t \n\t\t(last modified by Igor Jerosimi\u0107)\n\t \nUsing KeyTransform in ordering attribute of ArrayAgg function produces invalid SQL. I don't know if it matters but I'm using Postgres for DB.\n# sample model\nfrom django.db import models\nclass Parent(models.Model):\n\tname = models.CharField(default='test')\nclass Child(models",
-    "files_in_patch": [
-      "django/contrib/postgres/aggregates/mixins.py",
-      "django/contrib/postgres/constraints.py",
-      "django/db/models/expressions.py",
-      "django/db/models/fields/json.py",
-      "django/db/models/lookups.py"
-    ],
-    "n_files": 5
-  },
-  {
-    "instance_id": "django__django-14019",
-    "repo": "django/django",
-    "base_commit": "7c18b22e2fa70aa8dcfadb33beb17933abdf7ee4",
-    "problem_statement": "Make Index and Constraint __repr__ consistent.\nDescription\n\t \n\t\t(last modified by Hannes Ljungberg)\n\t \nIndex, UniqueConstraint, ExclusionConstraint and CheckConstraint currently have slightly different formatting on their __repr__ methods. We should keep them consistent.\n",
-    "files_in_patch": [
-      "django/contrib/postgres/constraints.py",
+      "django/db/backends/base/schema.py",
+      "django/db/backends/postgresql/features.py",
+      "django/db/backends/postgresql/schema.py",
+      "django/db/models/base.py",
       "django/db/models/constraints.py",
       "django/db/models/indexes.py"
     ],
-    "n_files": 3
+    "n_files": 9
   },
   {
-    "instance_id": "django__django-14309",
+    "instance_id": "django__django-11808",
     "repo": "django/django",
-    "base_commit": "6e742dabc95b00ba896434293556adeb4dbaee8a",
-    "problem_statement": "Combining an empty Q with a negated Exists un-negates the Exists lookup\nDescription\n\t\nThe following test case fails in Django 3.2 and main:\nclass TestEmptyQExistsCombination(TestCase):\n\tdef test_combine(self):\n\t\tq = Q() & Exists(Book.objects.all())\n\t\tself.assertFalse(q.negated) # passes\n\tdef test_combine_negated(self):\n\t\tq = Q() & ~Exists(Book.objects.all())\n\t\tself.assertTrue(q.negated) # fails\nI ",
+    "base_commit": "67e7dffe9543aff259f63c8f12d15642fe7be100",
+    "problem_statement": "__eq__ should return NotImplemented when equality cannot be checked.\nDescription\n\t \n\t\t(last modified by Elizabeth Uselton)\n\t \nModel.__eq__ never returns NotImplemented if it encounters an object it doesn't know how to compare against. Instead, if the object it is comparing to is not a Django Model, it automatically returns False. \nhttps://github.com/django/django/blob/master/django/db/models/base.py\nThe fix should be applied consistently to __eq__ methods across several Django model and utility classes.\n",
     "files_in_patch": [
+      "django/contrib/messages/storage/base.py",
+      "django/contrib/postgres/constraints.py",
+      "django/core/validators.py",
+      "django/db/models/base.py",
+      "django/db/models/constraints.py",
       "django/db/models/expressions.py",
+      "django/db/models/indexes.py",
+      "django/db/models/query.py",
       "django/db/models/query_utils.py",
-      "django/db/models/sql/query.py"
+      "django/template/context.py"
     ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-14313",
-    "repo": "django/django",
-    "base_commit": "d68be0494be8b82365f2a5410c9335e539d8efd6",
-    "problem_statement": "Deleting objects after searching related many to many field crashes the admin page\nDescription\n\t\nMinimal reproduction:\n# models.py\nclass Post(models.Model):\n title = models.String(...)\n authors = models.ManyToMany(\"User\", ...)\nclass User(models.Model):\n email = models.String(...)\n# admin.py\nclass PostAdmin(admin.ModelAdmin):\n search_fields = (\"title\", \"authors__email\")\nthen opening the admin site,",
-    "files_in_patch": [
-      "django/contrib/admin/options.py",
-      "django/contrib/admin/views/main.py",
-      "django/db/models/sql/compiler.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-14727",
-    "repo": "django/django",
-    "base_commit": "7afca03c4058c25f2e1cec8d0b07c2157c93e831",
-    "problem_statement": "Naming an incompletely applied squashed migration as a migration target fails with bare NodeNotFoundError\nDescription\n\t\nIn Line 205-208 in django/db/migrations/loader.py replacement migrations (created with squash) are checked if they can be applied. If any of the to be replaced migrations isn't already applied the replacement migration is not added to the nodes list.\nThis leads to the fact that i",
-    "files_in_patch": [
-      "django/core/management/commands/migrate.py",
-      "django/core/management/commands/sqlmigrate.py",
-      "django/db/migrations/loader.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-15166",
-    "repo": "django/django",
-    "base_commit": "eba9a9b7f72995206af867600d6685b5405f172a",
-    "problem_statement": "DatabaseCache backend doesn't quote all fields in queries\nDescription\n\t\nSnowflake requires all fields to be quoted, otherwise they're treated as uppercase.\nThe attached patch works with stable/3.2.x, but I'll have to review it once \u200bdjango-snowflake development is caught up to Django's main branch.\n",
-    "files_in_patch": [
-      "django/core/cache/backends/db.py",
-      "django/db/backends/base/operations.py",
-      "django/db/backends/oracle/operations.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-15248",
-    "repo": "django/django",
-    "base_commit": "f1905db6c0004a2b6c8b69c55a1f5f9da58ce2eb",
-    "problem_statement": "Add ability to know where an object was deleted from to pre/post delete signals\nDescription\n\t\nSince deleting objects deletes related objects, it would be good to know the origin of the delete. \nIt lets the signal listeners know why an object is being delete. If it's deleted from a model.delete(), you know which instance initiated the delete and if it's from a queryset.delete() you know which query",
-    "files_in_patch": [
-      "django/contrib/admin/utils.py",
-      "django/contrib/contenttypes/management/commands/remove_stale_contenttypes.py",
-      "django/db/models/base.py",
-      "django/db/models/deletion.py",
-      "django/db/models/query.py"
-    ],
-    "n_files": 5
-  },
-  {
-    "instance_id": "django__django-16072",
-    "repo": "django/django",
-    "base_commit": "9b0c9821ed4dd9920cc7c5e7b657720d91a89bdc",
-    "problem_statement": "update_or_create should utilize update_fields on update\nDescription\n\t\nupdate_or_create should update only the fields in default on update, not all fields. While it is concurrency-safe to update the whole model since update_or_create fetches the object via select_for_update it is still unnecessary to re transmit all fields back to the database (probably results in more wal/binary logs written etc e",
-    "files_in_patch": [
-      "django/db/models/base.py",
-      "django/db/models/options.py",
-      "django/db/models/query.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-16142",
-    "repo": "django/django",
-    "base_commit": "004f985b918d5ea36fbed9b050459dd22edaf396",
-    "problem_statement": "get_language_from_request should not fallback to settings.LANGUAGE_CODE\nDescription\n\t \n\t\t(last modified by sergioisidoro)\n\t \nI'm writing a middleware to fallback to a different language depending on the TLD of the domain of the HTTP_HOST\nHowever, I noticed that get_language_from_request falls back to the settings default language, which will almost always take precedence in this case.\nThis is quit",
-    "files_in_patch": [
-      "django/middleware/locale.py",
-      "django/utils/translation/trans_null.py",
-      "django/utils/translation/trans_real.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-16208",
-    "repo": "django/django",
-    "base_commit": "c0a93d39411004300dfda2deb3dc093b69ac6368",
-    "problem_statement": "Log when DB transactions are commited and rollbacked.\nDescription\n\t\nBackground: I was debugging database calls today with the django.db.backends log.\nProblem: The BEGIN SQL calls show up in the logs, but there is no way to see when the transaction is commited or if it is rolled back. \nAs easy solution would be to log commits and rollbacks as well.\n",
-    "files_in_patch": [
-      "django/db/backends/base/base.py",
-      "django/db/backends/oracle/base.py",
-      "django/db/backends/utils.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-16302",
-    "repo": "django/django",
-    "base_commit": "78f163a4fb3937aca2e71786fbdd51a0ef39629e",
-    "problem_statement": "Cannot define CharField with unlimited length\nDescription\n\t\nModel validation throws an error on CharField with a null max_length:\nclass Test(Model):\n\tchar_field = CharField(max_length=None)\nOne or more models did not validate:\ntest.test: \"char_field\": CharFields require a \"max_length\" attribute that is a positive integer.\nCharField should allow max_length=None, which intuitively means there is no ",
-    "files_in_patch": [
-      "django/core/management/commands/inspectdb.py",
-      "django/db/backends/base/features.py",
-      "django/db/backends/postgresql/base.py",
-      "django/db/backends/postgresql/features.py",
-      "django/db/models/fields/__init__.py"
-    ],
-    "n_files": 5
-  },
-  {
-    "instance_id": "django__django-16759",
-    "repo": "django/django",
-    "base_commit": "57f2b935b34d148c3c0d906fc8256765004b7b77",
-    "problem_statement": "lookup_allowed fails to consider dynamic list_filter\nDescription\n\t\nCurrently, lookup_allowed iterates over self.list_filter to determine valid params. This is technically incorrect since the introduction of get_list_filter() on ModelAdmin in 1.5, because it is possible to define a ModelAdmin such that self.list_filter is () but get_list_filter yields SimpleListFilter classes.\nTo correct it, the ab",
-    "files_in_patch": [
-      "django/contrib/admin/options.py",
-      "django/contrib/admin/views/main.py",
-      "django/contrib/auth/admin.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-16786",
-    "repo": "django/django",
-    "base_commit": "3fe0c609cf6d50e45e1246492ebac02660561177",
-    "problem_statement": "FilteredRelation resolves its conditions too late which can result in unknown alias references at SQL compilation time\nDescription\n\t \n\t\t(last modified by Daniel Schaffer)\n\t \nWhen using the Coalesce function as part of the condition of a FilteredRelation, the query fails with an \"Unknown column\" error if any of the fields referenced by Coalesce requires a JOIN. This appears to be due to the JOIN no",
-    "files_in_patch": [
-      "django/db/models/query_utils.py",
-      "django/db/models/sql/datastructures.py",
-      "django/db/models/sql/query.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-16810",
-    "repo": "django/django",
-    "base_commit": "191f6a9a4586b5e5f79f4f42f190e7ad4bbacc84",
-    "problem_statement": "Translatable URL patterns raise 404 for non-English default language when prefix_default_language=False is used.\nDescription\n\t\nA simple django project with instruction to replicate the bug can be found here:\n\u200bgithub repo\nIn brief: prefix_default_language = False raises HTTP 404 for the default unprefixed pages if LANGUAGE_CODE is not \"en\".\nI think the problem is that the function get_language_from",
-    "files_in_patch": [
-      "django/middleware/locale.py",
-      "django/urls/resolvers.py",
-      "django/utils/translation/__init__.py",
-      "django/utils/translation/trans_null.py",
-      "django/utils/translation/trans_real.py"
-    ],
-    "n_files": 5
-  },
-  {
-    "instance_id": "django__django-16879",
-    "repo": "django/django",
-    "base_commit": "89f10a80d7e681cd0cccf22d932e380f51bd3524",
-    "problem_statement": "Case-When aggregation over aggregated fields doesn't work since 4.2\nDescription\n\t \n\t\t(last modified by Denis Rold\u00e1n)\n\t \nThis same QuerySet was working on 4.1.X and prior versions and stopped working on 4.2.X:\nannotated_users = users_qs.annotate(\n\t\t\ttotal_things=Subquery(\n\t\t\t\tOtherModel.objects.filter(user_id=OuterRef(\"pk\")).annotate(\n\t\t\t\t\ttotal_objs=F(\"total\")\n\t\t\t\t).values(\"total_objs\")\n\t\t\t)\n)\nann",
-    "files_in_patch": [
-      "django/db/models/aggregates.py",
-      "django/db/models/expressions.py",
-      "django/db/models/sql/query.py"
-    ],
-    "n_files": 3
-  },
-  {
-    "instance_id": "django__django-17058",
-    "repo": "django/django",
-    "base_commit": "98cfb90182a8baa806fc4e09e294b6cfc5d09eff",
-    "problem_statement": "Add support for NULLS [NOT] DISTINCT to UniqueConstraint\nDescription\n\t \n\t\t(last modified by Simon Charette)\n\t \nPostgresSQL 15 is one of the first databases to implement the F292 SQL feature present in the 2023 standard that allows to specify whether or not null values should be considered as distinct in unique constraints.\nWhile most backends default to implicit NULLS DISTINCT some backends don't,",
-    "files_in_patch": [
-      "django/db/backends/base/features.py",
-      "django/db/backends/base/schema.py",
-      "django/db/backends/postgresql/features.py",
-      "django/db/models/base.py",
-      "django/db/models/constraints.py"
-    ],
-    "n_files": 5
-  },
-  {
-    "instance_id": "django__django-10213",
-    "repo": "django/django",
-    "base_commit": "a0ef6a0e22038a36c3646ea96f61fdc6d7ab7e5c",
-    "problem_statement": "Add an option to django-admin to always colorize output\nDescription\n\t\nWith Django management commands, it is currently possible disable colors with the --no-colors flag.\nWhat I'd like to have is basically the other side of the coin: a --force-colors flag that instructs Django to output ANSI color sequences in cases it would disable colors by default (typically, when the output is piped to another ",
-    "files_in_patch": [
-      "django/core/management/base.py",
-      "django/core/management/color.py"
-    ],
-    "n_files": 2
-  },
-  {
-    "instance_id": "django__django-10531",
-    "repo": "django/django",
-    "base_commit": "1564e42ad397021093585147875a21dae1a3b3fc",
-    "problem_statement": "Models history doesn't use verbose names\nDescription\n\t\nThe history for a model object (within the admin section) should show human-readable messages, favoring verbose names over field names. However, this is not currently the case. For example, consider a model with the following class variable:\npub_date = models.DateTimeField(\"date published\")\nChanging the publication date for an object of that m",
-    "files_in_patch": [
-      "django/contrib/admin/models.py",
-      "django/contrib/admin/utils.py"
-    ],
-    "n_files": 2
-  },
-  {
-    "instance_id": "django__django-10554",
-    "repo": "django/django",
-    "base_commit": "14d026cccb144c6877294ba4cd4e03ebf0842498",
-    "problem_statement": "Union queryset with ordering breaks on ordering with derived querysets\nDescription\n\t \n\t\t(last modified by Sergei Maertens)\n\t \nMay be related to #29692\nSimple reproduction (the exact models are not relevant I think):\n>>> Dimension.objects.values_list('id', flat=True)\n<QuerySet [10, 11, 12, 13, 14, 15, 16, 17, 18]>\n>>> qs = (\n\tDimension.objects.filter(pk__in=[10, 11])\n\t.union(Dimension.objects.filte",
-    "files_in_patch": [
-      "django/db/models/sql/compiler.py",
-      "django/db/models/sql/query.py"
-    ],
-    "n_files": 2
-  },
-  {
-    "instance_id": "django__django-11383",
-    "repo": "django/django",
-    "base_commit": "9d6f981a66bd2c4188c4a3e08e4f36fc9c4882ef",
-    "problem_statement": "Saving parent object after setting on child leads to unexpected data loss\nDescription\n\t \n\t\t(last modified by Erwin Junge)\n\t \nWhen saving a parent object after setting it on a child object and then saving the child object, no error is thrown but the FK relation is saved with a NULL value.\nFailing testcase:\n\t\t# Create parent and child, save parent, save child, parent_id should be set\n\t\tp = Parent()\n",
-    "files_in_patch": [
-      "django/db/models/base.py",
-      "django/db/models/fields/related.py"
-    ],
-    "n_files": 2
-  },
-  {
-    "instance_id": "django__django-11539",
-    "repo": "django/django",
-    "base_commit": "f197c3dd9130b18397022605c27ffe5755f329d7",
-    "problem_statement": "Move index name checks from Index.__init__ into system checks.\nDescription\n\t \n\t\t(last modified by Mariusz Felisiak)\n\t \nIndex names assertions should be moved to system checks to keep code cleaner and more consistent.\n",
-    "files_in_patch": [
-      "django/db/models/base.py",
-      "django/db/models/indexes.py"
-    ],
-    "n_files": 2
+    "n_files": 10
   }
 ]

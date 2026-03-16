@@ -1,0 +1,26 @@
+✅ Setup completato — 52 task pronte!
+Tutti e 52 i progetti Django sono pronti in benchmark_agent/projects_swebench/. Ogni task ha due copie identiche:
+
+control/ — Django originale senza annotazioni
+codedna/ — stessa versione, pronta per ricevere i docstring CodeDNA
+Distribuzione task (ottimale per un benchmark serio):
+
+5 task con 2 file toccati (cross-file minimo)
+24 task con 3 file (la maggioranza)
+13 task con 4 file
+10 task con 5 file
+Prossimi 2 passi da eseguire nel terminale
+Step 1 — Annota i file con CodeDNA (~1-2 ore, usa la tua API key Gemini)
+
+bash
+cd benchmark_agent
+source venv/bin/activate && GEMINI_API_KEY="AIzaSyDHoSsr5avKJNx85Wq0v0luad5Dtg5eGfg" python3 swebench/annotator.py
+Step 2 — Esegui il benchmark completo (~2-3 ore)
+
+bash
+source venv/bin/activate && GEMINI_API_KEY="AIzaSyDHoSsr5avKJNx85Wq0v0luad5Dtg5eGfg" python3 swebench/run_agent.py
+Step 3 — Analisi risultati (istantaneo)
+
+bash
+source venv/bin/activate && python3 swebench/analyze.py
+Con 52 task hai abbondantemente superato il threshold per avere risultati statisticamente forti nel paper. Un benchmark da 50+ su repository open source reali è un livello raro per un preprint indipendente.

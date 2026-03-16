@@ -25,7 +25,7 @@ TASKS_FILE   = Path(__file__).parent / "tasks.json"
 PROJECTS_DIR = Path(__file__).parent.parent / "projects_swebench"
 RESULTS_FILE = Path(__file__).parent.parent / "results_swebench.json"
 API_KEY      = os.getenv("GEMINI_API_KEY", "")
-MODEL_ID     = "gemini-2.5-flash-preview-04-17"
+MODEL_ID     = "gemini-2.5-flash"
 
 SYSTEM_PROMPT = """You are an expert software engineer debugging a Python codebase.
 Your task: read the problem description and find the root cause by navigating the codebase.
