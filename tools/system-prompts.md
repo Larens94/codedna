@@ -1,6 +1,6 @@
 # CodeDNA — AI System Prompts
 
-Ready-to-paste system prompts that configure any AI coding assistant to follow the **CodeDNA v0.5 Annotation Standard** (Python-native format).
+Ready-to-paste system prompts that configure any AI coding assistant to follow the **CodeDNA v0.6 Annotation Standard** (Python-native format).
 
 ---
 
@@ -9,12 +9,12 @@ Ready-to-paste system prompts that configure any AI coding assistant to follow t
 Paste into your AI assistant's system prompt or project instructions:
 
 ```
-You are operating under the CodeDNA v0.5 Annotation Standard (Python-native format).
+You are operating under the CodeDNA v0.6 Annotation Standard (Python-native format).
 Full spec: github.com/Larens94/codedna/blob/main/SPEC.md
 
 READING FILES:
 - Read the module docstring at the top of every Python file before reading any code.
-- Parse `deps:` — symbols you must never break.
+- Check `used_by:` — these callers depend on this file.
 - Parse `exports:` — symbols you must never rename or remove.
 - Read `Depends:` and `Rules:` in function docstrings before writing logic there.
 - At call-site inline comments (# includes X — filter Y below) — read and respect.
@@ -22,7 +22,7 @@ READING FILES:
 WRITING NEW FILES:
 - Every new Python file must begin with a module docstring:
   """filename.py — <what it does, ≤15 words>.
-  deps:    file → symbol | none
+  exports: function(arg) -> type
   exports: function(arg) -> return_type
   used_by: consumer.py → function
   tables:  table(col) | none
@@ -45,15 +45,15 @@ EDITING FILES:
 In your project's **agent configuration** or **system prompt settings**:
 
 ```
-You follow the CodeDNA v0.5 Annotation Standard (github.com/Larens94/codedna).
+You follow the CodeDNA v0.6 Annotation Standard (github.com/Larens94/codedna).
 
 ON READ: parse the module docstring first (first 8–12 lines). Check `rules:` before
-writing. Follow every `deps:` edge. Read `Depends:` / `Rules:` in function docstrings
+writing. Check `used_by:` for impact. Read `Rules:` in function docstrings
 before writing logic in that function.
 
 ON WRITE: every new Python file must start with a module docstring:
   """filename.py — <purpose ≤15 words>.
-  deps:    other.py → symbol | none
+
   exports: function(arg) -> type
   used_by: consumer.py → function
   tables:  table(col) | none
@@ -75,12 +75,12 @@ all `used_by` callers.
 Create `.cursorrules` at your repo root (or copy from `integrations/.cursorrules`):
 
 ```
-# CodeDNA Annotation Standard v0.5
+# CodeDNA Annotation Standard v0.6
 
 ## Module Docstring (required in every Python file)
 Every source file must begin with:
 """filename.py — <what it does, ≤15 words>.
-deps:    file → symbol | none
+
 exports: function(arg) -> return_type
 used_by: consumer.py → function
 tables:  table(col) | none
@@ -97,7 +97,7 @@ def fn(arg: type) -> type:
 
 ## On every edit
 1. Re-read `rules:` first (always)
-2. Follow `deps:` before making changes
+2. Check `used_by:` before making changes
 3. Read Depends: / Rules: in function docstrings before writing logic
 4. Cascade all Modifies: targets after your change
 5. Never rename `exports:` without updating all `used_by` callers
@@ -113,7 +113,7 @@ def fn(arg: type) -> type:
 Create `CLAUDE.md` at your repo root (or copy from `integrations/CLAUDE.md`):
 
 ```
-Project uses CodeDNA v0.5 Annotation Standard (Python-native format).
+Project uses CodeDNA v0.6 Annotation Standard (Python-native format).
 Full spec: github.com/Larens94/codedna
 
 On READ: parse module docstring first. Respect `rules:` as absolute constraints.
@@ -135,7 +135,7 @@ On EDIT: re-read `rules:` first. Cascade all Modifies: targets.
 Create `.github/copilot-instructions.md` (or copy from `integrations/copilot-instructions.md`):
 
 ```markdown
-# CodeDNA v0.5
+# CodeDNA v0.6
 
 This codebase uses the CodeDNA Annotation Standard (Python-native format).
 Full spec: github.com/Larens94/codedna
@@ -145,7 +145,7 @@ Required at the top of every Python file: deps / exports / used_by / tables / ru
 
 ## When you edit a file
 - Re-read `rules:` as your first step
-- Check `deps:` before modifying function signatures
+- Check `used_by:` before modifying function signatures
 - Read `Depends:` / `Rules:` in function docstrings before implementing logic
 - Cascade all Modifies: targets
 
@@ -162,7 +162,7 @@ Required at the top of every Python file: deps / exports / used_by / tables / ru
 Create `.windsurfrules` at your repo root (or copy from `integrations/.windsurfrules`):
 
 ```
-# CodeDNA v0.5
+# CodeDNA v0.6
 
 ON READ: parse module docstring first. Respect `rules:`. Read `Depends:`/`Rules:` in functions.
 ON WRITE: begin new files with module docstring (deps/exports/used_by/tables/rules).
@@ -180,7 +180,7 @@ NEVER rename `exports:` without updating all `used_by` callers.
 In **Custom Instructions** → "What would you like ChatGPT to know?" or a Project instruction:
 
 ```
-This project uses CodeDNA v0.5 Annotation Standard (Python-native format).
+This project uses CodeDNA v0.6 Annotation Standard (Python-native format).
 Spec: github.com/Larens94/codedna
 
 Rules:
@@ -201,11 +201,11 @@ Rules:
 In **System Instructions** field:
 
 ```
-You are working on a project that follows the CodeDNA v0.5 Annotation Standard.
+You are working on a project that follows the CodeDNA v0.6 Annotation Standard.
 Spec: github.com/Larens94/codedna/blob/main/SPEC.md
 
 BEFORE READING CODE: parse the module docstring at the top of each Python file.
-The fields `deps:`, `exports:`, `used_by:`, `tables:`, `rules:` encode the architecture.
+The fields `exports:`, `used_by:`, `tables:`, `rules:` encode the architecture.
 `rules:` contains HARD CONSTRAINTS — never violate them.
 
 WHEN WRITING A NEW FILE: the first block must be a module docstring with all fields.
@@ -236,7 +236,7 @@ python tools/codedna_setup.py install --tool cursor   # or claude, copilot, wind
 
 To confirm your AI assistant is following CodeDNA:
 
-1. Ask it to create a new Python file → confirm first block is a module docstring with `deps:`/`exports:`/`rules:` fields
+1. Ask it to create a new Python file → confirm first block is a module docstring with `exports:`/`used_by:`/`rules:` fields
 2. Ask it to edit an existing CodeDNA file that has a `rules:` constraint → confirm it reads and respects `rules:` before writing
 3. Ask it to modify a function that has `Depends:` in its docstring → confirm it follows the constraint
 

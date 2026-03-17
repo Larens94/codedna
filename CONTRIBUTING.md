@@ -12,7 +12,7 @@ Thank you for your interest in contributing! CodeDNA is a language-adaptable ann
 ## Adding a Language Example
 
 1. Create a folder: `examples/<language>/`
-2. Add at least one file demonstrating proper CodeDNA annotations (v0.5 format)
+2. Add at least one file demonstrating proper CodeDNA annotations (v0.6 format)
 3. Add a short `README.md` in that folder explaining the annotation style
 4. Open a PR with the title: `feat(examples): add <language> example`
 
@@ -29,6 +29,6 @@ Be respectful. This project welcomes contributors of all backgrounds and experie
 
 ## PR Checklist
 
-- [ ] Example files use valid CodeDNA v0.5 annotations (module docstring format)
+- [ ] Example files use valid CodeDNA v0.6 annotations (module docstring format)
 - [ ] Annotations are accurate and consistent with the code
 - [ ] A brief description of the change is included in the PR body

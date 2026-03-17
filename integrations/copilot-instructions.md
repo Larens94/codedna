@@ -1,6 +1,6 @@
-# CodeDNA v0.5 — GitHub Copilot Instructions
+# CodeDNA v0.6 — GitHub Copilot Instructions
 
-This codebase uses the CodeDNA annotation standard (v0.5 — Python-native format). Apply these rules in every suggestion.
+This codebase uses the CodeDNA annotation standard (v0.6). Apply these rules in every suggestion.
 
 ## Module header (required in every Python file)
 
@@ -9,7 +9,6 @@ Every file must begin with a module docstring:
 ```python
 """filename.py — <what it does, ≤15 words>.
 
-deps:    other_file.py → symbol | none
 exports: public_function(arg) -> return_type
 used_by: consumer_file.py → consumer_function
 tables:  table_name(col1, col2) | none
@@ -17,31 +16,29 @@ rules:   <hard constraint agents must never violate>
 """
 ```
 
-## Function docstring (required for cross-file functions)
+## Function-level Rules (for critical functions)
 
 ```python
 def critical_function(arg: type) -> return_type:
     """Short description.
 
-    Depends: other_file.symbol — contract it imposes.
     Rules:   What MUST or MUST NOT happen here.
     """
-    raw = get_external_data()  # includes X — filter Y below
 ```
 
 ## On edit: always do these in order
 
 1. Check `rules:` in the module docstring — never violate these constraints
-2. Check `deps:` — don't break those symbols
-3. Read `Depends:` / `Rules:` in any function docstring before writing logic
-4. Add call-site comment at any dangerous call: `# includes X — filter Y below`
+2. Check `used_by:` — these callers will be affected by your changes
+3. Read `Rules:` in any function docstring before writing logic
+4. If you discover a constraint, add a `Rules:` annotation for the next agent
 
 ## On generate: always do these
 
-1. Write module docstring before imports
-2. Add Google-style function docstring to functions with cross-file deps
+1. Write module docstring before imports (with `exports:`, `used_by:`, `rules:`)
+2. Add `Rules:` docstring to functions with non-obvious domain constraints
 3. Use semantic names: `list_dict_orders_from_db = query(sql)` not `data = query(sql)`
 
 ## Exports are contracts
 
-`exports:` symbols must not be renamed or removed — other files declare them in `deps:`.
+`exports:` symbols must not be renamed or removed — other files depend on them (check `used_by:`).

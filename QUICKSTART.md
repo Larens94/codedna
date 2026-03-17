@@ -2,7 +2,7 @@
 
 Get CodeDNA working in your project in under 2 minutes. Pick your AI tool below.
 
-> **💡 No prompt engineering needed.** Once CodeDNA annotations are in your code, any AI agent — Cursor, Claude Code, Copilot, ChatGPT — will automatically follow the `deps:` and `used_by:` graph to find all files that need changes. You just describe the problem. The code guides the agent.
+> **💡 No prompt engineering needed.** Once CodeDNA annotations are in your code, any AI agent — Cursor, Claude Code, Copilot, ChatGPT — will automatically follow the `used_by:` graph to find all files that need changes. You just describe the problem. The code guides the agent.
 
 ---
 
@@ -35,24 +35,22 @@ Options: `claude` · `cursor` · `copilot` · `cline` · `windsurf` · `agents` 
 Add to your **system prompt** or your project's agent configuration:
 
 ```
-You follow the CodeDNA v0.5 Annotation Standard (github.com/Larens94/codedna).
+You follow the CodeDNA v0.6 Annotation Standard (github.com/Larens94/codedna).
 
 ON READ: parse the module docstring first (first 8–12 lines). Check `rules:` before
-writing. Follow every `deps:` edge. Read `Depends:` / `Rules:` in function docstrings
-before writing logic in that function.
+writing. Check `used_by:` to understand who depends on this file. Read `Rules:` in
+function docstrings before writing logic in that function.
 
 ON WRITE: every new Python file must start with a module docstring:
   """filename.py — <purpose ≤15 words>.
-  deps:    other.py → symbol | none
   exports: function(arg) -> type
   used_by: consumer.py → function
   tables:  table(col) | none
   rules:   <hard constraint never to violate>
   """
-  For cross-file functions, add a Google-style docstring with Depends: and Rules:.
-  At the dangerous call site, add: # includes X — filter Y below
+  For critical functions, add a docstring with Rules:.
 
-ON EDIT: first re-read `rules:` and `Rules:`. Then cascade all Modifies: targets.
+ON EDIT: first re-read `rules:` and `Rules:`. Check `used_by:` for affected callers.
 
 EXPORTS are public contracts — never rename without explicit instruction and updating
 all `used_by` callers.
@@ -65,23 +63,23 @@ all `used_by` callers.
 Create `.cursorrules` at the root of your project:
 
 ```
-# CodeDNA v0.5 — cursor rules
+# CodeDNA v0.6 — cursor rules
 
 ON READ
 - Parse the module docstring (first 8–12 lines) before reading code.
 - Respect `rules:` as hard constraints.
-- Follow all `deps:` references before editing.
-- Read `Depends:` / `Rules:` in function docstrings before writing logic.
+- Check `used_by:` to understand who depends on this file.
+- Read `Rules:` in function docstrings before writing logic.
 
 ON WRITE
-- Begin every new Python file with a module docstring (deps/exports/used_by/tables/rules).
-- For cross-file functions, add Google-style docstring with Depends: and Rules:.
-- At the dangerous call site, add inline: # includes X — filter Y.
+- Begin every new Python file with a module docstring (exports/used_by/tables/rules).
+- For critical functions, add docstring with Rules:.
 - Use semantic naming: list_dict_users_from_db = get_users()
 
 ON EDIT
 - First re-read `rules:` and any `Rules:` in function docstrings.
-- Propagate all cascade targets mentioned in Modifies: and call-site comments.
+- Check `used_by:` and `cascade:` targets after editing.
+- If you discover a constraint, add a Rules: annotation for the next agent.
 
 NEVER rename `exports:` symbols without explicit instruction and updating all `used_by` callers.
 ```
@@ -95,26 +93,26 @@ Or copy the full version: [`integrations/.cursorrules`](./integrations/.cursorru
 Create `CLAUDE.md` at the root of your project:
 
 ```markdown
-# CodeDNA v0.5
+# CodeDNA v0.6
 
 This project follows the CodeDNA Annotation Standard (github.com/Larens94/codedna).
 
 ## On every READ
 1. Parse the module docstring (first 8–12 lines) before reading code
 2. Respect `rules:` as absolute constraints
-3. Follow `deps:` references before editing
-4. Read `Depends:` / `Rules:` in function docstrings before writing logic there
+3. Check `used_by:` to understand impact of changes
+4. Read `Rules:` in function docstrings before writing logic there
 
 ## On every WRITE (new file)
-1. Begin with a module docstring: deps / exports / used_by / tables / rules
-2. For critical cross-file functions: add Google-style docstring with Depends: and Rules:
-3. At the dangerous call site: add inline comment describing what to filter
-4. Use semantic naming: list_dict_users_from_db = get_users()
+1. Begin with a module docstring: exports / used_by / tables / rules
+2. For critical functions: add docstring with Rules:
+3. Use semantic naming: list_dict_users_from_db = get_users()
 
 ## On every EDIT
 1. Re-read `rules:` and `Rules:` before writing any logic
-2. Propagate all Modifies: targets and call-site-annotated cascades
+2. Check `used_by:` and `cascade:` targets after changes
 3. Never rename `exports:` without updating all `used_by` callers
+4. If you discover a constraint, add a Rules: annotation
 ```
 
 Or copy the full version: [`integrations/CLAUDE.md`](./integrations/CLAUDE.md)
@@ -126,17 +124,17 @@ Or copy the full version: [`integrations/CLAUDE.md`](./integrations/CLAUDE.md)
 Create `.github/copilot-instructions.md`:
 
 ```markdown
-# CodeDNA v0.5 Instructions
+# CodeDNA v0.6 Instructions
 
-This repository uses the CodeDNA Annotation Standard (Python-native format).
+This repository uses the CodeDNA Annotation Standard.
 
 When reading files: parse the module docstring first (first 8–12 lines).
-Respect `rules:`. Read `Depends:` / `Rules:` in function docstrings before writing logic.
+Respect `rules:`. Check `used_by:` for impact. Read `Rules:` in function docstrings.
 
-When writing new files: start with a module docstring (deps/exports/used_by/tables/rules).
-For cross-file functions: add Google-style docstring. At dangerous calls: add inline comment.
+When writing new files: start with module docstring (exports/used_by/tables/rules).
+For critical functions: add docstring with Rules:.
 
-When editing: re-read `rules:` first. Then propagate Modifies: cascades.
+When editing: re-read `rules:` first. Check `used_by:` targets.
 Never rename `exports:` without updating `used_by` callers.
 ```
 
@@ -149,12 +147,11 @@ Or copy the full version: [`integrations/copilot-instructions.md`](./integration
 Create `.windsurfrules` at the root of your project (same format as Cursor):
 
 ```
-# CodeDNA v0.5
+# CodeDNA v0.6
 
-ON READ: parse module docstring first. Respect `rules:`. Read `Depends:`/`Rules:` in functions.
-ON WRITE: begin new files with module docstring. Add Google-style function docstring for
-  cross-file deps. Add call-site inline comment at dangerous calls. Use semantic naming.
-ON EDIT: re-read `rules:` first. Propagate Modifies: cascades. Never rename `exports:`.
+ON READ: parse module docstring first. Respect `rules:`. Check `used_by:` for impact.
+ON WRITE: begin new files with module docstring. Add Rules: to critical functions. Use semantic naming.
+ON EDIT: re-read `rules:` first. Check `used_by:` targets. Never rename `exports:`.
 ```
 
 ---
@@ -164,17 +161,17 @@ ON EDIT: re-read `rules:` first. Propagate Modifies: cascades. Never rename `exp
 Paste this as system prompt or at the start of your conversation:
 
 ```
-You follow the CodeDNA v0.5 Annotation Standard.
+You follow the CodeDNA v0.6 Annotation Standard.
 
 Rules:
 1. READ: always parse the module docstring (first 8–12 lines). Respect `rules:` hard constraints.
-2. CROSS-FILE: read `Depends:` / `Rules:` in function docstrings before writing logic there.
-3. WRITE: new files start with module docstring (deps/exports/used_by/tables/rules).
-   Cross-file functions: add Google-style docstring with Depends: and Rules:.
-   Dangerous calls: add inline: # includes X — filter Y.
-4. EDIT: re-read `rules:` first. Cascade all Modifies: targets.
+2. IMPACT: check `used_by:` to understand which files depend on the one you're editing.
+3. WRITE: new files start with module docstring (exports/used_by/tables/rules).
+   Critical functions: add docstring with Rules:.
+4. EDIT: re-read `rules:` first. Check `used_by:` and `cascade:` targets.
 5. NAMING: list_dict_users_from_db = get_users(), int_cents_price_from_req = ...
 6. CONTRACTS: never rename `exports:` without updating all `used_by` callers.
+7. KNOWLEDGE: if you discover a constraint, add a Rules: annotation for the next agent.
 
 Full spec: github.com/Larens94/codedna/blob/main/SPEC.md
 ```
@@ -185,12 +182,12 @@ Full spec: github.com/Larens94/codedna/blob/main/SPEC.md
 
 Ask your AI tool:
 
-> *"Annotate this file following the CodeDNA v0.5 standard (github.com/Larens94/codedna). Add the module docstring header and Google-style function docstrings for any cross-file function calls."*
+> *"Annotate this file following the CodeDNA v0.6 standard (github.com/Larens94/codedna). Add the module docstring header with exports, used_by, and rules."*
 
-Or use the validate tool to check existing annotations:
+Or use the auto-annotator for existing codebases:
 
 ```bash
-python tools/validate_manifests.py ./your_project/
+python tools/auto_annotate.py ./your_project/ --package your_package
 ```
 
 ---
@@ -200,7 +197,6 @@ python tools/validate_manifests.py ./your_project/
 ```python
 """filename.py — <≤15 words describing what this file does>.
 
-deps:    other_file.py → symbol | none
 exports: public_function(arg) -> return_type
 used_by: consumer_file.py → consumer_function
 tables:  table_name(col1, col2) | none
@@ -211,33 +207,26 @@ rules:   <hard constraint agents must never violate>
 | Field | Required | Rule |
 |---|---|---|
 | First line | ✅ | `filename.py — <purpose ≤15 words>` |
-| `deps:` | ✅ | `file → symbol` or `none` |
 | `exports:` | ✅ | Public API with return type |
-| `used_by:` | — | Who calls this file's exports |
+| `used_by:` | ✅ | Who calls this file's exports |
 | `tables:` | — | DB tables accessed |
 | `rules:` | — | Hard constraints scoped to this file |
 
 ---
 
-## Sliding-Window Annotations (reference)
+## Function-Level Rules (reference)
 
-**Level 2a — Function docstring:**
+Add `Rules:` to functions with non-obvious domain constraints:
 
 ```python
 def my_function(arg: type) -> return_type:
     """Short description.
 
-    Depends: config.MAX_RATE — read before writing logic.
     Rules:   MUST cap value before returning; exceed = compliance bug.
-    Modifies: report.py → build_row  — update after changing this.
     """
 ```
 
-**Level 2b — Call-site inline comment:**
-
-```python
-    raw = get_all_orders()  # includes cancelled orders — filter status != 'cancelled' below
-```
+`Rules:` grow organically — agents add them as they discover constraints during their work.
 
 ---
 

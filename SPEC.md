@@ -1,6 +1,6 @@
 # CodeDNA Inter-Agent Communication Protocol — Specification
 
-**Version:** 0.5  
+**Version:** 0.6  
 **Status:** Draft  
 **Language:** Agnostic
 
@@ -8,15 +8,19 @@
 
 ## 1. Overview
 
-CodeDNA is an **inter-agent communication protocol** implemented as a source-file annotation format that makes codebases AI-navigable.
+CodeDNA is an **inter-agent communication protocol** implemented as a source-file annotation format that makes codebases AI-navigable. It provides information that **cannot be inferred from reading the code alone** — most critically, the *reverse dependency graph* (`used_by:`) and *domain rules* (`rules:`).
 
-**Level 1 — Module Header (Macro-Context):** A Python-native module docstring at the top of every file, encoding the file's purpose, dependencies, public API, and hard constraints for AI agents.
+The protocol follows a **zoom metaphor** — like how the human eye works:
 
-**Level 2 — Sliding-Window Annotations (Micro-Context):** Two sub-layers — (2a) Google-style function docstrings summarising cross-file deps and rules, and (2b) inline call-site comments at dangerous call points — ensuring agents reading only partial file content still receive critical context.
+**Level 0 — Project Manifest (`.codedna`):** A single file at the repo root describing the project structure, package purposes, and inter-package dependencies. The agent reads this first — the view from far away.
 
-**Level 3 — Semantic Naming (Cognitive Compression):** Variable naming conventions that encode type, origin, and shape directly into the identifier, eliminating the need to trace data flows.
+**Level 1 — Module Header (Macro-Context):** A docstring at the top of every file encoding the file's public API (`exports:`), reverse dependencies (`used_by:`), and hard constraints (`rules:`). The view from close up.
 
-Together, they make every code fragment self-sufficient: an AI extracting any part of a CodeDNA file finds enough context to act correctly without external lookup. This is CodeDNA's *holographic property* — named after the biological analogy: just as DNA encodes the entire organism blueprint in every cell, every CodeDNA file carries complete architectural context in every fragment.
+**Level 2 — Function-Level Rules (Micro-Context):** `Rules:` docstrings on critical functions, written organically by agents as they discover domain constraints. The view from very close.
+
+**Level 3 — Semantic Naming (Cognitive Compression):** Variable naming conventions that encode type, origin, and shape directly into the identifier.
+
+The design principle: **only annotate what the code doesn't already tell you.** Import statements already declare dependencies — duplicating them in annotations wastes tokens. But *who depends on you* (`used_by:`) is impossible to know without reading every file in the project. That is where CodeDNA adds value.
 
 ### 1.1 The Inter-Agent Communication Model
 
@@ -33,7 +37,8 @@ Agent A generates `analytics/revenue.py`. It knows (from its own generation cont
 ```python
 """analytics/revenue.py — Monthly revenue aggregation.
 
-deps:    payments/models.py → get_invoices_for_period
+exports: monthly_revenue(year, month) → dict | annual_summary(year) → list[dict]
+used_by: api/reports.py → revenue_route | workers/report_generator.py → generate
 rules:   get_invoices_for_period() returns ALL tenants, NO suspended filter →
          callers MUST call is_suspended() BEFORE aggregating
 """
@@ -41,16 +46,16 @@ rules:   get_invoices_for_period() returns ALL tenants, NO suspended filter →
 
 Two weeks later, Agent B (a different LLM, different session, different prompt) is asked to add a quarterly report. Agent B reads `revenue.py`, sees `rules:`, and immediately knows that any code calling `get_invoices_for_period()` must filter suspended tenants — without reading `payments/models.py`, without RAG, without external context. The file was the channel. Agent A transmitted. Agent B received.
 
-**Example B — The Dependency Graph as a Navigation Map**
+**Example B — The Reverse Dependency Graph as a Navigation Map**
 
-Agent C is asked to fix a bug: "revenue numbers are wrong." Without CodeDNA, it must: `list_files` → grep "revenue" → read 10 files → trace imports → guess the entry point (8–12 tool calls). With CodeDNA, Agent C reads `analytics/revenue.py` and sees:
+Agent C is asked to fix a bug in `format_currency()`. Without CodeDNA, it must grep all 500 files to find who calls it (8–12 tool calls). With CodeDNA, Agent C reads `utils/format.py` and sees:
 
 ```python
-deps:    payments/models.py → get_invoices_for_period
-used_by: api/reports.py → revenue_route
+exports: format_currency(n) → str | format_date(d) → str  
+used_by: views/dashboard.py → render | api/reports.py → revenue_route
 ```
 
-In 1 read, Agent C has a complete map: data comes from `payments/models.py`, output goes to `api/reports.py`. The bug is in this chain of 3 files. Total: 3 tool calls instead of 12. The `deps`/`used_by` graph is a navigation protocol — the writing agent mapped the territory, the reading agent follows the map.
+In 1 read, Agent C knows exactly which 2 files call `format_currency()` and will be affected by the change. Total: 3 tool calls instead of 12. The `used_by` field is a navigation protocol — it answers the question *"who depends on me?"* which is impossible to know from the code of this file alone.
 
 **Example C — Sliding Window as a Self-Healing Channel**
 
@@ -82,22 +87,72 @@ Level 2 exists because the channel must work even when the receiver sees only a 
 
 ---
 
-## 3. Level 1 — The Manifest Header
+## 2.5 Design Principle: Only Annotate What the Code Doesn't Tell You
 
-### 3.1 Placement
+In Python, `import` statements already declare dependencies — they are visible in the first lines of every file. Duplicating them in a `deps:` annotation wastes tokens and creates synchronisation risk. The same applies to `Depends:` at function level — the agent sees the imports when it reads the code.
 
-The Manifest Header **must be the first content in the file**. A shebang line (`#!/usr/bin/env python`) may appear on line 1; the header starts on line 2.
+What the code *doesn't* tell you:
+- **`used_by:`** — Who imports this file? Impossible to know without reading every file in the project.
+- **`exports:`** — Quick index of a file's public API without reading the entire file.
+- **`rules:`** — Domain constraints that no static analysis can extract ("always filter suspended tenants before aggregating revenue").
+
+These are the fields that survive the redundancy test. Everything else is either visible in the source or inferrable by the agent.
+
+---
+
+## 3. Level 0 — Project Manifest (`.codedna`)
+
+### 3.0 Purpose
+
+The `.codedna` file sits at the repo root and gives agents the **view from far away** — the project's package structure, what each package does, and how packages relate. The agent reads this first, before opening any source file.
+
+### 3.1 Format
+
+```yaml
+# .codedna — Project structure manifest (auto-generated by codedna init)
+project: myapp
+description: E-commerce platform with multi-tenant billing
+
+packages:
+  payments/:
+    purpose: "Invoice generation, payment processing, Stripe integration"
+    key_files: [models.py, stripe_client.py, webhooks.py]
+    
+  analytics/:
+    purpose: "Revenue reports, KPI dashboards, data aggregation"
+    depends_on: [payments/, tenants/]
+    
+  tenants/:
+    purpose: "Multi-tenant management, suspension, soft-delete"
+    key_files: [models.py, middleware.py]
+```
+
+### 3.2 Generation
+
+```bash
+codedna init          # generates .codedna from project structure
+codedna init --update # updates .codedna preserving manual edits
+```
+
+---
+
+## 4. Level 1 — The Module Header
+
+### 4.1 Placement
+
+The Module Header **must be the first content in the file**. A shebang line (`#!/usr/bin/env python`) may appear on line 1; the header starts on line 2.
 
 A blank line must follow the closing delimiter before the first import or code statement.
 
-### 3.2 Format
+### 4.2 Format
 
-The Manifest Header is written as a **Python module docstring** (triple-quoted string). This format is already deeply embedded in LLM training data, which makes it significantly more effective than a custom comment block — models apply existing pattern recognition instead of processing unfamiliar syntax.
+The Module Header is written as a **Python module docstring** (triple-quoted string). This format is already deeply embedded in LLM training data, which makes it significantly more effective than a custom comment block — models apply existing pattern recognition instead of processing unfamiliar syntax.
+
+> **Note:** `deps:` is intentionally omitted — import statements already declare dependencies and are visible in the first lines of the file. See §2.5.
 
 ```python
 """<filename> — <one-line purpose, max 15 words>.
 
-deps:      <file> → <symbol1>, <symbol2> | none
 exports:   <symbol(signature)> → <return_type> | none
 used_by:   <file> → <symbol> | none
 cascade:   <file> → <symbol> (MUST update if this file's exports change) | none
@@ -114,7 +169,6 @@ rules:     <hard constraints for AI agents; what to do and what to avoid> | none
 /**
  * <filename> — <one-line purpose>.
  *
- * deps:      <file> → <symbol>
  * exports:   <symbol(signature)> → <return_type>
  * used_by:   <file> → <symbol>
  * cascade:   <file> → <symbol>
@@ -125,37 +179,35 @@ rules:     <hard constraints for AI agents; what to do and what to avoid> | none
  */
 ```
 
-### 3.3 Fields
+### 4.3 Fields
 
 | Field | Required | Rule |
 |---|---|---|
 | first line | ✅ | `<filename> — <purpose>` (≤15 words, describes *what*, not *how*) |
-| `deps` | ✅ | `file → func1, func2` or `none` |
 | `exports` | ✅ | Public API with signatures |
-| `used_by` | — | Inverse of deps; who calls this file's exports |
+| `used_by` | ✅ | Inverse of deps; who calls this file's exports |
 | `cascade` | — | Files that **MUST** be updated when this file's exports change |
 | `tested_by` | — | Test file and class/function that covers this module |
 | `tables` | — | Tables and relevant columns, or `none` |
 | `raises` | — | Exceptions this module can propagate to callers |
 | `rules` | — | Hard constraints for AI agents (e.g. "never re-apply TAX_RATE") |
 
-### 3.4 `rules:` Field
+### 4.4 `rules:` Field
 
-The `rules:` field encodes hard constraints that apply agent-wide for this file. Unlike Level 2 function docstrings (which are function-scoped), `rules:` applies to **every edit** in the file — it is the file's genome: readable anywhere without navigating to a specific function.
+The `rules:` field encodes hard constraints that apply agent-wide for this file. `rules:` applies to **every edit** in the file — it is the file's genome.
 
 Common uses:
 - Monetary constraints: `never hardcode prices; use config.py → PRICE_CONSTANTS`
 - DB constraints: `always use parameterized queries; never concatenate SQL`
 - Cross-file contracts: `MUST call is_suspended() before aggregating revenue (no filter in upstream function)`
 
-### 3.5 `used_by:` Field (Inverse Dependency)
+### 4.5 `used_by:` Field (Inverse Dependency)
 
-`used_by:` is the inverse of `deps:`. It enables top-down navigation: when reading `utils.py`, the agent immediately knows which callers depend on its exports.
+`used_by:` answers the question: **"who depends on me?"** This is the most valuable field in CodeDNA — it provides information that is impossible to obtain from reading the file alone. Without `used_by:`, the agent must grep every file in the project to find callers.
 
 ```python
 """utils/format.py — Currency and date formatting helpers.
 
-deps:    none
 exports: format_currency(n) -> str | format_date(d) -> str
 used_by: views/dashboard.py → render | api/reports.py → revenue_route
 """
@@ -163,7 +215,7 @@ used_by: views/dashboard.py → render | api/reports.py → revenue_route
 
 **Agent behaviour on edit**: when modifying an `exports:` symbol, check every file listed in `used_by:` and update callers as needed.
 
-### 3.6 `cascade:` Field (Mandatory Update Targets)
+### 4.6 `cascade:` Field (Mandatory Update Targets)
 
 `cascade:` is stronger than `used_by:`. While `used_by:` is informational ("these files call me"), `cascade:` is **imperative** ("these files **MUST** be updated if my exports change"). Typical targets: serializers, API schemas, type definitions, configuration files.
 
@@ -173,7 +225,7 @@ cascade: api/serializers.py → RevenueSchema | docs/api_spec.yaml → /revenue
 
 **Agent behaviour on edit**: after modifying an `exports:` symbol, the agent **MUST** open and update every file in `cascade:` before considering the task complete.
 
-### 3.7 `tested_by:` Field (Test File Mapping)
+### 4.7 `tested_by:` Field (Test File Mapping)
 
 `tested_by:` tells the agent where the tests for this module live. Without it, agents waste tool calls grepping for test files or create duplicate tests in wrong locations.
 
@@ -183,7 +235,7 @@ tested_by: tests/test_revenue.py → TestMonthlyRevenue, TestAnnualSummary
 
 **Agent behaviour on edit**: after modifying logic, open the `tested_by:` file and update or add test cases to cover the change.
 
-### 3.8 `raises:` Field (Error Propagation)
+### 4.8 `raises:` Field (Error Propagation)
 
 `raises:` declares which exceptions this module can propagate to callers. Agents frequently ignore error handling or write generic try/except blocks because they don't know what can fail.
 
@@ -194,13 +246,12 @@ raises: TenantSuspendedError, NoDataError, InsufficientFundsError
 **Agent behaviour on edit**: when calling a function from a module with `raises:`, the agent must handle or propagate each declared exception.
 
 
-### 3.9 Examples by Language
+### 4.9 Examples by Language
 
 **Python**
 ```python
 """analytics/revenue.py — Monthly/annual revenue aggregation from paid invoices.
 
-deps:      payments/models.py → get_invoices_for_period | tenants/models.py → is_suspended
 exports:   monthly_revenue(year,month)->dict | annual_summary(year)->list[dict]
 used_by:   api/reports.py → revenue_route | workers/report_generator.py → generate
 cascade:   api/serializers.py → RevenueSchema
@@ -217,7 +268,6 @@ rules:     get_invoices_for_period() returns ALL tenants, NO suspended filter �
 /**
  * authService.ts — JWT authentication and session management.
  *
- * deps:      db.ts → getUser() | config.ts → JWT_SECRET
  * exports:   login(credentials)->Promise<Token> | verify(token)->User
  * used_by:   router.ts → authMiddleware()
  * cascade:   types/auth.d.ts → TokenPayload
@@ -232,7 +282,6 @@ rules:     get_invoices_for_period() returns ALL tenants, NO suspended filter �
 ```sql
 -- monthly_revenue.sql — Aggregated monthly revenue by category and region.
 --
--- deps:    none
 -- exports: (month, category, revenue, cost)
 -- tables:  orders, order_items, products
 -- rules:   always filter cancelled orders (status != 'cancelled')
@@ -240,37 +289,48 @@ rules:     get_invoices_for_period() returns ALL tenants, NO suspended filter �
 
 ---
 
-## 4. Level 2 — Sliding-Window Annotations
+## 5. Level 2 — Function-Level Rules
 
-### 4.1 Motivation
+### 5.1 Motivation
 
-AI agents operating in *sliding window* mode extract partial file content (e.g., lines 50–80) to reduce token consumption. This bypasses the Level 1 header entirely. Level 2 ensures that the **body of every critical function is self-documenting**, even when read in isolation.
+Level 1 headers provide file-level context. But critical domain constraints often apply to **specific functions** — especially large functions (100+ lines) where the agent must read hundreds of lines before encountering a danger point.
 
-Level 2 relies on:
-- **Function Docstring**: Google-style docstring summarizing dependencies and rules
+Level 2 annotations are **`Rules:` docstrings** on functions. Unlike `deps:` or `Depends:` (which duplicate information already visible in imports), `Rules:` encode domain knowledge that **cannot be inferred from the code**.
 
-### 4.2 Level 2 — Function Docstring (Google style)
+### 5.2 When to Add `Rules:`
 
-Add a structured docstring to any function that:
-- calls a dependency with a non-obvious contract
-- has a rule that an AI agent could violate without context
-- is part of a multi-file workflow
+Add a `Rules:` docstring to any function that:
+- has a constraint an AI agent could violate without domain context
+- is part of a multi-file workflow with non-obvious contracts
+- was the source of a previous bug (the agent documents the fix for the next agent)
+
+> **Note:** `Depends:` is intentionally omitted at function level — import statements are already visible in the file header or inline. The only exception: if a function contains a **local import** (inside the function body, not at file level), a `Depends:` annotation is appropriate.
+
+### 5.3 Format
 
 ```python
 def monthly_revenue(year: int, month: int) -> dict:
     """Aggregate paid invoices into monthly revenue total.
 
-    Depends: payments.models.get_invoices_for_period — returns ALL invoices, NO suspended filter.
     Rules:   MUST filter is_suspended() from tenants.models BEFORE summing.
              Failure to filter inflates revenue with suspended-tenant invoices.
     Raises:  TenantSuspendedError if all tenants in period are suspended.
-             NoDataError if no invoices exist for the period.
     Returns: {year, month, total_cents, by_tenant: {id: [invoices]}}
     """
 ```
-    invoices = get_invoices_for_period(year, month)  # includes suspended tenants — filter below
-    total = sum(i['amount_cents'] for i in invoices)
+
+### 5.4 Organic Growth
+
+`Rules:` annotations grow **organically**. They are not generated in batch — they are written by agents as they discover constraints during their work. Each agent that fixes a bug or learns something important leaves a `Rules:` annotation for the next agent.
+
+```python
+def annotate(self, *args, **kwargs):
+    """Rules: if annotation name collides with a Model field → FieldError.
+             After fix #14480, nested annotations are also checked.
+             See also: values() — same collision logic."""
 ```
+
+This creates a **knowledge accumulation cycle**: the codebase gets smarter with every agent interaction.
 
 
 
@@ -327,81 +387,74 @@ Purely local computation variables (`i`, `tmp`, `acc`) do not need renaming.
 
 ---
 
-## 6. Planner Manifest-Only Read Protocol
+## 7. Planner Read Protocol
 
 When an AI agent must plan edits across a multi-file codebase, it should:
 
-1. Read only the **module docstring** of each file (first 8–12 lines)
-2. Filter by relevance:
+1. Read **`.codedna`** — understand the project structure (which packages exist, what they do)
+2. Read only the **module docstring** of relevant files (first 8–12 lines)
+3. Filter by relevance:
+   - Include files whose `used_by:` mentions the file being edited
    - Include files whose `rules:` field mentions the task domain
-   - Include files that appear in another file's `deps:` for this task
    - Skip others unless explicitly referenced
-3. Build a dependency graph from `deps:`, `exports:`, and `used_by:`
-4. Identify the **minimum set of files** that must be read in full
-5. Load only those files for the edit phase
+4. Build a dependency graph from `exports:` and `used_by:`
+5. Identify the **minimum set of files** that must be read in full
+6. Load only those files for the edit phase
 
-**Token cost:** ~70 tokens per file × N files = complete codebase map for planning.
+**Token cost:** `.codedna` (~200 tok) + ~50 tokens per file header × N files = complete codebase map for planning.
 
 ---
 
-## 7. AI Interaction Protocol
+## 8. AI Interaction Protocol
 
-### 7.1 On READ (edit mode)
-1. Parse the module docstring (Level 1) — first 8–12 lines.
-2. Note `deps:` → these are contracts you must not break.
+### 8.1 On READ (opening a project)
+1. Read **`.codedna`** — understand the project structure.
+2. Parse the module docstring (Level 1) of relevant files — first 8–12 lines.
 3. Note `exports:` → must not rename or remove without explicit instruction.
-4. Note `rules:` → hard constraints for every edit in this file; read **before writing any logic**.
-5. For any function you are about to modify: read its `Depends:` / `Rules:` docstring first.
-6. Read call-site inline comments at any dangerous call you are near.
+4. Note `used_by:` → these callers will be affected by changes.
+5. Note `rules:` → hard constraints for every edit in this file; read **before writing any logic**.
+6. For any function you are about to modify: read its `Rules:` docstring first.
 
-### 7.2 On WRITE (generate mode)
+### 8.2 On WRITE (generate mode)
 1. Generate the module docstring as the **first output block**, before any imports.
-2. Populate all fields: `deps`, `exports`, `used_by`, `tables`, `rules`.
-3. For cross-file functions, add a Google-style function docstring with `Depends:` and `Rules:`.
-4. At dangerous call sites, add inline: `# includes X — filter Y below`.
-5. Apply semantic naming to data-carrying variables.
+2. Populate fields: `exports`, `used_by`, `rules` (and optionally `cascade`, `tested_by`, `tables`, `raises`).
+3. For critical functions with non-obvious domain constraints, add a `Rules:` docstring.
+4. Apply semantic naming to data-carrying variables.
 
-### 7.3 On EDIT
-1. **First step**: re-read `rules:` and the `Depends:` / `Rules:` of the function you are editing.
+### 8.3 On EDIT
+1. **First step**: re-read `rules:` and the `Rules:` of the function you are editing.
 2. Apply all file-level constraints before writing.
-3. After editing, cascade any `Modifies:` or call-site-annotated cascade targets.
+3. After editing, check `used_by:` and `cascade:` targets.
 4. If renaming an `exports:` symbol: update all `used_by:` callers.
-5. If the `rules:` field needs to reflect the change, update it.
+5. If you discover a constraint or fix a bug, add a `Rules:` annotation for the next agent.
 
-### 7.4 Migration
+### 8.4 Migration
 
-Migration of an existing codebase is a **one-time investment**. Any AI agent can annotate a pre-existing codebase by reading each file's imports, function signatures, and call sites, then generating the CodeDNA module docstring. Once annotated, maintenance cost approaches zero: the same agents that modify the code are responsible for updating the annotations in place.
+Migration of an existing codebase is a **two-step process**:
 
-CodeDNA targets **agentic code generation workflows** — environments where an LLM agent both generates and modifies source files. However, any legacy codebase can be migrated by delegating the annotation work to an agent. The initial annotation pass is the investment; all subsequent maintenance is a natural byproduct of code generation.
+1. **`codedna init`** (automatic): generates `.codedna` manifest and Module Headers (`exports:`, `used_by:`) by static analysis of imports. This takes seconds for a project with hundreds of files.
+2. **Organic `Rules:`** (incremental): agents add `Rules:` annotations as they work on the code. No upfront investment — knowledge accumulates naturally over time.
+
+CodeDNA targets **agentic code generation workflows** — environments where an LLM agent both generates and modifies source files. The structural annotations are auto-generated; the semantic annotations grow organically.
 
 
 ---
 
-## 8. Validation
+## 9. Validation
 
-Run `tools/validate_manifests.py` to check:
+Run `tools/auto_annotate.py --dry-run` to check:
 - Every file has a module docstring with the CodeDNA fields
 - All required fields are present and non-empty
 - First line matches the pattern `<filename> — <purpose>`
-- `deps:` symbols exist in the referenced files' `exports:`
-- `used_by:` is consistent with `deps:` in the referenced files
+- `used_by:` is consistent with imports across the project
 
 Pre-commit hook available in `tools/pre-commit`.
 
 ---
 
-## 9. Versioning
+## 10. Versioning
 
-Declared in the module docstring first line:
-
-```python
-"""filename.py — <purpose>.
-
-deps: ...
-"""
-```
-
-The version of the standard being used is tracked in the repo tag (`v0.5`).
+The version of the standard is tracked in the repo tag (`v0.6`).
 
 ---
 
@@ -413,4 +466,6 @@ The version of the standard being used is tracked in the repo tag (`v0.5`).
 | 0.2 | 2026-03-16 | Level 2 Inline Hyperlinks (`@REQUIRES-READ`, `@SEE`, `@MODIFIES-ALSO`), biological model |
 | 0.3 | 2026-03-16 | Level 3 Semantic Naming, `CONTEXT_BUDGET` field, Planner Manifest-Only Read protocol |
 | 0.4 | 2026-03-16 | `AGENT_RULES` field, `REQUIRED_BY` field, `CONTEXT_BUDGET` criteria, type prefix table |
-| **0.5** | **2026-03-16** | **Python-native module docstring format (replaces custom `# ===` block). Level 2 split into 2a (Google-style function docstring) and 2b (call-site inline comment). `rules:` replaces `AGENT_RULES`, `used_by:` replaces `REQUIRED_BY`, `deps:` replaces `DEPENDS_ON`. Agent-first framing: marginal annotation cost ≈ zero in agentic workflows.** |
+| 0.5 | 2026-03-16 | Python-native module docstring format. Level 2 split into 2a/2b. `rules:` replaces `AGENT_RULES`. |
+| **0.6** | **2026-03-18** | **Redundancy audit: removed `deps:` (redundant with import statements) and `Depends:` (redundant with visible imports). Added Level 0 `.codedna` project manifest. Level 2 simplified to `Rules:` only (organic, written by agents). `used_by:` promoted to required field. Zoom metaphor: far (.codedna) → close (file header) → very close (function Rules:).** |
+
