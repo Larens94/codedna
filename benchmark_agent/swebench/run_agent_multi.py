@@ -2,19 +2,25 @@
 swebench/run_agent_multi.py — Runs CodeDNA benchmark on multiple LLM providers.
 
 deps:    google-genai, anthropic, openai — install with: pip install anthropic openai
-exports: results_multi_<model>.json per model
+exports: results_<model>/results.json per model
 rules:   Same system prompt, same tools, same tasks for all models.
          Only the LLM client changes — comparison is clean.
+         Three conditions: control (no annotations), codedna (curated), agent-annotated (auto).
 
 Usage:
   # Test all configured models
   GEMINI_API_KEY=... ANTHROPIC_API_KEY=... OPENAI_API_KEY=... python run_agent_multi.py
 
   # Test a specific model
-  python run_agent_multi.py --model gemini-2.5-pro
-  python run_agent_multi.py --model claude-3-7-sonnet
-  python run_agent_multi.py --model gpt-4o
-  python run_agent_multi.py --model deepseek-chat
+  python run_agent_multi.py --model gemini-2.5-flash
+  python run_agent_multi.py --model claude-sonnet-4-6
+
+  # Multi-run for statistical significance
+  python run_agent_multi.py --model gemini-2.5-flash --runs 3 --temperature 0.1
+
+  # Run only specific condition (faster)
+  python run_agent_multi.py --model gemini-2.5-flash --condition codedna
+  python run_agent_multi.py --model gemini-2.5-flash --condition agent-annotated
 """
 
 import argparse
@@ -50,6 +56,15 @@ Strategy:
 
 Do not stop at finding just the first root cause. Make sure you map the full architectural boundary of the problem.
 """
+
+AGENT_ANNOTATED_PROMPT_HEADER = """## CodeDNA v0.7 — READ THIS FIRST
+(Annotations were generated automatically by an AI agent — no human curation.)
+
+"""
+
+# Agent-annotated uses the same navigation instructions as codedna
+# The difference is in the codebase variant, not the prompt.
+AGENT_ANNOTATED_PROMPT = None  # set after CODEDNA_PROMPT is defined
 
 CODEDNA_PROMPT = """## CodeDNA v0.7 — READ THIS FIRST
 
@@ -95,6 +110,19 @@ Tools available:
 
 Do not stop at finding just the first root cause. Use the `used_by:` graph to map the full boundary.
 """
+
+# Agent-annotated reuses the same navigation prompt (auto-generated headers have same format)
+AGENT_ANNOTATED_PROMPT = AGENT_ANNOTATED_PROMPT_HEADER + CODEDNA_PROMPT.split("## CodeDNA v0.7", 1)[-1].lstrip()
+
+
+def load_annotation_cost(ann_dir: Path) -> dict | None:
+    """Load annotation cost metadata if present (agent_annotated condition only)."""
+    cost_file = ann_dir / ".annotation_cost.json"
+    if cost_file.exists():
+        with open(cost_file) as f:
+            return json.load(f)
+    return None
+
 
 # ─────────────────── Tool execution (shared) ───────────────────
 
@@ -568,8 +596,10 @@ def main():
                         help="Number of runs per task for statistical averaging (default: 1)")
     parser.add_argument("--temperature", type=float, default=0.0,
                         help="Temperature for LLM sampling (default: 0.0, use 0.1 for multi-run)")
-    parser.add_argument("--codedna-only", action="store_true",
-                        help="Skip control, run CodeDNA only (faster)")
+    parser.add_argument("--condition",
+                        choices=["all", "control", "codedna", "agent-annotated"],
+                        default="all",
+                        help="Which condition(s) to run (default: all)")
     args = parser.parse_args()
 
     if args.runs > 1 and args.temperature == 0.0:
@@ -595,13 +625,18 @@ def main():
             std = (sum((v - m)**2 for v in vals) / (len(vals) - 1)) ** 0.5 if len(vals) > 1 else 0.0
             return {"mean": round(m, 4), "std": round(std, 4), "values": [round(v, 4) for v in vals]}
 
+        run_ctrl  = args.condition in ("all", "control")
+        run_cdna  = args.condition in ("all", "codedna")
+        run_aann  = args.condition in ("all", "agent-annotated")
+
         results = []
         for task in tasks:
-            iid     = task["instance_id"]
-            problem = task["problem_statement"]
-            gt      = task["files_in_patch"]
+            iid      = task["instance_id"]
+            problem  = task["problem_statement"]
+            gt       = task["files_in_patch"]
             ctrl_dir = PROJECTS_DIR / iid / "control"
             cdna_dir = PROJECTS_DIR / iid / "codedna"
+            aann_dir = PROJECTS_DIR / iid / "agent_annotated"
 
             if not ctrl_dir.exists():
                 print(f"⚠️  {iid}: not set up — run setup_repos.py first.")
@@ -610,63 +645,96 @@ def main():
             print(f"\n{'─'*60}")
             print(f"Task: {iid}  ({len(gt)} ground-truth files)")
 
-            # Multi-run: run N times and collect per-run results
-            ctrl_runs = []
-            cdna_runs = []
+            ctrl_runs, cdna_runs, aann_runs = [], [], []
+
             for run_i in range(args.runs):
                 run_label = f" [run {run_i+1}/{args.runs}]" if args.runs > 1 else ""
 
-                ctrl_result = None
-                if not args.codedna_only:
+                if run_ctrl:
                     print(f"  → CONTROL{run_label} ...", flush=True)
-                    log, text = dispatch(problem, ctrl_dir, cfg, args.max_turns, temperature=args.temperature, system_prompt=SYSTEM_PROMPT)
-                    ctrl_result = build_result(log, text, gt)
-                    cr = ctrl_result["metrics_read"]
-                    print(f"  Control: {ctrl_result['tool_calls']} calls "
-                          f"({ctrl_result['read_calls']} reads, {ctrl_result['grep_calls']} greps) | "
-                          f"{ctrl_result['total_chars_consumed']:,} chars | "
+                    log, text = dispatch(problem, ctrl_dir, cfg, args.max_turns,
+                                         temperature=args.temperature, system_prompt=SYSTEM_PROMPT)
+                    r = build_result(log, text, gt)
+                    cr = r["metrics_read"]
+                    print(f"  Control: {r['tool_calls']} calls "
+                          f"({r['read_calls']} reads, {r['grep_calls']} greps) | "
+                          f"{r['total_chars_consumed']:,} chars | "
                           f"read(R={cr['recall']:.0%} P={cr['precision']:.0%} F1={cr['f1']:.0%})")
-                    ctrl_runs.append(ctrl_result)
+                    ctrl_runs.append(r)
 
-                print(f"  → CODEDNA{run_label} ...", flush=True)
-                log, text = dispatch(problem, cdna_dir, cfg, args.max_turns, temperature=args.temperature, system_prompt=CODEDNA_PROMPT)
-                cdna_result = build_result(log, text, gt)
-                dr = cdna_result["metrics_read"]
-                print(f"  CodeDNA: {cdna_result['tool_calls']} calls "
-                      f"({cdna_result['read_calls']} reads, {cdna_result['grep_calls']} greps) | "
-                      f"{cdna_result['total_chars_consumed']:,} chars | "
-                      f"read(R={dr['recall']:.0%} P={dr['precision']:.0%} F1={dr['f1']:.0%})")
-                cdna_runs.append(cdna_result)
+                if run_cdna:
+                    print(f"  → CODEDNA{run_label} ...", flush=True)
+                    log, text = dispatch(problem, cdna_dir, cfg, args.max_turns,
+                                         temperature=args.temperature, system_prompt=CODEDNA_PROMPT)
+                    r = build_result(log, text, gt)
+                    dr = r["metrics_read"]
+                    print(f"  CodeDNA: {r['tool_calls']} calls "
+                          f"({r['read_calls']} reads, {r['grep_calls']} greps) | "
+                          f"{r['total_chars_consumed']:,} chars | "
+                          f"read(R={dr['recall']:.0%} P={dr['precision']:.0%} F1={dr['f1']:.0%})")
+                    cdna_runs.append(r)
 
-            # For single run, keep backward-compatible output
+                if run_aann:
+                    if not aann_dir.exists():
+                        print(f"  ⚠️  agent_annotated/ not found for {iid} — "
+                              f"run setup_agent_annotated.py first.")
+                    else:
+                        print(f"  → AGENT-ANNOTATED{run_label} ...", flush=True)
+                        log, text = dispatch(problem, aann_dir, cfg, args.max_turns,
+                                             temperature=args.temperature,
+                                             system_prompt=AGENT_ANNOTATED_PROMPT)
+                        r = build_result(log, text, gt)
+                        ar = r["metrics_read"]
+                        print(f"  AgentAnn: {r['tool_calls']} calls "
+                              f"({r['read_calls']} reads, {r['grep_calls']} greps) | "
+                              f"{r['total_chars_consumed']:,} chars | "
+                              f"read(R={ar['recall']:.0%} P={ar['precision']:.0%} F1={ar['f1']:.0%})")
+                        aann_runs.append(r)
+
+            # Load annotation cost for agent_annotated condition
+            ann_cost = load_annotation_cost(aann_dir) if aann_dir.exists() else None
+
+            # Build result entry (backward-compatible for single run)
+            entry = {
+                "instance_id":        iid,
+                "repo":               task["repo"],
+                "ground_truth_files": gt,
+            }
+
             if args.runs == 1:
-                results.append({
-                    "instance_id":        iid,
-                    "repo":               task["repo"],
-                    "ground_truth_files": gt,
-                    "control":            ctrl_runs[0] if ctrl_runs else None,
-                    "codedna":            cdna_runs[0],
-                })
+                entry["control"]         = ctrl_runs[0] if ctrl_runs else None
+                entry["codedna"]         = cdna_runs[0] if cdna_runs else None
+                entry["agent_annotated"] = aann_runs[0] if aann_runs else None
             else:
-                # Multi-run: store all runs + mean/std for F1
+                entry["n_runs"]              = args.runs
+                entry["temperature"]         = args.temperature
+                entry["control"]             = ctrl_runs[0]  if ctrl_runs  else None
+                entry["control_runs"]        = ctrl_runs      if ctrl_runs  else None
+                entry["control_f1_stats"]    = avg_f1(ctrl_runs) if ctrl_runs else None
+                entry["codedna"]             = cdna_runs[0]  if cdna_runs  else None
+                entry["codedna_runs"]        = cdna_runs      if cdna_runs  else None
+                entry["codedna_f1_stats"]    = avg_f1(cdna_runs) if cdna_runs else None
+                entry["agent_annotated"]     = aann_runs[0]  if aann_runs  else None
+                entry["agent_annotated_runs"]= aann_runs      if aann_runs  else None
+                entry["agent_annotated_f1_stats"] = avg_f1(aann_runs) if aann_runs else None
 
-                results.append({
-                    "instance_id":        iid,
-                    "repo":               task["repo"],
-                    "ground_truth_files": gt,
-                    "n_runs":             args.runs,
-                    "temperature":        args.temperature,
-                    "control":            ctrl_runs[0] if ctrl_runs else None,
-                    "control_runs":       ctrl_runs if ctrl_runs else None,
-                    "control_f1_stats":   avg_f1(ctrl_runs) if ctrl_runs else None,
-                    "codedna":            cdna_runs[0],
-                    "codedna_runs":       cdna_runs,
-                    "codedna_f1_stats":   avg_f1(cdna_runs),
-                })
-                cf1 = avg_f1(ctrl_runs) if ctrl_runs else {"mean": 0, "std": 0}
-                df1 = avg_f1(cdna_runs)
-                print(f"  📊 Mean F1 — Control: {cf1['mean']:.0%}±{cf1['std']:.0%}  "
-                      f"CodeDNA: {df1['mean']:.0%}±{df1['std']:.0%}")
+                # Print mean F1 summary
+                parts = []
+                if ctrl_runs:
+                    cf1 = avg_f1(ctrl_runs)
+                    parts.append(f"Control: {cf1['mean']:.0%}±{cf1['std']:.0%}")
+                if cdna_runs:
+                    df1 = avg_f1(cdna_runs)
+                    parts.append(f"CodeDNA: {df1['mean']:.0%}±{df1['std']:.0%}")
+                if aann_runs:
+                    af1 = avg_f1(aann_runs)
+                    parts.append(f"AgentAnn: {af1['mean']:.0%}±{af1['std']:.0%}")
+                print(f"  📊 Mean F1 — {' | '.join(parts)}")
+
+            if ann_cost:
+                entry["annotation_cost"] = ann_cost
+
+            results.append(entry)
 
         # Save results in runs/<model_name>/results.json
         run_dir = RUNS_DIR / model_name.replace('/', '-')
