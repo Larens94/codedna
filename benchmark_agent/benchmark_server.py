@@ -434,19 +434,17 @@ def api_run():
     active_queue.put({"type": "task_info", "task_id": task_id, "gt": active_gt,
                       "n_gt": len(active_gt), "model": model_name})
 
-    # Run both in parallel
-    def run_ctrl():
+    # Run sequentially (control first, then codedna) to avoid rate limits
+    def run_sequential():
         run_with_streaming(problem, ctrl_dir, cfg["provider"], cfg["model_id"],
                            "control", active_queue, temperature=0, max_turns=30,
                            system_prompt=ram.SYSTEM_PROMPT)
-
-    def run_cdna():
+        time.sleep(2)  # brief pause between runs
         run_with_streaming(problem, cdna_dir, cfg["provider"], cfg["model_id"],
                            "codedna", active_queue, temperature=0, max_turns=30,
                            system_prompt=ram.CODEDNA_PROMPT)
 
-    threading.Thread(target=run_ctrl, daemon=True).start()
-    threading.Thread(target=run_cdna, daemon=True).start()
+    threading.Thread(target=run_sequential, daemon=True).start()
 
     return jsonify({"status": "started", "task_id": task_id, "model": model_name})
 

@@ -174,14 +174,14 @@ def build_result(log: dict, final_text: str, ground_truth: list) -> dict:
 
 # ─────────────────── Retry helper ───────────────────
 
-def call_with_retry(fn, *args, max_attempts=3, **kwargs):
+def call_with_retry(fn, *args, max_attempts=5, **kwargs):
     """Generic retry with exponential backoff for API calls."""
     for attempt in range(max_attempts):
         try:
             return fn(*args, **kwargs)
         except Exception as e:
             if attempt < max_attempts - 1:
-                wait = 2 ** attempt
+                wait = 5 * (2 ** attempt)  # 5s, 10s, 20s, 40s
                 print(f"    ⚠️  API error ({type(e).__name__}), retrying in {wait}s...")
                 time.sleep(wait)
             else:

@@ -257,7 +257,7 @@ footer a { color:var(--accent); text-decoration:none; }
   <a class="nav-logo" href="#">
     <div class="nav-logo-mark"><img src="logo.png" alt="CodeDNA logo"></div>
     <span class="nav-logo-text">CodeDNA</span>
-    <span class="nav-version">v0.5</span>
+    <span class="nav-version">v0.7</span>
   </a>
   <div class="nav-links">
     <a href="#problema" data-i18n="navProblem">The Problem</a>
@@ -275,7 +275,7 @@ footer a { color:var(--accent); text-decoration:none; }
   <div class="hero-grid-bg"></div>
   <canvas id="hero-canvas"></canvas>
   <div class="hero-inner">
-    <div class="hero-eyebrow fade-up"><span class="eyebrow-dot"></span>CodeDNA Annotation Standard · v0.5 · MIT</div>
+    <div class="hero-eyebrow fade-up"><span class="eyebrow-dot"></span>CodeDNA Annotation Standard · v0.7 · MIT</div>
     <h1 class="fade-up" data-i18n-html="h1">The code that<br><em>explains itself.</em></h1>
     <p class="hero-sub fade-up" data-i18n-html="heroSub">
       AI tools editing your code make mistakes because they have <strong>no context</strong>. CodeDNA embeds it directly in the files — like DNA in every cell. Zero RAG. Minimal drift.
@@ -414,12 +414,11 @@ footer a { color:var(--accent); text-decoration:none; }
             <div class="code-bar"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#febc2e"></div><div class="dot" style="background:#28c840"></div><span class="code-filename">pricing.py</span></div>
             <pre class="code-pre"><span class="th">"""pricing.py — Pricing engine with tier discounts.
 
-deps:    config.py → MAX_DISCOUNT_RATE
 exports: apply_discount(cents, tier) -> int
 used_by: checkout.py → build_cart
-tables:  discount_tiers(tier, multiplier)
 rules:   NEVER exceed MAX_DISCOUNT_RATE from config.py;
-         apply_discount() must cap before returning
+         apply_discount() must cap before returning.
+         DB: discount_tiers(tier, multiplier).
 """</span></pre>
           </div>
         </div>
@@ -429,7 +428,7 @@ rules:   NEVER exceed MAX_DISCOUNT_RATE from config.py;
         <div class="level-meta">
           <div class="level-num" data-i18n="l2Num">Level 2</div>
           <div class="level-name">Sliding-Window Annotations</div>
-          <div class="level-desc" data-i18n-html="l2Desc">Two sub-layers: <strong>2a</strong> Google-style function docstring (rules + deps at function scope), <strong>2b</strong> inline call-site comment exactly where the danger is. Even in a 10-line extract the AI receives all the context it needs.</div>
+          <div class="level-desc" data-i18n-html="l2Desc"><code>Rules:</code> docstrings on critical functions, written organically by agents as they discover constraints. Each agent that fixes a bug leaves knowledge for the next. Even in a 10-line extract the AI receives all the context it needs.</div>
         </div>
         <div class="level-code">
           <div class="code-block">
@@ -437,12 +436,11 @@ rules:   NEVER exceed MAX_DISCOUNT_RATE from config.py;
             <pre class="code-pre"><span class="tk">def</span> apply_discount(cents: <span class="ts">int</span>, tier: <span class="ts">str</span>) -> <span class="ts">int</span>:
   <span class="tc">"""Apply tier discount to price in cents.
 
-  Depends: config.MAX_DISCOUNT_RATE — hard cap from config.
   Rules:   MUST cap discount before returning — exceeding
            MAX_DISCOUNT_RATE is a financial compliance bug.
+           After fix #42: also check tier != 'internal'.
   """</span>
   discount = get_multiplier(tier)
-  <span class="ti"># cap mandatory — never exceed config.MAX_DISCOUNT_RATE</span>
   discount = min(discount, MAX_DISCOUNT_RATE)
   <span class="tk">return</span> int(cents * (<span class="ts">1.0</span> - discount))</pre>
           </div>
@@ -473,18 +471,18 @@ data  = get_users()
         <div class="level-meta">
           <div class="level-num" data-i18n="bonusNum">Bonus</div>
           <div class="level-name" data-i18n="bonusName">Manifest-Only Planner</div>
-          <div class="level-desc" data-i18n-html="bonusDesc">To plan changes across 10+ files, the AI reads only the first 14 lines of each and uses <code>CONTEXT_BUDGET</code> to filter — building the full map in very few tokens.</div>
+          <div class="level-desc" data-i18n-html="bonusDesc">To plan changes across 10+ files, the AI reads <code>.codedna</code> first, then only the module docstring of each file (first 8–12 lines) — building the full map in very few tokens.</div>
         </div>
         <div class="level-code">
           <div class="code-block">
             <div class="code-bar"><span class="code-filename">Planner — Standard</span></div>
-            <pre class="code-pre" data-i18n-html="plannerCode"><span class="tc"># 1. Read only the first 14 lines (manifest)</span>
-<span class="tc"># 2. always → always include</span>
-<span class="tc">#    normal → include if relevant</span>
-<span class="tc">#    minimal → skip (utility file)</span>
-<span class="tc"># 3. Build DEPENDS_ON / REQUIRED_BY graph</span>
-<span class="tc"># 4. Open in full ONLY the required files</span>
-<span class="tc"># Cost: ~70 tok × N files = complete map</span></pre>
+            <pre class="code-pre" data-i18n-html="plannerCode"><span class="tc"># 1. Read .codedna — project structure</span>
+<span class="tc"># 2. Read module docstring (8–12 lines each)</span>
+<span class="tc"># 3. Filter: used_by mentions target? Include</span>
+<span class="tc">#    rules mentions task domain? Include</span>
+<span class="tc"># 4. Build exports → used_by graph</span>
+<span class="tc"># 5. Open in full ONLY the relevant files</span>
+<span class="tc"># Cost: ~50 tok × N files = complete map</span></pre>
           </div>
         </div>
       </div>
@@ -522,7 +520,7 @@ data  = get_users()
     <div class="sc-card">
       <div class="sc-tag">Scenario S5</div>
       <div class="sc-title" data-i18n="s5Title">🔗 Cascade Change — Domino Effect</div>
-      <div class="sc-body" data-i18n-html="s5Body">utils.py is modified. Without <code>@MODIFIES-ALSO</code>, the AI only updates utils.py and leaves main.py with a runtime KeyError.</div>
+      <div class="sc-body" data-i18n-html="s5Body">utils.py is modified. Without <code>used_by:</code>, the AI only updates utils.py and leaves main.py with a runtime KeyError.</div>
       <div class="sc-scores">
         <div class="sc-score bad">Control<strong>5.8 / 10</strong></div>
         <div class="sc-score good">CodeDNA<strong>9.8 / 10</strong></div>
@@ -540,7 +538,7 @@ data  = get_users()
     <div class="sc-card">
       <div class="sc-tag">Scenario S7</div>
       <div class="sc-title" data-i18n="s7Title">💥 Broken Dependency — Silent Rename</div>
-      <div class="sc-body" data-i18n-html="s7Body"><code>format_revenue()</code> → <code>format_currency()</code>. The manifest records the rename in <code>LAST_MODIFIED</code> and <code>AGENT_RULES</code>. The Control calls the old name: crash.</div>
+      <div class="sc-body" data-i18n-html="s7Body"><code>format_revenue()</code> → <code>format_currency()</code>. The <code>rules:</code> field records the rename. The Control calls the old name: crash.</div>
       <div class="sc-scores">
         <div class="sc-score bad">Control<strong>4.5 / 10</strong></div>
         <div class="sc-score good">CodeDNA<strong>9.9 / 10</strong></div>
@@ -549,7 +547,7 @@ data  = get_users()
     <div class="sc-card">
       <div class="sc-tag">Scenario S8</div>
       <div class="sc-title" data-i18n="s8Title">🗺️ Planning — 8 Files, Manifest Only</div>
-      <div class="sc-body" data-i18n-html="s8Body">The AI must find the 2 right files to change by reading only the manifests (14 lines each). Using <code>CONTEXT_BUDGET</code> and the DEPENDS_ON graph it identifies exactly the 2 files.</div>
+      <div class="sc-body" data-i18n-html="s8Body">The AI must find the 2 right files to change by reading only the module docstrings (8–12 lines each). Using the <code>exports:</code> → <code>used_by:</code> graph it identifies exactly the 2 files.</div>
       <div class="sc-scores">
         <div class="sc-score bad">Control<strong>6.8 / 10</strong></div>
         <div class="sc-score good">CodeDNA<strong>9.6 / 10</strong></div>
@@ -640,11 +638,12 @@ data  = get_users()
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Level 1 — Manifest Header (v0.1–v0.4)</div><div class="rm-sub">FILE, PURPOSE, DEPENDS_ON, EXPORTS, AGENT_RULES, REQUIRED_BY, DB_TABLES, LAST_MODIFIED.</div></div></div>
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Level 2 — Sliding-Window Annotations (v0.2–v0.3)</div><div class="rm-sub" data-i18n="rm2Sub">@REQUIRES-READ, @SEE, @MODIFIES-ALSO, @BREAKS-IF-RENAMED — solves the sliding-window problem.</div></div></div>
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Level 3 — Semantic Naming + CONTEXT_BUDGET (v0.3)</div><div class="rm-sub" data-i18n-html="rm3Sub">Naming <code>&lt;type&gt;_&lt;shape&gt;_&lt;domain&gt;_&lt;origin&gt;</code>. Manifest-Only Planner Read.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">LLM-Optimised Format (v0.5) ✦ Current</div><div class="rm-sub" data-i18n="rm4Sub">Python-native module docstring (L1) + Google-style function docstring (L2a) + inline call-site comment (L2b). Maximises LLM comprehension trained on Python corpora.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">LLM-Optimised Format (v0.5)</div><div class="rm-sub" data-i18n="rm4Sub">Python-native module docstring (L1) + function-level Rules: docstrings (L2). Maximises LLM comprehension trained on Python corpora.</div></div></div>
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm5Title">Enterprise Benchmark — 105-file, 3 bugs, 48 distractors</div><div class="rm-sub" data-i18n="rm5Sub">−29% tool calls, 0 incorrect root-cause identifications (vs 1 Control). Replicable on disk.</div></div></div>
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm6Title">Multi-Model SWE-bench Benchmark — 5 LLMs, 5 tasks</div><div class="rm-sub" data-i18n="rm6Sub">Gemini Flash +20pp, Codex +12pp, Pro +8pp, GPT-4o +2pp. 4/5 models improved. Model-agnostic validation.</div></div></div>
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm7Title">White Paper / arXiv preprint</div><div class="rm-sub" data-i18n="rm7Sub">Formal study with reproducible methodology, DNA analogy, and comparison against SWE-bench, LoCoBench-Agent, ETH Zurich (2026).</div></div></div>
 
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Redundancy Audit (v0.7) ✦ Current</div><div class="rm-sub">Header reduced to 3 fields: exports, used_by, rules. rules: promoted to required — the inter-agent communication channel. Python-only focus.</div></div></div>
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm8Title">IDE Plugin — VS Code</div><div class="rm-sub" data-i18n="rm8Sub">Auto-generation of module docstrings and function docstrings, real-time validation against SPEC.md.</div></div></div>
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm9Title">Full SWE-bench Evaluation — 50+ tasks</div><div class="rm-sub" data-i18n="rm9Sub">Extended benchmark across multiple repositories and languages. Statistical significance testing.</div></div></div>
   </div>
@@ -655,7 +654,7 @@ data  = get_users()
   <div class="logo-row">
     <div class="logo-mark">🧬</div>
     <strong style="color:var(--text); font-size:1rem;">CodeDNA</strong>
-    <span style="font-size:0.7rem; color:var(--muted);">v0.5 · MIT</span>
+    <span style="font-size:0.7rem; color:var(--muted);">v0.7 · MIT</span>
   </div>
   <p style="margin-bottom:0.5rem;"><em>"Every file carries the complete genome of the project it belongs to."</em></p>
   <p><a href="https://github.com/Larens94/codedna">github.com/Larens94/codedna</a></p>
@@ -679,21 +678,21 @@ const IT = {
   prob3Title:'La Soluzione: CodeDNA', prob3Text:"Il contesto vive nel file stesso \u2014 non in un documento esterno. Ogni frammento che l'AI legge porta con s\u00e9 le istruzioni per agire correttamente.", prob3Verdict:'\u2705 Zero errori in tutti i 5 scenari',
   howEyebrow:'Come Funziona', howH2:'Tre livelli. Ogni frammento \u00e8 autonomo.',
   howLead:"Come il DNA biologico: tagliarne metà produce due frammenti che portano ancora l'informazione completa. Con CodeDNA, 10 righe estratte a caso da qualsiasi punto del file bastano all'AI per agire correttamente.",
-  l1Num:'Livello 1', l1Desc:"Una module docstring Python-nativa all'inizio di ogni file. L'AI la legge prima del codice e conosce già scopo, dipendenze, API pubblica e regole. Formato nativo Python \u2014 massimizza la comprensione dei modelli addestrati su corpus Python.",
-  l2Num:'Livello 2', l2Desc:'Due sotto-livelli: <strong>2a</strong> docstring di funzione (Google style) con regole e dipendenze, <strong>2b</strong> commento inline esattamente dove c\'è il rischio. Anche in 10 righe estratte, l\'AI riceve tutto il contesto necessario.', l2Filename:'pricing.py \u00b7 righe 210\u2013226',
+  l1Num:'Livello 1', l1Desc:"Una module docstring Python-nativa all'inizio di ogni file. L'AI la legge prima del codice e conosce gi\u00e0 scopo, API pubblica, chi dipende da questo file e regole. Formato nativo Python \u2014 massimizza la comprensione dei modelli addestrati su corpus Python.",
+  l2Num:'Livello 2', l2Desc:'Docstring <code>Rules:</code> sulle funzioni critiche, scritte organicamente dagli agenti quando scoprono vincoli. Ogni agente che risolve un bug lascia conoscenza per il prossimo. Anche in 10 righe estratte, l\'AI riceve tutto il contesto necessario.', l2Filename:'pricing.py \u00b7 righe 210\u2013226',
   l3Num:'Livello 3', l3Desc:'I nomi delle variabili codificano tipo, forma e origine. Un frammento da 10 righe \u00e8 completamente auto-documentante \u2014 zero tracciamento a ritroso.', l3Filename:'Confronto',
   l3Code:'<span class="tc"># \u274c Ambiguo \u2014 euro? centesimi?</span>\nprice = request.json.get(<span class="ts">"price"</span>)\ndata  = get_users()\n\n<span class="tc"># \u2705 CodeDNA \u2014 tipo, dominio, origine chiari</span>\n<span class="ti">int_cents_price_from_request</span> = request.json.get(<span class="ts">"price"</span>)\n<span class="ti">list_dict_users_from_db</span>      = get_users()',
-  bonusNum:'Bonus', bonusName:'Planner Manifest-Only', bonusDesc:'Per pianificare modifiche su 10+ file, l\'AI legge solo le prime 14 righe di ciascuno e usa <code>CONTEXT_BUDGET</code> per filtrare \u2014 costruisce la mappa completa in pochi token.',
-  plannerCode:'<span class="tc"># 1. Leggi solo le prime 14 righe (manifest)</span>\n<span class="tc"># 2. always \u2192 includi sempre</span>\n<span class="tc">#    normal \u2192 includi se rilevante</span>\n<span class="tc">#    minimal \u2192 salta (utility file)</span>\n<span class="tc"># 3. Costruisci grafo DEPENDS_ON / REQUIRED_BY</span>\n<span class="tc"># 4. Apri in full SOLO i file necessari</span>\n<span class="tc"># Costo: ~70 tok \u00d7 N file = mappa completa</span>',
+  bonusNum:'Bonus', bonusName:'Planner Manifest-Only', bonusDesc:'Per pianificare modifiche su 10+ file, l\'AI legge <code>.codedna</code> e poi solo la module docstring di ogni file (prime 8\u201312 righe) \u2014 costruisce la mappa completa in pochi token.',
+  plannerCode:'<span class="tc"># 1. Leggi .codedna \u2014 struttura progetto</span>\n<span class="tc"># 2. Leggi module docstring (8\u201312 righe ciascuno)</span>\n<span class="tc"># 3. Filtra: used_by menziona il target? Includi</span>\n<span class="tc">#    rules menziona il dominio? Includi</span>\n<span class="tc"># 4. Costruisci grafo exports \u2192 used_by</span>\n<span class="tc"># 5. Apri in full SOLO i file rilevanti</span>\n<span class="tc"># Costo: ~50 tok \u00d7 N file = mappa completa</span>',
   bmkEyebrow:'Benchmark Reale', bmkH2:'Prove schiaccianti \u2014 non opinioni.',
   bmkLead:'5 scenari costruiti per essere <strong>impossibili da risolvere correttamente senza CodeDNA</strong>. Il Control commette errori deterministici. CodeDNA: zero errori in tutti i test.',
   chartQLabel:'Qualit\u00e0 Edit \u2014 punteggio AI Judge 0\u201310',
   chartELabel:'Errori totali per tipo (su 3 run a scenario)',
   s4Title:'\ud83d\udd0d Sliding Window \u2014 Vincolo Nascosto', s4Body:'L\'AI legge solo le righe 200\u2013250. Il limite massimo di sconto \u00e8 nel manifest (riga 7). Senza CodeDNA lo ignora e applica sconti illegali al 50%+.',
-  s5Title:'\ud83d\udd17 Cascade Change \u2014 Effetto Domino', s5Body:'Si modifica utils.py. Senza <code>@MODIFIES-ALSO</code>, l\'AI aggiorna solo utils.py e lascia main.py con una KeyError a runtime.',
+  s5Title:'\ud83d\udd17 Cascade Change \u2014 Effetto Domino', s5Body:'Si modifica utils.py. Senza <code>used_by:</code>, l\'AI aggiorna solo utils.py e lascia main.py con una KeyError a runtime.',
   s6Title:'\ud83d\udd22 Tipo Ambiguo \u2014 Euro o Centesimi?', s6Body:'<code>price = 1999</code> \u2014 euro o centesimi? Senza semantic naming l\'AI sbaglia unit\u00e0. Con CodeDNA: <code>int_cents_price_from_request</code> \u2014 zero dubbi.',
-  s7Title:'\ud83d\udca5 Dipendenza Rotta \u2014 Rename Silenzioso', s7Body:'<code>format_revenue()</code> \u2192 <code>format_currency()</code>. Il manifest registra il rename nel campo <code>LAST_MODIFIED</code> e <code>AGENT_RULES</code>. Il Control chiama il vecchio nome: crash.',
-  s8Title:'\ud83d\uddfa\ufe0f Planning \u2014 8 File, Solo Manifest', s8Body:'L\'AI deve trovare i 2 file giusti da modificare leggendo solo i manifest (14 righe ciascuno). Con <code>CONTEXT_BUDGET</code> e il grafo DEPENDS_ON identifica esattamente i 2 file.',
+  s7Title:'\ud83d\udca5 Dipendenza Rotta \u2014 Rename Silenzioso', s7Body:'<code>format_revenue()</code> \u2192 <code>format_currency()</code>. Il campo <code>rules:</code> registra il rename. Il Control chiama il vecchio nome: crash.',
+  s8Title:'\ud83d\uddfa\ufe0f Planning \u2014 8 File, Solo Manifest', s8Body:'L\'AI deve trovare i 2 file giusti da modificare leggendo solo le module docstring (8\u201312 righe ciascuna). Con il grafo <code>exports:</code> \u2192 <code>used_by:</code> identifica esattamente i 2 file.',
   methodology:'\ud83d\udd2c <strong style="color:var(--text2)">Metodologia:</strong> 5 scenari \u00d7 3 run con Gemini 2.5 Flash. Valutazione: LLM judge indipendente + checker automatico (constraint_violation, cascade_miss). Script: <code>benchmark/codedna_benchmark.py</code>. Risultati: <code>benchmark/results_v2.json</code>.',
   cmpEyebrow:'Confronto', cmpH2:'CodeDNA vs. approcci esistenti',
   thApproach:'Approccio', thLatency:'Latenza retrieval', thInfra:'Infrastruttura',
@@ -701,7 +700,7 @@ const IT = {
   rmEyebrow:'Stato', badgeDone:'Fatto', badgeNext:'Prossimo',
   rm2Sub:'@REQUIRES-READ, @SEE, @MODIFIES-ALSO, @BREAKS-IF-RENAMED \u2014 risolve il problema sliding-window.',
   rm3Sub:'Naming <code>&lt;tipo&gt;_&lt;shape&gt;_&lt;dominio&gt;_&lt;origine&gt;</code>. Planner Manifest-Only Read.',
-  rm4Sub:'Module docstring Python-nativo (L1) + docstring di funzione Google-style (L2a) + commento inline al sito di chiamata (L2b). Massimizza la comprensione degli LLM addestrati su Python.',
+  rm4Sub:'Module docstring Python-nativo (L1) + docstring Rules: a livello funzione (L2). Massimizza la comprensione degli LLM addestrati su Python.',
   rm5Title:'Benchmark Enterprise \u2014 105 file, 3 bug, 48 distractor', rm5Sub:'\u221229% tool call, 0 identificazioni errate (vs 1 Control). Replicabile su disco.',
   rm6Sub:'Studio formale con analogia DNA biologico e confronto contro SWE-bench, LoCoBench-Agent, ETH Zurich (2026).',
   rm7Sub:'Auto-generazione module docstring e function docstring, validazione real-time contro SPEC.md.'
