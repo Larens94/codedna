@@ -1,6 +1,6 @@
-# CodeDNA v0.6 — GitHub Copilot Instructions
+# CodeDNA v0.7 — GitHub Copilot Instructions
 
-This codebase uses the CodeDNA annotation standard (v0.6). Apply these rules in every suggestion.
+This codebase uses the CodeDNA annotation standard (v0.7). Apply these rules in every suggestion.
 
 ## Module header (required in every Python file)
 
@@ -11,7 +11,6 @@ Every file must begin with a module docstring:
 
 exports: public_function(arg) -> return_type
 used_by: consumer_file.py → consumer_function
-tables:  table_name(col1, col2) | none
 rules:   <hard constraint agents must never violate>
 """
 ```

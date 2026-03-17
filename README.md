@@ -1,9 +1,9 @@
-# 🧬 CodeDNA — Inter-Agent Communication Protocol v0.6
+# 🧬 CodeDNA — Inter-Agent Communication Protocol v0.7
 
 > *An in-source annotation standard where the writing agent encodes architectural context and the reading agent decodes it. The file is the channel. Every fragment carries the whole.*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
-[![Version](https://img.shields.io/badge/CodeDNA-v0.6-6366f1)](./SPEC.md)
+[![Version](https://img.shields.io/badge/CodeDNA-v0.7-6366f1)](./SPEC.md)
 [![arXiv](https://img.shields.io/badge/paper-arXiv-b31b1b)](./paper/codedna_paper.pdf)
 [![CI](https://github.com/Larens94/codedna/actions/workflows/ci.yml/badge.svg)](https://github.com/Larens94/codedna/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/Larens94/codedna/actions/workflows/codeql.yml/badge.svg)](https://github.com/Larens94/codedna/actions/workflows/codeql.yml)
@@ -120,7 +120,6 @@ A docstring at the top of every file. Only includes information that **cannot be
 
 exports: get_active_orders() -> list[dict] | create_order(user_id, items) -> None
 used_by: analytics/revenue.py → get_revenue_rows
-tables:  orders(user_id, status, created_at) | users(deleted_at)
 rules:   User system uses soft delete — NEVER return orders for users
          where users.deleted_at IS NOT NULL. Always JOIN on users.
 """
@@ -193,14 +192,7 @@ Because agents can hallucinate, `Rules:` annotations may contain incorrect infor
 
 ## 🌐 Language Support
 
-CodeDNA works in every language that supports single-line comments:
-
-| Language | Comment style |
-|---|---|
-| Python, Ruby, Shell | `# KEY: value` |
-| JavaScript, TypeScript, Go, Rust, C | `// KEY: value` |
-| SQL | `-- KEY: value` |
-| HTML | `<!-- KEY: value -->` |
+CodeDNA v0.7 is validated on **Python** using the native module docstring format. Support for other languages is planned for future versions.
 
 ---
 
@@ -210,7 +202,7 @@ CodeDNA works in every language that supports single-line comments:
 codedna/
 ├── README.md               ← you are here
 ├── QUICKSTART.md           ← 2-minute setup for every AI tool
-├── SPEC.md                 ← full technical specification v0.6
+├── SPEC.md                 ← full technical specification v0.7
 ├── integrations/
 │   ├── CLAUDE.md               ← Claude Code system prompt
 │   ├── .cursorrules             ← Cursor rules file
@@ -222,9 +214,7 @@ codedna/
 │   │   └── analyze_multi.py        ← multi-model comparison
 │   └── runs/                       ← results by model
 ├── examples/
-│   ├── python/
-│   ├── javascript/
-│   └── typescript/
+│   └── python/
 ├── paper/                  ← scientific paper (arXiv preprint)
 │   └── codedna_paper.pdf
 └── tools/

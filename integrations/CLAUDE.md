@@ -1,4 +1,4 @@
-# CodeDNA v0.6 — Protocol for Claude Code
+# CodeDNA v0.7 — Protocol for Claude Code
 
 This project uses the **CodeDNA** annotation standard. Follow these rules on every file operation.
 
@@ -21,7 +21,6 @@ Every new Python source file **must begin** with a CodeDNA module docstring:
 
 exports: public_function(arg) -> return_type
 used_by: consumer_file.py → consumer_function
-tables:  table_name(col1, col2) | none
 rules:   <hard constraint agents must never violate>
 """
 ```
@@ -33,8 +32,7 @@ Field guide:
 | First line | ✅ | `filename.py — <purpose ≤15 words>` |
 | `exports:` | ✅ | Public API with return type |
 | `used_by:` | ✅ | Who calls this file's exports |
-| `tables:` | — | DB tables accessed |
-| `rules:` | — | Hard constraints scoped to this file |
+| `rules:` | ✅ | Hard constraints — the inter-agent communication channel |
 
 ## Writing critical functions
 
@@ -52,9 +50,9 @@ def my_function(arg: type) -> return_type:
 
 1. **First step**: re-read `rules:` and the `Rules:` of the function you are editing.
 2. Apply all file-level constraints before writing.
-3. After editing, check `used_by:` and `cascade:` targets.
+3. After editing, check `used_by:` targets (especially `[cascade]`-tagged ones).
 4. Never remove `exports:` symbols — they are contracts used by other files.
-5. If you discover a constraint or fix a bug, add a `Rules:` annotation for the next agent.
+5. If you discover a constraint or fix a bug, **update `rules:` for the next agent.**
 
 ## Planning across multiple files
 

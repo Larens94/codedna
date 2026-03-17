@@ -1,8 +1,8 @@
 # CodeDNA Inter-Agent Communication Protocol — Specification
 
-**Version:** 0.6  
+**Version:** 0.7  
 **Status:** Draft  
-**Language:** Agnostic
+**Language:** Python (other languages planned)
 
 ---
 
@@ -81,7 +81,7 @@ Level 2 exists because the channel must work even when the receiver sees only a 
 - **Zero retrieval latency**: no vector DB, no network call
 - **Sliding-window safe**: Level 2 sub-layers guide agents that skip the header
 - **Planner efficient**: docstring-only reads give a full codebase map in ~70 tok/file
-- **Language adaptable**: docstring / comment-based protocol designed to work across languages (currently validated on Python)
+- **Python-native**: module docstring format, deeply embedded in LLM training data (other languages planned)
 - **Agent-first**: designed for agentic code generation workflows — the agent writes and maintains the annotations, not the human; marginal annotation cost approaches zero
 - **Human readable**: developers benefit as much as AI agents
 
@@ -153,31 +153,13 @@ The Module Header is written as a **Python module docstring** (triple-quoted str
 ```python
 """<filename> — <one-line purpose, max 15 words>.
 
-exports:   <symbol(signature)> → <return_type> | none
-used_by:   <file> → <symbol> | none
-cascade:   <file> → <symbol> (MUST update if this file's exports change) | none
-tested_by: <test_file> → <TestClass> | none
-tables:    <table>(<col1>, <col2>) | none
-raises:    <ExceptionType1>, <ExceptionType2> | none
-rules:     <hard constraints for AI agents; what to do and what to avoid> | none
+exports: <symbol(signature)> → <return_type> | none
+used_by: <file> → <symbol> | none
+rules:   <hard constraints for AI agents; what to do and what to avoid> | none
 """
 ```
 
-**For JavaScript / TypeScript / Go / Rust** (no native triple-string docstring), use a JSDoc-style block comment:
 
-```javascript
-/**
- * <filename> — <one-line purpose>.
- *
- * exports:   <symbol(signature)> → <return_type>
- * used_by:   <file> → <symbol>
- * cascade:   <file> → <symbol>
- * tested_by: <test_file> → <TestClass>
- * tables:    <table>(<col1>, <col2>)
- * raises:    <ErrorType1>, <ErrorType2>
- * rules:     <hard constraints for AI agents>
- */
-```
 
 ### 4.3 Fields
 
@@ -185,21 +167,31 @@ rules:     <hard constraints for AI agents; what to do and what to avoid> | none
 |---|---|---|
 | first line | ✅ | `<filename> — <purpose>` (≤15 words, describes *what*, not *how*) |
 | `exports` | ✅ | Public API with signatures |
-| `used_by` | ✅ | Inverse of deps; who calls this file's exports |
-| `cascade` | — | Files that **MUST** be updated when this file's exports change |
-| `tested_by` | — | Test file and class/function that covers this module |
-| `tables` | — | Tables and relevant columns, or `none` |
-| `raises` | — | Exceptions this module can propagate to callers |
-| `rules` | — | Hard constraints for AI agents (e.g. "never re-apply TAX_RATE") |
+| `used_by` | ✅ | Inverse of deps; who calls this file's exports. Optional `[cascade]` tag marks targets that **MUST** be updated when exports change. |
+| `rules` | ✅ | **The inter-agent communication channel.** Hard constraints, domain knowledge, what to do and what to avoid. Agents MUST read before editing and MUST update when they discover new constraints. |
 
-### 4.4 `rules:` Field
+### 4.4 `rules:` Field — The Inter-Agent Communication Channel
 
-The `rules:` field encodes hard constraints that apply agent-wide for this file. `rules:` applies to **every edit** in the file — it is the file's genome.
+`rules:` is **the most important field in CodeDNA**. It is the channel through which agents communicate with each other across time. When Agent A discovers a constraint, it writes it in `rules:`. When Agent B reads the file weeks later, it receives that knowledge instantly — without re-discovering it, without RAG, without external context.
 
-Common uses:
+**`rules:` is required.** Every file must have a `rules:` field — even if it's `none`. This signals to agents that the field is always expected and should always be checked and updated.
+
+`rules:` applies to **every edit** in the file — it is the file's genome.
+
+**What goes in `rules:`:**
+- Domain constraints: `MUST call is_suspended() before aggregating revenue (no filter in upstream function)`
 - Monetary constraints: `never hardcode prices; use config.py → PRICE_CONSTANTS`
-- DB constraints: `always use parameterized queries; never concatenate SQL`
-- Cross-file contracts: `MUST call is_suspended() before aggregating revenue (no filter in upstream function)`
+- DB constraints: `soft-delete via users.deleted_at — MUST filter before aggregating`
+- Security constraints: `never log tokens or passwords`
+- Data shape: `get_invoices_for_period() returns ALL tenants, NO suspended filter`
+- Cross-file contracts: `if changing monthly_revenue() signature → update api/serializers.py → RevenueSchema`
+
+**Agent behaviour:**
+- **On read**: always read `rules:` before writing any logic in this file
+- **On edit**: respect all constraints in `rules:` — violations are bugs
+- **On discovery**: if you discover a new constraint, fix a bug, or learn something non-obvious about this file — **add it to `rules:`**. This is how you communicate with the next agent.
+
+`rules:` annotations grow **organically**. They are not generated in batch — they are written by agents as they work. Each agent that fixes a bug or learns something important leaves a `rules:` annotation for the next agent. This creates a **knowledge accumulation cycle**: the codebase gets smarter with every agent interaction.
 
 ### 4.5 `used_by:` Field (Inverse Dependency)
 
@@ -210,82 +202,34 @@ Common uses:
 
 exports: format_currency(n) -> str | format_date(d) -> str
 used_by: views/dashboard.py → render | api/reports.py → revenue_route
+rules:   none
 """
 ```
 
 **Agent behaviour on edit**: when modifying an `exports:` symbol, check every file listed in `used_by:` and update callers as needed.
 
-### 4.6 `cascade:` Field (Mandatory Update Targets)
+#### The `[cascade]` Tag
 
-`cascade:` is stronger than `used_by:`. While `used_by:` is informational ("these files call me"), `cascade:` is **imperative** ("these files **MUST** be updated if my exports change"). Typical targets: serializers, API schemas, type definitions, configuration files.
-
-```python
-cascade: api/serializers.py → RevenueSchema | docs/api_spec.yaml → /revenue
-```
-
-**Agent behaviour on edit**: after modifying an `exports:` symbol, the agent **MUST** open and update every file in `cascade:` before considering the task complete.
-
-### 4.7 `tested_by:` Field (Test File Mapping)
-
-`tested_by:` tells the agent where the tests for this module live. Without it, agents waste tool calls grepping for test files or create duplicate tests in wrong locations.
+Some `used_by:` targets are critical — they **MUST** be updated when exports change (serializers, API schemas, type definitions). Mark these with `[cascade]`:
 
 ```python
-tested_by: tests/test_revenue.py → TestMonthlyRevenue, TestAnnualSummary
+used_by: api/reports.py → revenue_route | api/serializers.py → RevenueSchema [cascade]
 ```
 
-**Agent behaviour on edit**: after modifying logic, open the `tested_by:` file and update or add test cases to cover the change.
+**Agent behaviour**: after modifying an `exports:` symbol, the agent **MUST** open and update every `[cascade]`-tagged file before considering the task complete. Non-tagged `used_by:` targets should be checked but may not need changes.
 
-### 4.8 `raises:` Field (Error Propagation)
+### 4.6 Example
 
-`raises:` declares which exceptions this module can propagate to callers. Agents frequently ignore error handling or write generic try/except blocks because they don't know what can fail.
-
-```python
-raises: TenantSuspendedError, NoDataError, InsufficientFundsError
-```
-
-**Agent behaviour on edit**: when calling a function from a module with `raises:`, the agent must handle or propagate each declared exception.
-
-
-### 4.9 Examples by Language
-
-**Python**
 ```python
 """analytics/revenue.py — Monthly/annual revenue aggregation from paid invoices.
 
-exports:   monthly_revenue(year,month)->dict | annual_summary(year)->list[dict]
-used_by:   api/reports.py → revenue_route | workers/report_generator.py → generate
-cascade:   api/serializers.py → RevenueSchema
-tested_by: tests/test_revenue.py → TestMonthlyRevenue
-tables:    invoices(tenant_id, amount_cents, status) | tenants(suspended_at, deleted_at)
-raises:    TenantSuspendedError, NoDataError
-rules:     get_invoices_for_period() returns ALL tenants, NO suspended filter →
-           callers MUST call is_suspended() BEFORE aggregating revenue
-"""
-```
-
-**JavaScript / TypeScript**
-```javascript
-/**
- * authService.ts — JWT authentication and session management.
- *
- * exports:   login(credentials)->Promise<Token> | verify(token)->User
- * used_by:   router.ts → authMiddleware()
- * cascade:   types/auth.d.ts → TokenPayload
- * tested_by: __tests__/authService.test.ts → AuthLoginSuite
- * tables:    users(id, email, password_hash, role)
- * raises:    InvalidCredentialsError, TokenExpiredError
- * rules:     never log tokens or passwords; role field is string not boolean
- */
-```
-
-**SQL**
-```sql
--- monthly_revenue.sql — Aggregated monthly revenue by category and region.
---
--- exports: (month, category, revenue, cost)
--- tables:  orders, order_items, products
--- rules:   always filter cancelled orders (status != 'cancelled')
-```
+exports: monthly_revenue(year, month) -> dict | annual_summary(year) -> list[dict]
+used_by: api/reports.py → revenue_route | api/serializers.py → RevenueSchema [cascade]
+rules:   get_invoices_for_period() returns ALL tenants, NO suspended filter →
+         callers MUST call is_suspended() BEFORE aggregating revenue.
+         DB: invoices(tenant_id, amount_cents, status), tenants(suspended_at, deleted_at).
+         Raises TenantSuspendedError if all tenants in period are suspended.
+"""```
 
 ---
 
@@ -417,16 +361,16 @@ When an AI agent must plan edits across a multi-file codebase, it should:
 
 ### 8.2 On WRITE (generate mode)
 1. Generate the module docstring as the **first output block**, before any imports.
-2. Populate fields: `exports`, `used_by`, `rules` (and optionally `cascade`, `tested_by`, `tables`, `raises`).
+2. Populate all three fields: `exports`, `used_by`, `rules`.
 3. For critical functions with non-obvious domain constraints, add a `Rules:` docstring.
 4. Apply semantic naming to data-carrying variables.
 
 ### 8.3 On EDIT
 1. **First step**: re-read `rules:` and the `Rules:` of the function you are editing.
 2. Apply all file-level constraints before writing.
-3. After editing, check `used_by:` and `cascade:` targets.
+3. After editing, check `used_by:` targets (especially `[cascade]`-tagged ones).
 4. If renaming an `exports:` symbol: update all `used_by:` callers.
-5. If you discover a constraint or fix a bug, add a `Rules:` annotation for the next agent.
+5. **If you discover a constraint or fix a bug, update `rules:` for the next agent.** This is how agents communicate.
 
 ### 8.4 Migration
 
@@ -501,7 +445,7 @@ Pre-commit hook available in `tools/pre-commit`.
 
 ## 10. Versioning
 
-The version of the standard is tracked in the repo tag (`v0.6`).
+The version of the standard is tracked in the repo tag (`v0.7`).
 
 ---
 
@@ -514,5 +458,6 @@ The version of the standard is tracked in the repo tag (`v0.6`).
 | 0.3 | 2026-03-16 | Level 3 Semantic Naming, `CONTEXT_BUDGET` field, Planner Manifest-Only Read protocol |
 | 0.4 | 2026-03-16 | `AGENT_RULES` field, `REQUIRED_BY` field, `CONTEXT_BUDGET` criteria, type prefix table |
 | 0.5 | 2026-03-16 | Python-native module docstring format. Level 2 split into 2a/2b. `rules:` replaces `AGENT_RULES`. |
-| **0.6** | **2026-03-18** | **Redundancy audit: removed `deps:` (redundant with import statements) and `Depends:` (redundant with visible imports). Added Level 0 `.codedna` project manifest. Level 2 simplified to `Rules:` only (organic, written by agents). `used_by:` promoted to required field. Zoom metaphor: far (.codedna) → close (file header) → very close (function Rules:).** |
+| 0.6 | 2026-03-18 | Redundancy audit: removed `deps:` and `Depends:`. Added Level 0 `.codedna` manifest. Level 2 simplified to `Rules:` only. `used_by:` promoted to required field. Zoom metaphor. |
+| **0.7** | **2026-03-18** | **Header reduced to 3 fields: `exports:`, `used_by:`, `rules:`. `rules:` promoted to required — the inter-agent communication channel. `cascade:` absorbed into `used_by:` as `[cascade]` tag. Removed redundant fields: `tested_by:`, `tables:`, `raises:` (all inferrable from code). Python-only focus.** |
 

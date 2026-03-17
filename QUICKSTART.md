@@ -35,7 +35,7 @@ Options: `claude` · `cursor` · `copilot` · `cline` · `windsurf` · `agents` 
 Add to your **system prompt** or your project's agent configuration:
 
 ```
-You follow the CodeDNA v0.6 Annotation Standard (github.com/Larens94/codedna).
+You follow the CodeDNA v0.7 Annotation Standard (github.com/Larens94/codedna).
 
 ON READ: parse the module docstring first (first 8–12 lines). Check `rules:` before
 writing. Check `used_by:` to understand who depends on this file. Read `Rules:` in
@@ -45,7 +45,6 @@ ON WRITE: every new Python file must start with a module docstring:
   """filename.py — <purpose ≤15 words>.
   exports: function(arg) -> type
   used_by: consumer.py → function
-  tables:  table(col) | none
   rules:   <hard constraint never to violate>
   """
   For critical functions, add a docstring with Rules:.
@@ -63,7 +62,7 @@ all `used_by` callers.
 Create `.cursorrules` at the root of your project:
 
 ```
-# CodeDNA v0.6 — cursor rules
+# CodeDNA v0.7 — cursor rules
 
 ON READ
 - Parse the module docstring (first 8–12 lines) before reading code.
@@ -72,13 +71,13 @@ ON READ
 - Read `Rules:` in function docstrings before writing logic.
 
 ON WRITE
-- Begin every new Python file with a module docstring (exports/used_by/tables/rules).
+- Begin every new Python file with a module docstring (exports/used_by/rules).
 - For critical functions, add docstring with Rules:.
 - Use semantic naming: list_dict_users_from_db = get_users()
 
 ON EDIT
 - First re-read `rules:` and any `Rules:` in function docstrings.
-- Check `used_by:` and `cascade:` targets after editing.
+- Check `used_by:` targets after editing (especially `[cascade]`-tagged ones).
 - If you discover a constraint, add a Rules: annotation for the next agent.
 
 NEVER rename `exports:` symbols without explicit instruction and updating all `used_by` callers.
@@ -93,7 +92,7 @@ Or copy the full version: [`integrations/.cursorrules`](./integrations/.cursorru
 Create `CLAUDE.md` at the root of your project:
 
 ```markdown
-# CodeDNA v0.6
+# CodeDNA v0.7
 
 This project follows the CodeDNA Annotation Standard (github.com/Larens94/codedna).
 
@@ -104,13 +103,13 @@ This project follows the CodeDNA Annotation Standard (github.com/Larens94/codedn
 4. Read `Rules:` in function docstrings before writing logic there
 
 ## On every WRITE (new file)
-1. Begin with a module docstring: exports / used_by / tables / rules
+1. Begin with a module docstring: exports / used_by / rules
 2. For critical functions: add docstring with Rules:
 3. Use semantic naming: list_dict_users_from_db = get_users()
 
 ## On every EDIT
 1. Re-read `rules:` and `Rules:` before writing any logic
-2. Check `used_by:` and `cascade:` targets after changes
+2. Check `used_by:` targets after changes (especially `[cascade]`-tagged ones)
 3. Never rename `exports:` without updating all `used_by` callers
 4. If you discover a constraint, add a Rules: annotation
 ```
@@ -124,14 +123,14 @@ Or copy the full version: [`integrations/CLAUDE.md`](./integrations/CLAUDE.md)
 Create `.github/copilot-instructions.md`:
 
 ```markdown
-# CodeDNA v0.6 Instructions
+# CodeDNA v0.7 Instructions
 
 This repository uses the CodeDNA Annotation Standard.
 
 When reading files: parse the module docstring first (first 8–12 lines).
 Respect `rules:`. Check `used_by:` for impact. Read `Rules:` in function docstrings.
 
-When writing new files: start with module docstring (exports/used_by/tables/rules).
+When writing new files: start with module docstring (exports/used_by/rules).
 For critical functions: add docstring with Rules:.
 
 When editing: re-read `rules:` first. Check `used_by:` targets.
@@ -147,7 +146,7 @@ Or copy the full version: [`integrations/copilot-instructions.md`](./integration
 Create `.windsurfrules` at the root of your project (same format as Cursor):
 
 ```
-# CodeDNA v0.6
+# CodeDNA v0.7
 
 ON READ: parse module docstring first. Respect `rules:`. Check `used_by:` for impact.
 ON WRITE: begin new files with module docstring. Add Rules: to critical functions. Use semantic naming.
@@ -161,14 +160,14 @@ ON EDIT: re-read `rules:` first. Check `used_by:` targets. Never rename `exports
 Paste this as system prompt or at the start of your conversation:
 
 ```
-You follow the CodeDNA v0.6 Annotation Standard.
+You follow the CodeDNA v0.7 Annotation Standard.
 
 Rules:
 1. READ: always parse the module docstring (first 8–12 lines). Respect `rules:` hard constraints.
 2. IMPACT: check `used_by:` to understand which files depend on the one you're editing.
-3. WRITE: new files start with module docstring (exports/used_by/tables/rules).
+3. WRITE: new files start with module docstring (exports/used_by/rules).
    Critical functions: add docstring with Rules:.
-4. EDIT: re-read `rules:` first. Check `used_by:` and `cascade:` targets.
+4. EDIT: re-read `rules:` first. Check `used_by:` targets (especially `[cascade]`-tagged ones).
 5. NAMING: list_dict_users_from_db = get_users(), int_cents_price_from_req = ...
 6. CONTRACTS: never rename `exports:` without updating all `used_by` callers.
 7. KNOWLEDGE: if you discover a constraint, add a Rules: annotation for the next agent.
@@ -182,7 +181,7 @@ Full spec: github.com/Larens94/codedna/blob/main/SPEC.md
 
 Ask your AI tool:
 
-> *"Annotate this file following the CodeDNA v0.6 standard (github.com/Larens94/codedna). Add the module docstring header with exports, used_by, and rules."*
+> *"Annotate this file following the CodeDNA v0.7 standard (github.com/Larens94/codedna). Add the module docstring header with exports, used_by, and rules."*
 
 Or use the auto-annotator for existing codebases:
 
@@ -199,7 +198,6 @@ python tools/auto_annotate.py ./your_project/ --package your_package
 
 exports: public_function(arg) -> return_type
 used_by: consumer_file.py → consumer_function
-tables:  table_name(col1, col2) | none
 rules:   <hard constraint agents must never violate>
 """
 ```
@@ -209,8 +207,7 @@ rules:   <hard constraint agents must never violate>
 | First line | ✅ | `filename.py — <purpose ≤15 words>` |
 | `exports:` | ✅ | Public API with return type |
 | `used_by:` | ✅ | Who calls this file's exports |
-| `tables:` | — | DB tables accessed |
-| `rules:` | — | Hard constraints scoped to this file |
+| `rules:` | ✅ | Hard constraints — the inter-agent communication channel |
 
 ---
 

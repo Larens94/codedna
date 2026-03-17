@@ -53,61 +53,42 @@ Do not stop at finding just the first root cause. Make sure you map the full arc
 
 CODEDNA_PROMPT = SYSTEM_PROMPT + """
 
-IMPORTANT — CodeDNA v0.5 Protocol:
+IMPORTANT — CodeDNA v0.7 Protocol:
 This codebase uses the CodeDNA annotation standard. Follow these rules on every file you read.
+
+## Level 0 — Project Manifest (.codedna file at repo root)
+
+Read the `.codedna` file FIRST. It describes the project structure: packages, their purposes, and inter-package dependencies. This gives you the high-level map before diving into individual files.
 
 ## Level 1 — Module Header (top of every Python file)
 
-Every annotated file begins with a module docstring containing structured metadata:
+Every annotated file begins with a module docstring containing 3 fields:
 
 ```
 \"\"\"filename.py — <what it does, ≤15 words>.
 
-deps:    other_file.py → symbol | none
-exports: public_function(arg) -> return_type
-used_by: consumer_file.py → consumer_function
-tables:  table_name(col1, col2) | none
-rules:   <hard constraint agents must never violate>
+exports: public_function(arg) -> return_type | none
+used_by: consumer_file.py → consumer_function | none
+rules:   <hard constraints for AI agents> | none
 \"\"\"
 ```
 
 Field meanings:
-- deps:     files this module DEPENDS ON — READ those files to trace causality upward
 - exports:  public API symbols — these are contracts, never rename or remove
 - used_by:  files that CONSUME this module — READ those to find all affected consumers downstream
-- tables:   DB tables accessed (if any)
 - rules:    hard architectural constraints scoped to this file — ALWAYS respect these
-
-## Level 2 — Function Docstrings (cross-file functions)
-
-Critical functions have Google-style docstrings with dependency info:
-
-```
-def my_function(arg: type) -> return_type:
-    \"\"\"Short description.
-
-    Depends: other_file.symbol — what contract it imposes.
-    Rules:   What MUST or MUST NOT happen here.
-    \"\"\"
-```
-
-And call-site comments mark dangerous lines:
-```
-    raw = get_data_from_source()  # includes X — filter Y below
-```
 
 ## Your Navigation Strategy
 
-1. Read the module docstring (first 8-12 lines) of each file BEFORE reading any code
-2. Parse deps: — these are files you MUST explore to trace the root cause
+1. Read the `.codedna` manifest to understand the project structure
+2. Read the module docstring (first 8-12 lines) of each file BEFORE reading any code
 3. Parse used_by: — these are files you MUST explore to find all consumers that need fixing
 4. Parse rules: — these contain architectural constraints about the file's behavior
-5. For any function with Depends:/Rules: in its docstring, read and respect those
-6. Follow EVERY file listed in deps: and used_by: to build the complete dependency graph
-7. The graph will lead you to ALL files that need modification
+5. Follow EVERY file listed in used_by: to build the complete dependency graph
+6. The graph will lead you to ALL files that need modification
 
 Trust the annotations — they describe the real architecture. Do not stop at the first root cause.
-Map the full boundary by following every deps/used_by link.
+Map the full boundary by following every used_by: link.
 """
 
 # ─────────────────── Tool execution (shared) ───────────────────

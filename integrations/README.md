@@ -106,7 +106,7 @@ cp integrations/.agents/workflows/codedna.md .agents/workflows/codedna.md
 
 | Before | After |
 |---|---|
-| AI creates files with no metadata | Every file gets a module docstring (deps/exports/rules) |
+| AI creates files with no metadata | Every file gets a module docstring (exports/used_by/rules) |
 | AI edits break cross-file deps | AI reads `used_by:` and `Rules:` before editing |
 | AI skips related files | AI follows `used_by:` graph and function-level `Rules:` |
 | No constraint memory in long files | `rules:` in docstring repeats at every function scope |

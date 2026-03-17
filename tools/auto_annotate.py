@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-tools/auto_annotate.py — Automatically annotate a Python codebase with CodeDNA v0.6 headers.
+tools/auto_annotate.py — Automatically annotate a Python codebase with CodeDNA v0.7 headers.
 
 Uses AST to extract exports and compute used_by (inverse dependency graph),
 then injects CodeDNA module docstrings into every .py file.
@@ -136,11 +136,25 @@ def generate_purpose(rel_path: str, existing_docstring: str | None) -> str:
     if existing_docstring:
         # Use first line of existing docstring
         first_line = existing_docstring.strip().split("\n")[0].strip()
-        # Clean up common prefixes
+        # Strip all existing CodeDNA path prefixes: "a/b.py — c/d.py — purpose" → "purpose"
+        while " — " in first_line:
+            after = first_line.split(" — ", 1)[1].strip()
+            if after:
+                first_line = after
+            else:
+                break
+        # Skip if it looks like a file path (e.g. leftover "django/apps/registry.py")
+        if "/" in first_line and first_line.endswith(".py"):
+            first_line = ""
+        # Skip if it's a CodeDNA field line (exports:, used_by:, etc.)
+        if first_line.startswith(("exports:", "used_by:", "deps:", "rules:")):
+            first_line = ""
+        # Clean up
         first_line = first_line.rstrip(".")
-        if len(first_line) > 80:
+        if first_line and len(first_line) > 80:
             first_line = first_line[:77] + "..."
-        return first_line
+        if first_line:
+            return first_line
     
     # Generate from filename
     name = Path(rel_path).stem
@@ -174,7 +188,7 @@ def format_used_by(used_by_entries: dict) -> str:
 
 
 def generate_header(rel_path: str, info: dict, used_by_entries: dict) -> str:
-    """Generate a CodeDNA v0.6 module docstring (exports + used_by only)."""
+    """Generate a CodeDNA v0.7 module docstring (exports + used_by + rules)."""
     purpose = generate_purpose(rel_path, info.get("docstring"))
     exports_str = format_exports(info["exports"])
     used_by_str = format_used_by(used_by_entries)
@@ -182,6 +196,7 @@ def generate_header(rel_path: str, info: dict, used_by_entries: dict) -> str:
     header = f'"""{rel_path} — {purpose}.\n\n'
     header += f"exports: {exports_str}\n"
     header += f"used_by: {used_by_str}\n"
+    header += f"rules:   none\n"
     header += '"""\n'
     
     return header
@@ -229,9 +244,7 @@ def generate_codedna_manifest(repo_root: Path, file_infos: dict, package: str | 
         if parts[-1] == "__init__.py" and info.get("docstring"):
             existing = packages[pkg_path]["purpose"]
             if not existing or len(info["docstring"]) > len(existing):
-                purpose = info["docstring"].split("\n")[0].strip().rstrip(".")
-                if len(purpose) > 80:
-                    purpose = purpose[:77] + "..."
+                purpose = generate_purpose(rel_path, info["docstring"])
                 packages[pkg_path]["purpose"] = purpose
         
         # Track inter-package dependencies
@@ -338,7 +351,7 @@ def inject_header(py_file: Path, header: str, dry_run: bool = False) -> bool:
 # ── Main ────────────────────────────────────────────────────────────────────
 
 def main():
-    parser = argparse.ArgumentParser(description="Auto-annotate Python codebase with CodeDNA v0.6")
+    parser = argparse.ArgumentParser(description="Auto-annotate Python codebase with CodeDNA v0.7")
     parser.add_argument("repo", type=Path, help="Root of the repository to annotate")
     parser.add_argument("--package", default=None, help="Only annotate this package (e.g. 'django')")
     parser.add_argument("--init", action="store_true", help="Also generate .codedna manifest")
@@ -368,7 +381,7 @@ def main():
         py_files = py_files[:args.limit]
 
     total = len(py_files)
-    print(f"🧬 CodeDNA Auto-Annotator v0.6")
+    print(f"🧬 CodeDNA Auto-Annotator v0.7")
     print(f"   Repo: {repo_root}")
     print(f"   Scan: {scan_dir.relative_to(repo_root)}")
     print(f"   Files: {total}")
