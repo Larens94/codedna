@@ -272,9 +272,10 @@ def run_gemini(problem: str, repo_root: Path, model_id: str, max_turns=15, tempe
         if not cand.content:
             break
         history.append(cand.content)
-        tool_parts = [p for p in cand.content.parts if p.function_call is not None]
+        parts = cand.content.parts or []
+        tool_parts = [p for p in parts if p.function_call is not None]
         if not tool_parts:
-            final_text = "".join(p.text for p in cand.content.parts if p.text)
+            final_text = "".join(p.text for p in parts if p.text)
             break
         results = []
         for p in tool_parts:
