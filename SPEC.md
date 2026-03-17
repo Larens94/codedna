@@ -1,4 +1,4 @@
-# CodeDNA Annotation Standard — Specification
+# CodeDNA Inter-Agent Communication Protocol — Specification
 
 **Version:** 0.5  
 **Status:** Draft  
@@ -8,7 +8,7 @@
 
 ## 1. Overview
 
-CodeDNA is the **CodeDNA Annotation Standard** — a source-file annotation format that makes codebases AI-navigable.
+CodeDNA is an **inter-agent communication protocol** implemented as a source-file annotation format that makes codebases AI-navigable.
 
 **Level 1 — Module Header (Macro-Context):** A Python-native module docstring at the top of every file, encoding the file's purpose, dependencies, public API, and hard constraints for AI agents.
 
@@ -17,6 +17,55 @@ CodeDNA is the **CodeDNA Annotation Standard** — a source-file annotation form
 **Level 3 — Semantic Naming (Cognitive Compression):** Variable naming conventions that encode type, origin, and shape directly into the identifier, eliminating the need to trace data flows.
 
 Together, they make every code fragment self-sufficient: an AI extracting any part of a CodeDNA file finds enough context to act correctly without external lookup. This is CodeDNA's *holographic property* — named after the biological analogy: just as DNA encodes the entire organism blueprint in every cell, every CodeDNA file carries complete architectural context in every fragment.
+
+### 1.1 The Inter-Agent Communication Model
+
+CodeDNA is an annotation standard by *form*, but an **inter-agent communication protocol** by *function*. The file is the channel. The writing agent encodes architectural context as structured metadata; the reading agent decodes it at any point in the file.
+
+This is qualitatively different from rule files (CLAUDE.md, .cursorrules, AGENTS.md), which are **human→agent** communication. CodeDNA is **agent→agent** communication, co-located with the code it describes.
+
+Three examples illustrate the model:
+
+**Example A — The Writing Agent Warns the Reading Agent**
+
+Agent A generates `analytics/revenue.py`. It knows (from its own generation context) that `get_invoices_for_period()` returns ALL tenants with no suspension filter. Agent A writes:
+
+```python
+"""analytics/revenue.py — Monthly revenue aggregation.
+
+deps:    payments/models.py → get_invoices_for_period
+rules:   get_invoices_for_period() returns ALL tenants, NO suspended filter →
+         callers MUST call is_suspended() BEFORE aggregating
+"""
+```
+
+Two weeks later, Agent B (a different LLM, different session, different prompt) is asked to add a quarterly report. Agent B reads `revenue.py`, sees `rules:`, and immediately knows that any code calling `get_invoices_for_period()` must filter suspended tenants — without reading `payments/models.py`, without RAG, without external context. The file was the channel. Agent A transmitted. Agent B received.
+
+**Example B — The Dependency Graph as a Navigation Map**
+
+Agent C is asked to fix a bug: "revenue numbers are wrong." Without CodeDNA, it must: `list_files` → grep "revenue" → read 10 files → trace imports → guess the entry point (8–12 tool calls). With CodeDNA, Agent C reads `analytics/revenue.py` and sees:
+
+```python
+deps:    payments/models.py → get_invoices_for_period
+used_by: api/reports.py → revenue_route
+```
+
+In 1 read, Agent C has a complete map: data comes from `payments/models.py`, output goes to `api/reports.py`. The bug is in this chain of 3 files. Total: 3 tool calls instead of 12. The `deps`/`used_by` graph is a navigation protocol — the writing agent mapped the territory, the reading agent follows the map.
+
+**Example C — Sliding Window as a Self-Healing Channel**
+
+Agent D extracts only lines 50–80 of a 300-line file (sliding window mode) and never sees the Level 1 header. Without CodeDNA, it sees raw code with no context and writes a sum of all invoices — bug introduced. With CodeDNA, at line 55 it encounters:
+
+```python
+def monthly_revenue(year: int, month: int) -> dict:
+    """Aggregate paid invoices into monthly revenue.
+
+    Depends: payments.models.get_invoices_for_period — returns ALL invoices, NO suspended filter.
+    Rules:   MUST filter is_suspended() BEFORE summing.
+    """
+```
+
+Level 2 exists because the channel must work even when the receiver sees only a fragment. The message is repeated at every danger point — this is the holographic property in action.
 
 ---
 
@@ -48,11 +97,14 @@ The Manifest Header is written as a **Python module docstring** (triple-quoted s
 ```python
 """<filename> — <one-line purpose, max 15 words>.
 
-deps:    <file> → <symbol1>, <symbol2> | none
-exports: <symbol(signature)> → <return_type> | none
-used_by: <file> → <symbol> | none
-tables:  <table>(<col1>, <col2>) | none
-rules:   <hard constraints for AI agents; what to do and what to avoid> | none
+deps:      <file> → <symbol1>, <symbol2> | none
+exports:   <symbol(signature)> → <return_type> | none
+used_by:   <file> → <symbol> | none
+cascade:   <file> → <symbol> (MUST update if this file's exports change) | none
+tested_by: <test_file> → <TestClass> | none
+tables:    <table>(<col1>, <col2>) | none
+raises:    <ExceptionType1>, <ExceptionType2> | none
+rules:     <hard constraints for AI agents; what to do and what to avoid> | none
 """
 ```
 
@@ -62,11 +114,14 @@ rules:   <hard constraints for AI agents; what to do and what to avoid> | none
 /**
  * <filename> — <one-line purpose>.
  *
- * deps:    <file> → <symbol>
- * exports: <symbol(signature)> → <return_type>
- * used_by: <file> → <symbol>
- * tables:  <table>(<col1>, <col2>)
- * rules:   <hard constraints for AI agents>
+ * deps:      <file> → <symbol>
+ * exports:   <symbol(signature)> → <return_type>
+ * used_by:   <file> → <symbol>
+ * cascade:   <file> → <symbol>
+ * tested_by: <test_file> → <TestClass>
+ * tables:    <table>(<col1>, <col2>)
+ * raises:    <ErrorType1>, <ErrorType2>
+ * rules:     <hard constraints for AI agents>
  */
 ```
 
@@ -78,7 +133,10 @@ rules:   <hard constraints for AI agents; what to do and what to avoid> | none
 | `deps` | ✅ | `file → func1, func2` or `none` |
 | `exports` | ✅ | Public API with signatures |
 | `used_by` | — | Inverse of deps; who calls this file's exports |
+| `cascade` | — | Files that **MUST** be updated when this file's exports change |
+| `tested_by` | — | Test file and class/function that covers this module |
 | `tables` | — | Tables and relevant columns, or `none` |
+| `raises` | — | Exceptions this module can propagate to callers |
 | `rules` | — | Hard constraints for AI agents (e.g. "never re-apply TAX_RATE") |
 
 ### 3.4 `rules:` Field
@@ -105,19 +163,52 @@ used_by: views/dashboard.py → render | api/reports.py → revenue_route
 
 **Agent behaviour on edit**: when modifying an `exports:` symbol, check every file listed in `used_by:` and update callers as needed.
 
+### 3.6 `cascade:` Field (Mandatory Update Targets)
 
-### 3.7 Examples by Language
+`cascade:` is stronger than `used_by:`. While `used_by:` is informational ("these files call me"), `cascade:` is **imperative** ("these files **MUST** be updated if my exports change"). Typical targets: serializers, API schemas, type definitions, configuration files.
+
+```python
+cascade: api/serializers.py → RevenueSchema | docs/api_spec.yaml → /revenue
+```
+
+**Agent behaviour on edit**: after modifying an `exports:` symbol, the agent **MUST** open and update every file in `cascade:` before considering the task complete.
+
+### 3.7 `tested_by:` Field (Test File Mapping)
+
+`tested_by:` tells the agent where the tests for this module live. Without it, agents waste tool calls grepping for test files or create duplicate tests in wrong locations.
+
+```python
+tested_by: tests/test_revenue.py → TestMonthlyRevenue, TestAnnualSummary
+```
+
+**Agent behaviour on edit**: after modifying logic, open the `tested_by:` file and update or add test cases to cover the change.
+
+### 3.8 `raises:` Field (Error Propagation)
+
+`raises:` declares which exceptions this module can propagate to callers. Agents frequently ignore error handling or write generic try/except blocks because they don't know what can fail.
+
+```python
+raises: TenantSuspendedError, NoDataError, InsufficientFundsError
+```
+
+**Agent behaviour on edit**: when calling a function from a module with `raises:`, the agent must handle or propagate each declared exception.
+
+
+### 3.9 Examples by Language
 
 **Python**
 ```python
 """analytics/revenue.py — Monthly/annual revenue aggregation from paid invoices.
 
-deps:    payments/models.py → get_invoices_for_period | tenants/models.py → is_suspended
-exports: monthly_revenue(year,month)->dict | annual_summary(year)->list[dict]
-used_by: api/reports.py → revenue_route | workers/report_generator.py → generate
-tables:  invoices(tenant_id, amount_cents, status) | tenants(suspended_at, deleted_at)
-rules:   get_invoices_for_period() returns ALL tenants, NO suspended filter →
-         callers MUST call is_suspended() BEFORE aggregating revenue
+deps:      payments/models.py → get_invoices_for_period | tenants/models.py → is_suspended
+exports:   monthly_revenue(year,month)->dict | annual_summary(year)->list[dict]
+used_by:   api/reports.py → revenue_route | workers/report_generator.py → generate
+cascade:   api/serializers.py → RevenueSchema
+tested_by: tests/test_revenue.py → TestMonthlyRevenue
+tables:    invoices(tenant_id, amount_cents, status) | tenants(suspended_at, deleted_at)
+raises:    TenantSuspendedError, NoDataError
+rules:     get_invoices_for_period() returns ALL tenants, NO suspended filter →
+           callers MUST call is_suspended() BEFORE aggregating revenue
 """
 ```
 
@@ -126,11 +217,14 @@ rules:   get_invoices_for_period() returns ALL tenants, NO suspended filter →
 /**
  * authService.ts — JWT authentication and session management.
  *
- * deps:    db.ts → getUser() | config.ts → JWT_SECRET
- * exports: login(credentials)->Promise<Token> | verify(token)->User
- * used_by: router.ts → authMiddleware()
- * tables:  users(id, email, password_hash, role)
- * rules:   never log tokens or passwords; role field is string not boolean
+ * deps:      db.ts → getUser() | config.ts → JWT_SECRET
+ * exports:   login(credentials)->Promise<Token> | verify(token)->User
+ * used_by:   router.ts → authMiddleware()
+ * cascade:   types/auth.d.ts → TokenPayload
+ * tested_by: __tests__/authService.test.ts → AuthLoginSuite
+ * tables:    users(id, email, password_hash, role)
+ * raises:    InvalidCredentialsError, TokenExpiredError
+ * rules:     never log tokens or passwords; role field is string not boolean
  */
 ```
 
@@ -169,6 +263,8 @@ def monthly_revenue(year: int, month: int) -> dict:
     Depends: payments.models.get_invoices_for_period — returns ALL invoices, NO suspended filter.
     Rules:   MUST filter is_suspended() from tenants.models BEFORE summing.
              Failure to filter inflates revenue with suspended-tenant invoices.
+    Raises:  TenantSuspendedError if all tenants in period are suspended.
+             NoDataError if no invoices exist for the period.
     Returns: {year, month, total_cents, by_tenant: {id: [invoices]}}
     """
 ```
@@ -184,7 +280,11 @@ def monthly_revenue(year: int, month: int) -> dict:
 
 ### 5.1 Motivation
 
-Variable names that encode type, origin, and shape reduce the AI's need to trace data flows. Even in a 10-line extracted fragment, a well-named variable is self-documenting.
+**This is an agent-first convention, not a human style guide.** Traditional naming conventions (PEP 8, clean code) optimise for human readability in an IDE where type hints, hover tooltips, and "Go to Definition" are one click away. LLM agents have none of these — they see raw text in a fixed-size context window.
+
+When an agent reads lines 200–250 of a file, a variable named `data` forces it to trace backwards to the function signature or import to understand what it holds. A variable named `list_dict_users_from_db` is **self-documenting in any 10-line window** — type, shape, and origin are encoded in the identifier itself.
+
+This follows the same design logic as Level 2: Level 1 headers may be outside the sliding window → Level 2 repeats context at function scope. Native type hints may be outside the sliding window → Level 3 repeats type information in the variable name.
 
 ### 5.2 Convention
 
@@ -267,6 +367,12 @@ When an AI agent must plan edits across a multi-file codebase, it should:
 3. After editing, cascade any `Modifies:` or call-site-annotated cascade targets.
 4. If renaming an `exports:` symbol: update all `used_by:` callers.
 5. If the `rules:` field needs to reflect the change, update it.
+
+### 7.4 Migration
+
+Migration of an existing codebase is a **one-time investment**. Any AI agent can annotate a pre-existing codebase by reading each file's imports, function signatures, and call sites, then generating the CodeDNA module docstring. Once annotated, maintenance cost approaches zero: the same agents that modify the code are responsible for updating the annotations in place.
+
+CodeDNA targets **agentic code generation workflows** — environments where an LLM agent both generates and modifies source files. However, any legacy codebase can be migrated by delegating the annotation work to an agent. The initial annotation pass is the investment; all subsequent maintenance is a natural byproduct of code generation.
 
 
 ---

@@ -30,7 +30,7 @@ TASKS_FILE   = Path(__file__).parent / "tasks.json"
 PROJECTS_DIR = Path(__file__).parent.parent / "projects_swebench"
 RUNS_DIR     = Path(__file__).parent.parent / "runs"
 
-READ_FILE_LIMIT = 8000
+READ_FILE_LIMIT = 12000
 GREP_LIMIT      = 4000
 
 SYSTEM_PROMPT = """You are an expert software engineer debugging a Python codebase.
@@ -83,8 +83,11 @@ def make_fns(repo_root: Path):
         log["tool_calls"] += 1; log["grep_calls"] += 1
         log["greps"].append(pattern)
         target = repo_root / directory
-        r = subprocess.run(["grep", "-rn", "--include=*.py", pattern, str(target)],
-                           capture_output=True, text=True)
+        try:
+            r = subprocess.run(["grep", "-rn", "--include=*.py", pattern, str(target)],
+                               capture_output=True, text=True, timeout=10)
+        except subprocess.TimeoutExpired:
+            r = type('R', (), {'stdout': '(grep timed out)'})()
         result = r.stdout[:GREP_LIMIT] or "(no matches)"
         log["total_chars_consumed"] += len(result)
         return result
@@ -93,7 +96,9 @@ def make_fns(repo_root: Path):
 
 
 def extract_proposed_files(text: str) -> set:
-    raw = set(re.findall(r'[\w./]+\.py', text))
+    """Extract proposed .py file paths from the tail of the agent's response."""
+    tail = text[-3000:] if len(text) > 3000 else text
+    raw = set(re.findall(r'[\w./]+\.py', tail))
     return {p.lstrip('./') for p in raw if '/' in p.lstrip('./')}
 
 
@@ -125,6 +130,28 @@ def build_result(log: dict, final_text: str, ground_truth: list) -> dict:
         "metrics_read":         file_metrics(read_set, ground_truth),
         "metrics_proposed":     file_metrics(proposed, ground_truth),
     }
+
+
+# ─────────────────── Retry helper ───────────────────
+
+def call_with_retry(fn, *args, max_attempts=3, **kwargs):
+    """Generic retry with exponential backoff for API calls."""
+    for attempt in range(max_attempts):
+        try:
+            return fn(*args, **kwargs)
+        except Exception as e:
+            if attempt < max_attempts - 1:
+                wait = 2 ** attempt
+                print(f"    ⚠️  API error ({type(e).__name__}), retrying in {wait}s...")
+                time.sleep(wait)
+            else:
+                raise
+
+
+FORCE_FINAL_PROMPT = (
+    "You have used all available tool calls. Based on everything you have read so far, "
+    "provide your final analysis: list ALL files that need modification and explain the fix."
+)
 
 
 # ─────────────────── Provider: Gemini ───────────────────
@@ -165,7 +192,8 @@ def run_gemini(problem: str, repo_root: Path, model_id: str, max_turns=15) -> di
     final_text = ""
 
     for _ in range(max_turns):
-        resp = client.models.generate_content(model=model_id, contents=history, config=config)
+        resp = call_with_retry(client.models.generate_content,
+                               model=model_id, contents=history, config=config)
         cand = resp.candidates[0]
         if not cand.content:
             break
@@ -181,6 +209,18 @@ def run_gemini(problem: str, repo_root: Path, model_id: str, max_turns=15) -> di
             results.append(gt.Part(function_response=gt.FunctionResponse(
                 name=fc.name, response={"result": res})))
         history.append(gt.Content(role="tool", parts=results))
+
+    # Force final summary if agent exhausted max_turns without a text response
+    if not final_text:
+        history.append(gt.Content(role="user",
+            parts=[gt.Part(text=FORCE_FINAL_PROMPT)]))
+        config_no_tools = gt.GenerateContentConfig(system_instruction=SYSTEM_PROMPT,
+                                                    temperature=0)
+        resp = call_with_retry(client.models.generate_content,
+                               model=model_id, contents=history, config=config_no_tools)
+        cand = resp.candidates[0]
+        if cand.content:
+            final_text = "".join(p.text for p in cand.content.parts if p.text)
 
     return log, final_text
 
@@ -218,30 +258,18 @@ def run_anthropic(problem: str, repo_root: Path, model_id: str, max_turns=15) ->
     final_text = ""
 
     for _ in range(max_turns):
-        # Retry up to 3x on Anthropic 500 errors
-        for attempt in range(3):
-            try:
-                resp = client.messages.create(
-                    model=model_id,
-                    max_tokens=4096,
-                    system=SYSTEM_PROMPT,
-                    tools=tools,
-                    messages=messages,
-                )
-                break
-            except Exception as e:
-                if "500" in str(e) and attempt < 2:
-                    print(f"    ⚠️  Anthropic 500, retrying in {2**attempt}s...")
-                    time.sleep(2 ** attempt)
-                else:
-                    raise
+        resp = call_with_retry(
+            client.messages.create,
+            model=model_id,
+            max_tokens=4096,
+            system=SYSTEM_PROMPT,
+            tools=tools,
+            messages=messages,
+        )
         messages.append({"role": "assistant", "content": resp.content})
 
         tool_uses = [b for b in resp.content if b.type == "tool_use"]
         if not tool_uses:
-            final_text = "".join(b.text for b in resp.content if b.type == "text")
-            break
-        if resp.stop_reason == "end_turn":
             final_text = "".join(b.text for b in resp.content if b.type == "text")
             break
 
@@ -250,6 +278,16 @@ def run_anthropic(problem: str, repo_root: Path, model_id: str, max_turns=15) ->
             res = fns[tu.name](**tu.input) if tu.name in fns else "unknown"
             tool_results.append({"type": "tool_result", "tool_use_id": tu.id, "content": res})
         messages.append({"role": "user", "content": tool_results})
+
+    # Force final summary if agent exhausted max_turns without a text response
+    if not final_text:
+        messages.append({"role": "user", "content": FORCE_FINAL_PROMPT})
+        resp = call_with_retry(
+            client.messages.create,
+            model=model_id, max_tokens=4096,
+            system=SYSTEM_PROMPT, messages=messages,
+        )
+        final_text = "".join(b.text for b in resp.content if b.type == "text")
 
     return log, final_text
 
@@ -305,7 +343,7 @@ def run_openai_compat(problem: str, repo_root: Path, model_id: str,
         if not is_reasoning:
             create_kwargs["temperature"] = 0
 
-        resp = client.chat.completions.create(**create_kwargs)
+        resp = call_with_retry(client.chat.completions.create, **create_kwargs)
         msg = resp.choices[0].message
         messages.append(msg)
 
@@ -317,6 +355,15 @@ def run_openai_compat(problem: str, repo_root: Path, model_id: str,
             args = json.loads(tc.function.arguments)
             res = fns[tc.function.name](**args) if tc.function.name in fns else "unknown"
             messages.append({"role": "tool", "tool_call_id": tc.id, "content": res})
+
+    # Force final summary if agent exhausted max_turns without a text response
+    if not final_text:
+        messages.append({"role": "user", "content": FORCE_FINAL_PROMPT})
+        create_kwargs = dict(model=model_id, messages=messages)
+        if not any(x in model_id for x in ("o1", "o3")):
+            create_kwargs["temperature"] = 0
+        resp = call_with_retry(client.chat.completions.create, **create_kwargs)
+        final_text = resp.choices[0].message.content or ""
 
     return log, final_text
 
@@ -368,7 +415,7 @@ def run_openai_responses(problem: str, repo_root: Path, model_id: str, max_turns
         if previous_response_id:
             create_kwargs["previous_response_id"] = previous_response_id
 
-        resp = client.responses.create(**create_kwargs)
+        resp = call_with_retry(client.responses.create, **create_kwargs)
         previous_response_id = resp.id
 
         # Collect tool calls and text from output
@@ -397,6 +444,19 @@ def run_openai_responses(problem: str, repo_root: Path, model_id: str, max_turns
 
         # Next turn: only send the new tool results (API tracks history via previous_response_id)
         next_input = tool_results
+
+    # Force final summary if agent exhausted max_turns without a text response
+    if not final_text:
+        next_input = [{"role": "user", "content": FORCE_FINAL_PROMPT}]
+        create_kwargs = dict(model=model_id, input=next_input)
+        if previous_response_id:
+            create_kwargs["previous_response_id"] = previous_response_id
+        resp = call_with_retry(client.responses.create, **create_kwargs)
+        for item in resp.output:
+            if item.type == "message":
+                for block in item.content:
+                    if hasattr(block, "text"):
+                        final_text = block.text
 
     return log, final_text
 

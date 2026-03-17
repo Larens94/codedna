@@ -1,6 +1,6 @@
-# 🧬 CodeDNA — Annotation Standard v0.5
+# 🧬 CodeDNA — Inter-Agent Communication Protocol v0.5
 
-> *Every file contains the entire project's genome. The AI reads one fragment and understands the whole.*
+> *An in-source annotation standard where the writing agent encodes architectural context and the reading agent decodes it. The file is the channel. Every fragment carries the whole.*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![Version](https://img.shields.io/badge/CodeDNA-v0.5-6366f1)](./SPEC.md)
@@ -16,11 +16,13 @@
 [![ChatGPT](https://img.shields.io/badge/ChatGPT-74aa9c?logo=openai&logoColor=white)](./QUICKSTART.md)
 [![Gemini](https://img.shields.io/badge/Gemini-4285F4?logo=google&logoColor=white)](./QUICKSTART.md)
 
-**CodeDNA** embeds architectural context **directly into source files**. Like biological DNA — cut a hologram in half and you get two smaller complete images. Extract 10 lines from a CodeDNA file and those 10 lines still carry enough context for an AI agent to act correctly.
+**CodeDNA** is an **inter-agent communication protocol** implemented as in-source annotations. The writing agent embeds architectural context directly into source files; the reading agent decodes it at any point in the file. Like biological DNA — cut a hologram in half and you get two smaller complete images.
 
 **No RAG. No vector DB. No external rules files. Minimal drift (context co-located with code).**
 
 ![CodeDNA Site — Animated DNA Hero](./docs/hero.png)
+
+> **🔮 The Network Effect:** Every AI coding agent that writes CodeDNA annotations leaves a navigable trail for every other agent that reads the code after it — regardless of vendor, model, or IDE. If all agentic coding tools adopted this protocol today, within a decade every codebase in production would be self-navigating. The more agents participate, the more valuable the protocol becomes.
 
 ---
 
@@ -40,11 +42,11 @@ Then annotate your first file → see [QUICKSTART.md](./QUICKSTART.md)
 
 ---
 
-## 📊 Benchmark — Real Agent Results
-
-### 🆕 Multi-Model SWE-bench Benchmark (5 models × 5 tasks)
+## 📊 Benchmark — SWE-bench Multi-Model Results
 
 5 real Django issues from [SWE-bench](https://github.com/princeton-nlp/SWE-bench), tested across 5 state-of-the-art LLMs. Same prompt, same tools, same tasks. **Only difference: CodeDNA annotations.**
+
+> **Metric: File Localization F1** — measures how accurately models identify the files that need modification. While standard SWE-bench evaluates end-to-end resolution, this benchmark isolates the preceding bottleneck: navigation.
 
 | Model | Ctrl F1 | DNA F1 | **Δ F1** | Tasks Won |
 |---|---|---|---|---|
@@ -57,26 +59,6 @@ Then annotate your first file → see [QUICKSTART.md](./QUICKSTART.md)
 > **CodeDNA improves file localization F1 on 4 out of 5 models.** The largest gain (+20pp) is on Gemini 2.5 Flash, winning 4/5 tasks. The benefit is most pronounced on tasks requiring cross-module navigation.
 
 Full data: [`benchmark_agent/runs/`](./benchmark_agent/runs/) · Script: [`benchmark_agent/swebench/run_agent_multi.py`](./benchmark_agent/swebench/run_agent_multi.py)
-
-### Agent Navigation Benchmark — Simple Codebase (11 files)
-
-| Metric | Control | CodeDNA | Improvement |
-|---|---|---|---|
-| Total tool calls | 4 | 3 | **−25%** |
-| Files read | 3 | 2 | **−33%** |
-| Conversation turns | 5 | 4 | **−20%** |
-| Bug found | ✅ Yes | ✅ Yes | Equal accuracy |
-
-### Enterprise Benchmark — 105-file Codebase (3 bugs, 48 distractors)
-
-| Bug Scenario | Control Tools | CodeDNA Tools | Control Found? | CodeDNA Found? |
-|---|---|---|---|---|
-| **B1** Suspended tenants in revenue | 4 | 3 | ❌ **No** | ✅ **Yes** |
-| **B3** Admin permission bypass | 3 | 3 | ✅ Yes | ✅ Yes |
-| **B4** Fulfillment inventory race | 6 | 4 | ✅ Yes | ✅ Yes |
-| **Average** | **4.3** | **3.3** | **67%** | **100%** |
-
-> **B1 is the decisive scenario**: the Control agent used more tool calls and still failed to identify the root cause. CodeDNA used fewer calls and succeeded.
 
 ---
 
