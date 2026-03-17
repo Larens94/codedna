@@ -7,34 +7,37 @@
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 :root {
-  --bg:#0d1117; --bg2:#161b22; --bg3:#1c2333; --border:#30363d;
-  --text:#e6edf3; --text2:#8b949e;
-  --accent:#58a6ff; --green:#3fb950; --red:#f85149;
-  --orange:#d29922; --purple:#bc8cff; --cyan:#39d2c0;
+  --bg:#f8f9fb; --bg2:#ffffff; --bg3:#f0f2f5; --border:#d8dce3;
+  --text:#1a1a2e; --text2:#6b7280;
+  --accent:#2563eb; --green:#16a34a; --red:#dc2626;
+  --orange:#d97706; --purple:#7c3aed; --cyan:#0891b2;
   --radius:12px;
 }
 *{margin:0;padding:0;box-sizing:border-box}
 body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
 /* Header */
-.hdr{background:linear-gradient(135deg,#0d1117,#1a1e2e);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.hdr{background:linear-gradient(135deg,#ffffff,#f0f4ff);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;box-shadow:0 1px 3px rgba(0,0,0,.06)}
 .hdr h1{font-size:17px;font-weight:800;background:linear-gradient(90deg,var(--accent),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
 .hdr .sub{font-size:11px;color:var(--text2)}
-.tag-live{background:rgba(248,81,73,.2);color:var(--red);padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700;animation:pulse 2s infinite}
+.tag-live{background:rgba(220,38,38,.1);color:var(--red);padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700;animation:pulse 2s infinite}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
 .tag-live.off{animation:none;opacity:.5}
 .ctrls{display:flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap}
 select,button{font-family:'Inter';font-size:12px;border:1px solid var(--border);border-radius:7px;padding:6px 11px;background:var(--bg2);color:var(--text);cursor:pointer;transition:border-color .15s}
 select:hover,button:hover{border-color:var(--accent)}
-button.play{background:linear-gradient(135deg,#238636,#2ea043);border-color:#2ea043;font-weight:600;padding:6px 18px}
+button.play{background:linear-gradient(135deg,#16a34a,#22c55e);border-color:#16a34a;color:#fff;font-weight:600;padding:6px 18px}
 button.play:disabled{opacity:.4;cursor:not-allowed}
 .opt-no-key{color:var(--text2);font-style:italic}
+.mode-btns{display:flex;gap:2px;background:var(--bg3);border-radius:7px;padding:2px}
+.mode-btns button{border:none;background:transparent;padding:4px 10px;font-size:11px;font-weight:500;border-radius:5px;color:var(--text2)}
+.mode-btns button.active{background:var(--accent);color:#fff;font-weight:600}
 
 /* Main */
 .main{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 18px;max-width:1700px;margin:0 auto}
 
 /* Panel */
-.panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column}
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column;box-shadow:0 1px 3px rgba(0,0,0,.04)}
 .ph{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px}
 .ph .dot{width:8px;height:8px;border-radius:50%}
 .panel.ctrl .dot{background:var(--red)}.panel.ctrl .pt{color:var(--red)}
@@ -61,21 +64,21 @@ button.play:disabled{opacity:.4;cursor:not-allowed}
 
 /* Log entries */
 .le{display:flex;align-items:flex-start;gap:5px;padding:4px 5px;border-radius:4px;margin-bottom:2px;font-size:10px;animation:si .2s ease-out}
-.le:hover{background:rgba(255,255,255,.03)}
+.le:hover{background:rgba(0,0,0,.03)}
 @keyframes si{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
 
 .badge{display:inline-flex;align-items:center;justify-content:center;width:18px;height:14px;border-radius:3px;font-size:8px;font-weight:700;font-family:'JetBrains Mono';flex-shrink:0;margin-top:1px}
-.badge.R{background:rgba(88,166,255,.15);color:var(--accent)}
-.badge.G{background:rgba(210,153,34,.15);color:var(--orange)}
-.badge.L{background:rgba(188,140,255,.15);color:var(--purple)}
-.badge.T{background:rgba(57,210,192,.1);color:var(--cyan);width:auto;padding:0 4px;font-size:7px}
+.badge.R{background:rgba(37,99,235,.1);color:var(--accent)}
+.badge.G{background:rgba(217,119,6,.1);color:var(--orange)}
+.badge.L{background:rgba(124,58,237,.1);color:var(--purple)}
+.badge.T{background:rgba(8,145,178,.08);color:var(--cyan);width:auto;padding:0 4px;font-size:7px}
 
 .lf{font-family:'JetBrains Mono';font-size:9px;color:var(--text);word-break:break-all}
 
 /* Reasoning block */
 .reasoning{
   margin:3px 4px;padding:6px 8px;border-radius:5px;font-size:10px;line-height:1.4;
-  background:rgba(88,166,255,.04);border-left:2px solid var(--accent);
+  background:rgba(37,99,235,.04);border-left:2px solid var(--accent);
   color:var(--text2);max-height:80px;overflow-y:auto;animation:si .2s ease-out;
   cursor:pointer;transition:max-height .3s
 }
@@ -84,18 +87,18 @@ button.play:disabled{opacity:.4;cursor:not-allowed}
 
 /* File entries */
 .fe{display:flex;align-items:center;gap:4px;padding:3px 5px;border-radius:4px;font-family:'JetBrains Mono';font-size:9px;margin-bottom:1px;animation:si .2s ease-out}
-.fe.gt{background:rgba(63,185,80,.1);color:var(--green)}
-.fe.ngt{background:rgba(139,148,158,.06);color:var(--text2)}
+.fe.gt{background:rgba(22,163,74,.08);color:var(--green)}
+.fe.ngt{background:rgba(107,114,128,.06);color:var(--text2)}
 
 /* Result box */
 .rbox{border-top:1px solid var(--border);padding:8px 10px;font-size:10px;min-height:40px}
-.rbox.done{background:rgba(63,185,80,.05)}
+.rbox.done{background:rgba(22,163,74,.05)}
 .rbox h4{font-size:10px;font-weight:700;margin-bottom:3px;color:var(--cyan)}
 .mf{color:var(--red);font-family:'JetBrains Mono';font-size:9px}
 .ff{color:var(--green);font-family:'JetBrains Mono';font-size:9px}
 
 /* Final response */
-.final{margin:4px;padding:6px 8px;border-radius:5px;font-size:9px;line-height:1.4;background:rgba(63,185,80,.04);border-left:2px solid var(--green);color:var(--text);max-height:120px;overflow-y:auto;cursor:pointer}
+.final{margin:4px;padding:6px 8px;border-radius:5px;font-size:9px;line-height:1.4;background:rgba(22,163,74,.04);border-left:2px solid var(--green);color:var(--text);max-height:120px;overflow-y:auto;cursor:pointer}
 .final.expanded{max-height:400px}
 .final .flabel{font-size:8px;color:var(--green);text-transform:uppercase;font-weight:700;margin-bottom:2px}
 
@@ -112,6 +115,11 @@ button.play:disabled{opacity:.4;cursor:not-allowed}
   <div class="ctrls">
     <select id="modelSel"><option value="">Loading models…</option></select>
     <select id="taskSel"><option value="">Loading tasks…</option></select>
+    <div class="mode-btns">
+      <button id="mBoth" class="active" onclick="setMode('both')">Both</button>
+      <button id="mCtrl" onclick="setMode('control')">Control Only</button>
+      <button id="mCdna" onclick="setMode('codedna')">CodeDNA Only</button>
+    </div>
     <button class="play" id="btn" disabled>▶ Avvia</button>
   </div>
 </div>
@@ -155,11 +163,20 @@ button.play:disabled{opacity:.4;cursor:not-allowed}
 const API = window.location.origin;
 let gt = [];
 let evtSource = null;
+let currentMode = 'both';
 let counters = {
   control: {turns:0, reads:0, greps:0, lists:0},
   codedna: {turns:0, reads:0, greps:0, lists:0}
 };
 let filesFound = {control: new Set(), codedna: new Set()};
+
+function setMode(m) {
+  currentMode = m;
+  document.querySelectorAll('.mode-btns button').forEach(b => b.classList.remove('active'));
+  if (m === 'both') document.getElementById('mBoth').classList.add('active');
+  else if (m === 'control') document.getElementById('mCtrl').classList.add('active');
+  else document.getElementById('mCdna').classList.add('active');
+}
 
 function short(p) {
   const s = p.split("/");
@@ -217,7 +234,7 @@ document.getElementById("btn").addEventListener("click", async () => {
   const resp = await fetch(`${API}/api/run`, {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({model, task_id: taskId})
+    body: JSON.stringify({model, task_id: taskId, mode: currentMode})
   });
   const result = await resp.json();
   if (result.error) {

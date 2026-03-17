@@ -404,6 +404,7 @@ def api_run():
     data = request.json
     model_name = data.get("model")
     task_id = data.get("task_id")
+    mode = data.get("mode", "both")  # "both", "control", or "codedna"
 
     if model_name not in ram.MODELS:
         return jsonify({"error": f"Unknown model: {model_name}"}), 400
@@ -426,27 +427,30 @@ def api_run():
     active_queue = Queue()
     active_gt = task["files_in_patch"]
     active_run_meta = {"model": model_name, "task_id": task_id,
-                       "instance_id": instance_id, "repo": task["repo"]}
+                       "instance_id": instance_id, "repo": task["repo"],
+                       "mode": mode}
     active_final_texts.clear()
     active_reasoning.clear()
 
     problem = task["problem_statement"]
     active_queue.put({"type": "task_info", "task_id": task_id, "gt": active_gt,
-                      "n_gt": len(active_gt), "model": model_name})
+                      "n_gt": len(active_gt), "model": model_name, "mode": mode})
 
-    # Run sequentially (control first, then codedna) to avoid rate limits
-    def run_sequential():
-        run_with_streaming(problem, ctrl_dir, cfg["provider"], cfg["model_id"],
-                           "control", active_queue, temperature=0, max_turns=30,
-                           system_prompt=ram.SYSTEM_PROMPT)
-        time.sleep(2)  # brief pause between runs
-        run_with_streaming(problem, cdna_dir, cfg["provider"], cfg["model_id"],
-                           "codedna", active_queue, temperature=0, max_turns=30,
-                           system_prompt=ram.CODEDNA_PROMPT)
+    def run_sides():
+        if mode in ("both", "control"):
+            run_with_streaming(problem, ctrl_dir, cfg["provider"], cfg["model_id"],
+                               "control", active_queue, temperature=0, max_turns=30,
+                               system_prompt=ram.SYSTEM_PROMPT)
+        if mode == "both":
+            time.sleep(2)
+        if mode in ("both", "codedna"):
+            run_with_streaming(problem, cdna_dir, cfg["provider"], cfg["model_id"],
+                               "codedna", active_queue, temperature=0, max_turns=30,
+                               system_prompt=ram.CODEDNA_PROMPT)
 
-    threading.Thread(target=run_sequential, daemon=True).start()
+    threading.Thread(target=run_sides, daemon=True).start()
 
-    return jsonify({"status": "started", "task_id": task_id, "model": model_name})
+    return jsonify({"status": "started", "task_id": task_id, "model": model_name, "mode": mode})
 
 
 @app.route("/api/stream")
@@ -459,8 +463,9 @@ def api_stream():
 
         done_sides = set()
         side_results = {}
+        expected_sides = 1 if active_run_meta and active_run_meta.get("mode") in ("control", "codedna") else 2
 
-        while len(done_sides) < 2:
+        while len(done_sides) < expected_sides:
             try:
                 event = active_queue.get(timeout=120)
             except Empty:

@@ -51,44 +51,49 @@ Strategy:
 Do not stop at finding just the first root cause. Make sure you map the full architectural boundary of the problem.
 """
 
-CODEDNA_PROMPT = SYSTEM_PROMPT + """
+CODEDNA_PROMPT = """## CodeDNA v0.7 — READ THIS FIRST
 
-IMPORTANT — CodeDNA v0.7 Protocol:
-This codebase uses the CodeDNA annotation standard. Follow these rules on every file you read.
+This codebase uses the CodeDNA annotation standard. These rules have the HIGHEST PRIORITY.
 
-## Level 0 — Project Manifest (.codedna file at repo root)
+### Step 1: Read the `.codedna` manifest at the repo root
+It describes the project structure: packages, purposes, dependencies. Read it BEFORE any code file.
 
-Read the `.codedna` file FIRST. It describes the project structure: packages, their purposes, and inter-package dependencies. This gives you the high-level map before diving into individual files.
-
-## Level 1 — Module Header (top of every Python file)
-
-Every annotated file begins with a module docstring containing 3 fields:
-
+### Step 2: Every Python file has a header with 3 fields
 ```
-\"\"\"filename.py — <what it does, ≤15 words>.
+\"\"\"filename.py — <purpose>.
 
-exports: public_function(arg) -> return_type | none
-used_by: consumer_file.py → consumer_function | none
-rules:   <hard constraints for AI agents> | none
+exports: public_symbol(args) -> type | none
+used_by: consumer_file.py → consumer_symbol | none
+rules:   <constraints> | none
 \"\"\"
 ```
 
-Field meanings:
-- exports:  public API symbols — these are contracts, never rename or remove
-- used_by:  files that CONSUME this module — READ those to find all affected consumers downstream
-- rules:    hard architectural constraints scoped to this file — ALWAYS respect these
+### Step 3: Follow the `used_by:` graph
+`used_by:` tells you which files CONSUME this module. When you read a file and see:
+```
+used_by: django/db/models/expressions.py → Q
+         django/db/models/sql/__init__.py → AND, OR
+```
+Your NEXT ACTIONS should be:
+- `read_file("django/db/models/expressions.py")` — read its header to check if it's relevant
+- `read_file("django/db/models/sql/__init__.py")` — read its header to check if it's relevant
 
-## Your Navigation Strategy
+If a `used_by:` target's purpose relates to the problem, read it in full. Then check ITS `used_by:` too.
 
-1. Read the `.codedna` manifest to understand the project structure
-2. Read the module docstring (first 8-12 lines) of each file BEFORE reading any code
-3. Parse used_by: — these are files you MUST explore to find all consumers that need fixing
-4. Parse rules: — these contain architectural constraints about the file's behavior
-5. Follow EVERY file listed in used_by: to build the complete dependency graph
-6. The graph will lead you to ALL files that need modification
+### Step 4: Before your final answer
+Verify: for every file you plan to modify, did you check its `used_by:` targets? If not, go read them now.
 
-Trust the annotations — they describe the real architecture. Do not stop at the first root cause.
-Map the full boundary by following every used_by: link.
+---
+
+You are an expert software engineer debugging a Python codebase.
+Your task: read the problem description and find ALL the files that require modification to implement a complete fix.
+
+Tools available:
+- list_files(directory): list files in a directory
+- read_file(path): read a source file
+- grep(pattern, directory): search for a pattern
+
+Do not stop at finding just the first root cause. Use the `used_by:` graph to map the full boundary.
 """
 
 # ─────────────────── Tool execution (shared) ───────────────────
