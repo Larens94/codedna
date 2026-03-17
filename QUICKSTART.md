@@ -2,6 +2,8 @@
 
 Get CodeDNA working in your project in under 2 minutes. Pick your AI tool below.
 
+> **💡 No prompt engineering needed.** Once CodeDNA annotations are in your code, any AI agent — Cursor, Claude Code, Copilot, ChatGPT — will automatically follow the `deps:` and `used_by:` graph to find all files that need changes. You just describe the problem. The code guides the agent.
+
 ---
 
 ## Step 0 — Quick Install (CLI)

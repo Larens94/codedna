@@ -20,9 +20,24 @@
 
 **No RAG. No vector DB. No external rules files. Minimal drift (context co-located with code).**
 
+> **🎯 Zero Prompt Engineering Required:** CodeDNA annotations guide AI agents automatically. Even non-technical users get complete, multi-file fixes by simply describing the problem — no need to know *how* to instruct the agent. The architectural knowledge lives in the code, not in the prompt.
+
 ![CodeDNA Site — Animated DNA Hero](./docs/hero.png)
 
 > **🔮 The Network Effect:** Every AI coding agent that writes CodeDNA annotations leaves a navigable trail for every other agent that reads the code after it — regardless of vendor, model, or IDE. If all agentic coding tools adopted this protocol today, within a decade every codebase in production would be self-navigating. The more agents participate, the more valuable the protocol becomes.
+
+---
+
+## 🤔 Who is CodeDNA for?
+
+| You are… | Without CodeDNA | With CodeDNA |
+|---|---|---|
+| **Non-technical user** | Must learn prompt engineering to guide the AI agent through the codebase | Just describe the problem — annotations guide the agent automatically |
+| **Junior developer** | AI finds the obvious file, misses the 5 related ones | deps/used_by graph leads to ALL files that need changes |
+| **Senior developer** | Spends time writing detailed prompts every session | Writes annotations once, every agent benefits forever |
+| **Team lead** | Each developer's AI makes different mistakes | Annotations encode team knowledge — consistent results across all agents |
+
+**The core insight:** today, the quality of AI-assisted coding depends on the *user's* ability to prompt. CodeDNA shifts that knowledge from ephemeral prompts into persistent, version-controlled source code — democratizing access to expert-level AI assistance.
 
 ---
 

@@ -51,6 +51,65 @@ Strategy:
 Do not stop at finding just the first root cause. Make sure you map the full architectural boundary of the problem.
 """
 
+CODEDNA_PROMPT = SYSTEM_PROMPT + """
+
+IMPORTANT — CodeDNA v0.5 Protocol:
+This codebase uses the CodeDNA annotation standard. Follow these rules on every file you read.
+
+## Level 1 — Module Header (top of every Python file)
+
+Every annotated file begins with a module docstring containing structured metadata:
+
+```
+\"\"\"filename.py — <what it does, ≤15 words>.
+
+deps:    other_file.py → symbol | none
+exports: public_function(arg) -> return_type
+used_by: consumer_file.py → consumer_function
+tables:  table_name(col1, col2) | none
+rules:   <hard constraint agents must never violate>
+\"\"\"
+```
+
+Field meanings:
+- deps:     files this module DEPENDS ON — READ those files to trace causality upward
+- exports:  public API symbols — these are contracts, never rename or remove
+- used_by:  files that CONSUME this module — READ those to find all affected consumers downstream
+- tables:   DB tables accessed (if any)
+- rules:    hard architectural constraints scoped to this file — ALWAYS respect these
+
+## Level 2 — Function Docstrings (cross-file functions)
+
+Critical functions have Google-style docstrings with dependency info:
+
+```
+def my_function(arg: type) -> return_type:
+    \"\"\"Short description.
+
+    Depends: other_file.symbol — what contract it imposes.
+    Rules:   What MUST or MUST NOT happen here.
+    \"\"\"
+```
+
+And call-site comments mark dangerous lines:
+```
+    raw = get_data_from_source()  # includes X — filter Y below
+```
+
+## Your Navigation Strategy
+
+1. Read the module docstring (first 8-12 lines) of each file BEFORE reading any code
+2. Parse deps: — these are files you MUST explore to trace the root cause
+3. Parse used_by: — these are files you MUST explore to find all consumers that need fixing
+4. Parse rules: — these contain architectural constraints about the file's behavior
+5. For any function with Depends:/Rules: in its docstring, read and respect those
+6. Follow EVERY file listed in deps: and used_by: to build the complete dependency graph
+7. The graph will lead you to ALL files that need modification
+
+Trust the annotations — they describe the real architecture. Do not stop at the first root cause.
+Map the full boundary by following every deps/used_by link.
+"""
+
 # ─────────────────── Tool execution (shared) ───────────────────
 
 def make_fns(repo_root: Path):
@@ -156,7 +215,7 @@ FORCE_FINAL_PROMPT = (
 
 # ─────────────────── Provider: Gemini ───────────────────
 
-def run_gemini(problem: str, repo_root: Path, model_id: str, max_turns=15, temperature=0) -> dict:
+def run_gemini(problem: str, repo_root: Path, model_id: str, max_turns=15, temperature=0, system_prompt=None) -> dict:
     try:
         from google import genai
         from google.genai import types as gt
@@ -185,7 +244,8 @@ def run_gemini(problem: str, repo_root: Path, model_id: str, max_turns=15, tempe
                                              "directory": gt.Schema(type="STRING")})),
     ])]
 
-    config = gt.GenerateContentConfig(system_instruction=SYSTEM_PROMPT,
+    prompt = system_prompt or SYSTEM_PROMPT
+    config = gt.GenerateContentConfig(system_instruction=prompt,
                                       tools=tools_decl, temperature=temperature)
     history = [gt.Content(role="user",
         parts=[gt.Part(text=f"Problem:\n\n{problem}\n\nStart by listing the root directory.")])]
@@ -214,7 +274,7 @@ def run_gemini(problem: str, repo_root: Path, model_id: str, max_turns=15, tempe
     if not final_text:
         history.append(gt.Content(role="user",
             parts=[gt.Part(text=FORCE_FINAL_PROMPT)]))
-        config_no_tools = gt.GenerateContentConfig(system_instruction=SYSTEM_PROMPT,
+        config_no_tools = gt.GenerateContentConfig(system_instruction=prompt,
                                                     temperature=temperature)
         resp = call_with_retry(client.models.generate_content,
                                model=model_id, contents=history, config=config_no_tools)
@@ -227,7 +287,7 @@ def run_gemini(problem: str, repo_root: Path, model_id: str, max_turns=15, tempe
 
 # ─────────────────── Provider: Anthropic (Claude) ───────────────────
 
-def run_anthropic(problem: str, repo_root: Path, model_id: str, max_turns=15, temperature=0) -> dict:
+def run_anthropic(problem: str, repo_root: Path, model_id: str, max_turns=15, temperature=0, system_prompt=None) -> dict:
     try:
         import anthropic
     except ImportError:
@@ -255,6 +315,7 @@ def run_anthropic(problem: str, repo_root: Path, model_id: str, max_turns=15, te
 
     messages = [{"role": "user",
                  "content": f"Problem:\n\n{problem}\n\nStart by listing the root directory."}]
+    prompt = system_prompt or SYSTEM_PROMPT
     final_text = ""
 
     for _ in range(max_turns):
@@ -262,7 +323,7 @@ def run_anthropic(problem: str, repo_root: Path, model_id: str, max_turns=15, te
             client.messages.create,
             model=model_id,
             max_tokens=4096,
-            system=SYSTEM_PROMPT,
+            system=prompt,
             tools=tools,
             messages=messages,
             temperature=temperature,
@@ -286,7 +347,7 @@ def run_anthropic(problem: str, repo_root: Path, model_id: str, max_turns=15, te
         resp = call_with_retry(
             client.messages.create,
             model=model_id, max_tokens=4096,
-            system=SYSTEM_PROMPT, messages=messages,
+            system=prompt, messages=messages,
             temperature=temperature,
         )
         final_text = "".join(b.text for b in resp.content if b.type == "text")
@@ -297,7 +358,7 @@ def run_anthropic(problem: str, repo_root: Path, model_id: str, max_turns=15, te
 # ─────────────────── Provider: OpenAI-compatible (GPT, DeepSeek) ───────────────────
 
 def run_openai_compat(problem: str, repo_root: Path, model_id: str,
-                      base_url: str = None, max_turns=15, temperature=0) -> dict:
+                      base_url: str = None, max_turns=15, temperature=0, system_prompt=None) -> dict:
     try:
         from openai import OpenAI
     except ImportError:
@@ -332,8 +393,9 @@ def run_openai_compat(problem: str, repo_root: Path, model_id: str,
                                           "directory": {"type": "string", "default": "."}}}}}
     ]
 
+    prompt = system_prompt or SYSTEM_PROMPT
     messages = [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": prompt},
         {"role": "user", "content": f"Problem:\n\n{problem}\n\nStart by listing the root directory."}
     ]
     final_text = ""
@@ -372,7 +434,7 @@ def run_openai_compat(problem: str, repo_root: Path, model_id: str,
 
 # ─────────────────── Provider: OpenAI Responses API (Codex) ───────────────────
 
-def run_openai_responses(problem: str, repo_root: Path, model_id: str, max_turns=15, temperature=0):
+def run_openai_responses(problem: str, repo_root: Path, model_id: str, max_turns=15, temperature=0, system_prompt=None):
     """Use the OpenAI Responses API for gpt-5-codex base models."""
     try:
         from openai import OpenAI
@@ -403,8 +465,9 @@ def run_openai_responses(problem: str, repo_root: Path, model_id: str, max_turns
     ]
 
     # Responses API: first call sends full input, subsequent calls send only new tool results
+    prompt = system_prompt or SYSTEM_PROMPT
     initial_input = [
-        {"role": "system", "content": SYSTEM_PROMPT},
+        {"role": "system", "content": prompt},
         {"role": "user",
          "content": f"Problem:\n\n{problem}\n\nStart by listing the root directory."},
     ]
@@ -492,17 +555,17 @@ MODELS = {
 }
 
 
-def dispatch(problem, repo_root, cfg, max_turns=15, temperature=0):
+def dispatch(problem, repo_root, cfg, max_turns=15, temperature=0, system_prompt=None):
     p = cfg["provider"]
     m = cfg["model_id"]
     if p == "gemini":
-        return run_gemini(problem, repo_root, m, max_turns, temperature=temperature)
+        return run_gemini(problem, repo_root, m, max_turns, temperature=temperature, system_prompt=system_prompt)
     elif p == "anthropic":
-        return run_anthropic(problem, repo_root, m, max_turns, temperature=temperature)
+        return run_anthropic(problem, repo_root, m, max_turns, temperature=temperature, system_prompt=system_prompt)
     elif p == "openai":
-        return run_openai_compat(problem, repo_root, m, max_turns=max_turns, temperature=temperature)
+        return run_openai_compat(problem, repo_root, m, max_turns=max_turns, temperature=temperature, system_prompt=system_prompt)
     elif p == "codex":
-        return run_openai_responses(problem, repo_root, m, max_turns, temperature=temperature)
+        return run_openai_responses(problem, repo_root, m, max_turns, temperature=temperature, system_prompt=system_prompt)
     else:
         raise ValueError(f"Unknown provider: {p}")
 
@@ -570,7 +633,7 @@ def main():
                 ctrl_result = None
                 if not args.codedna_only:
                     print(f"  → CONTROL{run_label} ...", flush=True)
-                    log, text = dispatch(problem, ctrl_dir, cfg, args.max_turns, temperature=args.temperature)
+                    log, text = dispatch(problem, ctrl_dir, cfg, args.max_turns, temperature=args.temperature, system_prompt=SYSTEM_PROMPT)
                     ctrl_result = build_result(log, text, gt)
                     cr = ctrl_result["metrics_read"]
                     print(f"  Control: {ctrl_result['tool_calls']} calls "
@@ -580,7 +643,7 @@ def main():
                     ctrl_runs.append(ctrl_result)
 
                 print(f"  → CODEDNA{run_label} ...", flush=True)
-                log, text = dispatch(problem, cdna_dir, cfg, args.max_turns, temperature=args.temperature)
+                log, text = dispatch(problem, cdna_dir, cfg, args.max_turns, temperature=args.temperature, system_prompt=CODEDNA_PROMPT)
                 cdna_result = build_result(log, text, gt)
                 dr = cdna_result["metrics_read"]
                 print(f"  CodeDNA: {cdna_result['tool_calls']} calls "
