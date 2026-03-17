@@ -1,0 +1,94 @@
+[
+  {
+    "instance_id": "django__django-14480",
+    "repo": "django/django",
+    "ground_truth_files": [
+      "django/db/backends/base/features.py",
+      "django/db/backends/mysql/features.py",
+      "django/db/models/expressions.py",
+      "django/db/models/query.py",
+      "django/db/models/query_utils.py",
+      "django/db/models/sql/__init__.py",
+      "django/db/models/sql/where.py"
+    ],
+    "control": {
+      "tool_calls": 10,
+      "read_calls": 3,
+      "grep_calls": 6,
+      "list_calls": 1,
+      "files_read": [
+        "django/db/models/query_utils.py",
+        "django/db/models/query.py",
+        "django/db/models/sql/query.py"
+      ],
+      "files_read_unique": [
+        "django/db/models/query_utils.py",
+        "django/db/models/query.py",
+        "django/db/models/sql/query.py"
+      ],
+      "n_files_read": 3,
+      "greps": [
+        "class Q\\b|def xor|\\^|__xor__",
+        "def xor|\\^|__xor__|Q\\(",
+        "class Q",
+        "def __or__|def __and__|def __xor__|def xor\\(|\\|\\s*self|&\\s*self|_combinator_query|union\\(|intersection\\(|difference\\(",
+        "__or__|__and__|_combinator_query|union\\(|intersection\\(|difference\\(",
+        "def filter\\(|def exclude\\(|def complex_filter\\(|def _filter_or_exclude|def __or__|def __and__"
+      ],
+      "total_chars_consumed": 37037,
+      "final_response": "Implemented-scope file map for adding logical XOR support to `Q()` and `QuerySet()`:\n\n### Files that need modification\n\n1. **`django/db/models/query_utils.py`**\n   - Add XOR connector support to `Q`:\n     - Define `XOR = \"XOR\"` constant.\n     - Implement `Q.__xor__(self, other)` using `_combine(other, self.XOR)`.\n   - Ensure deconstruction/serialization naturally preserves `_connector=\"XOR\"` (already handled by existing `deconstruct()` logic once connector exists).\n\n2. **`django/db/models/query.py`**\n   - Add `QuerySet` XOR API:\n     - Implement `QuerySet.__xor__(self, other)` analogous to existing `__or__` / `__and__` behavior (same model checks, empty queryset behavior, known-related merge behavior, etc.).\n     - Implement public convenience method `QuerySet.xor(*other_qs)` similar in style to `union()/intersection()/difference()` if required by project conventions for set-like combinators.\n   - Ensure XOR combination routes through query-combine machinery correctly.\n\n3. **`django/db/models/sql/where.py`**\n   - Add `XOR` connector constant alongside `AND`/`OR`.\n   - Update `WhereNode` SQL rendering to support XOR:\n     - If backend supports logical XOR operator, emit native SQL connector.\n     - If backend does **not** support XOR (notably SQLite), rewrite XOR expression into equivalent boolean logic (e.g., odd-parity formulation using AND/OR/NOT) so behavior is backend-agnostic.\n   - Ensure negation/parenthesization rules remain correct.\n\n4. **`django/db/backends/base/features.py`**\n   - Add backend feature flag, e.g. `supports_logical_xor = False` (default).\n\n5. **Backend feature overrides (DB-specific):**\n   - **`django/db/backends/postgresql/features.py`** \u2192 set `supports_logical_xor = True` (if implemented via SQL operator/function in compiler path).\n   - **`django/db/backends/mysql/features.py`** \u2192 set `supports_logical_xor = True`.\n   - **`django/db/backends/oracle/features.py`** \u2192 set appropriately based on implementation path.\n   - **`django/db/backends/sqlite3/features.py`** \u2192 keep `False`.\n   - **`django/db/backends/sql_server/features.py`** only if present in this tree (usually not core Django). If absent, ignore.\n\n6. **`django/db/models/sql/query.py`**\n   - Verify/update places that assume connectors are only `AND`/`OR` when building/combining `Q` trees (`_add_q`, `build_filter`, etc.).\n   - Ensure XOR connector is accepted and propagated into `WhereNode` without assertion/validation failures.\n\n7. **`django/db/models/__init__.py`** (possibly)\n   - Only if needed to expose new API symbols/constants (likely no change unless connector constants are re-exported).\n\n---\n\n### Tests that need modification/addition\n\n8. **`tests/queries/test_q.py`** (or equivalent Q-object test module)\n   - Add tests for:\n     - `Q(...) ^ Q(...)` tree construction.\n     - Mixed precedence with `&`, `|`, `~`.\n     - Deconstruct/reconstruct with XOR connector.\n\n9. **`tests/queries/test_query.py`** (or equivalent queryset-combination tests)\n   - Add tests for:\n     - `qs1 ^ qs2` semantics.\n     - Empty queryset XOR behavior.\n     - Model mismatch/type errors consistent with `|`/`&`.\n\n10. **Backend-specific tests**\n   - **`tests/backends/sqlite/...`**: verify fallback SQL path works and returns correct results.\n   - **`tests/backends/...` for postgres/mysql/oracle**: verify native XOR path (if used) and SQL generation where asserted.\n\n11. **Potential docs/tests for public API**\n   - **`docs/ref/models/querysets.txt`** and/or **`docs/topics/db/queries.txt`**:\n     - Document `Q` XOR (`^`) and `QuerySet` XOR behavior.\n   - Add doc tests/examples if this repo enforces them.\n\n---\n\n### Why this is the full boundary\n\n- `Q` operator support alone is insufficient: SQL connector handling lives in `WhereNode` and query-building internals.\n- `QuerySet` operator support is separate from `Q` and must be explicitly added.\n- Backend capability differences require feature flags + fallback behavior.\n- Django requires comprehensive tests across ORM behavior and backend differences, plus docs for public API additions.\n\nIf you want, I can now do a second pass and pinpoint the **exact methods/lines** in each file to patch.",
+      "reasoning_log": [
+        "Implemented-scope file map for adding logical XOR support to `Q()` and `QuerySet()`:\n\n### Files that need modification\n\n1. **`django/db/models/query_utils.py`**\n   - Add XOR connector support to `Q`:\n     - Define `XOR = \"XOR\"` constant.\n     - Implement `Q.__xor__(self, other)` using `_combine(other, self.XOR)`.\n   - Ensure deconstruction/serialization naturally preserves `_connector=\"XOR\"` (already handled by existing `deconstruct()` logic once connector exists).\n\n2. **`django/db/models/query.py`**\n   - Add `QuerySet` XOR API:\n     - Implement `QuerySet.__xor__(self, other)` analogous to existing `__or__` / `__and__` behavior (same model checks, empty queryset behavior, known-related merge behavior, etc.).\n     - Implement public convenience method `QuerySet.xor(*other_qs)` similar in style to `union()/intersection()/difference()` if required by project conventions for set-like combinators.\n   - Ensure XOR combination routes through query-combine machinery correctly.\n\n3. **`django/db/models/sql/where.py`**\n   - Add `XOR` connector constant alongside `AND`/`OR`.\n   - Update `WhereNode` SQL rendering to support XOR:\n     - If backend supports logical XOR operator, emit native SQL connector.\n     - If backend does **not** support XOR (notably SQLite), rewrite XOR expression into equivalent boolean logic (e.g., odd-parity formulation using AND/OR/NOT) so behavior is backend-agnostic.\n   - Ensure negation/parenthesization rules remain correct.\n\n4. **`django/db/backends/base/features.py`**\n   - Add backend feature flag, e.g. `supports_logical_xor = False` (default).\n\n5. **Backend feature overrides (DB-specific):**\n   - **`django/db/backends/postgresql/features.py`** \u2192 set `supports_logical_xor = True` (if implemented via SQL operator/function in compiler path).\n   - **`django/db/backends/mysql/features.py`** \u2192 set `supports_logical_xor = True`.\n   - **`django/db/backends/oracle/features.py`** \u2192 set appropriately based on implementation path.\n   - **`django/db/backends/sqlite3/features.py`** \u2192 keep `False`.\n   - **`django/db/backends/sql_server/features.py`** only if present in this tree (usually not core Django). If absent, ignore.\n\n6. **`django/db/models/sql/query.py`**\n   - Verify/update places that assume connectors are only `AND`/`OR` when building/combining `Q` trees (`_add_q`, `build_filter`, etc.).\n   - Ensure XOR connector is accepted and propagated into `WhereNode` without assertion/validation failures.\n\n7. **`django/db/models/__init__.py`** (possibly)\n   - Only if needed to expose new API symbols/constants (likely no change unless connector constants are re-exported).\n\n---\n\n### Tests that need modification/addition\n\n8. **`tests/queries/test_q.py`** (or equivalent Q-object test module)\n   - Add tests for:\n     - `Q(...) ^ Q(...)` tree construction.\n     - Mixed precedence with `&`, `|`, `~`.\n     - Deconstruct/reconstruct with XOR connector.\n\n9. **`tests/queries/test_query.py`** (or equivalent queryset-combination tests)\n   - Add tests for:\n     - `qs1 ^ qs2` semantics.\n     - Empty queryset XOR behavior.\n     - Model mismatch/type errors consistent with `|`/`&`.\n\n10. **Backend-specific tests**\n   - **`tests/backends/sqlite/...`**: verify fallback SQL path works and returns correct results.\n   - **`tests/backends/...` for postgres/mysql/oracle**: verify native XOR path (if used) and SQL generation where asserted.\n\n11. **Potential docs/tests for public API**\n   - **`docs/ref/models/querysets.txt`** and/or **`docs/topics/db/queries.txt`**:\n     - Document `Q` XOR (`^`) and `QuerySet` XOR behavior.\n   - Add doc tests/examples if this repo enforces them.\n\n---\n\n### Why this is the full boundary\n\n- `Q` operator support alone is insufficient: SQL connector handling lives in `WhereNode` and query-building internals.\n- `QuerySet` operator support is separate from `Q` and must be explicitly added.\n- Backend capability differences require feature flags + fallback behavior.\n- Django requires comprehensive tests across ORM behavior and backend differences, plus docs for public API additions.\n\nIf you want, I can now do a second pass and pinpoint the **exact methods/lines** in each file to patch."
+      ],
+      "metrics_read": {
+        "recall": 0.2857142857142857,
+        "precision": 0.6666666666666666,
+        "f1": 0.4
+      },
+      "metrics_proposed": {
+        "recall": 0.2857142857142857,
+        "precision": 0.2,
+        "f1": 0.23529411764705882
+      }
+    },
+    "codedna": {
+      "tool_calls": 8,
+      "read_calls": 4,
+      "grep_calls": 3,
+      "list_calls": 1,
+      "files_read": [
+        ".codedna",
+        "django/db/models/query_utils.py",
+        "django/db/models/query.py",
+        "django/db/models/sql/where.py"
+      ],
+      "files_read_unique": [
+        "django/db/models/query_utils.py",
+        "django/db/models/query.py",
+        ".codedna",
+        "django/db/models/sql/where.py"
+      ],
+      "n_files_read": 4,
+      "greps": [
+        "class Q\\b|def xor\\b|\\^",
+        "class QuerySet\\b|def xor\\b",
+        "used_by:"
+      ],
+      "total_chars_consumed": 48558,
+      "final_response": "Root directory listed \u2705 and I\u2019ve started tracing the relevant ORM files per CodeDNA.\n\nFor this XOR feature, the key files that will require modification are:\n\n1. **`django/db/models/query_utils.py`**\n   - Contains `class Q`.\n   - Needs XOR connector constant and `__xor__` (and likely `.xor()` convenience if desired).\n\n2. **`django/db/models/query.py`**\n   - Contains `class QuerySet`.\n   - Needs `QuerySet.xor()` and likely `QuerySet.__xor__` support analogous to `__or__` / `__and__`.\n\n3. **`django/db/models/sql/where.py`**\n   - Defines SQL connectors (`AND`, `OR`) and `WhereNode.as_sql()`.\n   - Must add XOR connector handling and SQL generation strategy (including fallback for SQLite).\n\n4. **`django/db/models/sql/__init__.py`**\n   - Re-exports connectors from `where.py`.\n   - Must export XOR so query combination can use it.\n\nI should next read:\n- `django/db/models/sql/query.py` (where query combination logic lives),\n- backend feature flags in `django/db/backends/base/features.py` (and possibly backend-specific overrides),\n- and tests under `tests/` for `Q`/`QuerySet` combinators to identify all test files needing updates.\n\nIf you want, I\u2019ll continue and produce the **complete file modification boundary** (including all tests/docs) before any patching.",
+      "reasoning_log": [
+        "Root directory listed \u2705 and I\u2019ve started tracing the relevant ORM files per CodeDNA.\n\nFor this XOR feature, the key files that will require modification are:\n\n1. **`django/db/models/query_utils.py`**\n   - Contains `class Q`.\n   - Needs XOR connector constant and `__xor__` (and likely `.xor()` convenience if desired).\n\n2. **`django/db/models/query.py`**\n   - Contains `class QuerySet`.\n   - Needs `QuerySet.xor()` and likely `QuerySet.__xor__` support analogous to `__or__` / `__and__`.\n\n3. **`django/db/models/sql/where.py`**\n   - Defines SQL connectors (`AND`, `OR`) and `WhereNode.as_sql()`.\n   - Must add XOR connector handling and SQL generation strategy (including fallback for SQLite).\n\n4. **`django/db/models/sql/__init__.py`**\n   - Re-exports connectors from `where.py`.\n   - Must export XOR so query combination can use it.\n\nI should next read:\n- `django/db/models/sql/query.py` (where query combination logic lives),\n- backend feature flags in `django/db/backends/base/features.py` (and possibly backend-specific overrides),\n- and tests under `tests/` for `Q`/`QuerySet` combinators to identify all test files needing updates.\n\nIf you want, I\u2019ll continue and produce the **complete file modification boundary** (including all tests/docs) before any patching."
+      ],
+      "metrics_read": {
+        "recall": 0.42857142857142855,
+        "precision": 0.75,
+        "f1": 0.5454545454545454
+      },
+      "metrics_proposed": {
+        "recall": 0.7142857142857143,
+        "precision": 0.8333333333333334,
+        "f1": 0.7692307692307692
+      }
+    }
+  }
+]
