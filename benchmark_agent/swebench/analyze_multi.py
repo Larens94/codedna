@@ -90,16 +90,30 @@ def main():
             print(f"  {name:<23} — no results file found")
             continue
         s = summarize(results)
+        if not s:
+            print(f"  {name:<23} — no comparable results (run both control and codedna)")
+            continue
         summaries[name] = s
-        delta_f1 = s["avg_f1"] - s["ctrl_avg_f1"]
+        ctrl_f1 = s.get("ctrl_avg_f1")
+        dna_f1 = s.get("avg_f1")
+        if ctrl_f1 is not None and dna_f1 is not None:
+            delta_f1 = dna_f1 - ctrl_f1
+            ctrl_str = f"{ctrl_f1:>8.0%}"
+            delta_str = f"{pct(delta_f1):>7}"
+        else:
+            delta_f1 = 0
+            ctrl_str = f"{'—':>8}" if ctrl_f1 is None else f"{ctrl_f1:>8.0%}"
+            delta_str = f"{'—':>7}"
+        dna_str = f"{dna_f1:>8.0%}" if dna_f1 is not None else f"{'—':>8}"
+        recall_str = f"{s.get('avg_recall', 0):>10.0%}" if s.get('avg_recall') is not None else f"{'—':>10}"
         print(f"  {name:<23} "
-              f"{s['ctrl_avg_f1']:>8.0%} "
-              f"{s['avg_f1']:>8.0%} "
-              f"{pct(delta_f1):>7} "
-              f"{s['avg_recall']:>10.0%} "
-              f"{s['avg_unique_files']:>12.1f} "
-              f"{s['avg_chars']:>10,.0f} "
-              f"  {s['tasks_better']}/{s['n']}")
+              f"{ctrl_str} "
+              f"{dna_str} "
+              f"{delta_str} "
+              f"{recall_str} "
+              f"{s.get('avg_unique_files', 0):>12.1f} "
+              f"{s.get('avg_chars', 0):>10,.0f} "
+              f"  {s.get('tasks_better', 0)}/{s['n']}")
 
     if len(summaries) < 2:
         print("\n(Run more models to see cross-model comparison)")

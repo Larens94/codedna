@@ -71,12 +71,12 @@ rules:   <constraints> | none
 ### Step 3: Follow the `used_by:` graph
 `used_by:` tells you which files CONSUME this module. When you read a file and see:
 ```
-used_by: django/db/models/expressions.py → Q
-         django/db/models/sql/__init__.py → AND, OR
+used_by: some_module.py → SomeClass
+         another_module.py → helper_func
 ```
 Your NEXT ACTIONS should be:
-- `read_file("django/db/models/expressions.py")` — read its header to check if it's relevant
-- `read_file("django/db/models/sql/__init__.py")` — read its header to check if it's relevant
+- `read_file("some_module.py")` — read its header to check if it's relevant
+- `read_file("another_module.py")` — read its header to check if it's relevant
 
 If a `used_by:` target's purpose relates to the problem, read it in full. Then check ITS `used_by:` too.
 
