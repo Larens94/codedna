@@ -20,13 +20,13 @@ The protocol follows a **zoom metaphor** — like how the human eye works:
 
 **Level 3 — Semantic Naming (Cognitive Compression):** Variable naming conventions that encode type, origin, and shape directly into the identifier.
 
-The design principle: **only annotate what the code doesn't already tell you.** Import statements already declare dependencies — duplicating them in annotations wastes tokens. But *who depends on you* (`used_by:`) is impossible to know without reading every file in the project. That is where CodeDNA adds value.
+The design principle: **only annotate what the code doesn't already tell you.** Import statements already declare dependencies — duplicating them in annotations wastes tokens. But *who depends on you* (`used_by:`) is hard to determine without reading many files in the project. That is where CodeDNA adds value.
 
 ### 1.1 The Inter-Agent Communication Model
 
 CodeDNA is an annotation standard by *form*, but an **inter-agent communication protocol** by *function*. The file is the channel. The writing agent encodes architectural context as structured metadata; the reading agent decodes it at any point in the file.
 
-This is qualitatively different from rule files (CLAUDE.md, .cursorrules, AGENTS.md), which are **human→agent** communication. CodeDNA is **agent→agent** communication, co-located with the code it describes.
+This is different in nature from rule files (CLAUDE.md, .cursorrules, AGENTS.md), which are **human→agent** communication. CodeDNA is **agent→agent** communication, co-located with the code it describes.
 
 Three examples illustrate the model:
 
@@ -55,7 +55,7 @@ exports: format_currency(n) → str | format_date(d) → str
 used_by: views/dashboard.py → render | api/reports.py → revenue_route
 ```
 
-In 1 read, Agent C knows exactly which 2 files call `format_currency()` and will be affected by the change. Total: 3 tool calls instead of 12. The `used_by` field is a navigation protocol — it answers the question *"who depends on me?"* which is impossible to know from the code of this file alone.
+In 1 read, Agent C knows which 2 files call `format_currency()` and may be affected by the change. Total: 3 tool calls instead of ~12. The `used_by` field is a navigation aid — it answers the question *"who depends on me?"* which is hard to determine from the code of this file alone.
 
 **Example C — Sliding Window as a Self-Healing Channel**
 
@@ -92,7 +92,7 @@ Level 2 exists because the channel must work even when the receiver sees only a 
 In Python, `import` statements already declare dependencies — they are visible in the first lines of every file. Duplicating them in a `deps:` annotation wastes tokens and creates synchronisation risk. The same applies to `Depends:` at function level — the agent sees the imports when it reads the code.
 
 What the code *doesn't* tell you:
-- **`used_by:`** — Who imports this file? Impossible to know without reading every file in the project.
+- **`used_by:`** — Who imports this file? Hard to determine without reading many files in the project.
 - **`exports:`** — Quick index of a file's public API without reading the entire file.
 - **`rules:`** — Domain constraints that no static analysis can extract ("always filter suspended tenants before aggregating revenue").
 
@@ -203,7 +203,7 @@ Common uses:
 
 ### 4.5 `used_by:` Field (Inverse Dependency)
 
-`used_by:` answers the question: **"who depends on me?"** This is the most valuable field in CodeDNA — it provides information that is impossible to obtain from reading the file alone. Without `used_by:`, the agent must grep every file in the project to find callers.
+`used_by:` answers the question: **"who depends on me?"** This is one of the most useful fields in CodeDNA — it provides information that is hard to obtain from reading the file alone. Without `used_by:`, the agent would need to search across the project to find callers.
 
 ```python
 """utils/format.py — Currency and date formatting helpers.
@@ -445,9 +445,9 @@ CodeDNA is designed for environments where **multiple AI agents work on the same
 2. **Next agent** reads the annotation → avoids the bug without re-discovering it
 3. **Third agent** fixes a related bug → adds to the `Rules:` with more detail
 
-This creates a **self-improving codebase** where knowledge grows organically. Unlike documentation (which goes stale), `Rules:` annotations are co-located with the code they describe and are read every time the function is edited.
+This creates a **codebase that accumulates knowledge** over time. Unlike external documentation (which tends to go stale), `Rules:` annotations are co-located with the code they describe and are read each time the function is edited.
 
-**The key insight:** agents don't need to understand the *entire* codebase — they need to understand the *constraints that aren't obvious from reading the code*. That is exactly what `Rules:` provides.
+**The practical benefit:** agents don't need to understand the *entire* codebase — they need to understand the *constraints that aren't obvious from reading the code*. That is what `Rules:` helps with.
 
 ### 8.6 Verification Agents
 
@@ -475,7 +475,7 @@ Annotations have a maintenance cost — they can go stale, be wrong, or become o
 | Without CodeDNA | With CodeDNA |
 |---|---|
 | N agents each spend ~X tokens rediscovering the same constraint | One agent writes `Rules:`, N agents save ~X tokens each |
-| Bug is re-introduced every time an agent forgets the constraint | Constraint is preserved across all future sessions |
+| Bug is re-introduced when an agent forgets the constraint | Constraint is preserved across sessions |
 | Human must write detailed prompt every session | Annotations accumulate knowledge automatically |
 
 **The trade-off:** annotations require maintenance agents (verification, updates after refactoring). But because the annotations themselves are structured and machine-readable, this maintenance can also be automated. The cost of a verification agent pass is far lower than the cost of N agents each making the same mistake.

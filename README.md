@@ -184,7 +184,7 @@ Because agents can hallucinate, `Rules:` annotations may contain incorrect infor
 | Without CodeDNA | With CodeDNA |
 |---|---|
 | N agents rediscover the same constraint | One writes `Rules:`, N benefit |
-| Bugs re-introduced across sessions | Constraints preserved permanently |
+| Bugs re-introduced across sessions | Constraints preserved across sessions |
 | Human writes prompts every session | Knowledge accumulates automatically |
 
 > **See [SPEC.md §8.5–8.7](./SPEC.md) for the full inter-agent model, verification protocol, and cost analysis.**

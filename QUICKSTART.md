@@ -2,7 +2,7 @@
 
 Get CodeDNA working in your project in under 2 minutes. Pick your AI tool below.
 
-> **💡 No prompt engineering needed.** Once CodeDNA annotations are in your code, any AI agent — Cursor, Claude Code, Copilot, ChatGPT — will automatically follow the `used_by:` graph to find all files that need changes. You just describe the problem. The code guides the agent.
+> **💡 Less prompt engineering needed.** CodeDNA annotations help AI agents follow the `used_by:` graph to find related files that may need changes. You describe the problem — the annotations provide architectural context.
 
 ---
 
