@@ -26,7 +26,7 @@ TASKS_FILE   = Path(__file__).parent / "tasks.json"
 PROJECTS_DIR = Path(__file__).parent.parent / "projects_swebench"
 API_KEY      = os.getenv("GEMINI_API_KEY", "")
 
-ANNOTATION_PROMPT = """You are an expert Python architect. Given this Python source file from a real open-source project, generate a CodeDNA v0.5 module docstring.
+ANNOTATION_PROMPT = """You are an expert Python architect. Given this Python source file from a real open-source project, generate a CodeDNA v0.7 module docstring.
 
 FILE PATH: {filepath}
 FILE CONTENT:
@@ -36,23 +36,22 @@ FILE CONTENT:
 
 OTHER FILES IN THE SAME PACKAGE: {sibling_files}
 
-Generate ONLY the module docstring that should appear as the very first thing in the file.
+Generate ONLY the module docstring. It must be the very first thing in the file.
 
-Format exactly like this:
-\"\"\"{filename} — <what this file does, ≤15 words>.
+Output EXACTLY this format (no extra fields, no markdown fences):
+\"\"\"{filename} — <what this file does, max 15 words>.
 
-deps:    <file.py → symbol | none>
-exports: <function(arg) -> return_type | ClassName>
-used_by: <other_file.py → function | unknown>
-tables:  <table_name(col1, col2) | none>
-rules:   <one hard architectural constraint an agent editing this file must respect>
+exports: <ClassName | function(args) -> type | none>
+used_by: <other_file.py → symbol | none>
+rules:   <one architectural constraint an agent editing this file MUST respect>
 \"\"\"
 
-RULES:
-1. DO NOT include hints about bugs, vulnerabilities, or specific issues.
-2. Describe architecture and contracts only.
-3. Keep it to 7-10 lines maximum.
-4. Output ONLY the docstring block, no other text or markdown.
+STRICT RULES:
+1. Output ONLY the docstring — starting with \"\"\" and ending with \"\"\".
+2. Exactly 4 lines inside: summary, blank, exports:, used_by:, rules:
+3. NO deps:, NO tables:, NO other fields.
+4. DO NOT mention bugs or specific task details — architecture only.
+5. Keep rules: to one sentence, max 20 words.
 """
 
 def get_python_files(directory: Path) -> list[Path]:
@@ -86,7 +85,7 @@ def annotate_file(filepath: Path, repo_root: Path, client, model_id: str) -> boo
         response = client.models.generate_content(
             model=model_id,
             contents=prompt,
-            config=gtypes.GenerateContentConfig(temperature=0.2, max_output_tokens=512),
+            config=gtypes.GenerateContentConfig(temperature=0.2, max_output_tokens=1024),
         )
         raw = response.text.strip()
 
@@ -102,6 +101,12 @@ def annotate_file(filepath: Path, repo_root: Path, client, model_id: str) -> boo
                 if in_block:
                     inner.append(line)
             raw = "\n".join(inner).strip()
+
+        # Ensure docstring is properly closed
+        if raw.startswith('"""') and not raw.endswith('"""'):
+            raw = raw.rstrip() + '\n"""'
+        elif raw.startswith("'''") and not raw.endswith("'''"):
+            raw = raw.rstrip() + "\n'''"
 
         # Remove existing module docstring if present
         new_content = content
