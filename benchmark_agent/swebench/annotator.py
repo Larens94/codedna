@@ -8,9 +8,11 @@ rules:   NEVER include hints about specific bugs in the annotations.
          Run this BEFORE knowing which specific task will be tested.
 """
 
+import argparse
 import json
 import os
 import sys
+import time
 from pathlib import Path
 
 try:
@@ -58,7 +60,10 @@ def get_python_files(directory: Path) -> list[Path]:
             if "__pycache__" not in str(f) and f.name != "__init__.py"]
 
 def already_annotated(content: str) -> bool:
-    return content.strip().startswith('"""') and "deps:" in content[:600]
+    first = content.strip()
+    return first.startswith(('"""', "'''")) and (
+        "exports:" in first[:600] and "rules:" in first[:600]
+    )
 
 def annotate_file(filepath: Path, repo_root: Path, client, model_id: str) -> bool:
     content = filepath.read_text(encoding="utf-8", errors="replace")
@@ -114,26 +119,42 @@ def annotate_file(filepath: Path, repo_root: Path, client, model_id: str) -> boo
         return False
 
 def main():
+    parser = argparse.ArgumentParser(
+        description="Annotate codedna/ dirs with CodeDNA v0.7 headers (exports + used_by + rules)"
+    )
+    parser.add_argument("--task",  help="Annotate a specific instance_id only")
+    parser.add_argument("--force", action="store_true",
+                        help="Re-annotate even files that already have full annotations")
+    parser.add_argument("--model", default="gemini-2.5-flash",
+                        help="Gemini model to use (default: gemini-2.5-flash)")
+    args = parser.parse_args()
+
     if not API_KEY:
         print("ERROR: set GEMINI_API_KEY environment variable")
         sys.exit(1)
 
     client   = genai.Client(api_key=API_KEY)
-    model_id = "gemini-2.5-flash-preview-04-17"
+    model_id = args.model
 
     with open(TASKS_FILE) as f:
         tasks = json.load(f)
+
+    if args.task:
+        tasks = [t for t in tasks if t["instance_id"] == args.task]
+        if not tasks:
+            print(f"ERROR: task '{args.task}' not found in tasks.json")
+            sys.exit(1)
 
     for task in tasks:
         iid         = task["instance_id"]
         codedna_dir = PROJECTS_DIR / iid / "codedna"
 
         if not codedna_dir.exists():
-            print(f"⚠️  {iid}: codedna/ not found — run setup_repos.py first.")
+            print(f"⚠️  {iid}: codedna/ not found — skipping.")
             continue
 
         print(f"\n{'='*60}")
-        print(f"Annotating: {iid}")
+        print(f"Annotating: {iid}  (force={args.force})")
 
         # Prioritise files the real fix touches
         priority = [
@@ -141,23 +162,35 @@ def main():
             if (codedna_dir / f).exists() and f.endswith(".py")
         ]
 
-        # Also include top-level Python modules up to 20 files total
-        all_py     = get_python_files(codedna_dir)
-        top_level  = [f for f in all_py if len(f.relative_to(codedna_dir).parts) <= 2]
-        combined   = list({str(f): f for f in priority + top_level}.values())[:20]
+        # Also include top-level Python modules up to 30 files total
+        all_py    = get_python_files(codedna_dir)
+        top_level = [f for f in all_py if len(f.relative_to(codedna_dir).parts) <= 3]
+        combined  = list({str(f): f for f in priority + top_level}.values())[:30]
 
-        annotated  = 0
+        # If --force, strip existing docstrings so already_annotated() returns False
+        if args.force:
+            for fp in combined:
+                content = fp.read_text(encoding="utf-8", errors="replace")
+                stripped = content.lstrip()
+                if stripped.startswith(('"""', "'''")):
+                    q = '"""' if stripped.startswith('"""') else "'''"
+                    end = stripped.find(q, 3)
+                    if end != -1:
+                        fp.write_text(stripped[end + 3:].lstrip(), encoding="utf-8")
+
+        annotated = 0
         for fp in combined:
             rel = fp.relative_to(codedna_dir)
             ok  = annotate_file(fp, codedna_dir, client, model_id)
             print(f"    {'✅' if ok else '⏭️ '} {rel}")
             if ok:
                 annotated += 1
+            time.sleep(0.3)
 
         print(f"  → Annotated {annotated}/{len(combined)} files")
 
     print("\n✅ Annotation complete.")
-    print("Next: python swebench/run_agent.py")
+    print("Next: python swebench/run_agent_multi.py")
 
 if __name__ == "__main__":
     main()
