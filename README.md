@@ -20,11 +20,11 @@
 
 **No RAG. No vector DB. No external rules files. Minimal drift (context co-located with code).**
 
-> **🎯 Zero Prompt Engineering Required:** CodeDNA annotations guide AI agents automatically. Even non-technical users get complete, multi-file fixes by simply describing the problem — no need to know *how* to instruct the agent. The architectural knowledge lives in the code, not in the prompt.
+> **🎯 Less Prompt Engineering Needed:** CodeDNA annotations help AI agents navigate the codebase with less manual guidance. Even less-technical users can get better multi-file fixes by describing the problem — the architectural context is already in the code.
 
 ![CodeDNA Site — Animated DNA Hero](./docs/hero.png)
 
-> **🔮 The Network Effect:** Every AI coding agent that writes CodeDNA annotations leaves a navigable trail for every other agent that reads the code after it — regardless of vendor, model, or IDE. If all agentic coding tools adopted this protocol today, within a decade every codebase in production would be self-navigating. The more agents participate, the more valuable the protocol becomes.
+> **🔄 The Network Effect:** When an AI agent writes CodeDNA annotations, it leaves a navigable trail for every other agent that reads the code after it — regardless of vendor or model. The more agents that participate, the more useful the protocol becomes.
 
 ---
 
@@ -33,11 +33,11 @@
 | You are… | Without CodeDNA | With CodeDNA |
 |---|---|---|
 | **Non-technical user** | Must learn prompt engineering to guide the AI agent through the codebase | Just describe the problem — annotations guide the agent automatically |
-| **Junior developer** | AI finds the obvious file, misses the 5 related ones | `used_by:` graph leads to ALL files that need changes |
-| **Senior developer** | Spends time writing detailed prompts every session | Writes annotations once, every agent benefits forever |
-| **Team lead** | Each developer's AI makes different mistakes | Annotations encode team knowledge — consistent results across all agents |
+| **Junior developer** | AI finds the obvious file, misses the 5 related ones | `used_by:` graph helps find related files that may need changes |
+| **Senior developer** | Spends time writing detailed prompts every session | Writes annotations once, benefits persist across sessions |
+| **Team lead** | Each developer's AI makes different mistakes | Annotations encode team knowledge — more consistent results |
 
-**The core insight:** today, the quality of AI-assisted coding depends on the *user's* ability to prompt. CodeDNA shifts that knowledge from ephemeral prompts into persistent, version-controlled source code — democratizing access to expert-level AI assistance.
+**The core idea:** today, the quality of AI-assisted coding often depends on the *user's* ability to prompt. CodeDNA moves some of that knowledge from ephemeral prompts into persistent, version-controlled source code.
 
 ---
 
@@ -156,6 +156,38 @@ int_cents_price_from_req = request.json["price"]
 ### Planner Read Protocol
 
 To plan edits across 10+ files: read `.codedna` first, then read only the module docstring of each file (first 8–12 lines), build an `exports:` → `used_by:` graph, then open only the relevant files in full.
+
+---
+
+## 🔄 Inter-Agent Knowledge Accumulation
+
+CodeDNA is built for environments where **multiple AI agents work on the same codebase over time** — different models, different tools, different sessions. Each agent leaves knowledge for the next:
+
+```
+Agent A fixes a bug → adds Rules: "MUST filter soft-deleted users"
+         ↓
+Agent B reads Rules: → avoids the same bug without re-discovering it
+         ↓
+Agent C discovers a related edge case → extends the Rules:
+         ↓
+Knowledge accumulates organically in the codebase
+```
+
+Unlike documentation (which goes stale), `Rules:` annotations are **co-located with the code** — they are read every time the function is edited.
+
+### Verification Agents
+
+Because agents can hallucinate, `Rules:` annotations may contain incorrect information. A wrong annotation — e.g., "MUST filter by tenant_id" when no such filter exists — could propagate into every future agent's output.
+
+**Solution: verification agents** that periodically cross-check annotations against the actual code. This is the cost of the savings — annotation maintenance. But because annotations are structured and machine-readable, this maintenance is also automatable.
+
+| Without CodeDNA | With CodeDNA |
+|---|---|
+| N agents rediscover the same constraint | One writes `Rules:`, N benefit |
+| Bugs re-introduced across sessions | Constraints preserved permanently |
+| Human writes prompts every session | Knowledge accumulates automatically |
+
+> **See [SPEC.md §8.5–8.7](./SPEC.md) for the full inter-agent model, verification protocol, and cost analysis.**
 
 ---
 

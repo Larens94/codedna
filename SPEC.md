@@ -437,6 +437,53 @@ Migration of an existing codebase is a **two-step process**:
 
 CodeDNA targets **agentic code generation workflows** — environments where an LLM agent both generates and modifies source files. The structural annotations are auto-generated; the semantic annotations grow organically.
 
+### 8.5 Inter-Agent Knowledge Accumulation
+
+CodeDNA is designed for environments where **multiple AI agents work on the same codebase over time**, potentially different models, different tools, different sessions. Each agent leaves knowledge for the next:
+
+1. **Writing agent** discovers a constraint (e.g., a soft-delete filter) → writes a `Rules:` annotation
+2. **Next agent** reads the annotation → avoids the bug without re-discovering it
+3. **Third agent** fixes a related bug → adds to the `Rules:` with more detail
+
+This creates a **self-improving codebase** where knowledge grows organically. Unlike documentation (which goes stale), `Rules:` annotations are co-located with the code they describe and are read every time the function is edited.
+
+**The key insight:** agents don't need to understand the *entire* codebase — they need to understand the *constraints that aren't obvious from reading the code*. That is exactly what `Rules:` provides.
+
+### 8.6 Verification Agents
+
+Because `Rules:` annotations are written by AI agents, they may contain **hallucinated or incorrect information**. A single wrong `Rules:` annotation — e.g., "MUST filter by tenant_id" when no such filter is needed — could propagate into every future agent's output.
+
+**Solution: periodic verification agents.** A verification agent:
+
+1. Reads each `Rules:` annotation in the codebase
+2. Cross-checks it against the actual code (tests, database schema, import graph)
+3. Flags annotations that contradict the code or other annotations
+4. Optionally removes or corrects annotations with evidence
+
+This is analogous to code review for comments: the cost of reviewing is justified by the cost of wrong information propagating.
+
+**When to run verification:**
+- After a major refactor
+- Before a release
+- On a periodic schedule (e.g., weekly for active codebases)
+- When an agent's edit produces unexpected failures
+
+### 8.7 Maintenance Cost Model
+
+Annotations have a maintenance cost — they can go stale, be wrong, or become outdated after refactoring. This is not free. But the ROI is clear:
+
+| Without CodeDNA | With CodeDNA |
+|---|---|
+| N agents each spend ~X tokens rediscovering the same constraint | One agent writes `Rules:`, N agents save ~X tokens each |
+| Bug is re-introduced every time an agent forgets the constraint | Constraint is preserved across all future sessions |
+| Human must write detailed prompt every session | Annotations accumulate knowledge automatically |
+
+**The trade-off:** annotations require maintenance agents (verification, updates after refactoring). But because the annotations themselves are structured and machine-readable, this maintenance can also be automated. The cost of a verification agent pass is far lower than the cost of N agents each making the same mistake.
+
+**This is the same trade-off as documentation**, but with two key differences:
+1. **Machine-readable:** a verification agent can cross-check annotations against code automatically
+2. **Co-located:** unlike external docs, annotations are in the file — they are read every time the code is touched
+
 
 ---
 
