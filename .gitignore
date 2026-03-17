@@ -12,3 +12,4 @@ build/
 benchmark_agent/venv/
 projects_swebench/
 note_dev_2
+.claude/agents/ai-benchmark-validator.md
