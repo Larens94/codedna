@@ -64,7 +64,7 @@ def _wrap_fns(fns_dict, log, side, queue):
 
 
 def run_with_streaming(problem, repo_root, provider, model_id, side, queue,
-                       temperature=0, max_turns=15, system_prompt=None):
+                       temperature=0, max_turns=30, system_prompt=None):
     """Run a benchmark using the REAL provider functions, with SSE event interception."""
     try:
         fns_raw, log = ram.make_fns(repo_root)
@@ -437,12 +437,12 @@ def api_run():
     # Run both in parallel
     def run_ctrl():
         run_with_streaming(problem, ctrl_dir, cfg["provider"], cfg["model_id"],
-                           "control", active_queue, temperature=0, max_turns=15,
+                           "control", active_queue, temperature=0, max_turns=30,
                            system_prompt=ram.SYSTEM_PROMPT)
 
     def run_cdna():
         run_with_streaming(problem, cdna_dir, cfg["provider"], cfg["model_id"],
-                           "codedna", active_queue, temperature=0, max_turns=15,
+                           "codedna", active_queue, temperature=0, max_turns=30,
                            system_prompt=ram.CODEDNA_PROMPT)
 
     threading.Thread(target=run_ctrl, daemon=True).start()

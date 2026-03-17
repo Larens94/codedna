@@ -26,23 +26,35 @@ def load_model_results(model_name: str) -> list | None:
     with open(path) as f:
         return json.load(f)
 
+def _has_metrics(entry, condition):
+    """Check if an entry has valid metrics for the given condition."""
+    c = entry.get(condition)
+    return c is not None and c.get("metrics_read") is not None
+
 def summarize(results: list) -> dict:
     """Compute averages across all tasks for one model."""
-    n = len(results)
+    # Only include entries where both conditions have valid metrics
+    valid = [r for r in results if _has_metrics(r, "codedna") and _has_metrics(r, "control")]
+    n_total = len(results)
+    n = len(valid)
     if n == 0:
         return {}
+    # For codedna-only stats, include entries that have codedna metrics even if control is None
+    dna_valid = [r for r in results if _has_metrics(r, "codedna")]
+    nd = len(dna_valid)
     return {
-        "n": n,
-        "avg_read_calls":   sum(r["codedna"].get("read_calls", r["codedna"]["tool_calls"]) for r in results) / n,
-        "avg_unique_files": sum(r["codedna"]["n_files_read"] for r in results) / n,
-        "avg_chars":        sum(r["codedna"]["total_chars_consumed"] for r in results) / n,
-        "avg_recall":       sum(r["codedna"]["metrics_read"]["recall"] for r in results) / n,
-        "avg_precision":    sum(r["codedna"]["metrics_read"]["precision"] for r in results) / n,
-        "avg_f1":           sum(r["codedna"]["metrics_read"]["f1"] for r in results) / n,
+        "n": n_total,
+        "n_comparable": n,
+        "avg_read_calls":   sum(r["codedna"].get("read_calls", r["codedna"]["tool_calls"]) for r in dna_valid) / nd,
+        "avg_unique_files": sum(r["codedna"]["n_files_read"] for r in dna_valid) / nd,
+        "avg_chars":        sum(r["codedna"]["total_chars_consumed"] for r in dna_valid) / nd,
+        "avg_recall":       sum(r["codedna"]["metrics_read"]["recall"] for r in dna_valid) / nd,
+        "avg_precision":    sum(r["codedna"]["metrics_read"]["precision"] for r in dna_valid) / nd,
+        "avg_f1":           sum(r["codedna"]["metrics_read"]["f1"] for r in dna_valid) / nd,
 
-        "ctrl_avg_recall":  sum(r["control"]["metrics_read"]["recall"] for r in results if r["control"]) / n,
-        "ctrl_avg_f1":      sum(r["control"]["metrics_read"]["f1"] for r in results if r["control"]) / n,
-        "tasks_better":     sum(1 for r in results
+        "ctrl_avg_recall":  sum(r["control"]["metrics_read"]["recall"] for r in valid) / n,
+        "ctrl_avg_f1":      sum(r["control"]["metrics_read"]["f1"] for r in valid) / n,
+        "tasks_better":     sum(1 for r in valid
                                 if r["codedna"]["metrics_read"]["f1"] > r["control"]["metrics_read"]["f1"]),
     }
 
@@ -114,7 +126,7 @@ def main():
         for name in summaries:
             results = load_model_results(name)
             task_result = next((r for r in results if r["instance_id"] == task_id), None)
-            if task_result:
+            if task_result and _has_metrics(task_result, "codedna"):
                 f1 = task_result["codedna"]["metrics_read"]["f1"]
                 row += f" {f1:>15.0%}"
             else:

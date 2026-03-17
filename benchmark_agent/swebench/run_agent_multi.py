@@ -576,8 +576,8 @@ def main():
     parser = argparse.ArgumentParser(description="Multi-model CodeDNA benchmark")
     parser.add_argument("--model", choices=list(MODELS.keys()),
                         help="Model to test (default: all configured)")
-    parser.add_argument("--max-turns", type=int, default=15,
-                        help="Max agent turns per task (default: 15)")
+    parser.add_argument("--max-turns", type=int, default=30,
+                        help="Max agent turns per task (default: 30)")
     parser.add_argument("--runs", type=int, default=1,
                         help="Number of runs per task for statistical averaging (default: 1)")
     parser.add_argument("--temperature", type=float, default=0.0,
