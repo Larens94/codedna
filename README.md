@@ -28,6 +28,21 @@
 
 ## ⚡ 2-Minute Setup
 
+### One-Line Install (CLI)
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh)
+```
+
+Install for a **single tool** only:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) cursor
+# Options: claude | cursor | copilot | cline | windsurf | agents | all
+```
+
+### Manual Setup
+
 **Pick your AI tool and paste:**
 
 | Tool | File to create | Source |

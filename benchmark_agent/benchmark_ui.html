@@ -1,0 +1,386 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧬 CodeDNA Live Benchmark</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#0d1117; --bg2:#161b22; --bg3:#1c2333; --border:#30363d;
+  --text:#e6edf3; --text2:#8b949e;
+  --accent:#58a6ff; --green:#3fb950; --red:#f85149;
+  --orange:#d29922; --purple:#bc8cff; --cyan:#39d2c0;
+  --radius:12px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
+
+/* Header */
+.hdr{background:linear-gradient(135deg,#0d1117,#1a1e2e);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap}
+.hdr h1{font-size:17px;font-weight:800;background:linear-gradient(90deg,var(--accent),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hdr .sub{font-size:11px;color:var(--text2)}
+.tag-live{background:rgba(248,81,73,.2);color:var(--red);padding:3px 10px;border-radius:12px;font-size:10px;font-weight:700;animation:pulse 2s infinite}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.5}}
+.tag-live.off{animation:none;opacity:.5}
+.ctrls{display:flex;gap:8px;align-items:center;margin-left:auto;flex-wrap:wrap}
+select,button{font-family:'Inter';font-size:12px;border:1px solid var(--border);border-radius:7px;padding:6px 11px;background:var(--bg2);color:var(--text);cursor:pointer;transition:border-color .15s}
+select:hover,button:hover{border-color:var(--accent)}
+button.play{background:linear-gradient(135deg,#238636,#2ea043);border-color:#2ea043;font-weight:600;padding:6px 18px}
+button.play:disabled{opacity:.4;cursor:not-allowed}
+.opt-no-key{color:var(--text2);font-style:italic}
+
+/* Main */
+.main{display:grid;grid-template-columns:1fr 1fr;gap:12px;padding:12px 18px;max-width:1700px;margin:0 auto}
+
+/* Panel */
+.panel{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden;display:flex;flex-direction:column}
+.ph{padding:10px 14px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:7px}
+.ph .dot{width:8px;height:8px;border-radius:50%}
+.panel.ctrl .dot{background:var(--red)}.panel.ctrl .pt{color:var(--red)}
+.panel.cdna .dot{background:var(--green)}.panel.cdna .pt{color:var(--green)}
+.pt{font-weight:700;font-size:12px}
+.ps{margin-left:auto;font-size:10px;color:var(--text2);font-family:'JetBrains Mono'}
+.spinner{display:inline-block;width:12px;height:12px;border:2px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin .6s linear infinite;margin-right:4px}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* Metrics */
+.mrow{display:grid;grid-template-columns:repeat(5,1fr);gap:5px;padding:8px 10px;border-bottom:1px solid var(--border)}
+.mc{background:var(--bg3);border-radius:6px;padding:6px 4px;text-align:center}
+.mv{font-size:16px;font-weight:800;font-family:'JetBrains Mono';color:var(--accent);line-height:1.2}
+.ml{font-size:8px;color:var(--text2);text-transform:uppercase;letter-spacing:.4px;margin-top:1px}
+.mc.f1 .mv{color:var(--cyan);font-size:18px}
+.mc.ch .mv{color:var(--purple);font-size:13px}
+
+/* Content */
+.pcont{display:grid;grid-template-columns:1fr 1fr;flex:1;min-height:0}
+.lcol{border-right:1px solid var(--border);display:flex;flex-direction:column}
+.fcol{display:flex;flex-direction:column}
+.chdr{font-size:9px;text-transform:uppercase;letter-spacing:.7px;color:var(--text2);padding:7px 10px 3px}
+.llist,.flist{flex:1;overflow-y:auto;padding:2px 6px 6px;max-height:500px}
+
+/* Log entries */
+.le{display:flex;align-items:flex-start;gap:5px;padding:4px 5px;border-radius:4px;margin-bottom:2px;font-size:10px;animation:si .2s ease-out}
+.le:hover{background:rgba(255,255,255,.03)}
+@keyframes si{from{opacity:0;transform:translateX(-8px)}to{opacity:1;transform:translateX(0)}}
+
+.badge{display:inline-flex;align-items:center;justify-content:center;width:18px;height:14px;border-radius:3px;font-size:8px;font-weight:700;font-family:'JetBrains Mono';flex-shrink:0;margin-top:1px}
+.badge.R{background:rgba(88,166,255,.15);color:var(--accent)}
+.badge.G{background:rgba(210,153,34,.15);color:var(--orange)}
+.badge.L{background:rgba(188,140,255,.15);color:var(--purple)}
+.badge.T{background:rgba(57,210,192,.1);color:var(--cyan);width:auto;padding:0 4px;font-size:7px}
+
+.lf{font-family:'JetBrains Mono';font-size:9px;color:var(--text);word-break:break-all}
+
+/* Reasoning block */
+.reasoning{
+  margin:3px 4px;padding:6px 8px;border-radius:5px;font-size:10px;line-height:1.4;
+  background:rgba(88,166,255,.04);border-left:2px solid var(--accent);
+  color:var(--text2);max-height:80px;overflow-y:auto;animation:si .2s ease-out;
+  cursor:pointer;transition:max-height .3s
+}
+.reasoning.expanded{max-height:300px}
+.reasoning .rlabel{font-size:8px;color:var(--accent);text-transform:uppercase;font-weight:700;margin-bottom:2px}
+
+/* File entries */
+.fe{display:flex;align-items:center;gap:4px;padding:3px 5px;border-radius:4px;font-family:'JetBrains Mono';font-size:9px;margin-bottom:1px;animation:si .2s ease-out}
+.fe.gt{background:rgba(63,185,80,.1);color:var(--green)}
+.fe.ngt{background:rgba(139,148,158,.06);color:var(--text2)}
+
+/* Result box */
+.rbox{border-top:1px solid var(--border);padding:8px 10px;font-size:10px;min-height:40px}
+.rbox.done{background:rgba(63,185,80,.05)}
+.rbox h4{font-size:10px;font-weight:700;margin-bottom:3px;color:var(--cyan)}
+.mf{color:var(--red);font-family:'JetBrains Mono';font-size:9px}
+.ff{color:var(--green);font-family:'JetBrains Mono';font-size:9px}
+
+/* Final response */
+.final{margin:4px;padding:6px 8px;border-radius:5px;font-size:9px;line-height:1.4;background:rgba(63,185,80,.04);border-left:2px solid var(--green);color:var(--text);max-height:120px;overflow-y:auto;cursor:pointer}
+.final.expanded{max-height:400px}
+.final .flabel{font-size:8px;color:var(--green);text-transform:uppercase;font-weight:700;margin-bottom:2px}
+
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:transparent}::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+@media(max-width:900px){.main{grid-template-columns:1fr}}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>🧬 CodeDNA Live Benchmark</h1>
+  <span class="sub">Real LLM API Calls — SWE-bench Django</span>
+  <span class="tag-live off" id="liveTag">● LIVE</span>
+  <div class="ctrls">
+    <select id="modelSel"><option value="">Loading models…</option></select>
+    <select id="taskSel"><option value="">Loading tasks…</option></select>
+    <button class="play" id="btn" disabled>▶ Avvia</button>
+  </div>
+</div>
+
+<div class="main">
+  <!-- CONTROL -->
+  <div class="panel ctrl">
+    <div class="ph"><div class="dot"></div><span class="pt">CONTROL</span><span class="ps" id="sC">In attesa…</span></div>
+    <div class="mrow">
+      <div class="mc"><div class="mv" id="c-tc">0</div><div class="ml">Turns</div></div>
+      <div class="mc"><div class="mv" id="c-rd">0</div><div class="ml">Reads</div></div>
+      <div class="mc"><div class="mv" id="c-gr">0</div><div class="ml">Grep</div></div>
+      <div class="mc ch"><div class="mv" id="c-ch">—</div><div class="ml">Chars</div></div>
+      <div class="mc f1"><div class="mv" id="c-f1">—</div><div class="ml">F1</div></div>
+    </div>
+    <div class="pcont">
+      <div class="lcol"><div class="chdr">📋 Reasoning + Tool Calls</div><div class="llist" id="lC"></div></div>
+      <div class="fcol"><div class="chdr">📁 File Letti</div><div class="flist" id="fC"></div></div>
+    </div>
+    <div class="rbox" id="rC"></div>
+  </div>
+  <!-- CODEDNA -->
+  <div class="panel cdna">
+    <div class="ph"><div class="dot"></div><span class="pt">🧬 CodeDNA</span><span class="ps" id="sD">In attesa…</span></div>
+    <div class="mrow">
+      <div class="mc"><div class="mv" id="d-tc">0</div><div class="ml">Turns</div></div>
+      <div class="mc"><div class="mv" id="d-rd">0</div><div class="ml">Reads</div></div>
+      <div class="mc"><div class="mv" id="d-gr">0</div><div class="ml">Grep</div></div>
+      <div class="mc ch"><div class="mv" id="d-ch">—</div><div class="ml">Chars</div></div>
+      <div class="mc f1"><div class="mv" id="d-f1">—</div><div class="ml">F1</div></div>
+    </div>
+    <div class="pcont">
+      <div class="lcol"><div class="chdr">📋 Reasoning + Tool Calls</div><div class="llist" id="lD"></div></div>
+      <div class="fcol"><div class="chdr">📁 File Letti</div><div class="flist" id="fD"></div></div>
+    </div>
+    <div class="rbox" id="rD"></div>
+  </div>
+</div>
+
+<script>
+const API = window.location.origin;
+let gt = [];
+let evtSource = null;
+let counters = {
+  control: {turns:0, reads:0, greps:0, lists:0},
+  codedna: {turns:0, reads:0, greps:0, lists:0}
+};
+let filesFound = {control: new Set(), codedna: new Set()};
+
+function short(p) {
+  const s = p.split("/");
+  return s.length <= 2 ? p : "…/" + s.slice(-2).join("/");
+}
+
+// Load models
+fetch(`${API}/api/models`).then(r=>r.json()).then(data => {
+  const sel = document.getElementById("modelSel");
+  sel.innerHTML = "";
+  for (const [name, info] of Object.entries(data)) {
+    const o = document.createElement("option");
+    o.value = name;
+    o.textContent = info.available ? `✅ ${name}` : `❌ ${name} (no key)`;
+    o.disabled = !info.available;
+    sel.appendChild(o);
+  }
+  // Select first available
+  const first = Object.entries(data).find(([,i]) => i.available);
+  if (first) sel.value = first[0];
+  checkReady();
+});
+
+// Load tasks
+fetch(`${API}/api/tasks`).then(r=>r.json()).then(data => {
+  const sel = document.getElementById("taskSel");
+  sel.innerHTML = "";
+  data.forEach(t => {
+    const o = document.createElement("option");
+    o.value = t.id;
+    o.textContent = `T${t.id} — ${t.name.substring(0,50)}… (${t.n_files} files)`;
+    sel.appendChild(o);
+  });
+  checkReady();
+});
+
+function checkReady() {
+  const m = document.getElementById("modelSel").value;
+  const t = document.getElementById("taskSel").value;
+  document.getElementById("btn").disabled = !m || !t;
+}
+document.getElementById("modelSel").addEventListener("change", checkReady);
+document.getElementById("taskSel").addEventListener("change", checkReady);
+
+// Start run
+document.getElementById("btn").addEventListener("click", async () => {
+  const model = document.getElementById("modelSel").value;
+  const taskId = document.getElementById("taskSel").value;
+  if (!model || !taskId) return;
+
+  document.getElementById("btn").disabled = true;
+  resetUI();
+
+  // POST to start
+  const resp = await fetch(`${API}/api/run`, {
+    method: "POST",
+    headers: {"Content-Type": "application/json"},
+    body: JSON.stringify({model, task_id: taskId})
+  });
+  const result = await resp.json();
+  if (result.error) {
+    alert(result.error);
+    document.getElementById("btn").disabled = false;
+    return;
+  }
+
+  // Connect SSE
+  document.getElementById("liveTag").classList.remove("off");
+  evtSource = new EventSource(`${API}/api/stream`);
+  evtSource.onmessage = (e) => {
+    const ev = JSON.parse(e.data);
+    handleEvent(ev);
+  };
+  evtSource.onerror = () => {
+    evtSource.close();
+    document.getElementById("liveTag").classList.add("off");
+    document.getElementById("btn").disabled = false;
+  };
+});
+
+function handleEvent(ev) {
+  const side = ev.side; // "control" or "codedna"
+  const p = side === "control" ? "C" : "D";
+  const prefix = side === "control" ? "c" : "d";
+  const logEl = document.getElementById(`l${p}`);
+  const filesEl = document.getElementById(`f${p}`);
+  const statusEl = document.getElementById(`s${p}`);
+
+  switch (ev.type) {
+    case "task_info":
+      gt = ev.gt;
+      break;
+
+    case "start":
+      statusEl.innerHTML = `<span class="spinner"></span>Starting…`;
+      break;
+
+    case "turn_start":
+      counters[side].turns = ev.turn;
+      document.getElementById(`${prefix}-tc`).textContent = ev.turn;
+      statusEl.innerHTML = `<span class="spinner"></span>Turn ${ev.turn}`;
+      // Add turn divider
+      const div = document.createElement("div");
+      div.className = "le";
+      div.innerHTML = `<span class="badge T">T${ev.turn}</span><span class="lf" style="color:var(--text2)">Turn ${ev.turn}</span>`;
+      logEl.appendChild(div);
+      logEl.scrollTop = logEl.scrollHeight;
+      break;
+
+    case "reasoning": {
+      const r = document.createElement("div");
+      r.className = "reasoning";
+      r.onclick = () => r.classList.toggle("expanded");
+      const text = ev.text.replace(/</g,"&lt;").replace(/\n/g,"<br>");
+      r.innerHTML = `<div class="rlabel">💭 Reasoning</div>${text}`;
+      logEl.appendChild(r);
+      logEl.scrollTop = logEl.scrollHeight;
+      break;
+    }
+
+    case "tool_call": {
+      const badge = ev.name === "read_file" ? "R" : ev.name === "grep" ? "G" : "L";
+      if (badge === "R") { counters[side].reads++; document.getElementById(`${prefix}-rd`).textContent = counters[side].reads; }
+      if (badge === "G") { counters[side].greps++; document.getElementById(`${prefix}-gr`).textContent = counters[side].greps; }
+
+      const entry = document.createElement("div");
+      entry.className = "le";
+      const argStr = ev.name === "grep" ? `"${ev.args.pattern}" in ${ev.args.directory||"."}` :
+                     ev.name === "read_file" ? short(ev.args.path) :
+                     (ev.args.directory || ".");
+      entry.innerHTML = `<span class="badge ${badge}">${badge}</span><span class="lf">${ev.name}(${argStr})</span>`;
+      logEl.appendChild(entry);
+      logEl.scrollTop = logEl.scrollHeight;
+
+      // Add file to files list
+      if (ev.name === "read_file" && ev.args.path) {
+        const fp = ev.args.path;
+        if (!filesFound[side].has(fp)) {
+          filesFound[side].add(fp);
+          const isGt = gt.includes(fp);
+          const fe = document.createElement("div");
+          fe.className = `fe ${isGt ? "gt" : "ngt"}`;
+          fe.innerHTML = `<span>${isGt ? "✅" : "📄"}</span> ${short(fp)}`;
+          filesEl.appendChild(fe);
+        }
+      }
+      break;
+    }
+
+    case "tool_result": {
+      // Show preview as a subtle sub-entry
+      const pre = document.createElement("div");
+      pre.className = "le";
+      pre.style.paddingLeft = "28px";
+      pre.style.color = "var(--text2)";
+      pre.style.fontSize = "8px";
+      const text = (ev.preview || "").substring(0, 150).replace(/</g, "&lt;").replace(/\n/g, " ");
+      pre.innerHTML = `<span class="lf" style="color:var(--text2);font-size:8px">→ ${text}…</span>`;
+      logEl.appendChild(pre);
+      logEl.scrollTop = logEl.scrollHeight;
+      break;
+    }
+
+    case "final_response": {
+      const f = document.createElement("div");
+      f.className = "final";
+      f.onclick = () => f.classList.toggle("expanded");
+      const text = (ev.text || "").replace(/</g,"&lt;").replace(/\n/g,"<br>");
+      f.innerHTML = `<div class="flabel">📝 Final Response (click to expand)</div>${text.substring(0, 500)}…`;
+      logEl.appendChild(f);
+      logEl.scrollTop = logEl.scrollHeight;
+      break;
+    }
+
+    case "done": {
+      const mr = ev.metrics_read || {};
+      const f1 = (mr.f1 || 0);
+      const recall = (mr.recall || 0);
+      const precision = (mr.precision || 0);
+      const chars = ev.log?.total_chars_consumed || 0;
+
+      document.getElementById(`${prefix}-f1`).textContent = (f1 * 100).toFixed(0) + "%";
+      document.getElementById(`${prefix}-ch`).textContent = (chars / 1000).toFixed(0) + "K";
+      statusEl.textContent = `Completato — F1: ${(f1*100).toFixed(0)}%`;
+
+      const found = [...filesFound[side]].filter(f => gt.includes(f));
+      const missed = gt.filter(f => !filesFound[side].has(f));
+
+      const resEl = document.getElementById(`r${p}`);
+      let html = `<h4>F1 = ${(f1*100).toFixed(0)}% — R:${(recall*100).toFixed(0)}% P:${(precision*100).toFixed(0)}% — ${found.length}/${gt.length} GT</h4>`;
+      if (missed.length) html += `<div>❌ ${missed.map(f=>`<span class="mf">${short(f)}</span>`).join(", ")}</div>`;
+      if (!missed.length) html += `<div class="ff">✅ Tutti i GT trovati!</div>`;
+      resEl.innerHTML = html;
+      resEl.classList.add("done");
+      break;
+    }
+
+    case "error":
+      statusEl.textContent = `❌ Error: ${ev.error}`;
+      break;
+
+    case "all_done":
+      document.getElementById("liveTag").classList.add("off");
+      document.getElementById("btn").disabled = false;
+      if (evtSource) evtSource.close();
+      break;
+  }
+}
+
+function resetUI() {
+  ["lC","lD","fC","fD"].forEach(id => document.getElementById(id).innerHTML = "");
+  ["c-tc","c-rd","c-gr","d-tc","d-rd","d-gr"].forEach(id => document.getElementById(id).textContent = "0");
+  ["c-f1","d-f1"].forEach(id => document.getElementById(id).textContent = "—");
+  ["c-ch","d-ch"].forEach(id => document.getElementById(id).textContent = "—");
+  ["sC","sD"].forEach(id => document.getElementById(id).textContent = "In attesa…");
+  ["rC","rD"].forEach(id => { const el=document.getElementById(id); el.innerHTML=""; el.classList.remove("done"); });
+  counters = {control:{turns:0,reads:0,greps:0,lists:0}, codedna:{turns:0,reads:0,greps:0,lists:0}};
+  filesFound = {control: new Set(), codedna: new Set()};
+  gt = [];
+  if (evtSource) evtSource.close();
+}
+</script>
+</body>
+</html>

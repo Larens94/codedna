@@ -156,7 +156,7 @@ FORCE_FINAL_PROMPT = (
 
 # ─────────────────── Provider: Gemini ───────────────────
 
-def run_gemini(problem: str, repo_root: Path, model_id: str, max_turns=15) -> dict:
+def run_gemini(problem: str, repo_root: Path, model_id: str, max_turns=15, temperature=0) -> dict:
     try:
         from google import genai
         from google.genai import types as gt
@@ -186,7 +186,7 @@ def run_gemini(problem: str, repo_root: Path, model_id: str, max_turns=15) -> di
     ])]
 
     config = gt.GenerateContentConfig(system_instruction=SYSTEM_PROMPT,
-                                      tools=tools_decl, temperature=0)
+                                      tools=tools_decl, temperature=temperature)
     history = [gt.Content(role="user",
         parts=[gt.Part(text=f"Problem:\n\n{problem}\n\nStart by listing the root directory.")])]
     final_text = ""
@@ -215,7 +215,7 @@ def run_gemini(problem: str, repo_root: Path, model_id: str, max_turns=15) -> di
         history.append(gt.Content(role="user",
             parts=[gt.Part(text=FORCE_FINAL_PROMPT)]))
         config_no_tools = gt.GenerateContentConfig(system_instruction=SYSTEM_PROMPT,
-                                                    temperature=0)
+                                                    temperature=temperature)
         resp = call_with_retry(client.models.generate_content,
                                model=model_id, contents=history, config=config_no_tools)
         cand = resp.candidates[0]
@@ -227,7 +227,7 @@ def run_gemini(problem: str, repo_root: Path, model_id: str, max_turns=15) -> di
 
 # ─────────────────── Provider: Anthropic (Claude) ───────────────────
 
-def run_anthropic(problem: str, repo_root: Path, model_id: str, max_turns=15) -> dict:
+def run_anthropic(problem: str, repo_root: Path, model_id: str, max_turns=15, temperature=0) -> dict:
     try:
         import anthropic
     except ImportError:
@@ -265,6 +265,7 @@ def run_anthropic(problem: str, repo_root: Path, model_id: str, max_turns=15) ->
             system=SYSTEM_PROMPT,
             tools=tools,
             messages=messages,
+            temperature=temperature,
         )
         messages.append({"role": "assistant", "content": resp.content})
 
@@ -286,6 +287,7 @@ def run_anthropic(problem: str, repo_root: Path, model_id: str, max_turns=15) ->
             client.messages.create,
             model=model_id, max_tokens=4096,
             system=SYSTEM_PROMPT, messages=messages,
+            temperature=temperature,
         )
         final_text = "".join(b.text for b in resp.content if b.type == "text")
 
@@ -295,7 +297,7 @@ def run_anthropic(problem: str, repo_root: Path, model_id: str, max_turns=15) ->
 # ─────────────────── Provider: OpenAI-compatible (GPT, DeepSeek) ───────────────────
 
 def run_openai_compat(problem: str, repo_root: Path, model_id: str,
-                      base_url: str = None, max_turns=15) -> dict:
+                      base_url: str = None, max_turns=15, temperature=0) -> dict:
     try:
         from openai import OpenAI
     except ImportError:
@@ -341,7 +343,7 @@ def run_openai_compat(problem: str, repo_root: Path, model_id: str,
         is_reasoning = any(x in model_id for x in ("o1", "o3"))
         create_kwargs = dict(model=model_id, messages=messages, tools=tools)
         if not is_reasoning:
-            create_kwargs["temperature"] = 0
+            create_kwargs["temperature"] = temperature
 
         resp = call_with_retry(client.chat.completions.create, **create_kwargs)
         msg = resp.choices[0].message
@@ -361,7 +363,7 @@ def run_openai_compat(problem: str, repo_root: Path, model_id: str,
         messages.append({"role": "user", "content": FORCE_FINAL_PROMPT})
         create_kwargs = dict(model=model_id, messages=messages)
         if not any(x in model_id for x in ("o1", "o3")):
-            create_kwargs["temperature"] = 0
+            create_kwargs["temperature"] = temperature
         resp = call_with_retry(client.chat.completions.create, **create_kwargs)
         final_text = resp.choices[0].message.content or ""
 
@@ -370,7 +372,7 @@ def run_openai_compat(problem: str, repo_root: Path, model_id: str,
 
 # ─────────────────── Provider: OpenAI Responses API (Codex) ───────────────────
 
-def run_openai_responses(problem: str, repo_root: Path, model_id: str, max_turns=15):
+def run_openai_responses(problem: str, repo_root: Path, model_id: str, max_turns=15, temperature=0):
     """Use the OpenAI Responses API for gpt-5-codex base models."""
     try:
         from openai import OpenAI
@@ -411,7 +413,7 @@ def run_openai_responses(problem: str, repo_root: Path, model_id: str, max_turns
     next_input = initial_input
 
     for _ in range(max_turns):
-        create_kwargs = dict(model=model_id, input=next_input, tools=tools)
+        create_kwargs = dict(model=model_id, input=next_input, tools=tools, temperature=temperature)
         if previous_response_id:
             create_kwargs["previous_response_id"] = previous_response_id
 
@@ -448,7 +450,7 @@ def run_openai_responses(problem: str, repo_root: Path, model_id: str, max_turns
     # Force final summary if agent exhausted max_turns without a text response
     if not final_text:
         next_input = [{"role": "user", "content": FORCE_FINAL_PROMPT}]
-        create_kwargs = dict(model=model_id, input=next_input)
+        create_kwargs = dict(model=model_id, input=next_input, temperature=temperature)
         if previous_response_id:
             create_kwargs["previous_response_id"] = previous_response_id
         resp = call_with_retry(client.responses.create, **create_kwargs)
@@ -468,10 +470,8 @@ MODELS = {
     "gemini-2.5-flash": {"provider": "gemini",    "model_id": "gemini-2.5-flash"},
     "gemini-2.5-pro":   {"provider": "gemini",    "model_id": "gemini-2.5-pro"},
     # Anthropic Claude 4 (latest, March 2026)
-    "claude-sonnet-4":   {"provider": "anthropic", "model_id": "claude-sonnet-4-20250514"},
-    "claude-opus-4":     {"provider": "anthropic", "model_id": "claude-opus-4-20250514"},
-    "claude-sonnet-4-5": {"provider": "anthropic", "model_id": "claude-sonnet-4-5-20250929"},
-    "claude-opus-4-5":   {"provider": "anthropic", "model_id": "claude-opus-4-5-20251101"},
+    "claude-sonnet-4-6": {"provider": "anthropic", "model_id": "claude-sonnet-4-6"},
+    "claude-opus-4-6":   {"provider": "anthropic", "model_id": "claude-opus-4-6"},
     "claude-haiku-4-5":  {"provider": "anthropic", "model_id": "claude-haiku-4-5-20251001"},
     # OpenAI chat models (function calling via Chat Completions API)
     "gpt-4.1":           {"provider": "openai",    "model_id": "gpt-4.1"},
@@ -492,17 +492,17 @@ MODELS = {
 }
 
 
-def dispatch(problem, repo_root, cfg, max_turns=15):
+def dispatch(problem, repo_root, cfg, max_turns=15, temperature=0):
     p = cfg["provider"]
     m = cfg["model_id"]
     if p == "gemini":
-        return run_gemini(problem, repo_root, m, max_turns)
+        return run_gemini(problem, repo_root, m, max_turns, temperature=temperature)
     elif p == "anthropic":
-        return run_anthropic(problem, repo_root, m, max_turns)
+        return run_anthropic(problem, repo_root, m, max_turns, temperature=temperature)
     elif p == "openai":
-        return run_openai_compat(problem, repo_root, m, max_turns=max_turns)
+        return run_openai_compat(problem, repo_root, m, max_turns=max_turns, temperature=temperature)
     elif p == "codex":
-        return run_openai_responses(problem, repo_root, m, max_turns)
+        return run_openai_responses(problem, repo_root, m, max_turns, temperature=temperature)
     else:
         raise ValueError(f"Unknown provider: {p}")
 
@@ -515,9 +515,17 @@ def main():
                         help="Model to test (default: all configured)")
     parser.add_argument("--max-turns", type=int, default=15,
                         help="Max agent turns per task (default: 15)")
+    parser.add_argument("--runs", type=int, default=1,
+                        help="Number of runs per task for statistical averaging (default: 1)")
+    parser.add_argument("--temperature", type=float, default=0.0,
+                        help="Temperature for LLM sampling (default: 0.0, use 0.1 for multi-run)")
     parser.add_argument("--codedna-only", action="store_true",
                         help="Skip control, run CodeDNA only (faster)")
     args = parser.parse_args()
+
+    if args.runs > 1 and args.temperature == 0.0:
+        print("⚠️  Warning: --runs > 1 with temperature=0 will produce identical results.")
+        print("   Consider using --temperature 0.1 for meaningful variance.")
 
     models_to_run = [args.model] if args.model else list(MODELS.keys())
 
@@ -528,7 +536,15 @@ def main():
         cfg = MODELS[model_name]
         print(f"\n{'='*70}")
         print(f"  MODEL: {model_name}  (provider: {cfg['provider']})")
+        if args.runs > 1:
+            print(f"  RUNS: {args.runs}  |  TEMPERATURE: {args.temperature}")
         print(f"{'='*70}")
+
+        def avg_f1(runs):
+            vals = [r["metrics_read"]["f1"] for r in runs]
+            m = sum(vals) / len(vals)
+            std = (sum((v - m)**2 for v in vals) / (len(vals) - 1)) ** 0.5 if len(vals) > 1 else 0.0
+            return {"mean": round(m, 4), "std": round(std, 4), "values": [round(v, 4) for v in vals]}
 
         results = []
         for task in tasks:
@@ -545,33 +561,63 @@ def main():
             print(f"\n{'─'*60}")
             print(f"Task: {iid}  ({len(gt)} ground-truth files)")
 
-            ctrl_result = None
-            if not args.codedna_only:
-                print("  → CONTROL ...", flush=True)
-                log, text = dispatch(problem, ctrl_dir, cfg, args.max_turns)
-                ctrl_result = build_result(log, text, gt)
-                cr = ctrl_result["metrics_read"]
-                print(f"  Control: {ctrl_result['tool_calls']} calls "
-                      f"({ctrl_result['read_calls']} reads, {ctrl_result['grep_calls']} greps) | "
-                      f"{ctrl_result['total_chars_consumed']:,} chars | "
-                      f"read(R={cr['recall']:.0%} P={cr['precision']:.0%} F1={cr['f1']:.0%})")
+            # Multi-run: run N times and collect per-run results
+            ctrl_runs = []
+            cdna_runs = []
+            for run_i in range(args.runs):
+                run_label = f" [run {run_i+1}/{args.runs}]" if args.runs > 1 else ""
 
-            print("  → CODEDNA ...", flush=True)
-            log, text = dispatch(problem, cdna_dir, cfg, args.max_turns)
-            cdna_result = build_result(log, text, gt)
-            dr = cdna_result["metrics_read"]
-            print(f"  CodeDNA: {cdna_result['tool_calls']} calls "
-                  f"({cdna_result['read_calls']} reads, {cdna_result['grep_calls']} greps) | "
-                  f"{cdna_result['total_chars_consumed']:,} chars | "
-                  f"read(R={dr['recall']:.0%} P={dr['precision']:.0%} F1={dr['f1']:.0%})")
+                ctrl_result = None
+                if not args.codedna_only:
+                    print(f"  → CONTROL{run_label} ...", flush=True)
+                    log, text = dispatch(problem, ctrl_dir, cfg, args.max_turns, temperature=args.temperature)
+                    ctrl_result = build_result(log, text, gt)
+                    cr = ctrl_result["metrics_read"]
+                    print(f"  Control: {ctrl_result['tool_calls']} calls "
+                          f"({ctrl_result['read_calls']} reads, {ctrl_result['grep_calls']} greps) | "
+                          f"{ctrl_result['total_chars_consumed']:,} chars | "
+                          f"read(R={cr['recall']:.0%} P={cr['precision']:.0%} F1={cr['f1']:.0%})")
+                    ctrl_runs.append(ctrl_result)
 
-            results.append({
-                "instance_id":        iid,
-                "repo":               task["repo"],
-                "ground_truth_files": gt,
-                "control":            ctrl_result,
-                "codedna":            cdna_result,
-            })
+                print(f"  → CODEDNA{run_label} ...", flush=True)
+                log, text = dispatch(problem, cdna_dir, cfg, args.max_turns, temperature=args.temperature)
+                cdna_result = build_result(log, text, gt)
+                dr = cdna_result["metrics_read"]
+                print(f"  CodeDNA: {cdna_result['tool_calls']} calls "
+                      f"({cdna_result['read_calls']} reads, {cdna_result['grep_calls']} greps) | "
+                      f"{cdna_result['total_chars_consumed']:,} chars | "
+                      f"read(R={dr['recall']:.0%} P={dr['precision']:.0%} F1={dr['f1']:.0%})")
+                cdna_runs.append(cdna_result)
+
+            # For single run, keep backward-compatible output
+            if args.runs == 1:
+                results.append({
+                    "instance_id":        iid,
+                    "repo":               task["repo"],
+                    "ground_truth_files": gt,
+                    "control":            ctrl_runs[0] if ctrl_runs else None,
+                    "codedna":            cdna_runs[0],
+                })
+            else:
+                # Multi-run: store all runs + mean/std for F1
+
+                results.append({
+                    "instance_id":        iid,
+                    "repo":               task["repo"],
+                    "ground_truth_files": gt,
+                    "n_runs":             args.runs,
+                    "temperature":        args.temperature,
+                    "control":            ctrl_runs[0] if ctrl_runs else None,
+                    "control_runs":       ctrl_runs if ctrl_runs else None,
+                    "control_f1_stats":   avg_f1(ctrl_runs) if ctrl_runs else None,
+                    "codedna":            cdna_runs[0],
+                    "codedna_runs":       cdna_runs,
+                    "codedna_f1_stats":   avg_f1(cdna_runs),
+                })
+                cf1 = avg_f1(ctrl_runs) if ctrl_runs else {"mean": 0, "std": 0}
+                df1 = avg_f1(cdna_runs)
+                print(f"  📊 Mean F1 — Control: {cf1['mean']:.0%}±{cf1['std']:.0%}  "
+                      f"CodeDNA: {df1['mean']:.0%}±{df1['std']:.0%}")
 
         # Save results in runs/<model_name>/results.json
         run_dir = RUNS_DIR / model_name.replace('/', '-')

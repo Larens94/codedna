@@ -7,11 +7,18 @@ Copy these files to the **root of your repository** to activate CodeDNA in your 
 ## Quick Install (all tools)
 
 ```bash
-# Clone CodeDNA integrations into your project
-curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh | bash
+# Install CodeDNA rules for ALL supported tools
+bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh)
 ```
 
-Or copy manually — one file per tool:
+Install for a **single tool** only:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) claude
+# Options: claude | agents | cursor | copilot | cline | windsurf | all
+```
+
+Or copy the files manually — one file per tool:
 
 ---
 

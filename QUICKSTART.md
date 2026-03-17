@@ -4,6 +4,28 @@ Get CodeDNA working in your project in under 2 minutes. Pick your AI tool below.
 
 ---
 
+## Step 0 — Quick Install (CLI)
+
+Run this from the root of your project:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh)
+```
+
+This installs CodeDNA rules for **all** supported tools (Claude Code, Cursor, Copilot, Cline, Windsurf, Antigravity).
+
+To install for a **single tool** only:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) cursor
+```
+
+Options: `claude` · `cursor` · `copilot` · `cline` · `windsurf` · `agents` · `all`
+
+> After installing, skip to [Step 2 — Annotate your first file](#step-2--annotate-your-first-file).
+
+---
+
 ## Step 1 — Install for your AI tool
 
 ### Antigravity (this tool)
