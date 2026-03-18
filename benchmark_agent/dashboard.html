@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🧬 CodeDNA — Results Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg:#f8f9fb; --bg2:#ffffff; --bg3:#f0f2f5; --border:#d8dce3;
+  --text:#1a1a2e; --text2:#6b7280;
+  --accent:#2563eb; --green:#16a34a; --red:#dc2626;
+  --orange:#d97706; --purple:#7c3aed; --cyan:#0891b2;
+  --radius:10px;
+}
+*{margin:0;padding:0;box-sizing:border-box}
+body{font-family:'Inter',-apple-system,sans-serif;background:var(--bg);color:var(--text);min-height:100vh;padding:0 0 40px}
+
+.hdr{background:linear-gradient(135deg,#ffffff,#f0f4ff);border-bottom:1px solid var(--border);padding:14px 24px;display:flex;align-items:center;gap:16px;flex-wrap:wrap;box-shadow:0 1px 3px rgba(0,0,0,.06)}
+.hdr h1{font-size:17px;font-weight:800;background:linear-gradient(90deg,var(--accent),var(--cyan));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
+.hdr .sub{font-size:11px;color:var(--text2)}
+.hdr-right{margin-left:auto;display:flex;gap:8px;align-items:center}
+button{font-family:'Inter';font-size:12px;border:1px solid var(--border);border-radius:7px;padding:6px 14px;background:var(--bg2);color:var(--text);cursor:pointer}
+button:hover{border-color:var(--accent)}
+button.refresh{background:linear-gradient(135deg,var(--accent),#3b82f6);border-color:var(--accent);color:#fff;font-weight:600}
+a.nav-btn{font-size:11px;color:var(--text2);text-decoration:none;padding:5px 10px;border:1px solid var(--border);border-radius:6px;background:var(--bg2)}
+a.nav-btn:hover{border-color:var(--accent);color:var(--accent)}
+
+.wrap{max-width:1400px;margin:0 auto;padding:20px 18px;display:flex;flex-direction:column;gap:24px}
+
+/* Summary cards */
+.cards{display:flex;gap:12px;flex-wrap:wrap}
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);padding:14px 18px;min-width:160px;flex:1}
+.card .cv{font-size:28px;font-weight:800;font-family:'JetBrains Mono';line-height:1}
+.card .cl{font-size:10px;color:var(--text2);text-transform:uppercase;letter-spacing:.5px;margin-top:4px}
+.card.up .cv{color:var(--green)}
+.card.down .cv{color:var(--red)}
+.card.neutral .cv{color:var(--accent)}
+
+/* Model section */
+.model-block{background:var(--bg2);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.model-hdr{padding:10px 16px;background:var(--bg3);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:8px}
+.model-name{font-size:13px;font-weight:700;font-family:'JetBrains Mono'}
+.model-meta{font-size:10px;color:var(--text2);margin-left:auto}
+
+table{width:100%;border-collapse:collapse;font-size:11px}
+th{padding:7px 10px;text-align:left;font-size:10px;text-transform:uppercase;letter-spacing:.5px;color:var(--text2);border-bottom:1px solid var(--border);background:var(--bg3);font-weight:600}
+td{padding:8px 10px;border-bottom:1px solid rgba(0,0,0,.04);font-family:'JetBrains Mono';vertical-align:middle}
+tr:last-child td{border-bottom:none}
+tr:hover td{background:rgba(0,0,0,.02)}
+
+.task-id{font-size:10px;color:var(--text2)}
+.f1-val{font-size:13px;font-weight:700}
+.f1-ctrl{color:var(--text)}
+.f1-cdna{color:var(--accent)}
+.std{font-size:9px;color:var(--text2);font-weight:400}
+.delta{font-size:12px;font-weight:700;padding:2px 8px;border-radius:5px;display:inline-block}
+.delta.pos{background:rgba(22,163,74,.1);color:var(--green)}
+.delta.neg{background:rgba(220,38,38,.1);color:var(--red)}
+.delta.zero{background:var(--bg3);color:var(--text2)}
+.runs-badge{font-size:9px;color:var(--text2);padding:2px 6px;background:var(--bg3);border-radius:4px}
+
+/* Avg row */
+tr.avg-row td{background:rgba(37,99,235,.03);font-weight:700;border-top:2px solid var(--border)}
+
+/* Empty state */
+.empty{text-align:center;padding:40px;color:var(--text2);font-size:13px}
+
+/* Last updated */
+.last-upd{font-size:10px;color:var(--text2);text-align:right}
+
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <h1>🧬 CodeDNA Results Dashboard</h1>
+  <span class="sub">Accumulated runs — all models</span>
+  <div class="hdr-right">
+    <a class="nav-btn" href="/">▶ Live Benchmark</a>
+    <span id="lastUpd" style="font-size:10px;color:var(--text2)"></span>
+    <button class="refresh" onclick="load()">↻ Refresh</button>
+  </div>
+</div>
+
+<div class="wrap">
+  <div class="cards" id="cards"></div>
+  <div id="content"><div class="empty">Caricamento…</div></div>
+</div>
+
+<script>
+const API = window.location.origin;
+
+function fmt(v) { return v != null ? (v * 100).toFixed(0) + "%" : "—"; }
+function fmtStd(v) { return v != null && v > 0 ? ` ±${(v*100).toFixed(0)}%` : ""; }
+function shortTask(id) { return id.replace("django__django-", ""); }
+
+function deltaClass(d) {
+  if (d == null) return "zero";
+  if (d > 0.005) return "pos";
+  if (d < -0.005) return "neg";
+  return "zero";
+}
+function deltaSign(d) {
+  if (d == null) return "—";
+  const s = (d > 0 ? "+" : "") + (d * 100).toFixed(0) + "%";
+  return s;
+}
+
+async function load() {
+  document.getElementById("lastUpd").textContent = "Aggiornamento…";
+  const data = await fetch(`${API}/api/results`).then(r => r.json()).catch(() => ({}));
+  document.getElementById("lastUpd").textContent = "Aggiornato: " + new Date().toLocaleTimeString();
+
+  const models = Object.keys(data);
+  if (!models.length) {
+    document.getElementById("content").innerHTML = '<div class="empty">Nessun risultato trovato in runs/*/results.json</div>';
+    document.getElementById("cards").innerHTML = "";
+    return;
+  }
+
+  // ── Summary cards ──
+  let totalTasks = 0, totalRunsN = 0, modelsWithData = 0;
+  let allDeltas = [];
+  for (const [model, entries] of Object.entries(data)) {
+    if (!entries.length) continue;
+    modelsWithData++;
+    totalTasks += entries.length;
+    for (const e of entries) {
+      totalRunsN += e.n_runs || 1;
+      if (e.delta != null) allDeltas.push(e.delta);
+    }
+  }
+  const avgDelta = allDeltas.length ? allDeltas.reduce((a,b) => a+b, 0) / allDeltas.length : null;
+  const deltaUp = allDeltas.filter(d => d > 0.005).length;
+  const deltaDown = allDeltas.filter(d => d < -0.005).length;
+
+  document.getElementById("cards").innerHTML = `
+    <div class="card neutral"><div class="cv">${modelsWithData}</div><div class="cl">Modelli</div></div>
+    <div class="card neutral"><div class="cv">${totalTasks}</div><div class="cl">Task totali</div></div>
+    <div class="card neutral"><div class="cv">${totalRunsN}</div><div class="cl">Run accumulate</div></div>
+    <div class="card ${avgDelta > 0 ? 'up' : avgDelta < 0 ? 'down' : 'neutral'}">
+      <div class="cv">${avgDelta != null ? (avgDelta > 0 ? "+" : "") + (avgDelta*100).toFixed(0) + "%" : "—"}</div>
+      <div class="cl">Δ medio CodeDNA</div>
+    </div>
+    <div class="card up"><div class="cv">${deltaUp}/${allDeltas.length}</div><div class="cl">Task migliorati</div></div>
+  `;
+
+  // ── Per-model tables ──
+  let html = "";
+  for (const [model, entries] of Object.entries(data)) {
+    if (!entries.length) continue;
+
+    const validEntries = entries.filter(e => e.control && e.codedna);
+    const avgCtrl = validEntries.length ? validEntries.reduce((s,e) => s + e.control.mean, 0) / validEntries.length : null;
+    const avgCdna = validEntries.length ? validEntries.reduce((s,e) => s + e.codedna.mean, 0) / validEntries.length : null;
+    const avgDeltaModel = avgCtrl != null && avgCdna != null ? avgCdna - avgCtrl : null;
+    const totalRuns = entries.reduce((s,e) => s + (e.n_runs || 1), 0);
+
+    html += `
+    <div class="model-block">
+      <div class="model-hdr">
+        <span class="model-name">${model}</span>
+        <span class="model-meta">${totalRuns} run totali · ${entries.length} task</span>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Task</th>
+            <th>Control F1</th>
+            <th>CodeDNA F1</th>
+            <th>Δ</th>
+            <th>Run</th>
+            <th>Values (ctrl → cdna)</th>
+          </tr>
+        </thead>
+        <tbody>`;
+
+    for (const e of entries) {
+      const ctrl = e.control;
+      const cdna = e.codedna;
+      const d = e.delta;
+      const dc = deltaClass(d);
+
+      const ctrlVals = ctrl?.values?.map(v => fmt(v)).join(", ") || "—";
+      const cdnaVals = cdna?.values?.map(v => fmt(v)).join(", ") || "—";
+
+      html += `
+          <tr>
+            <td><span class="task-id">${shortTask(e.instance_id)}</span></td>
+            <td><span class="f1-val f1-ctrl">${fmt(ctrl?.mean)}</span><span class="std">${fmtStd(ctrl?.std)}</span></td>
+            <td><span class="f1-val f1-cdna">${fmt(cdna?.mean)}</span><span class="std">${fmtStd(cdna?.std)}</span></td>
+            <td><span class="delta ${dc}">${deltaSign(d)}</span></td>
+            <td><span class="runs-badge">n=${e.n_runs || 1} T=${e.temperature ?? "?"}</span></td>
+            <td style="font-size:9px;color:var(--text2)">[${ctrlVals}] → [${cdnaVals}]</td>
+          </tr>`;
+    }
+
+    // Avg row
+    html += `
+          <tr class="avg-row">
+            <td>AVG</td>
+            <td><span class="f1-val f1-ctrl">${fmt(avgCtrl)}</span></td>
+            <td><span class="f1-val f1-cdna">${fmt(avgCdna)}</span></td>
+            <td><span class="delta ${deltaClass(avgDeltaModel)}">${deltaSign(avgDeltaModel)}</span></td>
+            <td></td><td></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>`;
+  }
+
+  document.getElementById("content").innerHTML = html || '<div class="empty">Nessun dato</div>';
+}
+
+load();
+// Auto-refresh ogni 30s
+setInterval(load, 30000);
+</script>
+</body>
+</html>

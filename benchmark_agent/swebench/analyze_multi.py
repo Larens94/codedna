@@ -182,13 +182,33 @@ def annotation_cost_report(results: list) -> str:
 
 # ─────────────────── Summarize one model's results ───────────────────
 
-def _has_metrics(entry: dict, condition: str) -> bool:
+def _get_f1(entry: dict, condition: str) -> float | None:
+    """Return mean F1 for condition — prefers multi-run stats, falls back to single-run."""
+    stats_key = f"{condition}_f1_stats"
+    if stats_key in entry and entry[stats_key] and "mean" in entry[stats_key]:
+        return entry[stats_key]["mean"]
     c = entry.get(condition)
-    return c is not None and c.get("metrics_read") is not None
+    if c and c.get("metrics_read"):
+        return c["metrics_read"]["f1"]
+    return None
+
+
+def _get_chars(entry: dict, condition: str) -> float:
+    """Return mean chars consumed for condition across runs."""
+    runs_key = f"{condition}_runs"
+    runs = entry.get(runs_key, [])
+    if runs:
+        return sum(r.get("total_chars_consumed", 0) for r in runs) / len(runs)
+    c = entry.get(condition)
+    return c.get("total_chars_consumed", 0) if c else 0
+
+
+def _has_metrics(entry: dict, condition: str) -> bool:
+    return _get_f1(entry, condition) is not None
 
 
 def summarize(results: list) -> dict:
-    conditions = ["control", "codedna", "agent_annotated"]
+    conditions = ["control", "codedna"]
     out = {}
     for cond in conditions:
         valid = [r for r in results if _has_metrics(r, cond)]
@@ -196,12 +216,9 @@ def summarize(results: list) -> dict:
         if n == 0:
             continue
         out[cond] = {
-            "n":             n,
-            "avg_f1":        sum(r[cond]["metrics_read"]["f1"]       for r in valid) / n,
-            "avg_recall":    sum(r[cond]["metrics_read"]["recall"]    for r in valid) / n,
-            "avg_precision": sum(r[cond]["metrics_read"]["precision"] for r in valid) / n,
-            "avg_chars":     sum(r[cond]["total_chars_consumed"]      for r in valid) / n,
-            "avg_files":     sum(r[cond]["n_files_read"]              for r in valid) / n,
+            "n":         n,
+            "avg_f1":    sum(_get_f1(r, cond) for r in valid) / n,
+            "avg_chars": sum(_get_chars(r, cond) for r in valid) / n,
         }
     return out
 
@@ -225,8 +242,6 @@ def main():
     parser.add_argument("--model",         nargs="+", help="Model names to compare")
     parser.add_argument("--qualitative",   action="store_true",
                         help="Show qualitative rules analysis per task")
-    parser.add_argument("--annotation-cost", action="store_true",
-                        help="Show auto-annotation cost table")
     args = parser.parse_args()
 
     model_names = args.model or [
@@ -241,9 +256,8 @@ def main():
     print("="*110)
 
     # ── Per-model summary table ──
-    print(f"\n{'Model':<25} {'Ctrl F1':>8} {'DNA F1':>8} {'Ann F1':>8} "
-          f"{'Δ(DNA)':>7} {'Δ(Ann)':>7} {'DNA Chars':>10} {'Tasks↑(DNA)':>12}")
-    print("-"*95)
+    print(f"\n{'Model':<25} {'Ctrl F1':>8} {'DNA F1':>8} {'Δ(DNA)':>7} {'DNA Chars':>10} {'Tasks↑(DNA)':>12}")
+    print("-"*80)
 
     all_summaries: dict[str, dict] = {}
     all_results:   dict[str, list] = {}
@@ -260,49 +274,42 @@ def main():
         all_summaries[name] = s
         all_results[name]   = results
 
-        ctrl_f1 = s.get("control",        {}).get("avg_f1")
-        dna_f1  = s.get("codedna",        {}).get("avg_f1")
-        ann_f1  = s.get("agent_annotated",{}).get("avg_f1")
+        ctrl_f1 = s.get("control", {}).get("avg_f1")
+        dna_f1  = s.get("codedna", {}).get("avg_f1")
 
-        ctrl_str = f"{ctrl_f1:.0%}" if ctrl_f1 is not None else "—"
-        dna_str  = f"{dna_f1:.0%}"  if dna_f1  is not None else "—"
-        ann_str  = f"{ann_f1:.0%}"  if ann_f1  is not None else "—"
-
+        ctrl_str  = f"{ctrl_f1:.0%}" if ctrl_f1 is not None else "—"
+        dna_str   = f"{dna_f1:.0%}"  if dna_f1  is not None else "—"
         delta_dna = pct(dna_f1 - ctrl_f1) if (dna_f1 and ctrl_f1) else "—"
-        delta_ann = pct(ann_f1 - ctrl_f1) if (ann_f1 and ctrl_f1) else "—"
         dna_chars = s.get("codedna", {}).get("avg_chars", 0)
 
-        # tasks improved: codedna vs control
         comparable = [r for r in results if _has_metrics(r, "codedna") and _has_metrics(r, "control")]
         tasks_up   = sum(1 for r in comparable
-                         if r["codedna"]["metrics_read"]["f1"] > r["control"]["metrics_read"]["f1"])
+                         if (_get_f1(r, "codedna") or 0) > (_get_f1(r, "control") or 0))
         n_comp     = len(comparable)
 
-        print(f"  {name:<23} {ctrl_str:>8} {dna_str:>8} {ann_str:>8} "
-              f"{delta_dna:>7} {delta_ann:>7} {dna_chars:>10,.0f} "
+        print(f"  {name:<23} {ctrl_str:>8} {dna_str:>8} {delta_dna:>7} {dna_chars:>10,.0f} "
               f"  {tasks_up}/{n_comp}")
 
     # ── Wilcoxon signed-rank test ──
-    print(f"\n{'─'*95}")
-    print("  Wilcoxon Signed-Rank Test  (H1: condition > control, one-tailed)")
-    print(f"{'─'*95}")
-    print(f"  {'Model':<25} {'Condition':<18} {'W+':>6} {'n':>4} {'z':>7} {'p':>8}  {'sig?':>6}  Note")
-    print(f"  {'-'*85}")
+    print(f"\n{'─'*80}")
+    print("  Wilcoxon Signed-Rank Test  (H1: CodeDNA > control, one-tailed)")
+    print(f"{'─'*80}")
+    print(f"  {'Model':<25} {'W+':>6} {'n':>4} {'z':>7} {'p':>8}  {'sig?':>6}  Note")
+    print(f"  {'-'*70}")
 
     for name, results in all_results.items():
-        for cond_key, cond_label in [("codedna", "CodeDNA"), ("agent_annotated", "AgentAnnotated")]:
-            pairs = [
-                (r["control"]["metrics_read"]["f1"], r[cond_key]["metrics_read"]["f1"])
-                for r in results
-                if _has_metrics(r, "control") and _has_metrics(r, cond_key)
-            ]
-            if not pairs:
-                continue
-            w = wilcoxon_signed_rank(pairs)
-            sig_str = "✓ p<0.05" if w["significant_05"] else "✗"
-            note    = w["note"] or ""
-            print(f"  {name:<25} {cond_label:<18} {w['W_plus']:>6} {w['n']:>4} "
-                  f"{w['z']:>7.3f} {w['p_approx']:>8.4f}  {sig_str:<8}  {note}")
+        pairs = [
+            (_get_f1(r, "control"), _get_f1(r, "codedna"))
+            for r in results
+            if _has_metrics(r, "control") and _has_metrics(r, "codedna")
+        ]
+        if not pairs:
+            continue
+        w = wilcoxon_signed_rank(pairs)
+        sig_str = "✓ p<0.05" if w["significant_05"] else "✗"
+        note    = w["note"] or ""
+        print(f"  {name:<25} {w['W_plus']:>6} {w['n']:>4} "
+              f"{w['z']:>7.3f} {w['p_approx']:>8.4f}  {sig_str:<8}  {note}")
 
     # ── Per-task breakdown ──
     if all_summaries:
@@ -310,19 +317,19 @@ def main():
         ref_results = all_results[ref_name]
         task_ids    = [r["instance_id"] for r in ref_results]
 
-        print(f"\n{'─'*95}")
+        print(f"\n{'─'*80}")
         print("  Per-task F1 — CodeDNA condition")
         header = f"  {'Task':<35}"
         for name in all_summaries:
             header += f" {name[:14]:>15}"
         print(header)
-        print("  " + "-"*85)
+        print("  " + "-"*70)
         for tid in task_ids:
             row = f"  {tid[:34]:<35}"
             for name in all_summaries:
                 r = next((x for x in all_results[name] if x["instance_id"] == tid), None)
                 if r and _has_metrics(r, "codedna"):
-                    row += f" {r['codedna']['metrics_read']['f1']:>15.0%}"
+                    row += f" {_get_f1(r, 'codedna'):>15.0%}"
                 else:
                     row += f" {'—':>15}"
             print(row)
@@ -331,16 +338,9 @@ def main():
     if args.qualitative and all_results:
         ref_name = list(all_results.keys())[0]
         print(qualitative_rules_report(all_results[ref_name], "codedna"))
-        if any(_has_metrics(r, "agent_annotated") for r in all_results[ref_name]):
-            print(qualitative_rules_report(all_results[ref_name], "agent_annotated"))
-
-    # ── Annotation cost ──
-    if args.annotation_cost and all_results:
-        ref_name = list(all_results.keys())[0]
-        print(annotation_cost_report(all_results[ref_name]))
 
     # ── Paper-ready summary ──
-    print(f"\n{'─'*95}")
+    print(f"\n{'─'*80}")
     print("  Paper-ready summary:")
     if all_summaries:
         best = max(all_summaries,
@@ -348,12 +348,9 @@ def main():
         bs = all_summaries[best]
         cf = bs.get("control", {}).get("avg_f1", 0)
         df = bs.get("codedna", {}).get("avg_f1", 0)
-        af = bs.get("agent_annotated", {}).get("avg_f1")
         n  = bs.get("codedna", {}).get("n", 0)
         print(f"  Best model: {best}")
-        print(f"    CodeDNA F1:     {df:.0%}  vs Control: {cf:.0%}  (Δ={df-cf:+.0%}) over {n} task(s)")
-        if af is not None:
-            print(f"    AgentAnn F1:    {af:.0%}  vs Control: {cf:.0%}  (Δ={af-cf:+.0%})")
+        print(f"    CodeDNA F1:  {df:.0%}  vs Control: {cf:.0%}  (Δ={df-cf:+.0%}) over {n} task(s)")
         print(f"\n  ⚠️  Statistical note: Wilcoxon p-values are approximate (normal approx).")
         print(f"     For N<5, report W+ directly and note exact p requires lookup table.")
 

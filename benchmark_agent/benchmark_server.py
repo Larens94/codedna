@@ -365,9 +365,52 @@ active_final_texts = {}
 active_reasoning = {}
 
 
+DASHBOARD_FILE = BASE_DIR / "dashboard.html"
+
+
 @app.route("/")
 def index():
     return send_file(str(UI_FILE))
+
+
+@app.route("/dashboard")
+def dashboard():
+    return send_file(str(DASHBOARD_FILE))
+
+
+@app.route("/api/results")
+def api_results():
+    """Return all accumulated results from runs/*/results.json."""
+    out = {}
+    for results_file in sorted(RUNS_DIR.glob("*/results.json")):
+        model_name = results_file.parent.name
+        try:
+            entries = json.load(open(results_file))
+        except (json.JSONDecodeError, OSError):
+            continue
+        model_data = []
+        for e in entries:
+            def _f1(cond):
+                s = e.get(f"{cond}_f1_stats")
+                if s and "mean" in s:
+                    return s
+                c = e.get(cond)
+                if c and c.get("metrics_read"):
+                    f = c["metrics_read"]["f1"]
+                    return {"mean": f, "std": 0.0, "values": [f]}
+                return None
+            ctrl = _f1("control")
+            cdna = _f1("codedna")
+            model_data.append({
+                "instance_id": e["instance_id"],
+                "n_runs":      e.get("n_runs", 1),
+                "temperature": e.get("temperature", 0.0),
+                "control":     ctrl,
+                "codedna":     cdna,
+                "delta":       round(cdna["mean"] - ctrl["mean"], 4) if ctrl and cdna else None,
+            })
+        out[model_name] = model_data
+    return jsonify(out)
 
 
 @app.route("/api/models")
@@ -402,9 +445,12 @@ def api_run():
     global active_queue, active_gt, active_run_meta, active_final_texts, active_reasoning
 
     data = request.json
-    model_name = data.get("model")
-    task_id = data.get("task_id")
-    mode = data.get("mode", "both")  # "both", "control", or "codedna"
+    model_name  = data.get("model")
+    task_id     = data.get("task_id")
+    mode        = data.get("mode", "both")        # "both", "control", "codedna"
+    n_runs      = int(data.get("runs", 1))
+    _temp_default = 0.1 if n_runs > 1 else 0.0
+    temperature = float(data.get("temperature", _temp_default))
 
     if model_name not in ram.MODELS:
         return jsonify({"error": f"Unknown model: {model_name}"}), 400
@@ -428,29 +474,33 @@ def api_run():
     active_gt = task["files_in_patch"]
     active_run_meta = {"model": model_name, "task_id": task_id,
                        "instance_id": instance_id, "repo": task["repo"],
-                       "mode": mode}
+                       "mode": mode, "runs": n_runs, "temperature": temperature}
     active_final_texts.clear()
     active_reasoning.clear()
 
     problem = task["problem_statement"]
     active_queue.put({"type": "task_info", "task_id": task_id, "gt": active_gt,
-                      "n_gt": len(active_gt), "model": model_name, "mode": mode})
+                      "n_gt": len(active_gt), "model": model_name, "mode": mode,
+                      "runs": n_runs})
 
     def run_sides():
-        if mode in ("both", "control"):
-            run_with_streaming(problem, ctrl_dir, cfg["provider"], cfg["model_id"],
-                               "control", active_queue, temperature=0, max_turns=30,
-                               system_prompt=ram.SYSTEM_PROMPT)
-        if mode == "both":
-            time.sleep(2)
-        if mode in ("both", "codedna"):
-            run_with_streaming(problem, cdna_dir, cfg["provider"], cfg["model_id"],
-                               "codedna", active_queue, temperature=0, max_turns=30,
-                               system_prompt=ram.CODEDNA_PROMPT)
+        for run_i in range(n_runs):
+            run_label = f"_run{run_i}" if n_runs > 1 else ""
+            if mode in ("both", "control"):
+                run_with_streaming(problem, ctrl_dir, cfg["provider"], cfg["model_id"],
+                                   f"control{run_label}", active_queue,
+                                   temperature=temperature, max_turns=30,
+                                   system_prompt=ram.SYSTEM_PROMPT)
+            if mode in ("both", "codedna"):
+                run_with_streaming(problem, cdna_dir, cfg["provider"], cfg["model_id"],
+                                   f"codedna{run_label}", active_queue,
+                                   temperature=temperature, max_turns=30,
+                                   system_prompt=ram.CODEDNA_PROMPT)
 
     threading.Thread(target=run_sides, daemon=True).start()
 
-    return jsonify({"status": "started", "task_id": task_id, "model": model_name, "mode": mode})
+    return jsonify({"status": "started", "task_id": task_id, "model": model_name,
+                    "mode": mode, "runs": n_runs})
 
 
 @app.route("/api/stream")
@@ -463,7 +513,10 @@ def api_stream():
 
         done_sides = set()
         side_results = {}
-        expected_sides = 1 if active_run_meta and active_run_meta.get("mode") in ("control", "codedna") else 2
+        n_runs = active_run_meta.get("runs", 1) if active_run_meta else 1
+        mode   = active_run_meta.get("mode", "both") if active_run_meta else "both"
+        sides_per_run = 1 if mode in ("control", "codedna") else 2
+        expected_sides = n_runs * sides_per_run
 
         while len(done_sides) < expected_sides:
             try:
@@ -505,8 +558,15 @@ def api_stream():
                     headers={"Cache-Control": "no-cache", "X-Accel-Buffering": "no"})
 
 
+def _avg_f1(runs: list) -> dict:
+    vals = [r["metrics_read"]["f1"] for r in runs]
+    m = sum(vals) / len(vals)
+    std = (sum((v - m)**2 for v in vals) / (len(vals) - 1))**0.5 if len(vals) > 1 else 0.0
+    return {"mean": round(m, 4), "std": round(std, 4), "values": [round(v, 4) for v in vals]}
+
+
 def _save_run_results(meta, side_results, gt):
-    """Save to runs/<model>/results.json in same format as run_agent_multi.py."""
+    """Save to runs/<model>/results.json — compatible with analyze_multi.py format."""
     run_dir = RUNS_DIR / meta["model"].replace('/', '-')
     run_dir.mkdir(parents=True, exist_ok=True)
     out_file = run_dir / "results.json"
@@ -518,22 +578,43 @@ def _save_run_results(meta, side_results, gt):
         except json.JSONDecodeError:
             existing = []
 
-    new_entry = {
-        "instance_id": meta["instance_id"],
-        "repo": meta["repo"],
-        "ground_truth_files": gt,
-        "control": side_results.get("control"),
-        "codedna": side_results.get("codedna"),
-    }
+    # Collect new runs by base condition (strip _runN suffix)
+    ctrl_runs = [v for k, v in side_results.items() if k.startswith("control") if v]
+    cdna_runs = [v for k, v in side_results.items() if k.startswith("codedna") if v]
 
-    replaced = False
-    for i, entry in enumerate(existing):
-        if entry.get("instance_id") == meta["instance_id"]:
-            existing[i] = new_entry
-            replaced = True
-            break
-    if not replaced:
+    iid = meta["instance_id"]
+    old = next((e for e in existing if e.get("instance_id") == iid), None)
+
+    if old is None:
+        new_entry = {
+            "instance_id":        iid,
+            "repo":               meta["repo"],
+            "ground_truth_files": gt,
+            "control":            ctrl_runs[0] if ctrl_runs else None,
+            "codedna":            cdna_runs[0] if cdna_runs else None,
+        }
+        if ctrl_runs or cdna_runs:
+            all_runs = ctrl_runs + cdna_runs
+            new_entry["n_runs"]           = len(ctrl_runs) or len(cdna_runs)
+            new_entry["temperature"]      = meta.get("temperature", 0.0)
+            new_entry["control_runs"]     = ctrl_runs if ctrl_runs else None
+            new_entry["control_f1_stats"] = _avg_f1(ctrl_runs) if ctrl_runs else None
+            new_entry["codedna_runs"]     = cdna_runs if cdna_runs else None
+            new_entry["codedna_f1_stats"] = _avg_f1(cdna_runs) if cdna_runs else None
         existing.append(new_entry)
+    else:
+        # Accumulate runs into existing entry
+        for cond, new_runs in [("control", ctrl_runs), ("codedna", cdna_runs)]:
+            old_runs = old.get(f"{cond}_runs") or ([old[cond]] if old.get(cond) else [])
+            merged = old_runs + new_runs
+            if merged:
+                old[cond] = merged[0]
+                old[f"{cond}_runs"] = merged
+                old[f"{cond}_f1_stats"] = _avg_f1(merged)
+        old["n_runs"] = max(
+            len(old.get("control_runs") or []),
+            len(old.get("codedna_runs") or []))
+        old["temperature"] = meta.get("temperature", 0.0)
 
     with open(out_file, "w") as f:
         json.dump(existing, f, indent=2)

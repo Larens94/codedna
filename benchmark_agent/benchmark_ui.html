@@ -120,6 +120,16 @@ button.play:disabled{opacity:.4;cursor:not-allowed}
       <button id="mCtrl" onclick="setMode('control')">Control Only</button>
       <button id="mCdna" onclick="setMode('codedna')">CodeDNA Only</button>
     </div>
+    <label style="font-size:11px;color:var(--text2);display:flex;align-items:center;gap:4px">
+      🌡️
+      <select id="tempSel" title="Temperature">
+        <option value="0.0">T=0.0</option>
+        <option value="0.1" selected>T=0.1</option>
+        <option value="0.2">T=0.2</option>
+        <option value="0.5">T=0.5</option>
+        <option value="1.0">T=1.0</option>
+      </select>
+    </label>
     <button class="play" id="btn" disabled>▶ Avvia</button>
   </div>
 </div>
@@ -234,7 +244,8 @@ document.getElementById("btn").addEventListener("click", async () => {
   const resp = await fetch(`${API}/api/run`, {
     method: "POST",
     headers: {"Content-Type": "application/json"},
-    body: JSON.stringify({model, task_id: taskId, mode: currentMode})
+    body: JSON.stringify({model, task_id: taskId, mode: currentMode,
+                          temperature: parseFloat(document.getElementById("tempSel").value)})
   });
   const result = await resp.json();
   if (result.error) {

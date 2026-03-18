@@ -5,7 +5,7 @@ deps:    google-genai, anthropic, openai — install with: pip install anthropic
 exports: results_<model>/results.json per model
 rules:   Same system prompt, same tools, same tasks for all models.
          Only the LLM client changes — comparison is clean.
-         Three conditions: control (no annotations), codedna (curated), agent-annotated (auto).
+         Two conditions: control (no annotations), codedna (curated).
 
 Usage:
   # Test all configured models
@@ -20,7 +20,6 @@ Usage:
 
   # Run only specific condition (faster)
   python run_agent_multi.py --model gemini-2.5-flash --condition codedna
-  python run_agent_multi.py --model gemini-2.5-flash --condition agent-annotated
 """
 
 import argparse
@@ -57,15 +56,6 @@ Strategy:
 Do not stop at finding just the first root cause. Make sure you map the full architectural boundary of the problem.
 """
 
-AGENT_ANNOTATED_PROMPT_HEADER = """## CodeDNA v0.7 — READ THIS FIRST
-(Annotations were generated automatically by an AI agent — no human curation.)
-
-"""
-
-# Agent-annotated uses the same navigation instructions as codedna
-# The difference is in the codebase variant, not the prompt.
-AGENT_ANNOTATED_PROMPT = None  # set after CODEDNA_PROMPT is defined
-
 CODEDNA_PROMPT = """## CodeDNA v0.7 — READ THIS FIRST
 
 This codebase uses the CodeDNA annotation standard. These rules have the HIGHEST PRIORITY.
@@ -83,7 +73,12 @@ rules:   <constraints> | none
 \"\"\"
 ```
 
-### Step 3: Follow the `used_by:` graph
+### Step 3: Efficient reading strategy
+For any file you have not fully read yet: read only its first 15 lines (the docstring header).
+Then decide based on `exports:`, `used_by:`, and `rules:` whether to read the full file.
+This saves tokens and keeps navigation fast.
+
+### Step 4: Follow the `used_by:` graph
 `used_by:` tells you which files CONSUME this module. When you read a file and see:
 ```
 used_by: some_module.py → SomeClass
@@ -95,8 +90,17 @@ Your NEXT ACTIONS should be:
 
 If a `used_by:` target's purpose relates to the problem, read it in full. Then check ITS `used_by:` too.
 
-### Step 4: Before your final answer
-Verify: for every file you plan to modify, did you check its `used_by:` targets? If not, go read them now.
+### Step 5: Use `rules:` as navigation hints
+`rules:` contains hard architectural constraints. If `rules:` mentions other files, components,
+or backends, go read those too. Examples:
+- `rules: Changes here affect ALL backends; verify mysql, oracle, postgresql, sqlite3.`
+  → Action: read the operations file of each backend listed.
+- `rules: new connectors need support in sql/where.py and sql/__init__.py`
+  → Action: read sql/where.py and sql/__init__.py next.
+
+### Step 6: Before your final answer
+Verify: for every file you plan to modify, did you check its `used_by:` targets and `rules:`?
+If not, go read them now.
 
 ---
 
@@ -108,21 +112,8 @@ Tools available:
 - read_file(path): read a source file
 - grep(pattern, directory): search for a pattern
 
-Do not stop at finding just the first root cause. Use the `used_by:` graph to map the full boundary.
+Do not stop at finding just the first root cause. Use the `used_by:` graph and `rules:` hints to map the full boundary.
 """
-
-# Agent-annotated reuses the same navigation prompt (auto-generated headers have same format)
-AGENT_ANNOTATED_PROMPT = AGENT_ANNOTATED_PROMPT_HEADER + CODEDNA_PROMPT.split("## CodeDNA v0.7", 1)[-1].lstrip()
-
-
-def load_annotation_cost(ann_dir: Path) -> dict | None:
-    """Load annotation cost metadata if present (agent_annotated condition only)."""
-    cost_file = ann_dir / ".annotation_cost.json"
-    if cost_file.exists():
-        with open(cost_file) as f:
-            return json.load(f)
-    return None
-
 
 # ─────────────────── Tool execution (shared) ───────────────────
 
@@ -137,7 +128,8 @@ def make_fns(repo_root: Path):
             return f"Directory not found: {directory}"
         items = [f"{'[DIR] ' if i.is_dir() else '      '}{i.name}"
                  for i in sorted(target.iterdir())
-                 if not i.name.startswith(".") and i.name != "__pycache__"]
+                 if (not i.name.startswith(".") or i.name == ".codedna")
+                 and i.name != "__pycache__"]
         result = "\n".join(items) or "(empty)"
         log["total_chars_consumed"] += len(result)
         return result
@@ -227,6 +219,20 @@ FORCE_FINAL_PROMPT = (
 )
 
 
+def build_initial_message(problem: str, repo_root: Path) -> str:
+    """Build the initial user message, injecting .codedna content if present."""
+    codedna_path = repo_root / ".codedna"
+    if codedna_path.exists():
+        codedna_content = codedna_path.read_text(encoding="utf-8", errors="replace").strip()
+        return (
+            f"Problem:\n\n{problem}\n\n"
+            f"## Project manifest (.codedna)\n\n{codedna_content}\n\n"
+            "Read the `.codedna` manifest above first — it maps packages, purposes, and dependencies. "
+            "Then start exploring the repository."
+        )
+    return f"Problem:\n\n{problem}\n\nStart by listing the root directory."
+
+
 # ─────────────────── Provider: Gemini ───────────────────
 
 def run_gemini(problem: str, repo_root: Path, model_id: str, max_turns=15, temperature=0, system_prompt=None) -> dict:
@@ -262,7 +268,7 @@ def run_gemini(problem: str, repo_root: Path, model_id: str, max_turns=15, tempe
     config = gt.GenerateContentConfig(system_instruction=prompt,
                                       tools=tools_decl, temperature=temperature)
     history = [gt.Content(role="user",
-        parts=[gt.Part(text=f"Problem:\n\n{problem}\n\nStart by listing the root directory.")])]
+        parts=[gt.Part(text=build_initial_message(problem, repo_root))])]
     final_text = ""
 
     for _ in range(max_turns):
@@ -329,7 +335,7 @@ def run_anthropic(problem: str, repo_root: Path, model_id: str, max_turns=15, te
     ]
 
     messages = [{"role": "user",
-                 "content": f"Problem:\n\n{problem}\n\nStart by listing the root directory."}]
+                 "content": build_initial_message(problem, repo_root)}]
     prompt = system_prompt or SYSTEM_PROMPT
     final_text = ""
 
@@ -411,7 +417,7 @@ def run_openai_compat(problem: str, repo_root: Path, model_id: str,
     prompt = system_prompt or SYSTEM_PROMPT
     messages = [
         {"role": "system", "content": prompt},
-        {"role": "user", "content": f"Problem:\n\n{problem}\n\nStart by listing the root directory."}
+        {"role": "user", "content": build_initial_message(problem, repo_root)},
     ]
     final_text = ""
 
@@ -484,7 +490,7 @@ def run_openai_responses(problem: str, repo_root: Path, model_id: str, max_turns
     initial_input = [
         {"role": "system", "content": prompt},
         {"role": "user",
-         "content": f"Problem:\n\n{problem}\n\nStart by listing the root directory."},
+         "content": build_initial_message(problem, repo_root)},
     ]
     final_text = ""
     previous_response_id = None
@@ -595,17 +601,16 @@ def main():
                         help="Max agent turns per task (default: 30)")
     parser.add_argument("--runs", type=int, default=1,
                         help="Number of runs per task for statistical averaging (default: 1)")
-    parser.add_argument("--temperature", type=float, default=0.0,
-                        help="Temperature for LLM sampling (default: 0.0, use 0.1 for multi-run)")
+    parser.add_argument("--temperature", type=float, default=None,
+                        help="Temperature for LLM sampling (default: 0.0 single run, 0.1 multi-run)")
     parser.add_argument("--condition",
-                        choices=["all", "control", "codedna", "agent-annotated"],
+                        choices=["all", "control", "codedna"],
                         default="all",
                         help="Which condition(s) to run (default: all)")
     args = parser.parse_args()
 
-    if args.runs > 1 and args.temperature == 0.0:
-        print("⚠️  Warning: --runs > 1 with temperature=0 will produce identical results.")
-        print("   Consider using --temperature 0.1 for meaningful variance.")
+    if args.temperature is None:
+        args.temperature = 0.1 if args.runs > 1 else 0.0
 
     models_to_run = [args.model] if args.model else list(MODELS.keys())
 
@@ -626,9 +631,8 @@ def main():
             std = (sum((v - m)**2 for v in vals) / (len(vals) - 1)) ** 0.5 if len(vals) > 1 else 0.0
             return {"mean": round(m, 4), "std": round(std, 4), "values": [round(v, 4) for v in vals]}
 
-        run_ctrl  = args.condition in ("all", "control")
-        run_cdna  = args.condition in ("all", "codedna")
-        run_aann  = args.condition in ("all", "agent-annotated")
+        run_ctrl = args.condition in ("all", "control")
+        run_cdna = args.condition in ("all", "codedna")
 
         results = []
         for task in tasks:
@@ -637,7 +641,6 @@ def main():
             gt       = task["files_in_patch"]
             ctrl_dir = PROJECTS_DIR / iid / "control"
             cdna_dir = PROJECTS_DIR / iid / "codedna"
-            aann_dir = PROJECTS_DIR / iid / "agent_annotated"
 
             if not ctrl_dir.exists():
                 print(f"⚠️  {iid}: not set up — run setup_repos.py first.")
@@ -646,7 +649,7 @@ def main():
             print(f"\n{'─'*60}")
             print(f"Task: {iid}  ({len(gt)} ground-truth files)")
 
-            ctrl_runs, cdna_runs, aann_runs = [], [], []
+            ctrl_runs, cdna_runs = [], []
 
             for run_i in range(args.runs):
                 run_label = f" [run {run_i+1}/{args.runs}]" if args.runs > 1 else ""
@@ -675,26 +678,6 @@ def main():
                           f"read(R={dr['recall']:.0%} P={dr['precision']:.0%} F1={dr['f1']:.0%})")
                     cdna_runs.append(r)
 
-                if run_aann:
-                    if not aann_dir.exists():
-                        print(f"  ⚠️  agent_annotated/ not found for {iid} — "
-                              f"run setup_agent_annotated.py first.")
-                    else:
-                        print(f"  → AGENT-ANNOTATED{run_label} ...", flush=True)
-                        log, text = dispatch(problem, aann_dir, cfg, args.max_turns,
-                                             temperature=args.temperature,
-                                             system_prompt=AGENT_ANNOTATED_PROMPT)
-                        r = build_result(log, text, gt)
-                        ar = r["metrics_read"]
-                        print(f"  AgentAnn: {r['tool_calls']} calls "
-                              f"({r['read_calls']} reads, {r['grep_calls']} greps) | "
-                              f"{r['total_chars_consumed']:,} chars | "
-                              f"read(R={ar['recall']:.0%} P={ar['precision']:.0%} F1={ar['f1']:.0%})")
-                        aann_runs.append(r)
-
-            # Load annotation cost for agent_annotated condition
-            ann_cost = load_annotation_cost(aann_dir) if aann_dir.exists() else None
-
             # Build result entry (backward-compatible for single run)
             entry = {
                 "instance_id":        iid,
@@ -703,23 +686,18 @@ def main():
             }
 
             if args.runs == 1:
-                entry["control"]         = ctrl_runs[0] if ctrl_runs else None
-                entry["codedna"]         = cdna_runs[0] if cdna_runs else None
-                entry["agent_annotated"] = aann_runs[0] if aann_runs else None
+                entry["control"] = ctrl_runs[0] if ctrl_runs else None
+                entry["codedna"] = cdna_runs[0] if cdna_runs else None
             else:
-                entry["n_runs"]              = args.runs
-                entry["temperature"]         = args.temperature
-                entry["control"]             = ctrl_runs[0]  if ctrl_runs  else None
-                entry["control_runs"]        = ctrl_runs      if ctrl_runs  else None
-                entry["control_f1_stats"]    = avg_f1(ctrl_runs) if ctrl_runs else None
-                entry["codedna"]             = cdna_runs[0]  if cdna_runs  else None
-                entry["codedna_runs"]        = cdna_runs      if cdna_runs  else None
-                entry["codedna_f1_stats"]    = avg_f1(cdna_runs) if cdna_runs else None
-                entry["agent_annotated"]     = aann_runs[0]  if aann_runs  else None
-                entry["agent_annotated_runs"]= aann_runs      if aann_runs  else None
-                entry["agent_annotated_f1_stats"] = avg_f1(aann_runs) if aann_runs else None
+                entry["n_runs"]           = args.runs
+                entry["temperature"]      = args.temperature
+                entry["control"]          = ctrl_runs[0] if ctrl_runs else None
+                entry["control_runs"]     = ctrl_runs    if ctrl_runs else None
+                entry["control_f1_stats"] = avg_f1(ctrl_runs) if ctrl_runs else None
+                entry["codedna"]          = cdna_runs[0] if cdna_runs else None
+                entry["codedna_runs"]     = cdna_runs    if cdna_runs else None
+                entry["codedna_f1_stats"] = avg_f1(cdna_runs) if cdna_runs else None
 
-                # Print mean F1 summary
                 parts = []
                 if ctrl_runs:
                     cf1 = avg_f1(ctrl_runs)
@@ -727,22 +705,46 @@ def main():
                 if cdna_runs:
                     df1 = avg_f1(cdna_runs)
                     parts.append(f"CodeDNA: {df1['mean']:.0%}±{df1['std']:.0%}")
-                if aann_runs:
-                    af1 = avg_f1(aann_runs)
-                    parts.append(f"AgentAnn: {af1['mean']:.0%}±{af1['std']:.0%}")
                 print(f"  📊 Mean F1 — {' | '.join(parts)}")
-
-            if ann_cost:
-                entry["annotation_cost"] = ann_cost
 
             results.append(entry)
 
-        # Save results in runs/<model_name>/results.json
+        # Save results — accumulate runs into runs/<model_name>/results.json
         run_dir = RUNS_DIR / model_name.replace('/', '-')
         run_dir.mkdir(parents=True, exist_ok=True)
         out_file = run_dir / "results.json"
+
+        existing = []
+        if out_file.exists():
+            try:
+                existing = json.load(open(out_file))
+            except json.JSONDecodeError:
+                existing = []
+
+        for new_entry in results:
+            iid = new_entry["instance_id"]
+            old = next((e for e in existing if e.get("instance_id") == iid), None)
+            if old is None:
+                existing.append(new_entry)
+            else:
+                # Merge: accumulate _runs lists and recompute _f1_stats
+                for cond in ("control", "codedna"):
+                    new_runs = new_entry.get(f"{cond}_runs") or (
+                        [new_entry[cond]] if new_entry.get(cond) else [])
+                    old_runs = old.get(f"{cond}_runs") or (
+                        [old[cond]] if old.get(cond) else [])
+                    merged = old_runs + new_runs
+                    if merged:
+                        old[cond] = merged[0]
+                        old[f"{cond}_runs"] = merged
+                        old[f"{cond}_f1_stats"] = avg_f1(merged)
+                old["n_runs"] = max(
+                    len(old.get("control_runs") or []),
+                    len(old.get("codedna_runs") or []))
+                old["temperature"] = new_entry.get("temperature", args.temperature)
+
         with open(out_file, "w") as f:
-            json.dump(results, f, indent=2)
+            json.dump(existing, f, indent=2)
         print(f"\n✅ Saved → {out_file}")
         print(f"   Next:  python swebench/analyze_multi.py --model {model_name}")
 
