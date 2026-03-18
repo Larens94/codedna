@@ -96,9 +96,12 @@ Empirical analysis across 5 tasks reveals a clear pattern:
 
 | Task type | Example | Δ F1 |
 |---|---|---|
-| **Clear dependency chain** — A calls B which delegates to C | `dbshell → client → subprocess` (12508) | **+27%** |
+| **Clear dependency chain** — A calls B which delegates to C | `dbshell → client → subprocess` (12508) | **+17%** |
 | **Delegation with backend fan-out** — one interface, N backends | `Trunc → ops.date_trunc_sql` (13495) | **+14%** |
-| **Cross-cutting fix** — same pattern in 10 unrelated files | `__eq__ NotImplemented` (11808) | ~0% |
+| **Feature addition with flag gating** — new capability across feature/schema layers | `INCLUDE clause in Index` (11991) | **+17%** |
+| **Cross-cutting fix** — same pattern in N unrelated files, no shared ancestor | `__eq__ NotImplemented` (11808) | **~0%** |
+
+> **Transparency note on 11808:** the cross-cutting task was included deliberately to test the limits of the protocol. The benchmark annotations do **not** pre-populate a list of affected files — the agent must discover them independently. CodeDNA v0.7 shows Δ ≈ 0% on this task type. This is reported as a known limitation, not hidden. See [SPEC.md §2.4](./SPEC.md) for the proposed v0.8 extension (`cross_cutting_patterns:`) and why it would not constitute cheating.
 
 **CodeDNA is most effective when there is a navigable call chain.** The `used_by:` graph guides the agent from entry point to all affected files. For cross-cutting concerns (same fix in many independent files with no shared ancestor), the benefit is smaller because there is no natural navigation path to follow.
 

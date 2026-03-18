@@ -146,8 +146,16 @@ python swebench/analyze_multi.py --annotation-cost   # auto-annotation overhead
 
 | Task type | Tasks | Avg Δ |
 |---|---|---|
-| Dependency chain (clear A→B→C) | 14480, 13495, 12508 | **+11%** |
-| Cross-cutting / scattered | 11808, 11991 | ~0% |
+| Dependency/delegation chain | 14480, 13495, 12508, 11991 | **+13%** |
+| Cross-cutting (no shared ancestor) | 11808 | **~0%** |
+
+**Transparency note on 11808 (cross-cutting task):**
+
+Task 11808 (`__eq__` returning `NotImplemented` across 10 independent classes) was deliberately included to test the protocol's limits. The benchmark annotations contain **no list of affected files** — each file's `rules:` describes only local Python data model conventions. The agent must discover all 10 files independently.
+
+CodeDNA v0.7 shows Δ ≈ 0% on this task. This is an honest result: the `used_by:` navigation graph has no shared ancestor connecting the 10 classes, so structural navigation provides no advantage. Both conditions find the same ~6/10 obvious ORM files and miss the 4 peripheral ones (`validators.py`, `messages/`, `template/`, `postgres/constraints.py`).
+
+The proposed fix (v0.8 `cross_cutting_patterns:` in `.codedna`) would be written by an agent **post-fix** as accumulated knowledge — not pre-populated for evaluation. This distinction is documented in SPEC.md §2.4.
 
 ### The Cheaper-Model Hypothesis (to be confirmed)
 

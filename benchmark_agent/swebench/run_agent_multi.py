@@ -357,7 +357,13 @@ def run_anthropic(problem: str, repo_root: Path, model_id: str, max_turns=15, te
 
         tool_uses = [b for b in resp.content if b.type == "tool_use"]
         if not tool_uses:
-            final_text = "".join(b.text for b in resp.content if b.type == "text")
+            text_out = "".join(b.text for b in resp.content if b.type == "text")
+            if log["tool_calls"] == 0 and len(text_out) < 500:
+                messages.append({"role": "user", "content": [{"type": "text",
+                    "text": "You haven't explored the codebase yet. "
+                            "Start by calling list_files('.') to see the project structure."}]})
+                continue
+            final_text = text_out
             break
 
         tool_results = []
@@ -437,6 +443,12 @@ def run_openai_compat(problem: str, repo_root: Path, model_id: str,
         messages.append(msg)
 
         if not msg.tool_calls:
+            # Guard: if model bails on turn 1 with a very short response, nudge it to explore
+            if log["tool_calls"] == 0 and len(msg.content or "") < 500:
+                messages.append({"role": "user",
+                                  "content": "You haven't explored the codebase yet. "
+                                             "Start by calling list_files('.') to see the project structure."})
+                continue
             final_text = msg.content or ""
             break
 
