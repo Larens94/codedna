@@ -119,7 +119,8 @@ Do not stop at finding just the first root cause. Use the `used_by:` graph and `
 
 def make_fns(repo_root: Path):
     log = {"tool_calls": 0, "read_calls": 0, "grep_calls": 0, "list_calls": 0,
-           "files_read": [], "greps": [], "total_chars_consumed": 0}
+           "files_read": [], "greps": [], "total_chars_consumed": 0,
+           "input_tokens": 0, "output_tokens": 0}
 
     def list_files(directory=".", **kw):
         log["tool_calls"] += 1; log["list_calls"] += 1
@@ -195,6 +196,8 @@ def build_result(log: dict, final_text: str, ground_truth: list) -> dict:
         "n_files_read":         len(read_set),
         "greps":                log["greps"],
         "total_chars_consumed": log["total_chars_consumed"],
+        "input_tokens":         log["input_tokens"],
+        "output_tokens":        log["output_tokens"],
         "final_response":       final_text,
         "metrics_read":         file_metrics(read_set, ground_truth),
         "metrics_proposed":     file_metrics(proposed, ground_truth),
@@ -204,11 +207,15 @@ def build_result(log: dict, final_text: str, ground_truth: list) -> dict:
 # ─────────────────── Retry helper ───────────────────
 
 def call_with_retry(fn, *args, max_attempts=5, **kwargs):
-    """Generic retry with exponential backoff for API calls."""
+    """Generic retry with exponential backoff for API calls.
+    BadRequestError (400) is never retried — it indicates a malformed request."""
     for attempt in range(max_attempts):
         try:
             return fn(*args, **kwargs)
         except Exception as e:
+            # Don't retry client errors (400) — they won't succeed on retry
+            if "BadRequestError" in type(e).__name__ or "400" in str(e)[:50]:
+                raise
             if attempt < max_attempts - 1:
                 wait = 5 * (2 ** attempt)  # 5s, 10s, 20s, 40s
                 print(f"    ⚠️  API error ({type(e).__name__}), retrying in {wait}s...")
@@ -312,6 +319,37 @@ def run_gemini(problem: str, repo_root: Path, model_id: str, max_turns=15, tempe
 
 # ─────────────────── Provider: Anthropic (Claude) ───────────────────
 
+# Cost per million tokens (input, output) — update if pricing changes
+_ANTHROPIC_COSTS = {
+    "claude-haiku-4-5-20251001": (0.80, 4.00),
+    "claude-sonnet-4-6":         (3.00, 15.00),
+    "claude-opus-4-6":           (15.00, 75.00),
+}
+_ANTHROPIC_HISTORY_WINDOW = 8  # keep first msg + last N assistant/user pairs
+
+def _trim_anthropic_messages(messages: list, window: int) -> list:
+    """Keep first message (problem) + last `window` turn pairs to limit input growth.
+
+    The suffix must always start with an assistant message to avoid orphaned
+    tool_result blocks. If the raw slice starts with a user(tool_results) message,
+    the Anthropic API would merge it with messages[0], producing
+    messages.0.content.1 = tool_result → BadRequestError.
+    """
+    max_msgs = 1 + window * 2
+    if len(messages) <= max_msgs:
+        return messages
+
+    suffix = list(messages[-(window * 2):])
+    # Drop leading user messages so the suffix always begins with an assistant turn
+    while suffix and suffix[0].get("role") != "assistant":
+        suffix = suffix[1:]
+
+    if not suffix:
+        # Extreme edge case: all trimmed messages were user messages
+        return [messages[0]]
+
+    return [messages[0]] + suffix
+
 def run_anthropic(problem: str, repo_root: Path, model_id: str, max_turns=15, temperature=0, system_prompt=None) -> dict:
     try:
         import anthropic
@@ -350,9 +388,13 @@ def run_anthropic(problem: str, repo_root: Path, model_id: str, max_turns=15, te
             max_tokens=4096,
             system=prompt,
             tools=tools,
-            messages=messages,
+            messages=_trim_anthropic_messages(messages, _ANTHROPIC_HISTORY_WINDOW),
             temperature=temperature,
         )
+        # Track token usage
+        if hasattr(resp, "usage") and resp.usage:
+            log["input_tokens"]  += resp.usage.input_tokens
+            log["output_tokens"] += resp.usage.output_tokens
         messages.append({"role": "assistant", "content": resp.content})
 
         tool_uses = [b for b in resp.content if b.type == "tool_use"]
@@ -378,10 +420,21 @@ def run_anthropic(problem: str, repo_root: Path, model_id: str, max_turns=15, te
         resp = call_with_retry(
             client.messages.create,
             model=model_id, max_tokens=4096,
-            system=prompt, messages=messages,
+            system=prompt,
+            messages=_trim_anthropic_messages(messages, _ANTHROPIC_HISTORY_WINDOW),
             temperature=temperature,
         )
+        if hasattr(resp, "usage") and resp.usage:
+            log["input_tokens"]  += resp.usage.input_tokens
+            log["output_tokens"] += resp.usage.output_tokens
         final_text = "".join(b.text for b in resp.content if b.type == "text")
+
+    # Print token usage + estimated cost
+    costs = _ANTHROPIC_COSTS.get(model_id, (3.00, 15.00))
+    cost_usd = (log["input_tokens"] / 1_000_000 * costs[0]
+                + log["output_tokens"] / 1_000_000 * costs[1])
+    print(f"    💰 tokens in={log['input_tokens']:,} out={log['output_tokens']:,} "
+          f"≈ ${cost_usd:.4f}")
 
     return log, final_text
 
