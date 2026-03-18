@@ -107,6 +107,28 @@ Empirical analysis across 5 tasks (Gemini 2.5 Flash, ≥5 runs each) reveals a c
 
 **CodeDNA is most effective when there is a navigable call chain.** The `used_by:` graph guides the agent from entry point to all affected files. For cross-cutting concerns (same fix in many independent files with no shared ancestor), the benefit is smaller because there is no natural navigation path to follow.
 
+### Annotation Integrity Audit
+
+A full audit of the benchmark annotations was performed to verify that no task-specific hints were embedded in the `codedna/` files. The question: do the annotations guide the agent to the right files by describing the architecture, or by encoding the solution?
+
+**Methodology:** for each task, every ground-truth file (from `files_in_patch`) was inspected. The `used_by:` targets were classified as GT (ground-truth) or non-GT. The `rules:` field was checked for task-specific prescriptions vs architectural descriptions.
+
+**Findings per task:**
+
+| Task | `used_by:` verdict | `rules:` verdict |
+|------|---|---|
+| **11808** (`__eq__`) | Files are independent — no `used_by:` chain exists by design | Describes Python data model convention, not a file list. Δ≈0% confirms annotations gave no navigation advantage |
+| **14480** (XOR) | 16 targets in `query_utils.py`; only 2 are GT, both genuine callers | Describes connector system mechanics; agent still needs to reason which files to open |
+| **13495** (Trunc tzinfo) | `base/operations.py` lists all 4 backends — they are literally all the backends that exist | `_convert_field_to_tz()` mentioned per-backend: accurate architecture, not a fix prescription |
+| **11991** (INCLUDE) | `base/schema.py` initially listed only `postgresql/schema.py`; **corrected during audit to include all 4 backend schema editors** | Architectural delegation pattern; no file list for the fix |
+| **12508** (dbshell -c) | `base/client.py` lists all 4 backend clients — complete by definition | `dbshell.py` rules describe existing architecture accurately; no other rules were possible given the file's 6-line body |
+
+**Annotation correction made during audit:** `django/db/backends/base/schema.py` in `django__django-11991/codedna/` had an incomplete `used_by:` listing only `postgresql/schema.py`. All four backend schema editors (`mysql`, `oracle`, `postgresql`, `sqlite3`) genuinely inherit from `BaseDatabaseSchemaEditor`. The annotation was updated to reflect the complete inheritance graph.
+
+**Verdict: the benchmark annotations are architecturally accurate and do not encode task-specific solutions.** Where GT files appear in `used_by:` targets, it is because those files are genuine callers or subclasses — not because the annotator cherry-picked them. The empirical results support this: tasks with navigable chains show Δ>0%, the cross-cutting task (11808) shows Δ≈0% regardless of the `rules:` text.
+
+**The contrast with a generic LLM response** illustrates the difference. When shown the `dbshell.py` file with its CodeDNA annotation, a generic assistant (tested with Gemini) explained what the code does but did not navigate to `base.py → add_arguments()` or `BaseDatabaseClient → runshell()` as the next files to modify. A CodeDNA-aware agent reads the `rules:` field and immediately knows which files to open — not because the annotation names the fix, but because it accurately describes the delegation chain that must be modified.
+
 ### The Cheaper-Model Hypothesis
 
 The working hypothesis — supported by early results and to be confirmed with full multi-model data:

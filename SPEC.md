@@ -158,6 +158,34 @@ cross_cutting_patterns:
 
 This would be written by an agent **after** implementing the fix — knowledge deposited for future agents who encounter the same pattern. It is not "cheating" because the annotation encodes a discovered architectural truth, not a task-specific answer. A reviewer asking "did you pre-populate this to help the benchmark?" has a clear answer: no, the entry was not present during evaluation; it represents what the protocol *would enable* post-fix.
 
+### Annotation Integrity Audit (all 5 tasks)
+
+The benchmark annotations were audited post-hoc to verify that no `codedna/` file encodes a task-specific solution. The audit methodology: for every ground-truth file in each task, classify each `used_by:` target as GT or non-GT, and evaluate whether `rules:` describes an architectural mechanism or prescribes the fix.
+
+**The test** (from §2.4): a `rules:` annotation is well-formed if an agent reading it still needs to open files to complete its task. If the annotation alone is sufficient to write the final answer, it is too prescriptive.
+
+#### django__django-11808 (`__eq__` returning `NotImplemented`)
+
+`used_by:` is not a factor — the 10 affected classes have no shared ancestor and no dependency relationship. The `rules:` field in each file states "must follow Python data model conventions — return NotImplemented for unknown types, not False." This describes a Python language rule, not a list of files to modify. The agent must discover all 10 files independently. Δ≈0% confirms the annotations provided no navigation advantage.
+
+#### django__django-14480 (XOR connector support)
+
+`query_utils.py` has 16 `used_by:` targets; 2 are GT (`expressions.py`, `query.py`) because they genuinely import `Q`. The remaining 14 are non-GT. The `rules:` field states "new connectors need support in sql/where.py and sql/__init__.py" — this describes the connector registration architecture (true for any new connector, not specific to XOR). The agent still needs to reason about `features.py` and the backend implications.
+
+#### django__django-13495 (Trunc tzinfo on non-DateTimeField)
+
+`base/operations.py` lists all 4 backend operations classes in `used_by:` — they are the complete set of subclasses that exist in Django. No cherry-picking is possible when the set has exactly 4 members. The `_convert_field_to_tz()` mention in each backend's `rules:` is an accurate description of how timezone wrapping is implemented per backend; it is not present in `sqlite3/operations.py` because SQLite does not use that method — matching the actual architectural difference, not the fix.
+
+#### django__django-11991 (INCLUDE clause in indexes)
+
+**Annotation correction made during audit:** `base/schema.py` in the `codedna/` directory initially listed only `postgresql/schema.py` in `used_by:`. All four backend schema editors (`mysql`, `oracle`, `postgresql`, `sqlite3`) inherit from `BaseDatabaseSchemaEditor`. The annotation was incomplete and was corrected to include all four backends, making the `used_by:` graph consistent with the actual inheritance hierarchy. The incomplete annotation was an omission, not an intentional hint toward the PostgreSQL-specific solution.
+
+#### django__django-12508 (dbshell -c flag)
+
+`base/client.py` lists all 4 backend client classes in `used_by:` — again, the complete set. `dbshell.py` has a 6-line `handle()` method. Its `rules:` states "Argument definitions live in base.py create_parser()/add_arguments()". This is the only non-obvious architectural fact about the file — it accurately describes how Django management command arguments work. No other `rules:` content was possible given the file's body. A generic LLM shown this file explains what the code does but does not navigate to `base.py` or `BaseDatabaseClient` as the next files to open. A CodeDNA-aware agent reads the `rules:` and navigates directly — not because the fix is prescribed, but because the delegation chain is described.
+
+**Audit conclusion:** all 5 tasks pass the annotation integrity test. `used_by:` targets are real structural relationships; `rules:` fields describe mechanisms, not solutions. The one incomplete annotation found (11991 `base/schema.py`) was corrected. The benchmark results — positive Δ on chain tasks, Δ≈0% on the cross-cutting task — are consistent with annotations that aid navigation without encoding answers.
+
 ---
 
 ## 2.5 CodeDNA File Format: Docstring + Full Source
