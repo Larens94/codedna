@@ -75,16 +75,16 @@ def run_with_streaming(problem, repo_root, provider, model_id, side, queue,
         prompt = system_prompt or ram.SYSTEM_PROMPT
 
         if provider == "gemini":
-            final_text = _run_gemini(problem, model_id, fns, log, side, queue,
+            final_text = _run_gemini(problem, repo_root, model_id, fns, log, side, queue,
                                      temperature, max_turns, reasoning_texts, prompt)
         elif provider == "anthropic":
-            final_text = _run_anthropic(problem, model_id, fns, log, side, queue,
+            final_text = _run_anthropic(problem, repo_root, model_id, fns, log, side, queue,
                                         temperature, max_turns, reasoning_texts, prompt)
         elif provider == "openai":
-            final_text = _run_openai(problem, model_id, fns, log, side, queue,
+            final_text = _run_openai(problem, repo_root, model_id, fns, log, side, queue,
                                       temperature, max_turns, reasoning_texts, prompt)
         elif provider == "codex":
-            final_text = _run_codex(problem, model_id, fns, log, side, queue,
+            final_text = _run_codex(problem, repo_root, model_id, fns, log, side, queue,
                                      temperature, max_turns, reasoning_texts, prompt)
         else:
             queue.put({"type": "error", "side": side, "error": f"Unknown provider: {provider}"})
@@ -117,7 +117,7 @@ def run_with_streaming(problem, repo_root, provider, model_id, side, queue,
 
 # ─── Provider implementations (mirrors run_agent_multi.py exactly, + event emission) ───
 
-def _run_gemini(problem, model_id, fns, log, side, queue, temperature, max_turns, reasoning_texts, system_prompt):
+def _run_gemini(problem, repo_root, model_id, fns, log, side, queue, temperature, max_turns, reasoning_texts, system_prompt):
     from google import genai
     from google.genai import types as gt
 
@@ -137,7 +137,7 @@ def _run_gemini(problem, model_id, fns, log, side, queue, temperature, max_turns
     config = gt.GenerateContentConfig(system_instruction=system_prompt,
                                       tools=tools_decl, temperature=temperature)
     history = [gt.Content(role="user",
-        parts=[gt.Part(text=f"Problem:\n\n{problem}\n\nStart by listing the root directory.")])]
+        parts=[gt.Part(text=ram.build_initial_message(problem, repo_root))])]
     final_text = ""
 
     for turn in range(max_turns):
@@ -181,7 +181,7 @@ def _run_gemini(problem, model_id, fns, log, side, queue, temperature, max_turns
     return final_text
 
 
-def _run_anthropic(problem, model_id, fns, log, side, queue, temperature, max_turns, reasoning_texts, system_prompt):
+def _run_anthropic(problem, repo_root, model_id, fns, log, side, queue, temperature, max_turns, reasoning_texts, system_prompt):
     import anthropic
     client = anthropic.Anthropic(api_key=os.getenv("ANTHROPIC_API_KEY", ""))
     tools = [
@@ -193,7 +193,7 @@ def _run_anthropic(problem, model_id, fns, log, side, queue, temperature, max_tu
          "input_schema": {"type": "object", "required": ["pattern"],
                           "properties": {"pattern": {"type": "string"}, "directory": {"type": "string", "default": "."}}}},
     ]
-    messages = [{"role": "user", "content": f"Problem:\n\n{problem}\n\nStart by listing the root directory."}]
+    messages = [{"role": "user", "content": ram.build_initial_message(problem, repo_root)}]
     final_text = ""
 
     for turn in range(max_turns):
@@ -228,7 +228,7 @@ def _run_anthropic(problem, model_id, fns, log, side, queue, temperature, max_tu
     return final_text
 
 
-def _run_openai(problem, model_id, fns, log, side, queue, temperature, max_turns, reasoning_texts, system_prompt):
+def _run_openai(problem, repo_root, model_id, fns, log, side, queue, temperature, max_turns, reasoning_texts, system_prompt):
     from openai import OpenAI
     if "deepseek" in model_id.lower():
         client = OpenAI(api_key=os.getenv("DEEPSEEK_API_KEY", ""), base_url="https://api.deepseek.com/v1")
@@ -246,7 +246,7 @@ def _run_openai(problem, model_id, fns, log, side, queue, temperature, max_turns
     ]
     messages = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": f"Problem:\n\n{problem}\n\nStart by listing the root directory."}
+        {"role": "user", "content": ram.build_initial_message(problem, repo_root)},
     ]
     final_text = ""
 
@@ -285,7 +285,7 @@ def _run_openai(problem, model_id, fns, log, side, queue, temperature, max_turns
     return final_text
 
 
-def _run_codex(problem, model_id, fns, log, side, queue, temperature, max_turns, reasoning_texts, system_prompt):
+def _run_codex(problem, repo_root, model_id, fns, log, side, queue, temperature, max_turns, reasoning_texts, system_prompt):
     from openai import OpenAI
     client = OpenAI(api_key=os.getenv("OPENAI_API_KEY", ""))
     tools = [
@@ -300,7 +300,7 @@ def _run_codex(problem, model_id, fns, log, side, queue, temperature, max_turns,
 
     initial_input = [
         {"role": "system", "content": system_prompt},
-        {"role": "user", "content": f"Problem:\n\n{problem}\n\nStart by listing the root directory."},
+        {"role": "user", "content": ram.build_initial_message(problem, repo_root)},
     ]
     final_text = ""
     previous_response_id = None
