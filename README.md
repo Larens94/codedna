@@ -83,22 +83,24 @@ Then annotate your first file → see [QUICKSTART.md](./QUICKSTART.md)
 
 | Model | Ctrl F1 | DNA F1 | **Δ F1** | p-value | Tasks Won |
 |---|---|---|---|---|---|
-| **Gemini 2.5 Flash** | 62% | **69%** | **+7%** | 0.04* | 4/5 |
+| **Gemini 2.5 Flash** | 60% | **72%** | **+13%** | 0.040* | 4/5 |
 | **DeepSeek Chat** | — | — | — | in progress | — |
 | **Claude Haiku 4.5** | — | — | — | in progress | — |
-| **GPT-4o-mini** | — | — | — | in progress | — |
 
 > ⚠️ Multi-model benchmark in progress. Final results will be updated when all runs complete. Full data: [`benchmark_agent/runs/`](./benchmark_agent/runs/)
+>
+> Gemini 2.5 Flash: 5 tasks × ≥5 runs at T=0.1. Wilcoxon W+=14, N=5, p=0.040 (one-tailed).
 
 ### When CodeDNA Helps Most
 
-Empirical analysis across 5 tasks reveals a clear pattern:
+Empirical analysis across 5 tasks (Gemini 2.5 Flash, ≥5 runs each) reveals a clear pattern:
 
 | Task type | Example | Δ F1 |
 |---|---|---|
-| **Clear dependency chain** — A calls B which delegates to C | `dbshell → client → subprocess` (12508) | **+17%** |
-| **Delegation with backend fan-out** — one interface, N backends | `Trunc → ops.date_trunc_sql` (13495) | **+14%** |
+| **Clear dependency chain** — A calls B which delegates to C | `dbshell → client → subprocess` (12508) | **+9%** |
+| **Delegation with backend fan-out** — one interface, N backends | `Trunc → ops.date_trunc_sql` (13495) | **+21%** |
 | **Feature addition with flag gating** — new capability across feature/schema layers | `INCLUDE clause in Index` (11991) | **+17%** |
+| **XOR feature with multi-layer propagation** | `Q() XOR support` (14480) | **+18%** |
 | **Cross-cutting fix** — same pattern in N unrelated files, no shared ancestor | `__eq__ NotImplemented` (11808) | **~0%** |
 
 > **Transparency note on 11808:** the cross-cutting task was included deliberately to test the limits of the protocol. The benchmark annotations do **not** pre-populate a list of affected files — the agent must discover them independently. CodeDNA v0.7 shows Δ ≈ 0% on this task type. This is reported as a known limitation, not hidden. See [SPEC.md §2.4](./SPEC.md) for the proposed v0.8 extension (`cross_cutting_patterns:`) and why it would not constitute cheating.
