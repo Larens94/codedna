@@ -126,6 +126,8 @@ def make_fns(repo_root: Path):
         target = repo_root / directory
         if not target.exists():
             return f"Directory not found: {directory}"
+        if not target.is_dir():
+            return f"Not a directory: {directory}"
         items = [f"{'[DIR] ' if i.is_dir() else '      '}{i.name}"
                  for i in sorted(target.iterdir())
                  if (not i.name.startswith(".") or i.name == ".codedna")
@@ -139,6 +141,8 @@ def make_fns(repo_root: Path):
         target = repo_root / path
         if not target.exists():
             return f"File not found: {path}"
+        if target.is_dir():
+            return f"Is a directory, use list_files() instead: {path}"
         log["files_read"].append(path)
         result = target.read_text(encoding="utf-8", errors="replace")[:READ_FILE_LIMIT]
         log["total_chars_consumed"] += len(result)
@@ -607,6 +611,8 @@ def main():
                         choices=["all", "control", "codedna"],
                         default="all",
                         help="Which condition(s) to run (default: all)")
+    parser.add_argument("--task", nargs="+",
+                        help="Run only specific task IDs, e.g. --task 14480 13495")
     args = parser.parse_args()
 
     if args.temperature is None:
@@ -616,6 +622,14 @@ def main():
 
     with open(TASKS_FILE) as f:
         tasks = json.load(f)
+
+    if args.task:
+        filter_ids = {f"django__django-{t}" if not t.startswith("django") else t
+                      for t in args.task}
+        tasks = [t for t in tasks if t["instance_id"] in filter_ids]
+        if not tasks:
+            print(f"No tasks found for: {args.task}")
+            return
 
     for model_name in models_to_run:
         cfg = MODELS[model_name]

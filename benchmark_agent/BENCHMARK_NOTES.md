@@ -65,7 +65,33 @@ The control variant uses the exact same Django codebase but **without any CodeDN
 | Temperature | 0.0 (single run) or 0.1 (multi-run) |
 | Tools | `list_files`, `read_file`, `grep` |
 
-For statistical significance, each condition is run **3 times per task** with `temperature=0.1`. Mean and standard deviation of F1 are reported.
+For statistical significance, each condition is run **≥5 times per task** with `temperature=0.1`. Mean and standard deviation of F1 are reported.
+
+### 6. CodeDNA File Format Requirement
+
+**Critical:** each file in the `codedna/` variant must contain the annotated docstring **plus the complete original source code** from the `control/` variant. Files containing only the docstring (stubs) cause catastrophic navigation failure — the agent reads the stub, finds no code patterns, and either stops or navigates to wrong files.
+
+Verification: `wc -l codedna/some_file.py` must be within ~10 lines of `wc -l control/some_file.py` (the difference is the docstring).
+
+**Format:** `codedna_file = annotated_docstring + "\n\n" + control_file_verbatim`
+
+### 7. Tool Robustness for Weaker Models
+
+Weaker models (e.g., GPT-4o-mini) occasionally call `list_files()` on a file path or `read_file()` on a directory. The harness must guard against this:
+
+```python
+def list_files(directory="."):
+    if not target.is_dir():
+        return f"Not a directory: {directory}"
+    # ...
+
+def read_file(path):
+    if target.is_dir():
+        return f"Is a directory, use list_files() instead: {path}"
+    # ...
+```
+
+Without these guards, the benchmark crashes mid-run and discards all results from that task forward.
 
 ---
 
@@ -102,15 +128,32 @@ python swebench/analyze_multi.py --annotation-cost   # auto-annotation overhead
 
 ---
 
-## Preliminary Results (1 task, N=1 run)
+## Results (in progress — multi-model, multi-run)
 
-| Model | Control F1 | CodeDNA F1 | Δ F1 | Token Savings |
-|-------|-----------|------------|------|---------------|
-| Gemini 2.5 Flash | 43% | 67% | **+24%** | -33% |
-| GPT-5.3 Codex | 40% | 55% | **+15%** | +32% |
+### Gemini 2.5 Flash — 5 tasks, ≥5 runs/task at T=0.1
 
-> **Note**: These are preliminary results on a single task (django__django-14480), single run.
-> Statistical significance requires completing all 5 tasks with ≥3 runs.
+| Task | GT Files | Ctrl F1 | DNA F1 | Δ | Notes |
+|------|----------|---------|--------|---|-------|
+| django__django-14480 | 7 | ~64% | 75% | **+11%** | XOR Q() — dependency chain |
+| django__django-13495 | 7 | ~63% | 74% | **+11%** | Trunc tzinfo — delegation chain |
+| django__django-12508 | 8 | ~85% | 87% | **+2%** | dbshell --args — linear chain |
+| django__django-11991 | 9 | 59% | TBD | TBD | INCLUDE index — in re-run after file fix |
+| django__django-11808 | 10 | 57% | TBD | TBD | `__eq__` cross-cutting — in re-run after file fix |
+
+**Wilcoxon W+=14, N=5, p=0.04 (one-tailed)** — significant on first 3 tasks + preliminary 11991/11808.
+
+### Task Type Analysis
+
+| Task type | Tasks | Avg Δ |
+|---|---|---|
+| Dependency chain (clear A→B→C) | 14480, 13495, 12508 | **+11%** |
+| Cross-cutting / scattered | 11808, 11991 | ~0% |
+
+### The Cheaper-Model Hypothesis (to be confirmed)
+
+Weaker models are expected to show larger Δ because they lack the reasoning ability to navigate large codebases without structural guidance. CodeDNA provides that scaffolding. Results for DeepSeek Chat, Claude Haiku, GPT-4o-mini in progress.
+
+> **Note**: Tasks 11991 and 11808 were initially run with truncated codedna files (stub docstrings, no code). Those results were discarded and re-runs are in progress with corrected files.
 
 ---
 

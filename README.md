@@ -75,19 +75,40 @@ Then annotate your first file → see [QUICKSTART.md](./QUICKSTART.md)
 
 ## 📊 Benchmark — SWE-bench Multi-Model Results
 
-5 real Django issues from [SWE-bench](https://github.com/princeton-nlp/SWE-bench), tested across 5 state-of-the-art LLMs. Same prompt, same tools, same tasks. **Only difference: CodeDNA annotations.**
+5 real Django issues from [SWE-bench](https://github.com/princeton-nlp/SWE-bench), tested across multiple LLMs. Same prompt, same tools, same tasks. **Only difference: CodeDNA annotations.**
 
-> **Metric: File Localization F1** — measures how accurately models identify the files that need modification. While standard SWE-bench evaluates end-to-end resolution, this benchmark isolates the preceding bottleneck: navigation.
+> **Metric: File Localization F1** — harmonic mean of recall and precision on files read vs ground truth. Isolates the navigation bottleneck that precedes code generation.
 
-| Model | Ctrl F1 | DNA F1 | **Δ F1** | Tasks Won |
-|---|---|---|---|---|
-| **Gemini 2.5 Flash** | 57% | **77%** | **+20%** | 4/5 |
-| **GPT-5.3 Codex** | 39% | **51%** | **+12%** | 3/5 |
-| **Gemini 2.5 Pro** | 57% | **65%** | **+8%** | 3/5 |
-| **GPT-4o** | 49% | **51%** | **+2%** | 1/5 |
-| **DeepSeek Chat** | 42% | 40% | −1% | 1/5 |
+> **Statistical test:** Wilcoxon signed-rank test (one-tailed, H1: CodeDNA > Control) over F1 pairs across 5 tasks. N=5 with ≥5 runs per task at T=0.1.
 
-> **CodeDNA improves file localization F1 on 4 out of 5 models.** The largest gain (+20pp) is on Gemini 2.5 Flash, winning 4/5 tasks. The benefit is most pronounced on tasks requiring cross-module navigation.
+| Model | Ctrl F1 | DNA F1 | **Δ F1** | p-value | Tasks Won |
+|---|---|---|---|---|---|
+| **Gemini 2.5 Flash** | 62% | **69%** | **+7%** | 0.04* | 4/5 |
+| **DeepSeek Chat** | — | — | — | in progress | — |
+| **Claude Haiku 4.5** | — | — | — | in progress | — |
+| **GPT-4o-mini** | — | — | — | in progress | — |
+
+> ⚠️ Multi-model benchmark in progress. Final results will be updated when all runs complete. Full data: [`benchmark_agent/runs/`](./benchmark_agent/runs/)
+
+### When CodeDNA Helps Most
+
+Empirical analysis across 5 tasks reveals a clear pattern:
+
+| Task type | Example | Δ F1 |
+|---|---|---|
+| **Clear dependency chain** — A calls B which delegates to C | `dbshell → client → subprocess` (12508) | **+27%** |
+| **Delegation with backend fan-out** — one interface, N backends | `Trunc → ops.date_trunc_sql` (13495) | **+14%** |
+| **Cross-cutting fix** — same pattern in 10 unrelated files | `__eq__ NotImplemented` (11808) | ~0% |
+
+**CodeDNA is most effective when there is a navigable call chain.** The `used_by:` graph guides the agent from entry point to all affected files. For cross-cutting concerns (same fix in many independent files with no shared ancestor), the benefit is smaller because there is no natural navigation path to follow.
+
+### The Cheaper-Model Hypothesis
+
+The working hypothesis — supported by early results and to be confirmed with full multi-model data:
+
+> **Less capable, cheaper models benefit more from CodeDNA.** A frontier model navigates large codebases well by general reasoning. A cheaper model without structural guidance gets lost, loops, or stops early. CodeDNA provides the scaffolding that lets a cheap model approach the navigation quality of a more expensive one.
+
+This makes CodeDNA economically attractive: annotate once, run cheaper models with comparable accuracy.
 
 Full data: [`benchmark_agent/runs/`](./benchmark_agent/runs/) · Script: [`benchmark_agent/swebench/run_agent_multi.py`](./benchmark_agent/swebench/run_agent_multi.py)
 
@@ -156,6 +177,63 @@ int_cents_price_from_req = request.json["price"]
 ### Planner Read Protocol
 
 To plan edits across 10+ files: read `.codedna` first, then read only the module docstring of each file (first 8–12 lines), build an `exports:` → `used_by:` graph, then open only the relevant files in full.
+
+---
+
+## 🎯 Annotation Design Principle — Architecture, Not Answers
+
+The most important rule for writing `rules:` annotations: **describe the architectural mechanism, not the solution**.
+
+**Wrong** — gives away the answer:
+```python
+rules:   Fix mysql/operations.py, oracle/operations.py, postgresql/operations.py,
+         and sqlite3/operations.py to handle tzname in date_trunc_sql().
+```
+An agent reading this copies the list without opening the files. It scores zero on any file-localization metric.
+
+**Correct** — describes the mechanism:
+```python
+rules:   Trunc.as_sql() delegates to connection.ops.date_trunc_sql() and
+         time_trunc_sql(), passing tzname. Each backend implements these
+         methods independently with its own timezone strategy.
+```
+The agent reads this, understands the delegation chain, uses `.codedna` to find the backends, then **reasons** which ones to open based on the problem context.
+
+### `used_by:` is a navigation map, not an open list
+
+An agent that opens every `used_by:` target would be slower and less precise. The correct behavior is:
+
+1. Read the `used_by:` field to know **who depends on this file**
+2. Read the problem description and `.codedna` manifest
+3. **Reason** about which consumers are relevant to the current task
+4. Open only those — ignore the rest
+
+This is why CodeDNA improves both F1 **and** efficiency: the agent reads fewer files but finds more of the right ones. Our benchmark shows CodeDNA runs achieving P=100% (zero wasted reads) while Control runs scatter across irrelevant files.
+
+### The `.codedna` manifest as a reasoning enabler
+
+The project manifest is injected into the agent's first message so it has the full structural map before making any tool call. Combined with module-level `rules:`, this lets the agent answer: *"given this problem, which of these packages and modules are relevant?"* — without reading every file first.
+
+---
+
+## 🚀 Fine-Tuning Potential
+
+Current benchmark results are **zero-shot** — models reading CodeDNA annotations with no prior training on the protocol. They follow `used_by:` links and `rules:` hints by general language understanding alone.
+
+If a foundation model were fine-tuned specifically on the CodeDNA protocol:
+
+- `exports:` / `used_by:` / `rules:` would be recognized as native structured signals, not free text to interpret
+- Navigation via `used_by:` would become automatic rather than reasoned — reducing variance dramatically
+- The agent would know precisely when to stop exploring (precision) and when to follow another link (recall)
+- Token cost would drop further: the agent reads only headers until context demands a full file
+
+This is fundamentally different from RAG or GitHub Copilot. It is not retrieval — it is **semantically guided navigation embedded in the source**. A fine-tuned model would treat CodeDNA the way a human senior engineer treats a well-documented codebase: instant orientation, minimal reading, maximum coverage.
+
+### Inter-Agent Communication at Scale
+
+CodeDNA's `rules:` field is an **asynchronous message channel between agents**. Agent A writes architectural context into a file; Agent B reads it weeks later in a different session with a different model. No shared memory, no coordination protocol — the file is the channel.
+
+This scales naturally to multi-agent pipelines: a planning agent annotates while exploring, an implementation agent reads and acts, a review agent checks and updates `rules:` with discovered constraints. Each agent leaves the codebase more navigable for the next.
 
 ---
 

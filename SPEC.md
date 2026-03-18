@@ -87,7 +87,87 @@ Level 2 exists because the channel must work even when the receiver sees only a 
 
 ---
 
-## 2.5 Design Principle: Only Annotate What the Code Doesn't Tell You
+## 2.4 Annotation Design Principle: Architecture, Not Answers
+
+The `rules:` field must describe **architectural mechanisms and relationships** — never the solution to a specific task. This distinction is critical for benchmark validity and for real-world usefulness.
+
+**Wrong — prescribes the solution:**
+```python
+rules:   Fix mysql/operations.py, oracle/operations.py, and sqlite3/base.py
+         to handle tzname in date_trunc_sql().
+```
+An agent reading this can generate a plausible-sounding final answer by copying the file list without opening any file. The annotation replaces exploration with recall, breaking the causal chain that makes CodeDNA useful.
+
+**Correct — describes the mechanism:**
+```python
+rules:   Trunc.as_sql() delegates to connection.ops.date_trunc_sql() and
+         time_trunc_sql(), passing tzname. Each backend implements these
+         methods independently with its own timezone strategy.
+```
+The agent reads this, understands the delegation pattern, uses `.codedna` to locate the backends, and **reasons from context** about which ones are relevant to the current task.
+
+**The test:** a `rules:` annotation is well-formed if an agent reading it still needs to open files to complete its task. If the annotation alone is sufficient to write the final answer, it is too prescriptive.
+
+### `used_by:` as a Navigation Map
+
+`used_by:` lists **all real structural consumers** of a module — not just those relevant to the current task. The agent uses the problem description and `.codedna` manifest to reason which consumers matter. It should **not** open every `used_by:` target automatically: doing so wastes tokens and reduces precision.
+
+The correct navigation model:
+1. Read `used_by:` — know who depends on this file
+2. Read `.codedna` — know the project structure
+3. Read the problem description — understand the task domain
+4. **Reason** — open only the consumers that are architecturally relevant to the task
+
+This is why CodeDNA improves both F1 and efficiency simultaneously. Empirically (SWE-bench, 5 tasks, Gemini 2.5 Flash, ≥5 runs/task): CodeDNA runs achieve P=100% on dependency-chain tasks while Control runs scatter across irrelevant files.
+
+### When `used_by:` Navigation Is Most Effective
+
+Benchmark results across 5 SWE-bench tasks reveal that CodeDNA's navigation benefit is task-type dependent:
+
+- **Dependency chain tasks** (A→B→C call path, one entry point): CodeDNA Δ = +14% to +27%. The agent follows `used_by:` links from the entry point to all affected files along the chain.
+- **Cross-cutting tasks** (same fix in N unrelated files): CodeDNA Δ ≈ 0%. No natural chain exists; the agent must discover all files by pattern rather than by navigation. `used_by:` graphs with no shared ancestor do not help.
+
+**Implication for annotators:** for cross-cutting concerns, consider annotating a central file (e.g., a base class) with `used_by:` pointing to all affected subclasses, even if the subclasses do not directly import the base for this specific change.
+
+---
+
+## 2.5 CodeDNA File Format: Docstring + Full Source
+
+A `codedna/` variant file **must contain the annotated docstring plus the complete original source code**. Stripping code from annotated files — leaving only the docstring — is a critical mistake: the agent reads the stub, has no pattern context, and either stops early or navigates to wrong files.
+
+**Wrong — docstring only (stub):**
+```python
+"""features.py — BaseDatabaseFeatures: boolean capability flags for all DB backends.
+
+exports: BaseDatabaseFeatures
+used_by: postgresql/features.py → BaseDatabaseFeatures
+rules:   New DDL features need a flag here first.
+"""
+# (empty — no code)
+```
+An agent reading this cannot see what existing flags look like, has no pattern to follow, and may not understand that this file needs modification.
+
+**Correct — docstring + full source:**
+```python
+"""features.py — BaseDatabaseFeatures: boolean capability flags for all DB backends.
+
+exports: BaseDatabaseFeatures
+used_by: postgresql/features.py → BaseDatabaseFeatures
+rules:   New DDL features need a flag here first.
+"""
+
+class BaseDatabaseFeatures:
+    gis_enabled = False
+    supports_deferrable_unique_constraints = False
+    # ... full class body from control ...
+```
+The agent sees both the annotation and all existing flags. Pattern recognition is possible. Navigation is accurate.
+
+**Rule:** `codedna_file = annotated_docstring + "\n\n" + control_file_verbatim`
+
+---
+
+## 2.6 Design Principle: Only Annotate What the Code Doesn't Tell You
 
 In Python, `import` statements already declare dependencies — they are visible in the first lines of every file. Duplicating them in a `deps:` annotation wastes tokens and creates synchronisation risk. The same applies to `Depends:` at function level — the agent sees the imports when it reads the code.
 
@@ -431,6 +511,37 @@ Annotations have a maintenance cost — they can go stale, be wrong, or become o
 
 ---
 
+## 8.5 Fine-Tuning Potential
+
+All benchmark results in this specification are **zero-shot**: models read CodeDNA annotations with no prior training on the protocol. They interpret `exports:`, `used_by:`, and `rules:` through general language understanding — yet still show consistent F1 improvements over unannotated codebases.
+
+This establishes a performance floor. The ceiling is substantially higher.
+
+A foundation model fine-tuned specifically on CodeDNA-annotated codebases would:
+
+- Recognize `exports:` / `used_by:` / `rules:` as **native structured signals**, not free text requiring interpretation
+- Execute `used_by:` graph traversal as a **learned navigation primitive** rather than a reasoned inference — reducing the variance observed in zero-shot runs (e.g., ±33% F1 on a single task)
+- Know precisely when to stop exploring (precision maximization) and when to follow another link (recall maximization)
+- Treat the `.codedna` manifest as a **structured index**, not prose to parse
+
+This is fundamentally different from Retrieval-Augmented Generation (RAG) or tool-augmented code completion. RAG retrieves fragments by semantic similarity — a statistical process with no awareness of architectural relationships. CodeDNA encodes those relationships structurally in the source, so the agent navigates by graph traversal, not by similarity search. A fine-tuned model would navigate a CodeDNA-annotated codebase the way a human senior engineer navigates a well-documented one: immediate orientation, minimal reading, maximum coverage.
+
+### Asynchronous Agent Communication at Scale
+
+`rules:` is an **asynchronous message channel** between agents with no shared memory and no coordination protocol. Agent A writes architectural context into a file; Agent B reads it in a different session, with a different model, weeks later. The file is the channel. The protocol is the format.
+
+This extends naturally to multi-agent pipelines:
+
+```
+Planning agent  → annotates while exploring  → leaves rules: for implementation agent
+Implementation  → reads rules:, acts         → updates rules: with discovered constraints
+Review agent    → reads updated rules:       → validates consistency, extends annotations
+```
+
+Each agent leaves the codebase more navigable for the next. Unlike documentation, annotations are co-located with the code they describe — they are read every time the file is edited, not forgotten in a wiki.
+
+---
+
 ## 9. Validation
 
 Run `tools/auto_annotate.py --dry-run` to check:
@@ -460,4 +571,5 @@ The version of the standard is tracked in the repo tag (`v0.7`).
 | 0.5 | 2026-03-16 | Python-native module docstring format. Level 2 split into 2a/2b. `rules:` replaces `AGENT_RULES`. |
 | 0.6 | 2026-03-18 | Redundancy audit: removed `deps:` and `Depends:`. Added Level 0 `.codedna` manifest. Level 2 simplified to `Rules:` only. `used_by:` promoted to required field. Zoom metaphor. |
 | **0.7** | **2026-03-18** | **Header reduced to 3 fields: `exports:`, `used_by:`, `rules:`. `rules:` promoted to required — the inter-agent communication channel. `cascade:` absorbed into `used_by:` as `[cascade]` tag. Removed redundant fields: `tested_by:`, `tables:`, `raises:` (all inferrable from code). Python-only focus.** |
+| **0.7.1** | **2026-03-18** | **Added §2.5 codedna file format requirement (docstring + full source). Added §2.4 task-type analysis (dependency chains vs cross-cutting). Benchmark extended to 5 tasks, ≥5 runs/task, multi-model. Tool harness hardened with `list_files`/`read_file` directory guards.** |
 

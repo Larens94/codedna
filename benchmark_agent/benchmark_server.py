@@ -51,6 +51,9 @@ def _wrap_fns(fns_dict, log, side, queue):
     for name, fn in fns_dict.items():
         def make_wrapper(fn_name, fn_impl):
             def wrapper(**kwargs):
+                # Server-side log: show each tool call in real time
+                arg_preview = list(kwargs.values())[0] if kwargs else ""
+                print(f"  [{side}] {fn_name}({str(arg_preview)[:60]})", flush=True)
                 # Emit tool_call event
                 queue.put({"type": "tool_call", "side": side, "name": fn_name, "args": kwargs})
                 result = fn_impl(**kwargs)
@@ -70,6 +73,7 @@ def run_with_streaming(problem, repo_root, provider, model_id, side, queue,
         fns_raw, log = ram.make_fns(repo_root)
         fns = _wrap_fns(fns_raw, log, side, queue)
 
+        print(f"\n▶ START  [{side}]  model={model_id}  T={temperature}", flush=True)
         queue.put({"type": "start", "side": side, "model": model_id})
         reasoning_texts = []  # collect all reasoning for saving
         prompt = system_prompt or ram.SYSTEM_PROMPT
@@ -94,6 +98,8 @@ def run_with_streaming(problem, repo_root, provider, model_id, side, queue,
 
         # Emit done with full log
         read_set = set(log["files_read"])
+        print(f"✅ DONE   [{side}]  calls={log['tool_calls']} reads={log['read_calls']} "
+              f"chars={log['total_chars_consumed']:,}", flush=True)
         queue.put({
             "type": "done", "side": side,
             "log": {
@@ -111,6 +117,7 @@ def run_with_streaming(problem, repo_root, provider, model_id, side, queue,
             }
         })
     except Exception as e:
+        print(f"❌ ERROR  [{side}]  {type(e).__name__}: {e}", flush=True)
         queue.put({"type": "error", "side": side, "error": f"{type(e).__name__}: {str(e)}"})
         traceback.print_exc()
 
@@ -141,6 +148,7 @@ def _run_gemini(problem, repo_root, model_id, fns, log, side, queue, temperature
     final_text = ""
 
     for turn in range(max_turns):
+        print(f"  [{side}] turn {turn + 1}/{max_turns}", flush=True)
         queue.put({"type": "turn_start", "side": side, "turn": turn + 1})
         resp = ram.call_with_retry(client.models.generate_content,
                                model=model_id, contents=history, config=config)
@@ -197,6 +205,7 @@ def _run_anthropic(problem, repo_root, model_id, fns, log, side, queue, temperat
     final_text = ""
 
     for turn in range(max_turns):
+        print(f"  [{side}] turn {turn + 1}/{max_turns}", flush=True)
         queue.put({"type": "turn_start", "side": side, "turn": turn + 1})
         resp = ram.call_with_retry(client.messages.create, model=model_id, max_tokens=4096,
                                system=system_prompt, tools=tools, messages=messages, temperature=temperature)
@@ -251,6 +260,7 @@ def _run_openai(problem, repo_root, model_id, fns, log, side, queue, temperature
     final_text = ""
 
     for turn in range(max_turns):
+        print(f"  [{side}] turn {turn + 1}/{max_turns}", flush=True)
         queue.put({"type": "turn_start", "side": side, "turn": turn + 1})
         is_reasoning = any(x in model_id for x in ("o1", "o3"))
         create_kwargs = dict(model=model_id, messages=messages, tools=tools)
@@ -307,6 +317,7 @@ def _run_codex(problem, repo_root, model_id, fns, log, side, queue, temperature,
     next_input = initial_input
 
     for turn in range(max_turns):
+        print(f"  [{side}] turn {turn + 1}/{max_turns}", flush=True)
         queue.put({"type": "turn_start", "side": side, "turn": turn + 1})
         create_kwargs = dict(model=model_id, input=next_input, tools=tools, temperature=temperature)
         if previous_response_id:
