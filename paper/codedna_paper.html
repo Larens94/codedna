@@ -332,8 +332,8 @@
         reads</strong>; (2) a 105-file enterprise platform — <strong>−23% tool calls, zero incorrect file
         identifications</strong>; and (3) a multi-model SWE-bench evaluation across <strong>3 LLMs</strong> (Gemini 2.5
       Flash, DeepSeek Chat, Gemini 2.5 Pro) on 5 real Django issues, 5 runs/task at T=0.1 — <strong>CodeDNA improved
-        file localization F1 on both completed models</strong>, with a statistically significant gain of +13 percentage
-      points on Gemini 2.5 Flash (60% → 72%, Wilcoxon p=0.040) and +9pp on DeepSeek Chat (50% → 60%). These results
+        file localization F1 on all 3 completed models</strong>, with a statistically significant gain of +13 percentage
+      points on Gemini 2.5 Flash (60% → 72%, Wilcoxon p=0.040), +9pp on DeepSeek Chat (50% → 60%), and +9pp on Gemini 2.5 Pro (60% → 69%). These results
       measure <em>navigation efficiency</em> (which files the agent reads), not end-to-end patch correctness, isolating
       the navigation bottleneck that CodeDNA specifically addresses. CodeDNA requires no build step, no external system,
       and zero retrieval latency.
@@ -369,13 +369,13 @@
         fragment an agent reads is already self-sufficient.</p>
 
       <p class="no-indent"><strong>Contributions:</strong></p>
-      <p class="no-indent">(1) The <strong>CodeDNA Annotation Standard v0.5</strong>: a three-level, language-agnostic
+      <p class="no-indent">(1) The <strong>CodeDNA Annotation Standard v0.7</strong>: a three-level, language-agnostic
         in-source annotation protocol.</p>
       <p class="no-indent">(2) A biological analogy that frames the standard's design principle and motivates its
         redundancy property.</p>
       <p class="no-indent">(3) Two <strong>live agentic benchmarks</strong> (11 files and 105 files) using Gemini 2.5
         Flash with function-calling tools on real on-disk codebases.</p>
-      <p class="no-indent">(4) A <strong>multi-model SWE-bench benchmark</strong> across 5 LLMs demonstrating broadly
+      <p class="no-indent">(4) A <strong>multi-model SWE-bench benchmark</strong> across 3 LLMs demonstrating broadly
         beneficial improvements in file localization F1, with heterogeneous gains across model families.</p>
       <p class="no-indent">(5) Evidence of <strong>−23% to −25% tool-call reduction</strong>, zero incorrect diagnoses
         in custom benchmarks, and +20pp F1 improvement on the best-performing model.</p>
@@ -431,7 +431,7 @@
         targeting the failure modes of LLM agents rather than human readers.</p>
 
       <!-- ─── 3. THE CODEDNA STANDARD ─── -->
-      <h2 class="section">3. The CodeDNA Annotation Standard v0.5</h2>
+      <h2 class="section">3. The CodeDNA Annotation Standard v0.7</h2>
 
       <h3 class="subsection">3.1 Biological Analogy</h3>
 
@@ -548,7 +548,7 @@ int_cents_price_from_req = request.json["price"]</pre>
       <p class="no-indent">We generated two versions of an 11-file Python SaaS application (Flask server, orders, users,
         authentication, analytics, dashboard, payments, notifications, configuration, and database layer).
         <strong>Control:</strong> standard Python, no annotations. <strong>CodeDNA:</strong> identical logic, every file
-        annotated per v0.5. Annotations describe architecture only — no bug hints.
+        annotated per v0.7. Annotations describe architecture only — no bug hints.
       </p>
 
       <p><strong>Planted bug (B0).</strong> The user system implements <em>soft delete</em>: <code>delete_user()</code>
@@ -962,7 +962,16 @@ int_cents_price_from_req = request.json["price"]</pre>
         this navigation improvement translates to higher end-to-end bug resolution rates is an important open question
         that we leave to future work with larger-scale evaluations.</p>
 
-      <p>The specification (v0.5), benchmark code, both codebase versions, and AI integration files are available at:
+      <p><strong>Fine-tuning potential.</strong> All benchmark results reported here are <em>zero-shot</em>: models
+        follow <code>used_by:</code> links and <code>rules:</code> constraints by general language understanding alone,
+        with no prior training on the CodeDNA protocol. If a foundation model were fine-tuned on CodeDNA-annotated
+        codebases, the structured fields (<code>exports:</code>, <code>used_by:</code>, <code>rules:</code>) would be
+        recognised as native navigation signals rather than free text to interpret — reducing reasoning variance and
+        further lowering token cost. As CodeDNA adoption grows and annotated repositories accumulate in training
+        corpora, future models may benefit from the protocol natively, creating a self-reinforcing improvement cycle
+        analogous to the network effects observed in other open annotation standards.</p>
+
+      <p>The specification (v0.7), benchmark code, both codebase versions, and AI integration files are available at:
       </p>
       <p class="no-indent" style="text-align:center; font-weight:bold; margin: 6pt 0;">github.com/Larens94/codedna</p>
 
