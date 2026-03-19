@@ -4,7 +4,7 @@
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![Version](https://img.shields.io/badge/CodeDNA-v0.7-6366f1)](./SPEC.md)
-[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19109240-blue)](https://doi.org/10.5281/zenodo.19109240)
+[![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19110474-blue)](https://doi.org/10.5281/zenodo.19110474)
 [![Website](https://img.shields.io/badge/website-codedna.silicoreautomation.space-6366f1)](https://codedna.silicoreautomation.space)
 [![CI](https://github.com/Larens94/codedna/actions/workflows/ci.yml/badge.svg)](https://github.com/Larens94/codedna/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/Larens94/codedna/actions/workflows/codeql.yml/badge.svg)](https://github.com/Larens94/codedna/actions/workflows/codeql.yml)
