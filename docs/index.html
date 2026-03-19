@@ -333,8 +333,8 @@ footer a { color:var(--accent); text-decoration:none; }
     <div class="prob-card">
       <div class="prob-accent">🧬</div>
       <div class="prob-title" data-i18n="prob3Title">The Solution: CodeDNA</div>
-      <div class="prob-text" data-i18n="prob3Text">Context lives in the file itself — not in an external document. Every snippet the AI reads carries the instructions to act correctly.</div>
-      <span class="prob-verdict pv-good" data-i18n="prob3Verdict">✅ Zero errors across all 5 scenarios</span>
+      <div class="prob-text" data-i18n="prob3Text">Context lives in the file itself — not in an external document. Each snippet the AI reads carries architectural constraints for that module.</div>
+      <span class="prob-verdict pv-good" data-i18n="prob3Verdict">✅ +13pp F1 on SWE-bench (Gemini 2.5 Flash, p=0.040)</span>
     </div>
   </div>
 </div>
@@ -451,7 +451,7 @@ rules:   NEVER exceed MAX_DISCOUNT_RATE from config.py;
         <div class="level-meta">
           <div class="level-num" data-i18n="l3Num">Level 3</div>
           <div class="level-name">Semantic Naming</div>
-          <div class="level-desc" data-i18n="l3Desc">Variable names encode type, shape and origin. A 10-line snippet is completely self-documenting — zero backward tracing.</div>
+          <div class="level-desc" data-i18n="l3Desc">Variable names encode type, shape and origin. A 10-line snippet carries significantly more context — reducing backward tracing for the most common cases.</div>
         </div>
         <div class="level-code">
           <div class="code-block">
@@ -529,7 +529,7 @@ data  = get_users()
 <div class="full-bleed">
   <div class="full-bleed-inner">
     <div class="eyebrow" data-i18n="mmEyebrow">Multi-Model SWE-bench</div>
-    <h2 data-i18n="mmH2">Works across every major LLM.</h2>
+    <h2 data-i18n="mmH2">Tested across multiple LLMs.</h2>
     <p class="section-lead" data-i18n-html="mmLead">5 real Django issues from <strong>SWE-bench</strong>, tested across multiple LLMs. Same prompt, same tools, same tasks. <strong>Gemini 2.5 Flash: +13pp F1, p=0.040 ✅ · DeepSeek Chat: +9pp F1, p=0.11 · Gemini 2.5 Pro: +9pp F1, p=0.11 ✅ All 3 models complete.</strong></p>
 
     <div class="chart-pair">
@@ -609,9 +609,15 @@ data  = get_users()
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm7Title">White Paper / arXiv preprint</div><div class="rm-sub" data-i18n="rm7Sub">Formal study with reproducible methodology, DNA analogy, and comparison against SWE-bench, LoCoBench-Agent, ETH Zurich (2026).</div></div></div>
 
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Redundancy Audit (v0.7) ✦ Current</div><div class="rm-sub">Header reduced to 3 fields: exports, used_by, rules. rules: promoted to required — the inter-agent communication channel. Python-only focus.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm8Title">IDE Plugin — VS Code</div><div class="rm-sub" data-i18n="rm8Sub">Auto-generation of module docstrings and function docstrings, real-time validation against SPEC.md.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm9Title">Full SWE-bench Evaluation — 50+ tasks</div><div class="rm-sub" data-i18n="rm9Sub">Extended benchmark across multiple repositories and languages. Statistical significance testing.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm8Title">M1 — Protocol Specification &amp; CLI</div><div class="rm-sub" data-i18n="rm8Sub">CodeDNA v1.0 spec · AST-based auto-extraction of exports/used_by · <code>codedna verify</code> &amp; <code>codedna update</code> · PyPI package.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm9Title">M2 — Benchmark Expansion</div><div class="rm-sub" data-i18n="rm9Sub">20+ SWE-bench tasks across multiple projects · 5+ LLMs · confidence intervals · Zenodo dataset · public dashboard.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm10Title">M3 — Editor &amp; Workflow Integrations</div><div class="rm-sub" data-i18n="rm10Sub">VS Code extension (used_by graph, stale annotation highlight) · pre-commit hook · GitHub Action CI/CD.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm11Title">M4 — Language Extension</div><div class="rm-sub" data-i18n="rm11Sub">JavaScript/TypeScript (JSDoc) · Go (godoc) · Rust (/// comments) · v1.0 extension points for community languages.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm12Title">M5 — Research Paper &amp; Dissemination</div><div class="rm-sub" data-i18n="rm12Sub">Finalize paper · submit to ICSE NIER / LLM4Code workshop · contribute annotations to Flask, FastAPI and one non-Python project.</div></div></div>
   </div>
+  <p style="margin-top:1.25rem; font-size:0.8rem; color:var(--muted); padding:0.9rem 1.25rem; background:var(--bg2); border:1px solid var(--border); border-radius:10px;" data-i18n-html="rmNote">
+    M1–M5 are part of a funding application to <a href="https://nlnet.nl/commonsfund/" target="_blank" style="color:var(--accent);">NLnet NGI0 Commons Fund</a>. If you find CodeDNA useful, ⭐ the repo and share it.
+  </p>
 </div>
 
 <!-- FOOTER -->
@@ -632,20 +638,20 @@ const IT = {
   h1:'Il codice che si<br><em>spiega da solo.</em>',
   heroSub:'Gli AI che modificano il tuo codice commettono errori perch\u00e9 <strong>non hanno contesto</strong>. CodeDNA lo incorpora direttamente nei file \u2014 come il DNA in ogni cellula. Zero RAG. Deriva minima.',
   heroCta1:'Vedi le prove \u2192', heroCta2:'Leggi la Spec',
-  stat1Label:'Tasso errore \u2014 Control', stat1Note:'nei 5 scenari difficili',
-  stat2Label:'Tasso errore \u2014 CodeDNA', stat2Note:'zero violazioni, zero cascade miss',
+  stat1Label:'Miglioramento F1', stat1Note:'Gemini 2.5 Flash, p=0.040 \u2705',
+  stat2Label:'LLM testati', stat2Note:'\u0394 positivo su tutti e 3 i modelli',
   stat3Label:'Token per file', stat3Note:"per mappare l'intera codebase",
   stat4Label:'Infrastruttura richiesta', stat4Note:'niente RAG, niente vector DB',
   probEyebrow:'Il Problema', probH2:'Gli AI sbagliano quando non hanno contesto.',
   probLead:"Immagina di affidare la ristrutturazione di un appartamento a un artigiano, senza mostrargli la planimetria. Stesso problema con gli AI che modificano il tuo codice. CodeDNA \u00e8 la planimetria.",
   prob1Title:'Finestra Scorrevole', prob1Text:'Gli AI leggono il codice a \"finestre\" di 50\u201360 righe. Se una regola critica \u00e8 definita 200 righe pi\u00f9 in alto, non la vedono \u2014 e la violano.', prob1Verdict:'\u274c Scenario S4: viola MAX_DISCOUNT_RATE',
   prob2Title:'Effetto Cascata', prob2Text:"Cambi una funzione. Altre 3 parti del sistema dipendono da lei. Senza una mappa, l'AI aggiorna solo il file che vede e lascia il resto rotto.", prob2Verdict:'\u274c Scenario S5: KeyError a runtime in main.py',
-  prob3Title:'La Soluzione: CodeDNA', prob3Text:"Il contesto vive nel file stesso \u2014 non in un documento esterno. Ogni frammento che l'AI legge porta con s\u00e9 le istruzioni per agire correttamente.", prob3Verdict:'\u2705 Zero errori in tutti i 5 scenari',
+  prob3Title:'La Soluzione: CodeDNA', prob3Text:"Il contesto vive nel file stesso \u2014 non in un documento esterno. Ogni frammento che l'AI legge porta con s\u00e9 i vincoli architetturali del modulo.", prob3Verdict:'\u2705 +13pp F1 su SWE-bench (Gemini 2.5 Flash, p=0.040)',
   howEyebrow:'Come Funziona', howH2:'Tre livelli. Ogni frammento \u00e8 autonomo.',
   howLead:"Come il DNA biologico: tagliarne metà produce due frammenti che portano ancora l'informazione completa. Con CodeDNA, 10 righe estratte a caso da qualsiasi punto del file bastano all'AI per agire correttamente.",
   l1Num:'Livello 1', l1Desc:"Una module docstring Python-nativa all'inizio di ogni file. L'AI la legge prima del codice e conosce gi\u00e0 scopo, API pubblica, chi dipende da questo file e regole. Formato nativo Python \u2014 massimizza la comprensione dei modelli addestrati su corpus Python.",
   l2Num:'Livello 2', l2Desc:'Docstring <code>Rules:</code> sulle funzioni critiche, scritte organicamente dagli agenti quando scoprono vincoli. Ogni agente che risolve un bug lascia conoscenza per il prossimo. Anche in 10 righe estratte, l\'AI riceve tutto il contesto necessario.', l2Filename:'pricing.py \u00b7 righe 210\u2013226',
-  l3Num:'Livello 3', l3Desc:'I nomi delle variabili codificano tipo, forma e origine. Un frammento da 10 righe \u00e8 completamente auto-documentante \u2014 zero tracciamento a ritroso.', l3Filename:'Confronto',
+  l3Num:'Livello 3', l3Desc:'I nomi delle variabili codificano tipo, forma e origine. Un frammento da 10 righe porta significativamente pi\u00f9 contesto \u2014 riducendo il tracciamento a ritroso nei casi pi\u00f9 comuni.', l3Filename:'Confronto',
   l3Code:'<span class="tc"># \u274c Ambiguo \u2014 euro? centesimi?</span>\nprice = request.json.get(<span class="ts">"price"</span>)\ndata  = get_users()\n\n<span class="tc"># \u2705 CodeDNA \u2014 tipo, dominio, origine chiari</span>\n<span class="ti">int_cents_price_from_request</span> = request.json.get(<span class="ts">"price"</span>)\n<span class="ti">list_dict_users_from_db</span>      = get_users()',
   bonusNum:'Bonus', bonusName:'Planner Manifest-Only', bonusDesc:'Per pianificare modifiche su 10+ file, l\'AI legge <code>.codedna</code> e poi solo la module docstring di ogni file (prime 8\u201312 righe) \u2014 costruisce la mappa completa in pochi token.',
   plannerCode:'<span class="tc"># 1. Leggi .codedna \u2014 struttura progetto</span>\n<span class="tc"># 2. Leggi module docstring (8\u201312 righe ciascuno)</span>\n<span class="tc"># 3. Filtra: used_by menziona il target? Includi</span>\n<span class="tc">#    rules menziona il dominio? Includi</span>\n<span class="tc"># 4. Costruisci grafo exports \u2192 used_by</span>\n<span class="tc"># 5. Apri in full SOLO i file rilevanti</span>\n<span class="tc"># Costo: ~50 tok \u00d7 N file = mappa completa</span>',
@@ -665,7 +671,13 @@ const IT = {
   rm4Sub:'Module docstring Python-nativo (L1) + docstring Rules: a livello funzione (L2). Massimizza la comprensione degli LLM addestrati su Python.',
   rm5Title:'Benchmark Enterprise \u2014 105 file, 3 bug, 48 distractor', rm5Sub:'\u221229% tool call, 0 identificazioni errate (vs 1 Control). Replicabile su disco.',
   rm6Sub:'Studio formale con analogia DNA biologico e confronto contro SWE-bench, LoCoBench-Agent, ETH Zurich (2026).',
-  rm7Sub:'Auto-generazione module docstring e function docstring, validazione real-time contro SPEC.md.'
+  rm7Sub:'Auto-generazione module docstring e function docstring, validazione real-time contro SPEC.md.',
+  rm8Title:'M1 \u2014 Specifica Protocollo &amp; CLI', rm8Sub:'Spec CodeDNA v1.0 \u00b7 estrazione AST-based di exports/used_by \u00b7 <code>codedna verify</code> &amp; <code>codedna update</code> \u00b7 pacchetto PyPI.',
+  rm9Title:'M2 \u2014 Espansione Benchmark', rm9Sub:'20+ task SWE-bench su pi\u00f9 progetti \u00b7 5+ LLM \u00b7 intervalli di confidenza \u00b7 dataset Zenodo \u00b7 dashboard pubblica.',
+  rm10Title:'M3 \u2014 Integrazioni Editor &amp; Workflow', rm10Sub:'Estensione VS Code (grafo used_by, annotazioni stale) \u00b7 pre-commit hook \u00b7 GitHub Action CI/CD.',
+  rm11Title:'M4 \u2014 Estensione Linguaggi', rm11Sub:'JavaScript/TypeScript (JSDoc) \u00b7 Go (godoc) \u00b7 Rust (/// comments) \u00b7 punti di estensione v1.0 per la community.',
+  rm12Title:'M5 \u2014 Paper &amp; Disseminazione', rm12Sub:'Finalizza paper \u00b7 submission ICSE NIER / workshop LLM4Code \u00b7 annotazioni su Flask, FastAPI e un progetto non-Python.',
+  rmNote:'M1\u2013M5 fanno parte di una domanda di finanziamento al <a href="https://nlnet.nl/commonsfund/" target="_blank" style="color:var(--accent);">NLnet NGI0 Commons Fund</a>. Se trovi CodeDNA utile, metti \u2b50 al repo e condividilo.'
 };
 
 const EN_TEXT = {}, EN_HTML = {};
