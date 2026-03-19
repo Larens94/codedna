@@ -357,7 +357,8 @@
         <em>navigation cost</em>: finding the right files required too many tool interactions. Subsequent work confirms
         the pattern: LoCoBench-Agent [2] (2025) measures tool-usage efficiency in long-context engineering workflows and
         finds systematic over-exploration; PRDBench [3] (2025) reports that agents spend the majority of their token
-        budget on navigation rather than repair.</p>
+        budget on navigation rather than repair.
+      </p>
 
       <p>Current mitigation approaches share a structural weakness: <em>context lives outside the code</em>. CLAUDE.md
         and CursorRules are session-level files invisible to agents in sliding-window mode. RAG [6] systems introduce
@@ -392,7 +393,8 @@
       <p><strong>LoCoBench-Agent</strong> [2] (November 2025) provides the closest methodological parallel to our work:
         it benchmarks LLM agents in long-context software engineering scenarios with 8,000 tasks and measures
         <em>tool-usage efficiency</em> explicitly. Our metrics (tool calls per bug, file reads, grep frequency) directly
-        parallel LoCoBench-Agent's efficiency framing.</p>
+        parallel LoCoBench-Agent's efficiency framing.
+      </p>
 
       <p><strong>PRDBench</strong> [3] (October 2025, presented at AAMAS 2026) uses 50 real Python projects and an
         Agent-as-a-Judge paradigm to evaluate agents from Product Requirement Document to implementation. It confirms
@@ -400,7 +402,8 @@
 
       <p><strong>HumanEval</strong> [5] (Chen et al., 2021) measures single-function synthesis from docstrings. Its
         <em>pass@k</em> metric is complementary: it captures output quality but not cross-file navigation, making it
-        orthogonal rather than competing.</p>
+        orthogonal rather than competing.
+      </p>
 
       <h3 class="subsection">2.2 Context Management for LLM Agents</h3>
       <p class="no-indent"><strong>Retrieval-Augmented Generation</strong> [6] retrieves relevant chunks from a vector
@@ -440,7 +443,8 @@
 
       <p>CodeDNA applies the same principle to software: every source file encodes not only its own logic but also its
         <em>position in the architectural organism</em> — what it depends on, what depends on it, what contracts it must
-        honour. The three levels mirror three scales of biological encoding:</p>
+        honour. The three levels mirror three scales of biological encoding:
+      </p>
 
       <div class="dna-box">
         <span class="dna-title">Table A. Biological DNA ↔ CodeDNA Analogy</span>
@@ -511,7 +515,8 @@ rules:   get_invoices_for_period() returns ALL tenants,
 
       <h3 class="subsection">3.4 Level 3 — Semantic Naming</h3>
       <p class="no-indent">Variable names encode type, shape, domain, and origin. Format:
-        <code>&lt;type&gt;_&lt;shape&gt;_&lt;domain&gt;_&lt;origin&gt;</code>.</p>
+        <code>&lt;type&gt;_&lt;shape&gt;_&lt;domain&gt;_&lt;origin&gt;</code>.
+      </p>
 
       <pre># ❌ Standard — agent must trace to understand
 data  = get_users()
@@ -536,18 +541,21 @@ int_cents_price_from_req = request.json["price"]</pre>
         agent loop (tool orchestration, API behaviour) is not strictly deterministic in the mathematical sense. Metrics:
         <strong>total tool calls</strong>, <strong>read_file calls</strong>, <strong>grep calls</strong>,
         <strong>conversation turns</strong>, and <strong>found_correct</strong> (boolean — whether the identified
-        root-cause file is architecturally correct).</p>
+        root-cause file is architecturally correct).
+      </p>
 
       <h3 class="subsection">4.2 Benchmark 1 — 11-File Codebase</h3>
       <p class="no-indent">We generated two versions of an 11-file Python SaaS application (Flask server, orders, users,
         authentication, analytics, dashboard, payments, notifications, configuration, and database layer).
         <strong>Control:</strong> standard Python, no annotations. <strong>CodeDNA:</strong> identical logic, every file
-        annotated per v0.5. Annotations describe architecture only — no bug hints.</p>
+        annotated per v0.5. Annotations describe architecture only — no bug hints.
+      </p>
 
       <p><strong>Planted bug (B0).</strong> The user system implements <em>soft delete</em>: <code>delete_user()</code>
         sets <code>users.deleted_at = NOW()</code> but does not remove the row.
         <code>orders/orders.py::get_active_orders()</code> does not join on the users table; it returns all
-        non-cancelled orders regardless of user deletion status, inflating the revenue dashboard.</p>
+        non-cancelled orders regardless of user deletion status, inflating the revenue dashboard.
+      </p>
 
       <h3 class="subsection">4.3 Benchmark 2 — 105-File Enterprise Platform</h3>
       <p class="no-indent">We generated a 105-file enterprise marketplace platform (MarketCore) comprising 57 core
@@ -556,7 +564,8 @@ int_cents_price_from_req = request.json["price"]</pre>
         <code>payments</code>, <code>reports</code>, <code>services</code>, <code>utils</code>, and
         <code>workers</code>. The distractor files contain functions with similar names to the bug chain (e.g.,
         <code>get_X_for_period</code>, <code>list_active_X</code>, <code>suspended_at</code>), making grep-based
-        navigation noisy.</p>
+        navigation noisy.
+      </p>
 
       <p>Control version: 1,461 lines, zero annotations. CodeDNA version: 2,437 lines, every file annotated. Three bugs
         were planted:</p>
@@ -566,7 +575,8 @@ int_cents_price_from_req = request.json["price"]</pre>
       <p class="no-indent">• <strong>B3.</strong> <code>api/products.py</code> checks <code>user['is_admin']</code>
         instead of <code>payload['role'] == 'admin'</code>.</p>
       <p class="no-indent">• <strong>B4.</strong> <code>orders/fulfillment.py</code> does not call
-        <code>decrement_stock()</code> after order confirmation.</p>
+        <code>decrement_stock()</code> after order confirmation.
+      </p>
 
       <!-- ─── 5. RESULTS ─── -->
       <h2 class="section">5. Results</h2>
@@ -722,27 +732,28 @@ int_cents_price_from_req = request.json["price"]</pre>
           </tr>
           <tr>
             <td>Gemini 2.5 Pro</td>
-            <td>72%</td>
-            <td>78%</td>
-            <td class="green">+6pp</td>
-            <td style="color:#888;font-style:italic;">⏳ 3/5</td>
-            <td>2 / 3</td>
+            <td>60%</td>
+            <td>69%</td>
+            <td class="green">+9pp</td>
+            <td>0.11</td>
+            <td>3 / 5</td>
           </tr>
         </tbody>
       </table>
 
       <div class="key-result">
-        <strong>Key result:</strong> Both completed models show positive Δ on 4 out of 5 tasks. Gemini 2.5 Flash
-        achieves statistical significance (Wilcoxon W+=14, N=5, p=0.040). The benefit is most pronounced on tasks
-        requiring cross-module navigation: task 13495 (+22pp on Flash), task 14480 (+17pp on Flash). DeepSeek Chat shows
-        a +9pp overall gain, with notable heterogeneity: +35pp on the cross-cutting task 11808 but −9pp on task 13495
-        (anomaly under investigation). Gemini 2.5 Pro partial results (3/5 tasks): ctrl=72%, DNA=78%, Δ=+6pp — the
-        higher ctrl baseline is consistent with the cheaper-model hypothesis. Per-task breakdowns are available in the repository.
+        <strong>Key result:</strong> All 3 models complete. Gemini 2.5 Flash achieves statistical significance
+        (Wilcoxon W+=14, N=5, p=0.040, Δ=+13pp). DeepSeek Chat: Δ=+9pp, p=0.11. Gemini 2.5 Pro: Δ=+9pp, p=0.11.
+        Positive Δ on 3/5 tasks for Pro and DeepSeek, 4/5 for Flash. Notably, task 13495 shows consistent negative Δ
+        for both Pro (−8pp) and DeepSeek (−9pp) while Flash shows +22pp — a structural anomaly under investigation.
+        Pro ctrl=60% matches Flash — Pro is not stronger on these navigation tasks. Per-task breakdowns in the
+        repository.
       </div>
 
-      <p>Gemini 2.5 Flash shows a stronger benefit than expected for a "lighter" model. One hypothesis is that Flash's
+      <p>Gemini 2.5 Flash shows the strongest benefit. One hypothesis is that Flash's
         more concise reasoning style is better suited to following structured annotation chains than Pro's more verbose
-        approach, but this requires Gemini 2.5 Pro results to evaluate. The two completed models use different provider
+        approach. Gemini 2.5 Pro ctrl=60% matches Flash, suggesting these tasks do not favour larger models in the
+        control condition. The three models use different provider
         stacks (Google native function calling vs. DeepSeek's OpenAI-compatible endpoint), which introduces some
         cross-provider variability not fully controlled. This does not invalidate the comparison — the annotations
         themselves are identical — but the observed differences reflect both CodeDNA's effect and provider-specific
@@ -758,12 +769,14 @@ int_cents_price_from_req = request.json["price"]</pre>
         <code>read_file(analytics/revenue.py)</code>. The module header's <code>rules</code> field —
         <em>"get_invoices_for_period() returns ALL tenants, NO suspended filter → MUST call is_suspended() BEFORE
           aggregating"</em> — and the call-site comment — <em>"includes suspended tenants — filter below"</em> — gave
-        the agent sufficient information to produce a correct diagnosis without further reads.</p>
+        the agent sufficient information to produce a correct diagnosis without further reads.
+      </p>
 
       <p><strong>B4:</strong> The Control agent opened 4 files (2 greps + 2 extra reads) before converging. The CodeDNA
         agent opened 2 files (1 grep + 1 read): the module header stated <em>"MUST call decrement_stock() for each item
           in order['items'] before update_status()"</em>, eliminating the need to read <code>orders/models.py</code> and
-        <code>products/catalog.py</code> for contextual verification.</p>
+        <code>products/catalog.py</code> for contextual verification.
+      </p>
 
       <h3 class="subsection">5.5 Scaling Projection</h3>
       <p class="no-indent">A 29% reduction in tool calls compounds across an agentic session:</p>
@@ -856,7 +869,8 @@ int_cents_price_from_req = request.json["price"]</pre>
         declared <em>at the function</em>, capable agents do not need to retrieve it from its original definition. The
         <code>rules</code> field in <code>analytics/revenue.py</code> propagated the suspension-filter contract
         downstream to the exact location where it was violated, allowing the CodeDNA agent to diagnose B1 correctly
-        without reading <code>payments/models.py</code>.</p>
+        without reading <code>payments/models.py</code>.
+      </p>
 
       <p>The ETH Zurich finding [4] that LLM-generated context files <em>degrade</em> performance precisely motivates
         this approach: if external context files cause over-exploration, the solution is not better files but embedded
@@ -868,7 +882,8 @@ int_cents_price_from_req = request.json["price"]</pre>
         was validated empirically: models trained on Python corpora apply existing pattern-matching to the docstring's
         <code>deps:</code> / <code>exports:</code> / <code>rules:</code> structure. The custom
         <code># === CODEDNA:0.5 ===</code> block format, while machine-parsable, required the model to process an
-        unfamiliar syntax schema, yielding marginally longer reasoning chains before exploitation.</p>
+        unfamiliar syntax schema, yielding marginally longer reasoning chains before exploitation.
+      </p>
 
       <h3 class="subsection">6.4 Annotation Overhead and the Agentic Workflow Framing</h3>
       <p class="no-indent">A common objection to annotation standards is the overhead of writing and maintaining them.
@@ -885,7 +900,8 @@ int_cents_price_from_req = request.json["price"]</pre>
         <code>Depends:</code>) do not require new syntax — they live inside Python-native docstrings. Many codebases
         already have docstrings; CodeDNA adds <em>navigation intent</em> to documentation that already exists. The
         distinction between a standard docstring and a CodeDNA docstring is not syntactic but semantic: the latter must
-        be <em>machine-oriented and navigation-oriented</em>, not merely human-readable.</p>
+        be <em>machine-oriented and navigation-oriented</em>, not merely human-readable.
+      </p>
 
       <h3 class="subsection">6.5 Limitations</h3>
       <p class="no-indent"><strong>Sample size.</strong> Benchmark 3 uses 5 runs per task at T=0.1, enabling Wilcoxon
@@ -905,12 +921,13 @@ int_cents_price_from_req = request.json["price"]</pre>
         shifts the research problem from production cost to <em>consistency enforcement</em>: pre-commit hooks, CI
         validation, and agent-side re-annotation obligations are the correct mitigations. A complementary direction is a
         "CodeDNA Bootstrapper" — a batch LLM pass that injects initial annotations into legacy codebases, preparing them
-        for agentic maintenance. Future integrations should treat annotation drift as a first-class failure mode.</p>
+        for agentic maintenance. Future integrations should treat annotation drift as a first-class failure mode.
+      </p>
 
-      <p><strong>Multi-model evaluation.</strong> Benchmark 3 has 2 of 3 models complete and a third (Gemini 2.5 Pro)
-        with partial results (3/5 tasks). Partial Pro data shows a higher ctrl baseline (72% vs 60% for Flash),
-        consistent with the cheaper-model hypothesis but not yet statistically testable. Results are consistent across
-        completed models but the SWE-bench subset (5 tasks, all Django) is small and all tasks come from a single repository. Cross-provider runtime differences
+      <p><strong>Multi-model evaluation.</strong> All 3 models complete. Results are consistent across models (positive
+        Δ on 3–4/5 tasks each) but the SWE-bench subset (5 tasks, all Django) is small and all tasks come from a single
+        repository. Task 13495 shows a consistent negative Δ for Pro and DeepSeek that is not yet explained.
+        Cross-provider runtime differences
         (function-calling implementations, tool orchestration) introduce variability that is not fully controlled. The
         results should be replicated on a larger, more diverse task set before generalisability claims can be
         strengthened.</p>
@@ -933,13 +950,12 @@ int_cents_price_from_req = request.json["price"]</pre>
 
       <p>Our three benchmarks provide preliminary evidence that in-source architectural context can reduce navigation
         cost for LLM agents: (a) a 25–29% reduction in tool calls with zero incorrect root-cause identifications on
-        custom codebases; and (b) positive improvements in SWE-bench file localization F1 on both completed models —
-        Gemini 2.5 Flash +13pp (60% → 72%, p=0.040) and DeepSeek Chat +9pp (50% → 60%) — with consistent gains on 4/5
-        tasks each. Partial results for Gemini 2.5 Pro (3/5 tasks) show Δ=+6pp with a notably higher ctrl baseline
-        (72%), suggesting stronger models benefit less from annotations — consistent with the cheaper-model hypothesis.
-        These results suggest that CodeDNA functions as a <em>navigation prior</em> that can benefit diverse
-        model architectures, though the small sample size (5 tasks, single repository, 2 of 3 models complete) limits
-        the strength of generalisability claims.</p>
+        custom codebases; and (b) positive improvements in SWE-bench file localization F1 across all 3 models —
+        Gemini 2.5 Flash +13pp (60% → 72%, p=0.040), DeepSeek Chat +9pp (50% → 60%), Gemini 2.5 Pro +9pp (60% → 69%)
+        — with positive Δ on 3–4/5 tasks per model. These results suggest that CodeDNA functions as a
+        <em>navigation prior</em> that can benefit diverse model architectures, though the small sample size
+        (5 tasks, single repository) limits the strength of generalisability claims.
+      </p>
 
       <p>The results are consistent with the core hypothesis: <em>when cross-file contracts are declared at the point of
           use, agents can navigate more efficiently without following each contract back to its source.</em> Whether
@@ -1026,7 +1042,8 @@ int_cents_price_from_req = request.json["price"]</pre>
     <h2 class="section" style="column-span:all; margin-top:8pt;">References</h2>
     <div class="references">
       <div class="ref-item">[1] Jimenez, C., Yang, J., Wettig, A., Yao, S., Pei, K., Press, O., Narasimhan, K. (2024).
-        <em>SWE-bench: Can Language Models Resolve Real-World GitHub Issues?</em> ICLR 2024. arXiv:2310.06770.</div>
+        <em>SWE-bench: Can Language Models Resolve Real-World GitHub Issues?</em> ICLR 2024. arXiv:2310.06770.
+      </div>
       <div class="ref-item">[2] LoCoBench-Agent: <em>An Interactive Benchmark for LLM Agents in Long-Context Software
           Engineering</em>. arXiv, November 2025. arXiv:2511.13998.</div>
       <div class="ref-item">[3] PRDBench: <em>Automatically Benchmarking LLM Code Agents through Agent-Driven Annotation

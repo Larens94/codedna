@@ -156,29 +156,27 @@ python swebench/analyze_multi.py --annotation-cost   # auto-annotation overhead
 
 **Notable:** DeepSeek gained +35pp on the cross-cutting task 11808 (vs Flash's −1pp), suggesting the model uses a different navigation strategy. Task 13495 anomaly (−9pp) is unexplained.
 
-### Gemini 2.5 Pro — partial ⏳ (3/5 tasks, 5 runs/task; 11991 and 11808 pending)
-
-> Run was interrupted at task 11991 run 3 due to process kill. Results below are from the output log and were not persisted to disk. A new 3-run benchmark is currently in progress.
+### Gemini 2.5 Pro — 5 tasks, 3 runs/task at T=0.1 ✅
 
 | Task | GT Files | Ctrl F1 | DNA F1 | Δ | Notes |
 |------|----------|---------|--------|---|-------|
-| django__django-14480 | 7 | 50% | 53% | **+3pp** | ⚠️ run4 CodeDNA F1=0% (0 calls anomaly) |
-| django__django-13495 | 7 | 90% | 91% | **+1pp** | Pro ctrl already very high |
-| django__django-12508 | 8 | 76% | 90% | **+14pp** | ✅ strongest gain so far |
-| django__django-11991 | 9 | — | — | — | pending |
-| django__django-11808 | 10 | — | — | — | pending |
+| django__django-14480 | 7 | 48% | 75% | **+27pp** | ✅ strongest gain across all models |
+| django__django-13495 | 7 | 91% | 83% | **−8pp** | ⚠️ anomaly — same as DeepSeek |
+| django__django-12508 | 8 | 76% | 89% | **+13pp** | ✅ |
+| django__django-11991 | 9 | 54% | 73% | **+19pp** | ✅ |
+| django__django-11808 | 10 | 27% | 25% | **−2pp** | cross-cutting — expected |
 
-**Partial average (3 tasks): ctrl=72%, DNA=78%, Δ=+6pp.** Pro ctrl is dramatically higher than Flash (72% vs 60%) — consistent with the cheaper-model hypothesis.
-
-**Notable anomaly:** task 14480 CodeDNA run4 made 0 calls (F1=0%). May indicate the model gave up or hit a context issue mid-turn. Under investigation.
+**Wilcoxon W+=12, N=5, p=0.11 (one-tailed)** ✗ not significant. Overall ctrl=60%, DNA=69%, Δ=+9pp, 3/5 tasks.
 
 ### Task Type Analysis
 
-| Task type | Tasks | Flash Δ | DeepSeek Δ | Pro Δ (partial) |
+| Task type | Tasks | Flash Δ | DeepSeek Δ | Pro Δ |
 |---|---|---|---|---|
-| Dependency/delegation chain | 14480, 12508, 11991 | **+14%** | **+7%** | +9pp (2/3 tasks) |
-| Delegation with backend fan-out | 13495 | **+22%** | **−9%** ⚠️ | **+1pp** |
-| Cross-cutting (no shared ancestor) | 11808 | **−1%** | **+35%** | pending |
+| Dependency/delegation chain | 14480, 12508, 11991 | **+14pp** | **+7pp** | **+20pp** |
+| Delegation with backend fan-out | 13495 | **+22pp** | **−9pp** ⚠️ | **−8pp** ⚠️ |
+| Cross-cutting (no shared ancestor) | 11808 | **−1pp** | **+35pp** | **−2pp** |
+
+**Key finding on task 13495:** both DeepSeek and Pro show negative Δ on this task, while Flash shows +22pp. This is a consistent, model-specific pattern — not random noise. Hypothesis: Flash's more concise reasoning style follows the CodeDNA delegation chain more faithfully, while larger/more verbose models (Pro, DeepSeek) over-explore and dilute precision.
 
 **Transparency note on 11808 (cross-cutting task):**
 
@@ -188,9 +186,9 @@ Gemini 2.5 Flash shows Δ ≈ 0% on this task — as expected, since the `used_b
 
 The proposed fix (v0.8 `cross_cutting_patterns:` in `.codedna`) would be written by an agent **post-fix** as accumulated knowledge — not pre-populated for evaluation. This distinction is documented in SPEC.md §2.4.
 
-### The Cheaper-Model Hypothesis — partial evidence
+### The Cheaper-Model Hypothesis — reassessed
 
-Two models complete + Pro partial. All three show positive Δ on the completed tasks. Critically, Pro ctrl F1 is much higher than Flash (72% vs 60% on the same 3 tasks), and Pro Δ is smaller (+6pp vs +13pp Flash). This is consistent with the hypothesis: a stronger model navigates well without help, so CodeDNA's marginal benefit is smaller. Full evaluation requires Pro completion (tasks 11991, 11808).
+All 3 models complete. Gemini 2.5 Pro ctrl=60% — identical to Flash, not higher as expected. The hypothesis that stronger models need CodeDNA less is **not confirmed** by raw F1. However, Flash shows the largest Δ (+13pp) vs Pro/DeepSeek (+9pp each), suggesting Flash benefits more from the annotations on a per-task basis. The pattern is more nuanced than expected: model reasoning style (concise vs verbose) may matter more than raw capability.
 
 ---
 

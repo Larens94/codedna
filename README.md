@@ -5,6 +5,7 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![Version](https://img.shields.io/badge/CodeDNA-v0.7-6366f1)](./SPEC.md)
 [![arXiv](https://img.shields.io/badge/paper-arXiv-b31b1b)](./paper/codedna_paper.pdf)
+[![Website](https://img.shields.io/badge/website-codedna.silicoreautomation.space-6366f1)](https://codedna.silicoreautomation.space)
 [![CI](https://github.com/Larens94/codedna/actions/workflows/ci.yml/badge.svg)](https://github.com/Larens94/codedna/actions/workflows/ci.yml)
 [![CodeQL](https://github.com/Larens94/codedna/actions/workflows/codeql.yml/badge.svg)](https://github.com/Larens94/codedna/actions/workflows/codeql.yml)
 
@@ -140,6 +141,22 @@ The working hypothesis — now supported by two data points:
 This makes CodeDNA economically attractive: annotate once, run cheaper models with comparable accuracy.
 
 Full data: [`benchmark_agent/runs/`](./benchmark_agent/runs/) · Script: [`benchmark_agent/swebench/run_agent_multi.py`](./benchmark_agent/swebench/run_agent_multi.py)
+
+---
+
+## 🗺️ Roadmap
+
+CodeDNA v0.7 is the research prototype. The planned development path:
+
+| Milestone | Goal | Status |
+|---|---|---|
+| **M1 — Protocol & CLI** | v1.0 spec · `codedna verify` · `codedna update` · AST-based auto-extraction · PyPI | 🔜 |
+| **M2 — Benchmark Expansion** | 20+ SWE-bench tasks · 5+ LLMs · Zenodo dataset · public dashboard | 🔜 |
+| **M3 — Editor & Workflow** | VS Code extension (used_by graph) · pre-commit hook · GitHub Action CI | 🔜 |
+| **M4 — Language Extension** | JavaScript/TypeScript · Go · Rust · full docs rewrite | 🔜 |
+| **M5 — Research & Dissemination** | arXiv preprint · ICSE NIER/workshop submission · annotate Flask, FastAPI | 🔜 |
+
+> This roadmap is part of a funding application to [NLnet NGI0 Commons Fund](https://nlnet.nl/commonsfund/) (deadline April 1st 2026). If you find CodeDNA useful and want to support its development, ⭐ the repo and share it.
 
 ---
 
