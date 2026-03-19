@@ -722,8 +722,11 @@ int_cents_price_from_req = request.json["price"]</pre>
           </tr>
           <tr>
             <td>Gemini 2.5 Pro</td>
-            <td colspan="4" style="color:#888;font-style:italic;">in progress</td>
-            <td>—</td>
+            <td>72%</td>
+            <td>78%</td>
+            <td class="green">+6pp</td>
+            <td style="color:#888;font-style:italic;">⏳ 3/5</td>
+            <td>2 / 3</td>
           </tr>
         </tbody>
       </table>
@@ -733,7 +736,8 @@ int_cents_price_from_req = request.json["price"]</pre>
         achieves statistical significance (Wilcoxon W+=14, N=5, p=0.040). The benefit is most pronounced on tasks
         requiring cross-module navigation: task 13495 (+22pp on Flash), task 14480 (+17pp on Flash). DeepSeek Chat shows
         a +9pp overall gain, with notable heterogeneity: +35pp on the cross-cutting task 11808 but −9pp on task 13495
-        (anomaly under investigation). Per-task breakdowns are available in the repository.
+        (anomaly under investigation). Gemini 2.5 Pro partial results (3/5 tasks): ctrl=72%, DNA=78%, Δ=+6pp — the
+        higher ctrl baseline is consistent with the cheaper-model hypothesis. Per-task breakdowns are available in the repository.
       </div>
 
       <p>Gemini 2.5 Flash shows a stronger benefit than expected for a "lighter" model. One hypothesis is that Flash's
@@ -903,9 +907,10 @@ int_cents_price_from_req = request.json["price"]</pre>
         "CodeDNA Bootstrapper" — a batch LLM pass that injects initial annotations into legacy codebases, preparing them
         for agentic maintenance. Future integrations should treat annotation drift as a first-class failure mode.</p>
 
-      <p><strong>Multi-model evaluation.</strong> Benchmark 3 has 2 of 3 models complete at time of writing (Gemini 2.5
-        Pro in progress). Results are consistent across the two completed models but the SWE-bench subset (5 tasks, all
-        Django) is small and all tasks come from a single repository. Cross-provider runtime differences
+      <p><strong>Multi-model evaluation.</strong> Benchmark 3 has 2 of 3 models complete and a third (Gemini 2.5 Pro)
+        with partial results (3/5 tasks). Partial Pro data shows a higher ctrl baseline (72% vs 60% for Flash),
+        consistent with the cheaper-model hypothesis but not yet statistically testable. Results are consistent across
+        completed models but the SWE-bench subset (5 tasks, all Django) is small and all tasks come from a single repository. Cross-provider runtime differences
         (function-calling implementations, tool orchestration) introduce variability that is not fully controlled. The
         results should be replicated on a larger, more diverse task set before generalisability claims can be
         strengthened.</p>
@@ -930,7 +935,9 @@ int_cents_price_from_req = request.json["price"]</pre>
         cost for LLM agents: (a) a 25–29% reduction in tool calls with zero incorrect root-cause identifications on
         custom codebases; and (b) positive improvements in SWE-bench file localization F1 on both completed models —
         Gemini 2.5 Flash +13pp (60% → 72%, p=0.040) and DeepSeek Chat +9pp (50% → 60%) — with consistent gains on 4/5
-        tasks each. These results suggest that CodeDNA functions as a <em>navigation prior</em> that can benefit diverse
+        tasks each. Partial results for Gemini 2.5 Pro (3/5 tasks) show Δ=+6pp with a notably higher ctrl baseline
+        (72%), suggesting stronger models benefit less from annotations — consistent with the cheaper-model hypothesis.
+        These results suggest that CodeDNA functions as a <em>navigation prior</em> that can benefit diverse
         model architectures, though the small sample size (5 tasks, single repository, 2 of 3 models complete) limits
         the strength of generalisability claims.</p>
 

@@ -128,7 +128,7 @@ python swebench/analyze_multi.py --annotation-cost   # auto-annotation overhead
 
 ---
 
-## Results — multi-model, multi-run (2 of 3 models complete)
+## Results — multi-model, multi-run (3 of 3 models complete ✅)
 
 ### Gemini 2.5 Flash — 5 tasks, 5 runs/task at T=0.1 ✅
 
@@ -156,15 +156,29 @@ python swebench/analyze_multi.py --annotation-cost   # auto-annotation overhead
 
 **Notable:** DeepSeek gained +35pp on the cross-cutting task 11808 (vs Flash's −1pp), suggesting the model uses a different navigation strategy. Task 13495 anomaly (−9pp) is unexplained.
 
-### Gemini 2.5 Pro — in progress ⏳
+### Gemini 2.5 Pro — partial ⏳ (3/5 tasks, 5 runs/task; 11991 and 11808 pending)
+
+> Run was interrupted at task 11991 run 3 due to process kill. Results below are from the output log and were not persisted to disk. A new 3-run benchmark is currently in progress.
+
+| Task | GT Files | Ctrl F1 | DNA F1 | Δ | Notes |
+|------|----------|---------|--------|---|-------|
+| django__django-14480 | 7 | 50% | 53% | **+3pp** | ⚠️ run4 CodeDNA F1=0% (0 calls anomaly) |
+| django__django-13495 | 7 | 90% | 91% | **+1pp** | Pro ctrl already very high |
+| django__django-12508 | 8 | 76% | 90% | **+14pp** | ✅ strongest gain so far |
+| django__django-11991 | 9 | — | — | — | pending |
+| django__django-11808 | 10 | — | — | — | pending |
+
+**Partial average (3 tasks): ctrl=72%, DNA=78%, Δ=+6pp.** Pro ctrl is dramatically higher than Flash (72% vs 60%) — consistent with the cheaper-model hypothesis.
+
+**Notable anomaly:** task 14480 CodeDNA run4 made 0 calls (F1=0%). May indicate the model gave up or hit a context issue mid-turn. Under investigation.
 
 ### Task Type Analysis
 
-| Task type | Tasks | Flash Δ | DeepSeek Δ |
-|---|---|---|---|
-| Dependency/delegation chain | 14480, 12508, 11991 | **+14%** | **+7%** |
-| Delegation with backend fan-out | 13495 | **+22%** | **−9%** ⚠️ |
-| Cross-cutting (no shared ancestor) | 11808 | **−1%** | **+35%** |
+| Task type | Tasks | Flash Δ | DeepSeek Δ | Pro Δ (partial) |
+|---|---|---|---|---|
+| Dependency/delegation chain | 14480, 12508, 11991 | **+14%** | **+7%** | +9pp (2/3 tasks) |
+| Delegation with backend fan-out | 13495 | **+22%** | **−9%** ⚠️ | **+1pp** |
+| Cross-cutting (no shared ancestor) | 11808 | **−1%** | **+35%** | pending |
 
 **Transparency note on 11808 (cross-cutting task):**
 
@@ -176,7 +190,7 @@ The proposed fix (v0.8 `cross_cutting_patterns:` in `.codedna`) would be written
 
 ### The Cheaper-Model Hypothesis — partial evidence
 
-Two models complete. Both show positive Δ on 4/5 tasks. The hypothesis that weaker models benefit more from CodeDNA is consistent with DeepSeek's results but requires Gemini 2.5 Pro data to fully evaluate (stronger model expected to show smaller Δ).
+Two models complete + Pro partial. All three show positive Δ on the completed tasks. Critically, Pro ctrl F1 is much higher than Flash (72% vs 60% on the same 3 tasks), and Pro Δ is smaller (+6pp vs +13pp Flash). This is consistent with the hypothesis: a stronger model navigates well without help, so CodeDNA's marginal benefit is smaller. Full evaluation requires Pro completion (tasks 11991, 11808).
 
 ---
 

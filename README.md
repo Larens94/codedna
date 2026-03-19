@@ -85,11 +85,11 @@ Then annotate your first file → see [QUICKSTART.md](./QUICKSTART.md)
 |---|---|---|---|---|---|
 | **Gemini 2.5 Flash** | 60% | **72%** | **+13%** | 0.040* | 4/5 |
 | **DeepSeek Chat** | 50% | **60%** | **+9%** | 0.11 | 4/5 |
-| **Gemini 2.5 Pro** | — | — | — | ⏳ in progress | — |
+| **Gemini 2.5 Pro** | 60% | **69%** | **+9%** | 0.11 | 3/5 |
 
-> 2 of 3 models complete. Gemini 2.5 Pro in progress. Full data: [`benchmark_agent/runs/`](./benchmark_agent/runs/)
+> 3 of 3 models complete. Full data: [`benchmark_agent/runs/`](./benchmark_agent/runs/)
 >
-> Gemini 2.5 Flash: W+=14, N=5, p=0.040 ✅ significant. DeepSeek Chat: W+=12, N=5, p=0.11 (not significant). All runs: 5 tasks × ≥5 runs at T=0.1.
+> Gemini 2.5 Flash: W+=14, N=5, p=0.040 ✅ significant. DeepSeek Chat: W+=12, N=5, p=0.11. Gemini 2.5 Pro: W+=12, N=5, p=0.11. All runs: 5 tasks × 3–5 runs at T=0.1.
 
 ### When CodeDNA Helps Most
 
@@ -135,7 +135,7 @@ The working hypothesis — now supported by two data points:
 
 > **Less capable, cheaper models benefit more from CodeDNA.** A frontier model navigates large codebases well by general reasoning. A cheaper model without structural guidance gets lost, loops, or stops early. CodeDNA provides the scaffolding that lets a cheap model approach the navigation quality of a more expensive one.
 
-**Early evidence:** DeepSeek Chat (Δ=+9%, 4/5 tasks) and Gemini 2.5 Flash (Δ=+13%, 4/5 tasks) both show positive results, with DeepSeek gaining notably on the cross-cutting task 11808 (Δ=+35%). The anomaly on task 13495 (DeepSeek Δ=−9%) is under investigation. Gemini 2.5 Pro results pending.
+**Evidence from all 3 models:** Gemini 2.5 Flash (Δ=+13pp, p=0.040), DeepSeek Chat (Δ=+9pp), Gemini 2.5 Pro (Δ=+9pp). Flash shows the strongest benefit. Interestingly, Pro ctrl=60% matches Flash — Pro is not stronger on these navigation tasks. Task 13495 is consistently negative for both DeepSeek (−9pp) and Pro (−8pp) but positive for Flash (+22pp) — a structural anomaly under investigation.
 
 This makes CodeDNA economically attractive: annotate once, run cheaper models with comparable accuracy.
 

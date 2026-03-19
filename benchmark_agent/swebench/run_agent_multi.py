@@ -713,6 +713,40 @@ def main():
         run_ctrl = args.condition in ("all", "control")
         run_cdna = args.condition in ("all", "codedna")
 
+        run_dir = RUNS_DIR / model_name.replace('/', '-')
+        run_dir.mkdir(parents=True, exist_ok=True)
+        out_file = run_dir / "results.json"
+
+        def _save_results(run_dir, out_file, new_entries, avg_f1, args):
+            existing = []
+            if out_file.exists():
+                try:
+                    existing = json.load(open(out_file))
+                except json.JSONDecodeError:
+                    existing = []
+            for new_entry in new_entries:
+                iid = new_entry["instance_id"]
+                old = next((e for e in existing if e.get("instance_id") == iid), None)
+                if old is None:
+                    existing.append(new_entry)
+                else:
+                    for cond in ("control", "codedna"):
+                        new_runs = new_entry.get(f"{cond}_runs") or (
+                            [new_entry[cond]] if new_entry.get(cond) else [])
+                        old_runs = old.get(f"{cond}_runs") or (
+                            [old[cond]] if old.get(cond) else [])
+                        merged = old_runs + new_runs
+                        if merged:
+                            old[cond] = merged[0]
+                            old[f"{cond}_runs"] = merged
+                            old[f"{cond}_f1_stats"] = avg_f1(merged)
+                    old["n_runs"] = max(
+                        len(old.get("control_runs") or []),
+                        len(old.get("codedna_runs") or []))
+                    old["temperature"] = new_entry.get("temperature", args.temperature)
+            with open(out_file, "w") as f:
+                json.dump(existing, f, indent=2)
+
         results = []
         for task in tasks:
             iid      = task["instance_id"]
@@ -788,43 +822,11 @@ def main():
 
             results.append(entry)
 
-        # Save results — accumulate runs into runs/<model_name>/results.json
-        run_dir = RUNS_DIR / model_name.replace('/', '-')
-        run_dir.mkdir(parents=True, exist_ok=True)
-        out_file = run_dir / "results.json"
+            # Save incrementally after each task
+            _save_results(run_dir, out_file, [entry], avg_f1, args)
+            print(f"  💾 Saved → {out_file}")
 
-        existing = []
-        if out_file.exists():
-            try:
-                existing = json.load(open(out_file))
-            except json.JSONDecodeError:
-                existing = []
-
-        for new_entry in results:
-            iid = new_entry["instance_id"]
-            old = next((e for e in existing if e.get("instance_id") == iid), None)
-            if old is None:
-                existing.append(new_entry)
-            else:
-                # Merge: accumulate _runs lists and recompute _f1_stats
-                for cond in ("control", "codedna"):
-                    new_runs = new_entry.get(f"{cond}_runs") or (
-                        [new_entry[cond]] if new_entry.get(cond) else [])
-                    old_runs = old.get(f"{cond}_runs") or (
-                        [old[cond]] if old.get(cond) else [])
-                    merged = old_runs + new_runs
-                    if merged:
-                        old[cond] = merged[0]
-                        old[f"{cond}_runs"] = merged
-                        old[f"{cond}_f1_stats"] = avg_f1(merged)
-                old["n_runs"] = max(
-                    len(old.get("control_runs") or []),
-                    len(old.get("codedna_runs") or []))
-                old["temperature"] = new_entry.get("temperature", args.temperature)
-
-        with open(out_file, "w") as f:
-            json.dump(existing, f, indent=2)
-        print(f"\n✅ Saved → {out_file}")
+        print(f"\n✅ All tasks done → {out_file}")
         print(f"   Next:  python swebench/analyze_multi.py --model {model_name}")
 
 
