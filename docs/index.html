@@ -492,72 +492,37 @@ data  = get_users()
 
 <!-- BENCHMARK -->
 <div class="section" id="benchmark">
-  <div class="eyebrow" data-i18n="bmkEyebrow">Real Benchmark</div>
-  <h2 data-i18n="bmkH2">Crushing evidence — not opinions.</h2>
-  <p class="section-lead" data-i18n-html="bmkLead">5 scenarios built to be <strong>impossible to solve correctly without CodeDNA</strong>. The Control makes deterministic errors. CodeDNA: zero errors across all tests.</p>
-
-  <div class="chart-pair">
-    <div class="chart-card">
-      <div class="chart-label" data-i18n="chartQLabel">Edit Quality — AI Judge score 0–10</div>
-      <canvas id="cQ" height="230"></canvas>
-    </div>
-    <div class="chart-card">
-      <div class="chart-label" data-i18n="chartELabel">Total errors by type (over 3 runs per scenario)</div>
-      <canvas id="cE" height="230"></canvas>
-    </div>
-  </div>
+  <div class="eyebrow" data-i18n="bmkEyebrow">Illustrative Scenarios</div>
+  <h2 data-i18n="bmkH2">Problems CodeDNA is designed to solve.</h2>
+  <p class="section-lead" data-i18n-html="bmkLead">5 scenarios that illustrate the categories of errors AI agents make without architectural context. For measured results, see the SWE-bench benchmark below.</p>
 
   <div class="scenario-cards">
     <div class="sc-card">
       <div class="sc-tag">Scenario S4</div>
       <div class="sc-title" data-i18n="s4Title">🔍 Sliding Window — Hidden Constraint</div>
       <div class="sc-body" data-i18n="s4Body">The AI reads only lines 200–250. The max discount limit is in the manifest (line 7). Without CodeDNA it ignores it and applies illegal discounts of 50%+.</div>
-      <div class="sc-scores">
-        <div class="sc-score bad">Control<strong>6.2 / 10</strong></div>
-        <div class="sc-score good">CodeDNA<strong>9.5 / 10</strong></div>
-      </div>
     </div>
     <div class="sc-card">
       <div class="sc-tag">Scenario S5</div>
       <div class="sc-title" data-i18n="s5Title">🔗 Cascade Change — Domino Effect</div>
       <div class="sc-body" data-i18n-html="s5Body">utils.py is modified. Without <code>used_by:</code>, the AI only updates utils.py and leaves main.py with a runtime KeyError.</div>
-      <div class="sc-scores">
-        <div class="sc-score bad">Control<strong>5.8 / 10</strong></div>
-        <div class="sc-score good">CodeDNA<strong>9.8 / 10</strong></div>
-      </div>
     </div>
     <div class="sc-card">
       <div class="sc-tag">Scenario S6</div>
       <div class="sc-title" data-i18n="s6Title">🔢 Ambiguous Type — Euros or Cents?</div>
       <div class="sc-body" data-i18n-html="s6Body"><code>price = 1999</code> — euros or cents? Without semantic naming the AI gets the unit wrong. With CodeDNA: <code>int_cents_price_from_request</code> — zero ambiguity.</div>
-      <div class="sc-scores">
-        <div class="sc-score bad">Control<strong>5.0 / 10</strong></div>
-        <div class="sc-score good">CodeDNA<strong>9.7 / 10</strong></div>
-      </div>
     </div>
     <div class="sc-card">
       <div class="sc-tag">Scenario S7</div>
       <div class="sc-title" data-i18n="s7Title">💥 Broken Dependency — Silent Rename</div>
       <div class="sc-body" data-i18n-html="s7Body"><code>format_revenue()</code> → <code>format_currency()</code>. The <code>rules:</code> field records the rename. The Control calls the old name: crash.</div>
-      <div class="sc-scores">
-        <div class="sc-score bad">Control<strong>4.5 / 10</strong></div>
-        <div class="sc-score good">CodeDNA<strong>9.9 / 10</strong></div>
-      </div>
     </div>
     <div class="sc-card">
       <div class="sc-tag">Scenario S8</div>
       <div class="sc-title" data-i18n="s8Title">🗺️ Planning — 8 Files, Manifest Only</div>
       <div class="sc-body" data-i18n-html="s8Body">The AI must find the 2 right files to change by reading only the module docstrings (8–12 lines each). Using the <code>exports:</code> → <code>used_by:</code> graph it identifies exactly the 2 files.</div>
-      <div class="sc-scores">
-        <div class="sc-score bad">Control<strong>6.8 / 10</strong></div>
-        <div class="sc-score good">CodeDNA<strong>9.6 / 10</strong></div>
-      </div>
     </div>
   </div>
-
-  <p style="margin-top:1.75rem; font-size:0.8rem; color:var(--muted); padding:1rem 1.25rem; background:var(--bg2); border:1px solid var(--border); border-radius:10px;" data-i18n-html="methodology">
-    🔬 <strong style="color:var(--text2)">Methodology:</strong> 5 scenarios × 3 runs with Gemini 2.5 Flash. Evaluation: independent LLM judge + automatic checker (constraint_violation, cascade_miss). Script: <code>benchmark/codedna_benchmark.py</code>. Results: <code>benchmark/results_v2.json</code>.
-  </p>
 </div>
 
 <!-- MULTI-MODEL SWE-BENCH -->
@@ -684,16 +649,13 @@ const IT = {
   l3Code:'<span class="tc"># \u274c Ambiguo \u2014 euro? centesimi?</span>\nprice = request.json.get(<span class="ts">"price"</span>)\ndata  = get_users()\n\n<span class="tc"># \u2705 CodeDNA \u2014 tipo, dominio, origine chiari</span>\n<span class="ti">int_cents_price_from_request</span> = request.json.get(<span class="ts">"price"</span>)\n<span class="ti">list_dict_users_from_db</span>      = get_users()',
   bonusNum:'Bonus', bonusName:'Planner Manifest-Only', bonusDesc:'Per pianificare modifiche su 10+ file, l\'AI legge <code>.codedna</code> e poi solo la module docstring di ogni file (prime 8\u201312 righe) \u2014 costruisce la mappa completa in pochi token.',
   plannerCode:'<span class="tc"># 1. Leggi .codedna \u2014 struttura progetto</span>\n<span class="tc"># 2. Leggi module docstring (8\u201312 righe ciascuno)</span>\n<span class="tc"># 3. Filtra: used_by menziona il target? Includi</span>\n<span class="tc">#    rules menziona il dominio? Includi</span>\n<span class="tc"># 4. Costruisci grafo exports \u2192 used_by</span>\n<span class="tc"># 5. Apri in full SOLO i file rilevanti</span>\n<span class="tc"># Costo: ~50 tok \u00d7 N file = mappa completa</span>',
-  bmkEyebrow:'Benchmark Reale', bmkH2:'Prove schiaccianti \u2014 non opinioni.',
-  bmkLead:'5 scenari costruiti per essere <strong>impossibili da risolvere correttamente senza CodeDNA</strong>. Il Control commette errori deterministici. CodeDNA: zero errori in tutti i test.',
-  chartQLabel:'Qualit\u00e0 Edit \u2014 punteggio AI Judge 0\u201310',
-  chartELabel:'Errori totali per tipo (su 3 run a scenario)',
+  bmkEyebrow:'Scenari Illustrativi', bmkH2:'I problemi che CodeDNA \u00e8 progettato per risolvere.',
+  bmkLead:'5 scenari che illustrano le categorie di errori che gli agenti AI commettono senza contesto architetturale. Per i risultati misurati, vedi il benchmark SWE-bench qui sotto.',
   s4Title:'\ud83d\udd0d Sliding Window \u2014 Vincolo Nascosto', s4Body:'L\'AI legge solo le righe 200\u2013250. Il limite massimo di sconto \u00e8 nel manifest (riga 7). Senza CodeDNA lo ignora e applica sconti illegali al 50%+.',
   s5Title:'\ud83d\udd17 Cascade Change \u2014 Effetto Domino', s5Body:'Si modifica utils.py. Senza <code>used_by:</code>, l\'AI aggiorna solo utils.py e lascia main.py con una KeyError a runtime.',
   s6Title:'\ud83d\udd22 Tipo Ambiguo \u2014 Euro o Centesimi?', s6Body:'<code>price = 1999</code> \u2014 euro o centesimi? Senza semantic naming l\'AI sbaglia unit\u00e0. Con CodeDNA: <code>int_cents_price_from_request</code> \u2014 zero dubbi.',
   s7Title:'\ud83d\udca5 Dipendenza Rotta \u2014 Rename Silenzioso', s7Body:'<code>format_revenue()</code> \u2192 <code>format_currency()</code>. Il campo <code>rules:</code> registra il rename. Il Control chiama il vecchio nome: crash.',
   s8Title:'\ud83d\uddfa\ufe0f Planning \u2014 8 File, Solo Manifest', s8Body:'L\'AI deve trovare i 2 file giusti da modificare leggendo solo le module docstring (8\u201312 righe ciascuna). Con il grafo <code>exports:</code> \u2192 <code>used_by:</code> identifica esattamente i 2 file.',
-  methodology:'\ud83d\udd2c <strong style="color:var(--text2)">Metodologia:</strong> 5 scenari \u00d7 3 run con Gemini 2.5 Flash. Valutazione: LLM judge indipendente + checker automatico (constraint_violation, cascade_miss). Script: <code>benchmark/codedna_benchmark.py</code>. Risultati: <code>benchmark/results_v2.json</code>.',
   cmpEyebrow:'Confronto', cmpH2:'CodeDNA vs. approcci esistenti',
   thApproach:'Approccio', thLatency:'Latenza retrieval', thInfra:'Infrastruttura',
   pillHigh:'Alto', pillLow:'Basso', pillMed:'Medio', pillYes:'S\u00ec \u2713', pillNone:'Nessuna', pillExtFile:'File esterno', pillComplex:'Sistema complesso',
@@ -737,75 +699,13 @@ document.addEventListener('DOMContentLoaded', function() {
 </script>
 
 <script>
-// CHART.JS — Quality bar chart
-const qCtx = document.getElementById('cQ').getContext('2d');
 const chartLabels = {
-  en: { bar:['S4 Sliding\nWindow','S5 Cascade\nChange','S6 Ambiguous\nType','S7 Broken\nDep.','S8 Planning'], radar:['S4 Constraint','S5 Cascade Miss','S6 Type Error','S7 Wrong Symbol','S8 Wrong Files'], ctl:'Control', dna:'CodeDNA', ctlR:'Control (3 runs)', dnaR:'CodeDNA (3 runs)' },
-  it:  { bar:['S4 Sliding\nWindow','S5 Cascade\nChange','S6 Tipo\nAmbiguo','S7 Broken\nDep.','S8 Planning'],    radar:['S4 Constraint','S5 Cascade Miss','S6 Type Error','S7 Wrong Symbol','S8 Wrong Files'], ctl:'Control', dna:'CodeDNA', ctlR:'Control (su 3 run)', dnaR:'CodeDNA (su 3 run)' }
+  en: { ctl:'Control', dna:'CodeDNA' },
+  it: { ctl:'Control', dna:'CodeDNA' }
 };
-window.chartQ = new Chart(qCtx, {
-  type: 'bar',
-  data: {
-    labels: chartLabels.en.bar,
-    datasets:[
-      { label:chartLabels.en.ctl, data:[6.2,5.8,5.0,4.5,6.8], backgroundColor:'rgba(220,38,38,0.12)', borderColor:'rgba(220,38,38,0.7)', borderWidth:1.5, borderRadius:5 },
-      { label:chartLabels.en.dna, data:[9.5,9.8,9.7,9.9,9.6], backgroundColor:'rgba(67,56,202,0.12)', borderColor:'rgba(67,56,202,0.7)', borderWidth:1.5, borderRadius:5 }
-    ]
-  },
-  options:{
-    responsive:true,
-    scales:{
-      y:{ min:0, max:10, grid:{color:'rgba(0,0,0,0.04)'}, ticks:{color:'#8787a0',font:{size:11}} },
-      x:{ grid:{display:false}, ticks:{color:'#8787a0',font:{size:10}} }
-    },
-    plugins:{
-      legend:{labels:{color:'#1a1a2e',font:{size:11},boxWidth:10}},
-      tooltip:{backgroundColor:'#1a1a2e',titleColor:'#fff',bodyColor:'#c7d2fe',cornerRadius:8}
-    }
-  }
-});
-
-// CHART.JS — Errors radar
-const eCtx = document.getElementById('cE').getContext('2d');
-window.chartE = new Chart(eCtx, {
-  type:'radar',
-  data:{
-    labels:chartLabels.en.radar,
-    datasets:[
-      { label:chartLabels.en.ctlR, data:[2.7,3,2.3,2.7,1.7], backgroundColor:'rgba(220,38,38,0.08)', borderColor:'rgba(220,38,38,0.6)', pointBackgroundColor:'rgb(220,38,38)', pointRadius:4 },
-      { label:chartLabels.en.dnaR, data:[0,0,0,0,0.3], backgroundColor:'rgba(67,56,202,0.08)', borderColor:'rgba(67,56,202,0.6)', pointBackgroundColor:'rgb(67,56,202)', pointRadius:4 }
-    ]
-  },
-  options:{
-    responsive:true,
-    scales:{
-      r:{
-        min:0, max:3, grid:{color:'rgba(0,0,0,0.06)'}, angleLines:{color:'rgba(0,0,0,0.06)'},
-        ticks:{color:'#8787a0',backdropColor:'transparent',stepSize:1,font:{size:10}},
-        pointLabels:{color:'#3d3d5c',font:{size:10}}
-      }
-    },
-    plugins:{
-      legend:{labels:{color:'#1a1a2e',font:{size:11},boxWidth:10}},
-      tooltip:{backgroundColor:'#1a1a2e',titleColor:'#fff',bodyColor:'#c7d2fe',cornerRadius:8}
-    }
-  }
-});
 
 function updateCharts(l) {
   const cl = chartLabels[l] || chartLabels.en;
-  if (window.chartQ) {
-    window.chartQ.data.labels = cl.bar;
-    window.chartQ.data.datasets[0].label = cl.ctl;
-    window.chartQ.data.datasets[1].label = cl.dna;
-    window.chartQ.update();
-  }
-  if (window.chartE) {
-    window.chartE.data.labels = cl.radar;
-    window.chartE.data.datasets[0].label = cl.ctlR;
-    window.chartE.data.datasets[1].label = cl.dnaR;
-    window.chartE.update();
-  }
   if (window.chartM) {
     window.chartM.data.datasets[0].label = cl.ctl || 'Control';
     window.chartM.data.datasets[1].label = cl.dna || 'CodeDNA';
