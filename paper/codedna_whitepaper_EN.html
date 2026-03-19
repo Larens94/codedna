@@ -1,456 +1,564 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CodeDNA White Paper — The Annotation Standard for AI-Navigable Code</title>
-<style>
-  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>CodeDNA White Paper — The Annotation Standard for AI-Navigable Code</title>
+  <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
 
-  * { box-sizing: border-box; margin: 0; padding: 0; }
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  body {
-    font-family: 'Inter', -apple-system, sans-serif;
-    font-size: 10.5pt;
-    line-height: 1.65;
-    color: #1a1a2e;
-    background: white;
-  }
+    body {
+      font-family: 'Inter', -apple-system, sans-serif;
+      font-size: 10.5pt;
+      line-height: 1.65;
+      color: #1a1a2e;
+      background: white;
+    }
 
-  .page {
-    width: 210mm;
-    margin: 0 auto;
-    padding: 18mm 20mm 20mm;
-  }
+    .page {
+      width: 210mm;
+      margin: 0 auto;
+      padding: 18mm 20mm 20mm;
+    }
 
-  /* COVER */
-  .cover {
-    border-bottom: 3px solid #3730a3;
-    padding-bottom: 18pt;
-    margin-bottom: 20pt;
-  }
+    /* COVER */
+    .cover {
+      border-bottom: 3px solid #3730a3;
+      padding-bottom: 18pt;
+      margin-bottom: 20pt;
+    }
 
-  .logo-line {
-    display: flex;
-    align-items: center;
-    gap: 10pt;
-    margin-bottom: 14pt;
-  }
+    .logo-line {
+      display: flex;
+      align-items: center;
+      gap: 10pt;
+      margin-bottom: 14pt;
+    }
 
-  .logo-dna {
-    font-size: 22pt;
-  }
+    .logo-dna {
+      font-size: 22pt;
+    }
 
-  .logo-text {
-    font-size: 22pt;
-    font-weight: 700;
-    color: #3730a3;
-    letter-spacing: -0.5px;
-  }
+    .logo-text {
+      font-size: 22pt;
+      font-weight: 700;
+      color: #3730a3;
+      letter-spacing: -0.5px;
+    }
 
-  .logo-tag {
-    font-size: 8pt;
-    font-weight: 500;
-    background: #3730a3;
-    color: white;
-    padding: 2pt 6pt;
-    border-radius: 3pt;
-    letter-spacing: 0.3px;
-  }
+    .logo-tag {
+      font-size: 8pt;
+      font-weight: 500;
+      background: #3730a3;
+      color: white;
+      padding: 2pt 6pt;
+      border-radius: 3pt;
+      letter-spacing: 0.3px;
+    }
 
-  .wp-title {
-    font-size: 17pt;
-    font-weight: 700;
-    line-height: 1.2;
-    color: #0f0f1a;
-    margin-bottom: 8pt;
-  }
+    .wp-title {
+      font-size: 17pt;
+      font-weight: 700;
+      line-height: 1.2;
+      color: #0f0f1a;
+      margin-bottom: 8pt;
+    }
 
-  .wp-subtitle {
-    font-size: 10.5pt;
-    color: #555;
-    font-weight: 400;
-    margin-bottom: 10pt;
-  }
+    .wp-subtitle {
+      font-size: 10.5pt;
+      color: #555;
+      font-weight: 400;
+      margin-bottom: 10pt;
+    }
 
-  .meta-line {
-    font-size: 8.5pt;
-    color: #888;
-    display: flex;
-    gap: 18pt;
-  }
+    .meta-line {
+      font-size: 8.5pt;
+      color: #888;
+      display: flex;
+      gap: 18pt;
+    }
 
-  .meta-line span { font-weight: 500; color: #3730a3; }
+    .meta-line span {
+      font-weight: 500;
+      color: #3730a3;
+    }
 
-  /* EXECUTIVE SUMMARY */
-  .exec-box {
-    background: #f0f4ff;
-    border-left: 4px solid #3730a3;
-    padding: 12pt 14pt;
-    margin: 14pt 0;
-    border-radius: 0 4pt 4pt 0;
-  }
+    /* EXECUTIVE SUMMARY */
+    .exec-box {
+      background: #f0f4ff;
+      border-left: 4px solid #3730a3;
+      padding: 12pt 14pt;
+      margin: 14pt 0;
+      border-radius: 0 4pt 4pt 0;
+    }
 
-  .exec-box h3 {
-    font-size: 9pt;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.8px;
-    color: #3730a3;
-    margin-bottom: 6pt;
-  }
+    .exec-box h3 {
+      font-size: 9pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.8px;
+      color: #3730a3;
+      margin-bottom: 6pt;
+    }
 
-  .exec-box p {
-    font-size: 10pt;
-    line-height: 1.6;
-    color: #1a1a2e;
-  }
+    .exec-box p {
+      font-size: 10pt;
+      line-height: 1.6;
+      color: #1a1a2e;
+    }
 
-  /* SECTIONS */
-  h2 {
-    font-size: 12pt;
-    font-weight: 700;
-    color: #3730a3;
-    margin-top: 18pt;
-    margin-bottom: 6pt;
-    padding-bottom: 3pt;
-    border-bottom: 1px solid #e0e4ff;
-  }
+    /* SECTIONS */
+    h2 {
+      font-size: 12pt;
+      font-weight: 700;
+      color: #3730a3;
+      margin-top: 18pt;
+      margin-bottom: 6pt;
+      padding-bottom: 3pt;
+      border-bottom: 1px solid #e0e4ff;
+    }
 
-  h3 {
-    font-size: 10.5pt;
-    font-weight: 600;
-    color: #1a1a2e;
-    margin-top: 10pt;
-    margin-bottom: 4pt;
-  }
+    h3 {
+      font-size: 10.5pt;
+      font-weight: 600;
+      color: #1a1a2e;
+      margin-top: 10pt;
+      margin-bottom: 4pt;
+    }
 
-  p {
-    margin-bottom: 7pt;
-    text-align: justify;
-    hyphens: auto;
-  }
+    p {
+      margin-bottom: 7pt;
+      text-align: justify;
+      hyphens: auto;
+    }
 
-  /* STATS ROW */
-  .stats-row {
-    display: flex;
-    gap: 10pt;
-    margin: 12pt 0;
-  }
+    /* STATS ROW */
+    .stats-row {
+      display: flex;
+      gap: 10pt;
+      margin: 12pt 0;
+    }
 
-  .stat-box {
-    flex: 1;
-    background: #fafafa;
-    border: 1px solid #e0e4ff;
-    border-top: 3px solid #3730a3;
-    padding: 10pt;
-    border-radius: 0 0 4pt 4pt;
-    text-align: center;
-  }
+    .stat-box {
+      flex: 1;
+      background: #fafafa;
+      border: 1px solid #e0e4ff;
+      border-top: 3px solid #3730a3;
+      padding: 10pt;
+      border-radius: 0 0 4pt 4pt;
+      text-align: center;
+    }
 
-  .stat-number {
-    font-size: 22pt;
-    font-weight: 700;
-    color: #3730a3;
-    line-height: 1;
-    display: block;
-    margin-bottom: 3pt;
-  }
+    .stat-number {
+      font-size: 22pt;
+      font-weight: 700;
+      color: #3730a3;
+      line-height: 1;
+      display: block;
+      margin-bottom: 3pt;
+    }
 
-  .stat-label {
-    font-size: 8pt;
-    color: #666;
-    line-height: 1.3;
-  }
+    .stat-label {
+      font-size: 8pt;
+      color: #666;
+      line-height: 1.3;
+    }
 
-  /* PROBLEM / SOLUTION SPLIT */
-  .two-col {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 12pt;
-    margin: 10pt 0;
-  }
+    /* PROBLEM / SOLUTION SPLIT */
+    .two-col {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 12pt;
+      margin: 10pt 0;
+    }
 
-  .col-box {
-    padding: 10pt;
-    border-radius: 4pt;
-    font-size: 9.5pt;
-  }
+    .col-box {
+      padding: 10pt;
+      border-radius: 4pt;
+      font-size: 9.5pt;
+    }
 
-  .col-problem {
-    background: #fff8f8;
-    border: 1px solid #fca5a5;
-  }
+    .col-problem {
+      background: #fff8f8;
+      border: 1px solid #fca5a5;
+    }
 
-  .col-solution {
-    background: #f0fdf4;
-    border: 1px solid #86efac;
-  }
+    .col-solution {
+      background: #f0fdf4;
+      border: 1px solid #86efac;
+    }
 
-  .col-head {
-    font-size: 8pt;
-    font-weight: 700;
-    text-transform: uppercase;
-    letter-spacing: 0.6px;
-    margin-bottom: 5pt;
-  }
+    .col-head {
+      font-size: 8pt;
+      font-weight: 700;
+      text-transform: uppercase;
+      letter-spacing: 0.6px;
+      margin-bottom: 5pt;
+    }
 
-  .col-problem .col-head { color: #dc2626; }
-  .col-solution .col-head { color: #16a34a; }
+    .col-problem .col-head {
+      color: #dc2626;
+    }
 
-  .col-box ul { padding-left: 12pt; }
-  .col-box li { margin-bottom: 3pt; }
+    .col-solution .col-head {
+      color: #16a34a;
+    }
 
-  /* CODE BOX */
-  pre, code {
-    font-family: 'JetBrains Mono', 'Courier New', monospace;
-    font-size: 7.5pt;
-    background: #1a1a2e;
-    color: #e2e8f0;
-    border-radius: 4pt;
-  }
+    .col-box ul {
+      padding-left: 12pt;
+    }
 
-  pre {
-    padding: 9pt 11pt;
-    margin: 7pt 0;
-    line-height: 1.45;
-    break-inside: avoid;
-    overflow: hidden;
-  }
+    .col-box li {
+      margin-bottom: 3pt;
+    }
 
-  code { padding: 1pt 3pt; }
+    /* CODE BOX */
+    pre,
+    code {
+      font-family: 'JetBrains Mono', 'Courier New', monospace;
+      font-size: 7.5pt;
+      background: #1a1a2e;
+      color: #e2e8f0;
+      border-radius: 4pt;
+    }
 
-  .code-comment { color: #94a3b8; }
-  .code-key { color: #93c5fd; }
-  .code-val { color: #86efac; }
-  .code-warn { color: #fbbf24; }
+    pre {
+      padding: 9pt 11pt;
+      margin: 7pt 0;
+      line-height: 1.45;
+      break-inside: avoid;
+      overflow: hidden;
+    }
 
-  /* RESULTS TABLE */
-  table {
-    width: 100%;
-    border-collapse: collapse;
-    font-size: 9pt;
-    margin: 8pt 0;
-    break-inside: avoid;
-  }
+    code {
+      padding: 1pt 3pt;
+    }
 
-  thead th {
-    background: #3730a3;
-    color: white;
-    padding: 5pt 8pt;
-    text-align: left;
-    font-weight: 600;
-    font-size: 8.5pt;
-  }
+    .code-comment {
+      color: #94a3b8;
+    }
 
-  tbody td {
-    padding: 4pt 8pt;
-    border-bottom: 1px solid #e0e4ff;
-  }
+    .code-key {
+      color: #93c5fd;
+    }
 
-  tbody tr:nth-child(even) td { background: #f8f9ff; }
+    .code-val {
+      color: #86efac;
+    }
 
-  .green { color: #16a34a; font-weight: 700; }
-  .red   { color: #dc2626; font-weight: 700; }
+    .code-warn {
+      color: #fbbf24;
+    }
 
-  /* HOW IT WORKS */
-  .level-row {
-    display: flex;
-    gap: 8pt;
-    margin: 6pt 0;
-    align-items: flex-start;
-  }
+    /* RESULTS TABLE */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 9pt;
+      margin: 8pt 0;
+      break-inside: avoid;
+    }
 
-  .level-badge {
-    background: #3730a3;
-    color: white;
-    font-size: 7pt;
-    font-weight: 700;
-    padding: 3pt 6pt;
-    border-radius: 3pt;
-    white-space: nowrap;
-    margin-top: 1pt;
-    min-width: 56pt;
-    text-align: center;
-  }
+    thead th {
+      background: #3730a3;
+      color: white;
+      padding: 5pt 8pt;
+      text-align: left;
+      font-weight: 600;
+      font-size: 8.5pt;
+    }
 
-  .level-desc { font-size: 9.5pt; }
-  .level-desc strong { color: #3730a3; }
+    tbody td {
+      padding: 4pt 8pt;
+      border-bottom: 1px solid #e0e4ff;
+    }
 
-  /* QUOTE */
-  blockquote {
-    border-left: 3px solid #cbd5e1;
-    padding: 6pt 10pt;
-    margin: 8pt 0;
-    font-style: italic;
-    color: #444;
-    font-size: 9.5pt;
-    background: #f8fafc;
-  }
+    tbody tr:nth-child(even) td {
+      background: #f8f9ff;
+    }
 
-  /* USE CASES */
-  .use-grid {
-    display: grid;
-    grid-template-columns: 1fr 1fr 1fr;
-    gap: 8pt;
-    margin: 8pt 0;
-  }
+    .green {
+      color: #16a34a;
+      font-weight: 700;
+    }
 
-  .use-box {
-    border: 1px solid #e0e4ff;
-    border-radius: 4pt;
-    padding: 9pt;
-    font-size: 8.5pt;
-  }
+    .red {
+      color: #dc2626;
+      font-weight: 700;
+    }
 
-  .use-icon { font-size: 16pt; display: block; margin-bottom: 4pt; }
-  .use-title { font-weight: 700; color: #3730a3; margin-bottom: 3pt; font-size: 9pt; }
+    /* HOW IT WORKS */
+    .level-row {
+      display: flex;
+      gap: 8pt;
+      margin: 6pt 0;
+      align-items: flex-start;
+    }
 
-  /* FOOTER */
-  .footer {
-    margin-top: 18pt;
-    padding-top: 10pt;
-    border-top: 1px solid #e0e4ff;
-    display: flex;
-    justify-content: space-between;
-    font-size: 8pt;
-    color: #888;
-  }
+    .level-badge {
+      background: #3730a3;
+      color: white;
+      font-size: 7pt;
+      font-weight: 700;
+      padding: 3pt 6pt;
+      border-radius: 3pt;
+      white-space: nowrap;
+      margin-top: 1pt;
+      min-width: 56pt;
+      text-align: center;
+    }
 
-  .footer a { color: #3730a3; text-decoration: none; }
+    .level-desc {
+      font-size: 9.5pt;
+    }
 
-  /* CALL TO ACTION */
-  .cta-box {
-    background: #1a1a2e;
-    color: white;
-    padding: 14pt 16pt;
-    border-radius: 6pt;
-    margin: 14pt 0 0;
-    text-align: center;
-  }
+    .level-desc strong {
+      color: #3730a3;
+    }
 
-  .cta-box h3 { color: #93c5fd; margin-bottom: 6pt; font-size: 11pt; }
-  .cta-box p { color: #cbd5e1; font-size: 9pt; margin-bottom: 6pt; text-align: center; }
-  .cta-links { display: flex; gap: 12pt; justify-content: center; font-size: 9pt; }
-  .cta-links a { color: #93c5fd; font-weight: 600; }
+    /* QUOTE */
+    blockquote {
+      border-left: 3px solid #cbd5e1;
+      padding: 6pt 10pt;
+      margin: 8pt 0;
+      font-style: italic;
+      color: #444;
+      font-size: 9.5pt;
+      background: #f8fafc;
+    }
 
-  @media print {
-    .page { padding: 12mm 16mm; }
-  }
-</style>
+    /* USE CASES */
+    .use-grid {
+      display: grid;
+      grid-template-columns: 1fr 1fr 1fr;
+      gap: 8pt;
+      margin: 8pt 0;
+    }
+
+    .use-box {
+      border: 1px solid #e0e4ff;
+      border-radius: 4pt;
+      padding: 9pt;
+      font-size: 8.5pt;
+    }
+
+    .use-icon {
+      font-size: 16pt;
+      display: block;
+      margin-bottom: 4pt;
+    }
+
+    .use-title {
+      font-weight: 700;
+      color: #3730a3;
+      margin-bottom: 3pt;
+      font-size: 9pt;
+    }
+
+    /* FOOTER */
+    .footer {
+      margin-top: 18pt;
+      padding-top: 10pt;
+      border-top: 1px solid #e0e4ff;
+      display: flex;
+      justify-content: space-between;
+      font-size: 8pt;
+      color: #888;
+    }
+
+    .footer a {
+      color: #3730a3;
+      text-decoration: none;
+    }
+
+    /* CALL TO ACTION */
+    .cta-box {
+      background: #1a1a2e;
+      color: white;
+      padding: 14pt 16pt;
+      border-radius: 6pt;
+      margin: 14pt 0 0;
+      text-align: center;
+    }
+
+    .cta-box h3 {
+      color: #93c5fd;
+      margin-bottom: 6pt;
+      font-size: 11pt;
+    }
+
+    .cta-box p {
+      color: #cbd5e1;
+      font-size: 9pt;
+      margin-bottom: 6pt;
+      text-align: center;
+    }
+
+    .cta-links {
+      display: flex;
+      gap: 12pt;
+      justify-content: center;
+      font-size: 9pt;
+    }
+
+    .cta-links a {
+      color: #93c5fd;
+      font-weight: 600;
+    }
+
+    @media print {
+      .page {
+        padding: 12mm 16mm;
+      }
+    }
+  </style>
 </head>
+
 <body>
-<div class="page">
+  <div class="page">
 
-<!-- COVER -->
-<div class="cover">
-  <div class="logo-line">
-    <span class="logo-dna">🧬</span>
-    <span class="logo-text">CodeDNA</span>
-    <span class="logo-tag">v1.0 WHITE PAPER</span>
-  </div>
-  <h1 class="wp-title">The Annotation Standard for<br>AI-Navigable Code</h1>
-  <p class="wp-subtitle">How embedding architectural context directly in source files reduces LLM agent tool calls by 25–29% and eliminates root-cause misidentification</p>
-  <div class="meta-line">
-    <div>Author: <span>Fabrizio Corpora</span></div>
-    <div>Date: <span>March 2026</span></div>
-    <div>License: <span>MIT (Open Source)</span></div>
-    <div>Repository: <span>github.com/Larens94/codedna</span></div>
-  </div>
-</div>
+    <!-- COVER -->
+    <div class="cover">
+      <div class="logo-line">
+        <span class="logo-dna">🧬</span>
+        <span class="logo-text">CodeDNA</span>
+        <span class="logo-tag">v1.0 WHITE PAPER</span>
+      </div>
+      <h1 class="wp-title">The Annotation Standard for<br>AI-Navigable Code</h1>
+      <p class="wp-subtitle">How embedding architectural context directly in source files reduces LLM agent tool calls
+        by 25–29% and eliminates root-cause misidentification</p>
+      <div class="meta-line">
+        <div>Author: <span>Fabrizio Corpora</span></div>
+        <div>Date: <span>March 2026</span></div>
+        <div>License: <span>MIT (Open Source)</span></div>
+        <div>Repository: <span>github.com/Larens94/codedna</span></div>
+      </div>
+    </div>
 
-<!-- EXECUTIVE SUMMARY -->
-<div class="exec-box">
-  <h3>Executive Summary</h3>
-  <p>
-    AI coding agents — tools like GitHub Copilot, Claude Code, and Cursor — are increasingly deployed on real, multi-file production codebases. The dominant failure mode is not reasoning quality: it is <strong>navigation cost</strong>. Agents spend most of their token budget finding the right files, and when they misidentify the source of a bug, they introduce regressions instead of fixes.
-  </p>
-  <p style="margin-top:6pt;">
-    <strong>CodeDNA</strong> is a lightweight, language-agnostic annotation standard that solves this by embedding a navigable dependency graph directly inside every source file — no external systems, no retrieval latency, no build step. Two controlled agentic benchmarks show a consistent <strong>25–29% reduction in tool calls</strong> and <strong>zero root-cause misidentifications</strong> compared to unannotated codebases. The standard is open source (MIT), already integrated with the four major AI coding tools, and available at <a href="https://github.com/Larens94/codedna">github.com/Larens94/codedna</a>.
-  </p>
-</div>
+    <!-- EXECUTIVE SUMMARY -->
+    <div class="exec-box">
+      <h3>Executive Summary</h3>
+      <p>
+        AI coding agents — tools like GitHub Copilot, Claude Code, and Cursor — are increasingly deployed on real,
+        multi-file production codebases. The dominant failure mode is not reasoning quality: it is <strong>navigation
+          cost</strong>. Agents spend most of their token budget finding the right files, and when they misidentify the
+        source of a bug, they introduce regressions instead of fixes.
+      </p>
+      <p style="margin-top:6pt;">
+        <strong>CodeDNA</strong> is a lightweight, language-agnostic annotation standard that solves this by embedding a
+        navigable dependency graph directly inside every source file — no external systems, no retrieval latency, no
+        build step. Two controlled agentic benchmarks show a consistent <strong>25–29% reduction in tool calls</strong>
+        and <strong>zero root-cause misidentifications</strong> compared to unannotated codebases. The standard is open
+        source (MIT), already integrated with the four major AI coding tools, and available at <a
+          href="https://github.com/Larens94/codedna">github.com/Larens94/codedna</a>.
+      </p>
+    </div>
 
-<!-- STATS -->
-<div class="stats-row">
-  <div class="stat-box">
-    <span class="stat-number">−29%</span>
-    <span class="stat-label">tool calls on 105-file enterprise codebase</span>
-  </div>
-  <div class="stat-box">
-    <span class="stat-number">−33%</span>
-    <span class="stat-label">file reads on 11-file benchmark</span>
-  </div>
-  <div class="stat-box">
-    <span class="stat-number">0 vs 1</span>
-    <span class="stat-label">root-cause misidentifications (CodeDNA vs control)</span>
-  </div>
-  <div class="stat-box">
-    <span class="stat-number">0</span>
-    <span class="stat-label">external dependencies — context travels with the code</span>
-  </div>
-</div>
+    <!-- STATS -->
+    <div class="stats-row">
+      <div class="stat-box">
+        <span class="stat-number">−29%</span>
+        <span class="stat-label">tool calls on 105-file enterprise codebase</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-number">−33%</span>
+        <span class="stat-label">file reads on 11-file benchmark</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-number">0 vs 1</span>
+        <span class="stat-label">root-cause misidentifications (CodeDNA vs control)</span>
+      </div>
+      <div class="stat-box">
+        <span class="stat-number">0</span>
+        <span class="stat-label">external dependencies — context travels with the code</span>
+      </div>
+    </div>
 
-<!-- THE PROBLEM -->
-<h2>1. The Problem: AI Agents Are Navigation-Blind</h2>
+    <!-- THE PROBLEM -->
+    <h2>1. The Problem: AI Agents Are Navigation-Blind</h2>
 
-<p>
-  Modern AI coding assistants are powerful reasoners but poor navigators. SWE-bench (2024), the leading multi-file agent benchmark, found that state-of-the-art models resolved only <strong>1.96% of real GitHub issues</strong>. The bottleneck was not code generation quality — it was the cost of finding the right files in the first place.
-</p>
+    <p>
+      Modern AI coding assistants are powerful reasoners but poor navigators. SWE-bench (2024), the leading multi-file
+      agent benchmark, found that state-of-the-art models resolved only <strong>1.96% of real GitHub issues</strong>.
+      The bottleneck was not code generation quality — it was the cost of finding the right files in the first place.
+    </p>
 
-<div class="two-col">
-  <div class="col-box col-problem">
-    <div class="col-head">❌ Current approaches fail because…</div>
-    <ul>
-      <li><strong>RAG systems</strong> require embedding infrastructure and introduce retrieval latency that may not align with architectural relevance</li>
-      <li><strong>Rule files</strong> (CLAUDE.md, AGENTS.md, .cursorrules) are invisible to agents in sliding-window mode — the agent reading line 50 of a file cannot see the project-level rules file</li>
-      <li><strong>Long-context injection</strong> inflates inference costs and degrades with distance</li>
-      <li>A 2026 ETH Zurich study found LLM-generated context files <em>degrade</em> task success by 3% and increase costs by 20%+</li>
-    </ul>
-  </div>
-  <div class="col-box col-solution">
-    <div class="col-head">✅ CodeDNA works because…</div>
-    <ul>
-      <li>Context is <strong>co-located with the code</strong> — it travels in every file read, in every context window, at every sliding position</li>
-      <li>No external systems: zero retrieval latency, zero infrastructure, zero sync issues</li>
-      <li>Uses <strong>native comment and docstring syntax</strong> — no new toolchain required</li>
-      <li>Scales with the codebase: the more files, the larger the navigation advantage</li>
-    </ul>
-  </div>
-</div>
+    <div class="two-col">
+      <div class="col-box col-problem">
+        <div class="col-head">❌ Current approaches fail because…</div>
+        <ul>
+          <li><strong>RAG systems</strong> require embedding infrastructure and introduce retrieval latency that may not
+            align with architectural relevance</li>
+          <li><strong>Rule files</strong> (CLAUDE.md, AGENTS.md, .cursorrules) are invisible to agents in sliding-window
+            mode — the agent reading line 50 of a file cannot see the project-level rules file</li>
+          <li><strong>Long-context injection</strong> inflates inference costs and degrades with distance</li>
+          <li>A 2026 ETH Zurich study found LLM-generated context files <em>degrade</em> task success by 3% and increase
+            costs by 20%+</li>
+        </ul>
+      </div>
+      <div class="col-box col-solution">
+        <div class="col-head">✅ CodeDNA works because…</div>
+        <ul>
+          <li>Context is <strong>co-located with the code</strong> — it travels in every file read, in every context
+            window, at every sliding position</li>
+          <li>No external systems: zero retrieval latency, zero infrastructure, zero sync issues</li>
+          <li>Uses <strong>native comment and docstring syntax</strong> — no new toolchain required</li>
+          <li>Scales with the codebase: the more files, the larger the navigation advantage</li>
+        </ul>
+      </div>
+    </div>
 
-<blockquote>
-  "When an agent reads only lines 50–80 of a file, it encounters function-level annotations and inline comments that reassert the critical architectural rules exactly at the point of risk." — CodeDNA Specification v0.5
-</blockquote>
+    <blockquote>
+      "When an agent reads only lines 50–80 of a file, it encounters function-level annotations and inline comments that
+      reassert the critical architectural rules exactly at the point of risk." — CodeDNA Specification v0.5
+    </blockquote>
 
-<!-- HOW IT WORKS -->
-<h2>2. How CodeDNA Works: The Biological Analogy</h2>
+    <!-- HOW IT WORKS -->
+    <h2>2. How CodeDNA Works: The Biological Analogy</h2>
 
-<p>
-  The name <em>CodeDNA</em> captures the core design principle through a molecular biology analogy. Biological DNA encodes the complete blueprint of the organism in <em>every cell</em>. No matter which cell a biologist examines, it carries the full genome. CodeDNA applies the same principle to software: every source file encodes not only its own logic, but also its <em>position in the architectural organism</em> — what it depends on, who depends on it, and what contracts it must respect.
-</p>
+    <p>
+      The name <em>CodeDNA</em> captures the core design principle through a molecular biology analogy. Biological DNA
+      encodes the complete blueprint of the organism in <em>every cell</em>. No matter which cell a biologist examines,
+      it carries the full genome. CodeDNA applies the same principle to software: every source file encodes not only its
+      own logic, but also its <em>position in the architectural organism</em> — what it depends on, who depends on it,
+      and what contracts it must respect.
+    </p>
 
-<div class="level-row">
-  <div class="level-badge">LEVEL 1<br>Module Header</div>
-  <div class="level-desc">
-    <strong>File-level manifest</strong> — placed at the top of every source file. Encodes the complete architectural position in ~70 tokens: dependencies, exports, consumers, database tables touched, and agent-facing rules. Visible even when the file is read from the very first line.
-  </div>
-</div>
+    <div class="level-row">
+      <div class="level-badge">LEVEL 1<br>Module Header</div>
+      <div class="level-desc">
+        <strong>File-level manifest</strong> — placed at the top of every source file. Encodes the complete
+        architectural position in ~70 tokens: dependencies, exports, consumers, database tables touched, and
+        agent-facing rules. Visible even when the file is read from the very first line.
+      </div>
+    </div>
 
-<div class="level-row">
-  <div class="level-badge">LEVEL 2<br>Sliding Window</div>
-  <div class="level-desc">
-    <strong>Function-level annotations</strong> — docstrings and inline call-site comments. Agents often extract 50–100 lines from the middle of a file, bypassing the module header. Level 2 re-asserts dependency contracts at every cross-file function call.
-  </div>
-</div>
+    <div class="level-row">
+      <div class="level-badge">LEVEL 2<br>Sliding Window</div>
+      <div class="level-desc">
+        <strong>Function-level annotations</strong> — docstrings and inline call-site comments. Agents often extract
+        50–100 lines from the middle of a file, bypassing the module header. Level 2 re-asserts dependency contracts at
+        every cross-file function call.
+      </div>
+    </div>
 
-<div class="level-row">
-  <div class="level-badge">LEVEL 3<br>Semantic Naming</div>
-  <div class="level-desc">
-    <strong>Variable naming convention</strong> — format: <code>&lt;type&gt;_&lt;shape&gt;_&lt;domain&gt;_&lt;origin&gt;</code>. Any 10-line context window containing a variable name carries its type, origin, and semantic role without requiring a lookup.
-  </div>
-</div>
+    <div class="level-row">
+      <div class="level-badge">LEVEL 3<br>Semantic Naming</div>
+      <div class="level-desc">
+        <strong>Variable naming convention</strong> — format:
+        <code>&lt;type&gt;_&lt;shape&gt;_&lt;domain&gt;_&lt;origin&gt;</code>. Any 10-line context window containing a
+        variable name carries its type, origin, and semantic role without requiring a lookup.
+      </div>
+    </div>
 
-<pre><span class="code-comment">"""analytics/revenue.py — Monthly revenue aggregation.
+    <pre><span class="code-comment">"""analytics/revenue.py — Monthly revenue aggregation.
 
 </span><span class="code-key">deps:</span>    <span class="code-val">payments/models.py → get_invoices_for_period</span>
          <span class="code-val">tenants/models.py → is_suspended</span>
@@ -460,130 +568,235 @@
          <span class="code-warn">→ MUST call is_suspended() BEFORE aggregating revenue</span>
 <span class="code-comment">"""</span></pre>
 
-<!-- BENCHMARK RESULTS -->
-<h2>3. Evidence: Two Live Agentic Benchmarks</h2>
+    <!-- BENCHMARK RESULTS -->
+    <h2>3. Evidence: Two Live Agentic Benchmarks</h2>
 
-<p>
-  We implemented an autonomous agent using Gemini 2.5 Flash (temperature 0, deterministic) with three function-calling tools: <code>read_file</code>, <code>list_files</code>, and <code>grep</code>. No file content is pre-loaded. The agent runs until completion (max 20 turns). We measured tool calls, file reads, and root-cause correctness across two codebase scales.
-</p>
+    <p>
+      We implemented an autonomous agent using Gemini 2.5 Flash (temperature 0, deterministic) with three
+      function-calling tools: <code>read_file</code>, <code>list_files</code>, and <code>grep</code>. No file content is
+      pre-loaded. The agent runs until completion (max 20 turns). We measured tool calls, file reads, and root-cause
+      correctness across two codebase scales.
+    </p>
 
-<h3>Benchmark 1 — 11-File Python SaaS Application</h3>
-<p>Bug B0: orders from <em>soft-deleted</em> users appear in the revenue dashboard because <code>get_active_orders()</code> does not join on the users table.</p>
+    <h3>Benchmark 1 — 11-File Python SaaS Application</h3>
+    <p>Bug B0: orders from <em>soft-deleted</em> users appear in the revenue dashboard because
+      <code>get_active_orders()</code> does not join on the users table.</p>
 
-<table>
-  <thead><tr><th>Metric</th><th>Control (unannotated)</th><th>CodeDNA</th><th>Delta</th></tr></thead>
-  <tbody>
-    <tr><td>Total tool calls</td><td>4</td><td>3</td><td class="green">−25%</td></tr>
-    <tr><td>File reads</td><td>3</td><td>2</td><td class="green">−33%</td></tr>
-    <tr><td>Conversation turns</td><td>5</td><td>4</td><td class="green">−20%</td></tr>
-    <tr><td>Root cause correct</td><td>✓ Yes</td><td>✓ Yes</td><td>Equal</td></tr>
-  </tbody>
-</table>
+    <table>
+      <thead>
+        <tr>
+          <th>Metric</th>
+          <th>Control (unannotated)</th>
+          <th>CodeDNA</th>
+          <th>Delta</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>Total tool calls</td>
+          <td>4</td>
+          <td>3</td>
+          <td class="green">−25%</td>
+        </tr>
+        <tr>
+          <td>File reads</td>
+          <td>3</td>
+          <td>2</td>
+          <td class="green">−33%</td>
+        </tr>
+        <tr>
+          <td>Conversation turns</td>
+          <td>5</td>
+          <td>4</td>
+          <td class="green">−20%</td>
+        </tr>
+        <tr>
+          <td>Root cause correct</td>
+          <td>✓ Yes</td>
+          <td>✓ Yes</td>
+          <td>Equal</td>
+        </tr>
+      </tbody>
+    </table>
 
-<h3>Benchmark 2 — 105-File Enterprise Marketplace Platform</h3>
-<p>Three planted bugs, 48 realistic distractor files with similar function names (making grep-based navigation noisy). Bug B1: suspended-tenant invoices included in monthly revenue total.</p>
+    <h3>Benchmark 2 — 105-File Enterprise Marketplace Platform</h3>
+    <p>Three planted bugs, 48 realistic distractor files with similar function names (making grep-based navigation
+      noisy). Bug B1: suspended-tenant invoices included in monthly revenue total.</p>
 
-<table>
-  <thead><tr><th>Bug</th><th>Control calls</th><th>CodeDNA calls</th><th>Delta</th><th>Root cause</th></tr></thead>
-  <tbody>
-    <tr><td>B1 — suspended revenue</td><td>5</td><td>3</td><td class="green">−40%</td><td>Control <span class="red">✗</span> &nbsp; CodeDNA <span class="green">✓</span></td></tr>
-    <tr><td>B3 — admin permission</td><td>3</td><td>3</td><td>—</td><td>Both <span class="green">✓</span></td></tr>
-    <tr><td>B4 — fulfillment stock</td><td>6</td><td>4</td><td class="green">−33%</td><td>Both <span class="green">✓</span></td></tr>
-    <tr><td><strong>Total</strong></td><td><strong>14</strong></td><td><strong>10</strong></td><td class="green"><strong>−29%</strong></td><td>1 error vs 0 errors</td></tr>
-  </tbody>
-</table>
+    <table>
+      <thead>
+        <tr>
+          <th>Bug</th>
+          <th>Control calls</th>
+          <th>CodeDNA calls</th>
+          <th>Delta</th>
+          <th>Root cause</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td>B1 — suspended revenue</td>
+          <td>5</td>
+          <td>3</td>
+          <td class="green">−40%</td>
+          <td>Control <span class="red">✗</span> &nbsp; CodeDNA <span class="green">✓</span></td>
+        </tr>
+        <tr>
+          <td>B3 — admin permission</td>
+          <td>3</td>
+          <td>3</td>
+          <td>—</td>
+          <td>Both <span class="green">✓</span></td>
+        </tr>
+        <tr>
+          <td>B4 — fulfillment stock</td>
+          <td>6</td>
+          <td>4</td>
+          <td class="green">−33%</td>
+          <td>Both <span class="green">✓</span></td>
+        </tr>
+        <tr>
+          <td><strong>Total</strong></td>
+          <td><strong>14</strong></td>
+          <td><strong>10</strong></td>
+          <td class="green"><strong>−29%</strong></td>
+          <td>1 error vs 0 errors</td>
+        </tr>
+      </tbody>
+    </table>
 
-<p>
-  The critical finding on B1: the Control agent identified <code>payments/models.py</code> (the SQL query layer) as the location to fix, rather than <code>analytics/revenue.py</code> (the correct architectural layer where the filter should be enforced). Patching the wrong layer would have broken other consumers of <code>get_invoices_for_period()</code>. The CodeDNA agent, guided by the <code>rules:</code> field in the module header, diagnosed the correct file in 3 tool calls instead of 5.
-</p>
+    <p>
+      The critical finding on B1: the Control agent identified <code>payments/models.py</code> (the SQL query layer) as
+      the location to fix, rather than <code>analytics/revenue.py</code> (the correct architectural layer where the
+      filter should be enforced). Patching the wrong layer would have broken other consumers of
+      <code>get_invoices_for_period()</code>. The CodeDNA agent, guided by the <code>rules:</code> field in the module
+      header, diagnosed the correct file in 3 tool calls instead of 5.
+    </p>
 
-<!-- USE CASES -->
-<h2>4. Who Benefits</h2>
+    <!-- USE CASES -->
+    <h2>4. Who Benefits</h2>
 
-<div class="use-grid">
-  <div class="use-box">
-    <span class="use-icon">🏢</span>
-    <div class="use-title">Engineering Teams</div>
-    AI coding assistants introduce fewer regressions in your codebase. Every PR touched by Copilot or Claude Code benefits from embedded navigation context.
+    <div class="use-grid">
+      <div class="use-box">
+        <span class="use-icon">🏢</span>
+        <div class="use-title">Engineering Teams</div>
+        AI coding assistants introduce fewer regressions in your codebase. Every PR touched by Copilot or Claude Code
+        benefits from embedded navigation context.
+      </div>
+      <div class="use-box">
+        <span class="use-icon">🧰</span>
+        <div class="use-title">AI Tool Vendors</div>
+        Integration files already exist for Claude Code, Cursor, GitHub Copilot, and Windsurf. CodeDNA is a drop-in
+        protocol that improves agent outcomes without model changes.
+      </div>
+      <div class="use-box">
+        <span class="use-icon">🔬</span>
+        <div class="use-title">Researchers</div>
+        A reproducible benchmark framework for measuring LLM navigation efficiency. Both codebase sets are open source
+        and deterministic at temperature 0.
+      </div>
+    </div>
+
+    <!-- ADOPTION -->
+    <h2>5. Adoption: Zero-Cost Start</h2>
+
+    <p>
+      CodeDNA requires no new toolchain. Annotations are plain comments and docstrings in whichever comment syntax the
+      language already uses. An agent that writes CodeDNA annotations as it generates code pays zero marginal annotation
+      cost — the architectural memory is a natural byproduct of code generation.
+    </p>
+
+    <p>
+      For existing codebases, the CLI tool <code>tools/codedna_setup.py</code> installs AI integration files in under 60
+      seconds. A validation tool (<code>tools/validate_manifests.py</code>) checks annotation completeness as a CI step.
+      GitHub Actions configuration is provided out of the box.
+    </p>
+
+    <!-- ROADMAP -->
+    <h2>5.3 SWE-bench Multi-Model Evaluation (v0.7)</h2>
+
+    <p>Beyond the custom benchmarks above, CodeDNA v0.7 has been evaluated on 5 real Django issues from
+      <strong>SWE-bench</strong> — a public benchmark of real GitHub issues. Each task was run 5 times per condition at
+      T=0.1 across 3 LLMs (max 30 turns). Statistical significance is evaluated with the Wilcoxon signed-rank test
+      (one-tailed).</p>
+
+    <table style="width:100%; border-collapse:collapse; margin:10pt 0 14pt; font-size:9pt;">
+      <thead>
+        <tr style="border-bottom:2px solid #3730a3; text-align:left;">
+          <th style="padding:5pt 8pt;">Model</th>
+          <th style="padding:5pt 8pt;">Ctrl F1</th>
+          <th style="padding:5pt 8pt;">DNA F1</th>
+          <th style="padding:5pt 8pt;">Δ F1</th>
+          <th style="padding:5pt 8pt;">p-value</th>
+          <th style="padding:5pt 8pt;">Tasks Won</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #e5e5ea;">
+          <td style="padding:5pt 8pt;">Gemini 2.5 Flash</td>
+          <td style="padding:5pt 8pt;">60%</td>
+          <td style="padding:5pt 8pt;font-weight:600;">72%</td>
+          <td style="padding:5pt 8pt;color:#16a34a;font-weight:600;">+13pp</td>
+          <td style="padding:5pt 8pt;">0.040 ✅</td>
+          <td style="padding:5pt 8pt;">4 / 5</td>
+        </tr>
+        <tr style="border-bottom:1px solid #e5e5ea;">
+          <td style="padding:5pt 8pt;">DeepSeek Chat</td>
+          <td style="padding:5pt 8pt;">50%</td>
+          <td style="padding:5pt 8pt;font-weight:600;">60%</td>
+          <td style="padding:5pt 8pt;color:#16a34a;font-weight:600;">+9pp</td>
+          <td style="padding:5pt 8pt;">0.11</td>
+          <td style="padding:5pt 8pt;">4 / 5</td>
+        </tr>
+        <tr>
+          <td style="padding:5pt 8pt;">Gemini 2.5 Pro</td>
+          <td colspan="4" style="padding:5pt 8pt;color:#888;font-style:italic;">in progress</td>
+          <td style="padding:5pt 8pt;">—</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>Both completed models show positive Δ on 4/5 tasks. Gemini 2.5 Flash achieves statistical significance (Wilcoxon
+      W+=14, p=0.040). The benefit is strongest on tasks with navigable dependency chains (e.g., task 13495: +22pp on
+      Flash). The cross-cutting task 11808 — 10 independent files with no shared ancestor — shows Δ≈0% for Flash and
+      +35pp for DeepSeek, illustrating model-specific navigation strategies.</p>
+
+    <h2>6. Research Roadmap</h2>
+
+    <p>The current benchmark establishes the proof of concept across B1/B2 (custom codebases) and B3 (SWE-bench,
+      multi-model). Planned extensions include:</p>
+
+    <ul style="padding-left: 16pt; margin-bottom: 7pt;">
+      <li style="margin-bottom: 4pt;"><strong>Statistical validation</strong> — expand B3 to 3+ completed LLMs, 20+
+        tasks, multiple repositories</li>
+      <li style="margin-bottom: 4pt;"><strong>Annotation drift enforcement</strong> — pre-commit hooks and CI validation
+        to keep annotations consistent as code evolves</li>
+      <li style="margin-bottom: 4pt;"><strong>Multi-language adapters</strong> — JavaScript/TypeScript, Go, Rust, Java
+        formal grammars</li>
+      <li style="margin-bottom: 4pt;"><strong>IDE plugin</strong> — real-time annotation consistency validation in VS
+        Code / Neovim</li>
+      <li style="margin-bottom: 4pt;"><strong>Peer-reviewed publication</strong> — MSR 2026 or ICSE 2027 submission</li>
+    </ul>
+
+    <!-- CTA -->
+    <div class="cta-box">
+      <h3>Try CodeDNA Today</h3>
+      <p>Open source · MIT License · Ready-to-use integrations for Claude Code, Cursor, GitHub Copilot, Windsurf</p>
+      <div class="cta-links">
+        <a href="https://github.com/Larens94/codedna">⭐ GitHub Repository</a>
+        <a href="https://larens94.github.io/codedna">📖 Documentation</a>
+        <a href="mailto:fabrizio.corpora@gmail.com">✉ Contact</a>
+      </div>
+    </div>
+
+    <!-- FOOTER -->
+    <div class="footer">
+      <div>CodeDNA v1.0 — White Paper — March 2026</div>
+      <div>Fabrizio Corpora · Independent Research · <a
+          href="https://github.com/Larens94/codedna">github.com/Larens94/codedna</a></div>
+    </div>
+
   </div>
-  <div class="use-box">
-    <span class="use-icon">🧰</span>
-    <div class="use-title">AI Tool Vendors</div>
-    Integration files already exist for Claude Code, Cursor, GitHub Copilot, and Windsurf. CodeDNA is a drop-in protocol that improves agent outcomes without model changes.
-  </div>
-  <div class="use-box">
-    <span class="use-icon">🔬</span>
-    <div class="use-title">Researchers</div>
-    A reproducible benchmark framework for measuring LLM navigation efficiency. Both codebase sets are open source and deterministic at temperature 0.
-  </div>
-</div>
-
-<!-- ADOPTION -->
-<h2>5. Adoption: Zero-Cost Start</h2>
-
-<p>
-  CodeDNA requires no new toolchain. Annotations are plain comments and docstrings in whichever comment syntax the language already uses. An agent that writes CodeDNA annotations as it generates code pays zero marginal annotation cost — the architectural memory is a natural byproduct of code generation.
-</p>
-
-<p>
-  For existing codebases, the CLI tool <code>tools/codedna_setup.py</code> installs AI integration files in under 60 seconds. A validation tool (<code>tools/validate_manifests.py</code>) checks annotation completeness as a CI step. GitHub Actions configuration is provided out of the box.
-</p>
-
-<!-- ROADMAP -->
-<h2>5.3 SWE-bench Multi-Model Evaluation (v0.7)</h2>
-
-<p>Beyond the custom benchmarks above, CodeDNA v0.7 has been evaluated on 5 real Django issues from <strong>SWE-bench</strong> — a public benchmark of real GitHub issues. Each task was run 5 times per condition at T=0.1 across 3 LLMs (max 30 turns). Statistical significance is evaluated with the Wilcoxon signed-rank test (one-tailed).</p>
-
-<table style="width:100%; border-collapse:collapse; margin:10pt 0 14pt; font-size:9pt;">
-  <thead>
-    <tr style="border-bottom:2px solid #3730a3; text-align:left;">
-      <th style="padding:5pt 8pt;">Model</th><th style="padding:5pt 8pt;">Ctrl F1</th><th style="padding:5pt 8pt;">DNA F1</th><th style="padding:5pt 8pt;">Δ F1</th><th style="padding:5pt 8pt;">p-value</th><th style="padding:5pt 8pt;">Tasks Won</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr style="border-bottom:1px solid #e5e5ea;">
-      <td style="padding:5pt 8pt;">Gemini 2.5 Flash</td><td style="padding:5pt 8pt;">60%</td><td style="padding:5pt 8pt;font-weight:600;">72%</td><td style="padding:5pt 8pt;color:#16a34a;font-weight:600;">+13pp</td><td style="padding:5pt 8pt;">0.040 ✅</td><td style="padding:5pt 8pt;">4 / 5</td>
-    </tr>
-    <tr style="border-bottom:1px solid #e5e5ea;">
-      <td style="padding:5pt 8pt;">DeepSeek Chat</td><td style="padding:5pt 8pt;">50%</td><td style="padding:5pt 8pt;font-weight:600;">60%</td><td style="padding:5pt 8pt;color:#16a34a;font-weight:600;">+9pp</td><td style="padding:5pt 8pt;">0.11</td><td style="padding:5pt 8pt;">4 / 5</td>
-    </tr>
-    <tr>
-      <td style="padding:5pt 8pt;">Gemini 2.5 Pro</td><td colspan="4" style="padding:5pt 8pt;color:#888;font-style:italic;">in progress</td><td style="padding:5pt 8pt;">—</td>
-    </tr>
-  </tbody>
-</table>
-
-<p>Both completed models show positive Δ on 4/5 tasks. Gemini 2.5 Flash achieves statistical significance (Wilcoxon W+=14, p=0.040). The benefit is strongest on tasks with navigable dependency chains (e.g., task 13495: +22pp on Flash). The cross-cutting task 11808 — 10 independent files with no shared ancestor — shows Δ≈0% for Flash and +35pp for DeepSeek, illustrating model-specific navigation strategies.</p>
-
-<h2>6. Research Roadmap</h2>
-
-<p>The current benchmark establishes the proof of concept across B1/B2 (custom codebases) and B3 (SWE-bench, multi-model). Planned extensions include:</p>
-
-<ul style="padding-left: 16pt; margin-bottom: 7pt;">
-  <li style="margin-bottom: 4pt;"><strong>Statistical validation</strong> — expand B3 to 3+ completed LLMs, 20+ tasks, multiple repositories</li>
-  <li style="margin-bottom: 4pt;"><strong>Annotation drift enforcement</strong> — pre-commit hooks and CI validation to keep annotations consistent as code evolves</li>
-  <li style="margin-bottom: 4pt;"><strong>Multi-language adapters</strong> — JavaScript/TypeScript, Go, Rust, Java formal grammars</li>
-  <li style="margin-bottom: 4pt;"><strong>IDE plugin</strong> — real-time annotation consistency validation in VS Code / Neovim</li>
-  <li style="margin-bottom: 4pt;"><strong>Peer-reviewed publication</strong> — MSR 2026 or ICSE 2027 submission</li>
-</ul>
-
-<!-- CTA -->
-<div class="cta-box">
-  <h3>Try CodeDNA Today</h3>
-  <p>Open source · MIT License · Ready-to-use integrations for Claude Code, Cursor, GitHub Copilot, Windsurf</p>
-  <div class="cta-links">
-    <a href="https://github.com/Larens94/codedna">⭐ GitHub Repository</a>
-    <a href="https://larens94.github.io/codedna">📖 Documentation</a>
-    <a href="mailto:fabrizio@corpora.dev">✉ Contact</a>
-  </div>
-</div>
-
-<!-- FOOTER -->
-<div class="footer">
-  <div>CodeDNA v1.0 — White Paper — March 2026</div>
-  <div>Fabrizio Corpora · Independent Research · <a href="https://github.com/Larens94/codedna">github.com/Larens94/codedna</a></div>
-</div>
-
-</div>
 </body>
+
 </html>

@@ -1,141 +1,411 @@
 <!DOCTYPE html>
 <html lang="it">
+
 <head>
-<meta charset="UTF-8">
-<style>
-  * { box-sizing: border-box; margin: 0; padding: 0; }
-  body { font-family: "Times New Roman", Times, serif; font-size: 10pt; line-height: 1.5; color: #000; background: white; }
-  .page { width: 210mm; margin: 0 auto; padding: 20mm 18mm; }
+  <meta charset="UTF-8">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
 
-  /* TITLE */
-  .title-block { text-align: center; margin-bottom: 16pt; padding-bottom: 10pt; border-bottom: 1px solid #aaa; }
-  h1.paper-title { font-size: 15pt; font-weight: bold; line-height: 1.3; margin-bottom: 10pt; }
-  .authors { font-size: 10.5pt; margin-bottom: 4pt; }
-  .affiliation { font-size: 8.5pt; color: #444; }
-  .date { font-size: 8.5pt; color: #555; margin-top: 4pt; font-style: italic; }
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 10pt;
+      line-height: 1.5;
+      color: #000;
+      background: white;
+    }
 
-  /* ABSTRACT */
-  .abstract-block { margin: 12pt 24pt; font-size: 9pt; line-height: 1.5; }
-  .abstract-title { font-weight: bold; font-size: 9.5pt; display: block; text-align: center; margin-bottom: 5pt; font-variant: small-caps; }
+    .page {
+      width: 210mm;
+      margin: 0 auto;
+      padding: 20mm 18mm;
+    }
 
-  /* TWO-COLUMN */
-  .two-col { column-count: 2; column-gap: 16pt; margin-top: 14pt; text-align: justify; hyphens: auto; }
+    /* TITLE */
+    .title-block {
+      text-align: center;
+      margin-bottom: 16pt;
+      padding-bottom: 10pt;
+      border-bottom: 1px solid #aaa;
+    }
 
-  /* HEADINGS */
-  h2.section { font-size: 10pt; font-weight: bold; font-variant: small-caps; margin-top: 11pt; margin-bottom: 4pt; }
-  h3.subsection { font-size: 9.5pt; font-weight: bold; font-style: italic; margin-top: 7pt; margin-bottom: 3pt; }
+    h1.paper-title {
+      font-size: 15pt;
+      font-weight: bold;
+      line-height: 1.3;
+      margin-bottom: 10pt;
+    }
 
-  p { margin-bottom: 5pt; text-indent: 10pt; }
-  p.ni { text-indent: 0; }
+    .authors {
+      font-size: 10.5pt;
+      margin-bottom: 4pt;
+    }
 
-  /* CODE */
-  pre, code { font-family: "Courier New", Courier, monospace; font-size: 7.5pt; background: #f8f8f8; border: 1px solid #ddd; border-radius: 2px; }
-  pre { padding: 5pt 7pt; margin: 5pt 0; white-space: pre-wrap; word-break: break-word; line-height: 1.4; break-inside: avoid; }
-  code { padding: 0 2pt; }
+    .affiliation {
+      font-size: 8.5pt;
+      color: #444;
+    }
 
-  /* TABLES */
-  table { width: 100%; border-collapse: collapse; font-size: 8pt; margin: 7pt 0; break-inside: avoid; }
-  th { border-top: 1.5px solid #000; border-bottom: 1px solid #000; padding: 3pt 5pt; font-weight: bold; background: #f5f5f5; }
-  td { padding: 2.5pt 5pt; border-bottom: 0.5px solid #ccc; }
-  tr:last-child td { border-bottom: 1.5px solid #000; }
-  .tcap { font-size: 8pt; font-style: italic; text-align: center; margin-bottom: 4pt; text-indent: 0; }
-  .tnum { font-weight: bold; font-style: normal; }
+    .date {
+      font-size: 8.5pt;
+      color: #555;
+      margin-top: 4pt;
+      font-style: italic;
+    }
 
-  /* BOX */
-  .result-box { border: 1px solid #ccc; border-radius: 3px; padding: 6pt 8pt; margin: 5pt 0; background: #fafafa; font-size: 8pt; break-inside: avoid; }
-  .key-result { background: #f0f4ff; border-left: 3px solid #3730a3; padding: 4pt 6pt; margin: 5pt 0; font-size: 8.5pt; break-inside: avoid; }
+    /* ABSTRACT */
+    .abstract-block {
+      margin: 12pt 24pt;
+      font-size: 9pt;
+      line-height: 1.5;
+    }
 
-  .dna-box { border: 1.5px solid #3730a3; border-radius: 4px; padding: 7pt 9pt; margin: 7pt 0; background: #f0f4ff; font-size: 8pt; break-inside: avoid; }
-  .dna-title { font-weight: bold; font-size: 8.5pt; color: #3730a3; display: block; margin-bottom: 5pt; text-indent: 0; }
-  .dna-row { display: flex; gap: 6pt; margin-bottom: 3pt; font-size: 7.5pt; }
-  .dna-l { flex: 1; font-weight: bold; }
-  .dna-r { flex: 2; }
+    .abstract-title {
+      font-weight: bold;
+      font-size: 9.5pt;
+      display: block;
+      text-align: center;
+      margin-bottom: 5pt;
+      font-variant: small-caps;
+    }
 
-  /* REFS */
-  .references { font-size: 8pt; line-height: 1.4; column-count: 2; column-gap: 14pt; }
-  .ref-item { padding-left: 14pt; text-indent: -14pt; margin-bottom: 4pt; }
+    /* TWO-COLUMN */
+    .two-col {
+      column-count: 2;
+      column-gap: 16pt;
+      margin-top: 14pt;
+      text-align: justify;
+      hyphens: auto;
+    }
 
-  .green { color: #15803d; font-weight: bold; }
-  .red   { color: #dc2626; font-weight: bold; }
-  hr.sr  { border: none; border-top: 1px solid #ccc; margin: 8pt 0; }
-  sup { font-size: 6pt; vertical-align: super; }
-</style>
+    /* HEADINGS */
+    h2.section {
+      font-size: 10pt;
+      font-weight: bold;
+      font-variant: small-caps;
+      margin-top: 11pt;
+      margin-bottom: 4pt;
+    }
+
+    h3.subsection {
+      font-size: 9.5pt;
+      font-weight: bold;
+      font-style: italic;
+      margin-top: 7pt;
+      margin-bottom: 3pt;
+    }
+
+    p {
+      margin-bottom: 5pt;
+      text-indent: 10pt;
+    }
+
+    p.ni {
+      text-indent: 0;
+    }
+
+    /* CODE */
+    pre,
+    code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 7.5pt;
+      background: #f8f8f8;
+      border: 1px solid #ddd;
+      border-radius: 2px;
+    }
+
+    pre {
+      padding: 5pt 7pt;
+      margin: 5pt 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.4;
+      break-inside: avoid;
+    }
+
+    code {
+      padding: 0 2pt;
+    }
+
+    /* TABLES */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8pt;
+      margin: 7pt 0;
+      break-inside: avoid;
+    }
+
+    th {
+      border-top: 1.5px solid #000;
+      border-bottom: 1px solid #000;
+      padding: 3pt 5pt;
+      font-weight: bold;
+      background: #f5f5f5;
+    }
+
+    td {
+      padding: 2.5pt 5pt;
+      border-bottom: 0.5px solid #ccc;
+    }
+
+    tr:last-child td {
+      border-bottom: 1.5px solid #000;
+    }
+
+    .tcap {
+      font-size: 8pt;
+      font-style: italic;
+      text-align: center;
+      margin-bottom: 4pt;
+      text-indent: 0;
+    }
+
+    .tnum {
+      font-weight: bold;
+      font-style: normal;
+    }
+
+    /* BOX */
+    .result-box {
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      padding: 6pt 8pt;
+      margin: 5pt 0;
+      background: #fafafa;
+      font-size: 8pt;
+      break-inside: avoid;
+    }
+
+    .key-result {
+      background: #f0f4ff;
+      border-left: 3px solid #3730a3;
+      padding: 4pt 6pt;
+      margin: 5pt 0;
+      font-size: 8.5pt;
+      break-inside: avoid;
+    }
+
+    .dna-box {
+      border: 1.5px solid #3730a3;
+      border-radius: 4px;
+      padding: 7pt 9pt;
+      margin: 7pt 0;
+      background: #f0f4ff;
+      font-size: 8pt;
+      break-inside: avoid;
+    }
+
+    .dna-title {
+      font-weight: bold;
+      font-size: 8.5pt;
+      color: #3730a3;
+      display: block;
+      margin-bottom: 5pt;
+      text-indent: 0;
+    }
+
+    .dna-row {
+      display: flex;
+      gap: 6pt;
+      margin-bottom: 3pt;
+      font-size: 7.5pt;
+    }
+
+    .dna-l {
+      flex: 1;
+      font-weight: bold;
+    }
+
+    .dna-r {
+      flex: 2;
+    }
+
+    /* REFS */
+    .references {
+      font-size: 8pt;
+      line-height: 1.4;
+      column-count: 2;
+      column-gap: 14pt;
+    }
+
+    .ref-item {
+      padding-left: 14pt;
+      text-indent: -14pt;
+      margin-bottom: 4pt;
+    }
+
+    .green {
+      color: #15803d;
+      font-weight: bold;
+    }
+
+    .red {
+      color: #dc2626;
+      font-weight: bold;
+    }
+
+    hr.sr {
+      border: none;
+      border-top: 1px solid #ccc;
+      margin: 8pt 0;
+    }
+
+    sup {
+      font-size: 6pt;
+      vertical-align: super;
+    }
+  </style>
 </head>
+
 <body>
-<div class="page">
+  <div class="page">
 
-<!-- TITOLO -->
-<div class="title-block">
-  <h1 class="paper-title">CodeDNA: uno standard di annotazione in-source<br>per la navigazione deterministica di codebase multi-file<br>da parte di agenti LLM</h1>
-  <div class="authors">Fabrizio Corpora</div>
-  <div class="affiliation">Ricerca indipendente · <em>fabrizio@corpora.dev</em></div>
-  <div class="date">Preprint arXiv · Marzo 2026</div>
-</div>
+    <!-- TITOLO -->
+    <div class="title-block">
+      <h1 class="paper-title">CodeDNA: uno standard di annotazione in-source<br>per la navigazione deterministica di
+        codebase multi-file<br>da parte di agenti LLM</h1>
+      <div class="authors">Fabrizio Corpora</div>
+      <div class="affiliation">Ricerca indipendente · <em>fabrizio.corpora@gmail.com</em></div>
+      <div class="date">Preprint arXiv · Marzo 2026</div>
+    </div>
 
-<!-- ABSTRACT -->
-<div class="abstract-block">
-  <span class="abstract-title">Sommario</span>
-  Gli agenti LLM che modificano autonomamente codebase di produzione soffrono di <em>cecità contestuale</em>: modificano una funzione senza consapevolezza delle dipendenze tra file, producendo bug silenziosi e cascate di errori. Le soluzioni esistenti — RAG, file di regole a livello di progetto (CLAUDE.md, AGENTS.md), o iniezione di contesto long-context — impongono latenza di recupero, sovraccarico di manutenzione o costi di infrastruttura. Un'indagine recente (ETH Zurigo, 2026) dimostra che i file di contesto generati da LLM possono <em>degradare</em> il tasso di successo del compito del 3% e aumentare i costi di inferenza di oltre il 20%. Presentiamo <strong>CodeDNA</strong>, uno standard di annotazione in-source che incorpora grafi di dipendenza, contratti pubblici, vincoli per gli agenti e convenzioni di naming semantico direttamente nei file sorgente. Il nome richiama la sua analogia biologica: come il DNA codifica il progetto completo dell'organismo in ogni cellula, CodeDNA garantisce che ogni frammento di codice porti sufficiente contesto architetturale perché un agente agisca correttamente in isolamento. Valutiamo CodeDNA con due benchmark agentici controllati: (1) codebase da 11 file — <strong>−25% di chiamate a strumenti, −33% di file letti</strong>; (2) piattaforma enterprise da 105 file — <strong>−29% di chiamate, zero identificazioni errate della causa radice</strong> contro una nel control non annotato. CodeDNA non richiede build step, sistemi esterni né latenza di recupero.
-</div>
+    <!-- ABSTRACT -->
+    <div class="abstract-block">
+      <span class="abstract-title">Sommario</span>
+      Gli agenti LLM che modificano autonomamente codebase di produzione soffrono di <em>cecità contestuale</em>:
+      modificano una funzione senza consapevolezza delle dipendenze tra file, producendo bug silenziosi e cascate di
+      errori. Le soluzioni esistenti — RAG, file di regole a livello di progetto (CLAUDE.md, AGENTS.md), o iniezione di
+      contesto long-context — impongono latenza di recupero, sovraccarico di manutenzione o costi di infrastruttura.
+      Un'indagine recente (ETH Zurigo, 2026) dimostra che i file di contesto generati da LLM possono <em>degradare</em>
+      il tasso di successo del compito del 3% e aumentare i costi di inferenza di oltre il 20%. Presentiamo
+      <strong>CodeDNA</strong>, uno standard di annotazione in-source che incorpora grafi di dipendenza, contratti
+      pubblici, vincoli per gli agenti e convenzioni di naming semantico direttamente nei file sorgente. Il nome
+      richiama la sua analogia biologica: come il DNA codifica il progetto completo dell'organismo in ogni cellula,
+      CodeDNA garantisce che ogni frammento di codice porti sufficiente contesto architetturale perché un agente agisca
+      correttamente in isolamento. Valutiamo CodeDNA con due benchmark agentici controllati: (1) codebase da 11 file —
+      <strong>−25% di chiamate a strumenti, −33% di file letti</strong>; (2) piattaforma enterprise da 105 file —
+      <strong>−29% di chiamate, zero identificazioni errate della causa radice</strong> contro una nel control non
+      annotato. CodeDNA non richiede build step, sistemi esterni né latenza di recupero.
+    </div>
 
-<!-- CORPO A DUE COLONNE -->
-<div class="two-col">
+    <!-- CORPO A DUE COLONNE -->
+    <div class="two-col">
 
-<!-- 1. INTRODUZIONE -->
-<h2 class="section">1. Introduzione</h2>
+      <!-- 1. INTRODUZIONE -->
+      <h2 class="section">1. Introduzione</h2>
 
-<p class="ni">L'adozione di agenti LLM nei flussi di lavoro di produzione ha esposto una classe di fallimento che i benchmark su singolo file non colgono sistematicamente: la <em>cecità contestuale cross-file</em>. Quando un agente legge una funzione in isolamento — perché opera in modalità sliding-window o perché il contratto rilevante si trova in un altro modulo — non può osservare i vincoli architetturali che governano il comportamento corretto.</p>
+      <p class="ni">L'adozione di agenti LLM nei flussi di lavoro di produzione ha esposto una classe di fallimento che
+        i benchmark su singolo file non colgono sistematicamente: la <em>cecità contestuale cross-file</em>. Quando un
+        agente legge una funzione in isolamento — perché opera in modalità sliding-window o perché il contratto
+        rilevante si trova in un altro modulo — non può osservare i vincoli architetturali che governano il
+        comportamento corretto.</p>
 
-<p>SWE-bench [1], il principale benchmark multi-file del settore, ha dimostrato nel 2024 che i modelli allo stato dell'arte riuscivano a risolvere solo l'1,96% delle issue reali di GitHub. La modalità di fallimento dominante non era la qualità del ragionamento, ma il <em>costo di navigazione</em>: trovare i file giusti richiedeva troppe interazioni con gli strumenti. Lavori successivi confermano il pattern: LoCoBench-Agent [2] (2025) misura l'efficienza nell'uso degli strumenti in flussi di lavoro long-context e rileva una sistematica sovraesplorazione; PRDBench [3] (2025) riferisce che gli agenti spendono la maggior parte del loro budget token in navigazione piuttosto che nella riparazione.</p>
+      <p>SWE-bench [1], il principale benchmark multi-file del settore, ha dimostrato nel 2024 che i modelli allo stato
+        dell'arte riuscivano a risolvere solo l'1,96% delle issue reali di GitHub. La modalità di fallimento dominante
+        non era la qualità del ragionamento, ma il <em>costo di navigazione</em>: trovare i file giusti richiedeva
+        troppe interazioni con gli strumenti. Lavori successivi confermano il pattern: LoCoBench-Agent [2] (2025) misura
+        l'efficienza nell'uso degli strumenti in flussi di lavoro long-context e rileva una sistematica
+        sovraesplorazione; PRDBench [3] (2025) riferisce che gli agenti spendono la maggior parte del loro budget token
+        in navigazione piuttosto che nella riparazione.</p>
 
-<p>Le soluzioni attuali condividono una debolezza strutturale: <em>il contesto vive fuori dal codice</em>. CLAUDE.md e CursorRules sono file a livello di sessione invisibili agli agenti in modalità sliding-window. I sistemi RAG [6] introducono latenza di recupero e richiedono infrastrutture di embedding. Lo studio ETH Zurigo 2026 [4] ha riscontrato che i file di contesto generati da LLM (AGENTS.md) peggiorano il successo del compito del 3% e aumentano i costi di oltre il 20%, mentre i file scritti da umani offrono solo un guadagno del 4%.</p>
+      <p>Le soluzioni attuali condividono una debolezza strutturale: <em>il contesto vive fuori dal codice</em>.
+        CLAUDE.md e CursorRules sono file a livello di sessione invisibili agli agenti in modalità sliding-window. I
+        sistemi RAG [6] introducono latenza di recupero e richiedono infrastrutture di embedding. Lo studio ETH Zurigo
+        2026 [4] ha riscontrato che i file di contesto generati da LLM (AGENTS.md) peggiorano il successo del compito
+        del 3% e aumentano i costi di oltre il 20%, mentre i file scritti da umani offrono solo un guadagno del 4%.</p>
 
-<p>Proponiamo un approccio complementare: incorporare il contesto <em>dentro il codice</em>, a ogni livello, in modo che qualsiasi frammento letto da un agente sia già autosufficiente.</p>
+      <p>Proponiamo un approccio complementare: incorporare il contesto <em>dentro il codice</em>, a ogni livello, in
+        modo che qualsiasi frammento letto da un agente sia già autosufficiente.</p>
 
-<p class="ni"><strong>Contributi:</strong></p>
-<p class="ni">(1) Il <strong>CodeDNA Annotation Standard v0.5</strong>: un protocollo di annotazione in-source a tre livelli, language-agnostic.</p>
-<p class="ni">(2) Un'analogia biologica che motiva il principio di ridondanza olografica dello standard.</p>
-<p class="ni">(3) Due <strong>benchmark agentici live</strong> (11 e 105 file) con Gemini 2.5 Flash e function-calling tools su codebase reali su disco.</p>
-<p class="ni">(4) Evidenza di <strong>−25–29% di chiamate agli strumenti</strong> e zero diagnosi errate con CodeDNA.</p>
-<p class="ni">(5) Rilascio open-source di spec, codice benchmark e file di integrazione AI.</p>
+      <p class="ni"><strong>Contributi:</strong></p>
+      <p class="ni">(1) Il <strong>CodeDNA Annotation Standard v0.5</strong>: un protocollo di annotazione in-source a
+        tre livelli, language-agnostic.</p>
+      <p class="ni">(2) Un'analogia biologica che motiva il principio di ridondanza olografica dello standard.</p>
+      <p class="ni">(3) Due <strong>benchmark agentici live</strong> (11 e 105 file) con Gemini 2.5 Flash e
+        function-calling tools su codebase reali su disco.</p>
+      <p class="ni">(4) Evidenza di <strong>−25–29% di chiamate agli strumenti</strong> e zero diagnosi errate con
+        CodeDNA.</p>
+      <p class="ni">(5) Rilascio open-source di spec, codice benchmark e file di integrazione AI.</p>
 
-<!-- 2. LAVORI CORRELATI -->
-<h2 class="section">2. Lavori Correlati</h2>
+      <!-- 2. LAVORI CORRELATI -->
+      <h2 class="section">2. Lavori Correlati</h2>
 
-<h3 class="subsection">2.1 Benchmark Multi-File per Agenti</h3>
-<p class="ni"><strong>SWE-bench</strong> [1] valuta gli LLM su 2.294 issue GitHub reali su 12 repository Python, stabilendo che il coordinamento multi-file è il collo di bottiglia principale. <strong>LoCoBench-Agent</strong> [2] (novembre 2025) offre il parallelo metodologico più prossimo al nostro lavoro: valuta agenti in scenari di ingegneria del software long-context con 8.000 task e misura esplicitamente l'<em>efficienza nell'uso degli strumenti</em> — la stessa metrica di CodeDNA. <strong>PRDBench</strong> [3] (ottobre 2025, AAMAS 2026) usa 50 progetti Python reali con Product Requirement Documents e Agent-as-a-Judge, confermando che gli agenti sovraesplorano quando la struttura del codebase è opaca. <strong>HumanEval</strong> [5] misura la sintesi di singole funzioni da docstring: il suo <em>pass@k</em> è ortogonale alla navigazione cross-file, non competitivo.</p>
+      <h3 class="subsection">2.1 Benchmark Multi-File per Agenti</h3>
+      <p class="ni"><strong>SWE-bench</strong> [1] valuta gli LLM su 2.294 issue GitHub reali su 12 repository Python,
+        stabilendo che il coordinamento multi-file è il collo di bottiglia principale. <strong>LoCoBench-Agent</strong>
+        [2] (novembre 2025) offre il parallelo metodologico più prossimo al nostro lavoro: valuta agenti in scenari di
+        ingegneria del software long-context con 8.000 task e misura esplicitamente l'<em>efficienza nell'uso degli
+          strumenti</em> — la stessa metrica di CodeDNA. <strong>PRDBench</strong> [3] (ottobre 2025, AAMAS 2026) usa 50
+        progetti Python reali con Product Requirement Documents e Agent-as-a-Judge, confermando che gli agenti
+        sovraesplorano quando la struttura del codebase è opaca. <strong>HumanEval</strong> [5] misura la sintesi di
+        singole funzioni da docstring: il suo <em>pass@k</em> è ortogonale alla navigazione cross-file, non competitivo.
+      </p>
 
-<h3 class="subsection">2.2 Gestione del Contesto per Agenti LLM</h3>
-<p class="ni"><strong>RAG</strong> [6] recupera chunk rilevanti da un vector store a tempo di inferenza. Applicato al codice, la qualità del recupero dipende dalla similarità degli embedding, che può non allinearsi alla rilevanza architetturale. I <strong>file di regole</strong> (CLAUDE.md [10], CursorRules, AGENTS.md) impongono convenzioni a livello di progetto ma sono invisibili agli agenti in modalità sliding-window. Lo studio ETH Zurigo [4] fornisce la prova più forte contro l'approccio a file esterni. <strong>MemGPT</strong> [7] mantiene una memoria compressa tra i turni, ma una cronologia di letture precedenti non dice a un agente cosa leggere <em>dopo</em>. Gli approcci basati su knowledge graph (Tongyi Lingma [11]) usano la traversata del grafo per esporre le relazioni cross-modulo, ma richiedono infrastrutture esterne. <strong>Il differenziatore chiave di CodeDNA</strong>: il grafo di navigazione è co-locato con il codice stesso, non richiede sistemi di recupero e sopravvive in qualsiasi finestra sliding.</p>
+      <h3 class="subsection">2.2 Gestione del Contesto per Agenti LLM</h3>
+      <p class="ni"><strong>RAG</strong> [6] recupera chunk rilevanti da un vector store a tempo di inferenza. Applicato
+        al codice, la qualità del recupero dipende dalla similarità degli embedding, che può non allinearsi alla
+        rilevanza architetturale. I <strong>file di regole</strong> (CLAUDE.md [10], CursorRules, AGENTS.md) impongono
+        convenzioni a livello di progetto ma sono invisibili agli agenti in modalità sliding-window. Lo studio ETH
+        Zurigo [4] fornisce la prova più forte contro l'approccio a file esterni. <strong>MemGPT</strong> [7] mantiene
+        una memoria compressa tra i turni, ma una cronologia di letture precedenti non dice a un agente cosa leggere
+        <em>dopo</em>. Gli approcci basati su knowledge graph (Tongyi Lingma [11]) usano la traversata del grafo per
+        esporre le relazioni cross-modulo, ma richiedono infrastrutture esterne. <strong>Il differenziatore chiave di
+          CodeDNA</strong>: il grafo di navigazione è co-locato con il codice stesso, non richiede sistemi di recupero e
+        sopravvive in qualsiasi finestra sliding.
+      </p>
 
-<h3 class="subsection">2.3 Standard di Annotazione e Documentazione</h3>
-<p class="ni">Gli standard di documentazione (docstring, JSDoc, Doxygen, Literate Programming [8]) si concentrano sulla leggibilità umana e non codificano semantica di navigazione cross-file né vincoli specifici per gli agenti. I sistemi di annotazione dei tipi (PEP 484, TypeScript) codificano contratti di tipo ma non architetturali. CodeDNA si distingue progettando le annotazioni come un <em>protocollo di navigazione machine-readable</em> che punta ai fail mode degli agenti LLM, non ai lettori umani.</p>
+      <h3 class="subsection">2.3 Standard di Annotazione e Documentazione</h3>
+      <p class="ni">Gli standard di documentazione (docstring, JSDoc, Doxygen, Literate Programming [8]) si concentrano
+        sulla leggibilità umana e non codificano semantica di navigazione cross-file né vincoli specifici per gli
+        agenti. I sistemi di annotazione dei tipi (PEP 484, TypeScript) codificano contratti di tipo ma non
+        architetturali. CodeDNA si distingue progettando le annotazioni come un <em>protocollo di navigazione
+          machine-readable</em> che punta ai fail mode degli agenti LLM, non ai lettori umani.</p>
 
-<!-- 3. LO STANDARD CODEDNA -->
-<h2 class="section">3. Lo Standard CodeDNA v0.5</h2>
+      <!-- 3. LO STANDARD CODEDNA -->
+      <h2 class="section">3. Lo Standard CodeDNA v0.5</h2>
 
-<h3 class="subsection">3.1 Analogia Biologica</h3>
+      <h3 class="subsection">3.1 Analogia Biologica</h3>
 
-<p class="ni">Il nome <em>CodeDNA</em> cattura il principio di design dello standard attraverso un'analogia con la biologia molecolare. Il DNA biologico codifica il progetto completo dell'organismo in <em>ogni cellula</em>: ogni nucleo cellulare contiene il genoma completo, non solo le istruzioni per la funzione specializzata della cellula stessa. Questa ridondanza significa che ogni cellula — indipendentemente dalla sua posizione o contesto — può essere letta dalla giusta macchinaria e fornire informazioni architetturali sull'intero organismo.</p>
+      <p class="ni">Il nome <em>CodeDNA</em> cattura il principio di design dello standard attraverso un'analogia con la
+        biologia molecolare. Il DNA biologico codifica il progetto completo dell'organismo in <em>ogni cellula</em>:
+        ogni nucleo cellulare contiene il genoma completo, non solo le istruzioni per la funzione specializzata della
+        cellula stessa. Questa ridondanza significa che ogni cellula — indipendentemente dalla sua posizione o contesto
+        — può essere letta dalla giusta macchinaria e fornire informazioni architetturali sull'intero organismo.</p>
 
-<p>CodeDNA applica lo stesso principio al software: ogni file sorgente codifica non solo la propria logica, ma anche la propria <em>posizione nell'organismo architetturale</em> — da cosa dipende, chi dipende da esso, quali contratti deve rispettare. I tre livelli rispecchiano tre scale di codifica biologica:</p>
+      <p>CodeDNA applica lo stesso principio al software: ogni file sorgente codifica non solo la propria logica, ma
+        anche la propria <em>posizione nell'organismo architetturale</em> — da cosa dipende, chi dipende da esso, quali
+        contratti deve rispettare. I tre livelli rispecchiano tre scale di codifica biologica:</p>
 
-<div class="dna-box">
-  <span class="dna-title">Tabella A. Analogia DNA biologico ↔ CodeDNA</span>
-  <div class="dna-row"><span class="dna-l">Concetto biologico</span><span class="dna-r"><strong>Equivalente CodeDNA</strong></span></div>
-  <div class="dna-row"><span class="dna-l">Genoma completo in ogni cellula</span><span class="dna-r">Module header L1: posizione architetturale completa in ogni file</span></div>
-  <div class="dna-row"><span class="dna-l">Gene = unità funzionale locale</span><span class="dna-r">Docstring di funzione L2: contratto locale + dipendenze cross-file</span></div>
-  <div class="dna-row"><span class="dna-l">Codone = unità minima di codifica</span><span class="dna-r">Commento inline L3: 1 riga di contesto nel punto di rischio</span></div>
-  <div class="dna-row"><span class="dna-l">Ridondanza olografica</span><span class="dna-r">Qualsiasi estratto di 10 righe porta contesto sufficiente per navigare</span></div>
-  <div class="dna-row"><span class="dna-l">Nessuna consultazione esterna</span><span class="dna-r">Zero latenza di recupero; il contesto viaggia con il codice</span></div>
-</div>
+      <div class="dna-box">
+        <span class="dna-title">Tabella A. Analogia DNA biologico ↔ CodeDNA</span>
+        <div class="dna-row"><span class="dna-l">Concetto biologico</span><span class="dna-r"><strong>Equivalente
+              CodeDNA</strong></span></div>
+        <div class="dna-row"><span class="dna-l">Genoma completo in ogni cellula</span><span class="dna-r">Module header
+            L1: posizione architetturale completa in ogni file</span></div>
+        <div class="dna-row"><span class="dna-l">Gene = unità funzionale locale</span><span class="dna-r">Docstring di
+            funzione L2: contratto locale + dipendenze cross-file</span></div>
+        <div class="dna-row"><span class="dna-l">Codone = unità minima di codifica</span><span class="dna-r">Commento
+            inline L3: 1 riga di contesto nel punto di rischio</span></div>
+        <div class="dna-row"><span class="dna-l">Ridondanza olografica</span><span class="dna-r">Qualsiasi estratto di
+            10 righe porta contesto sufficiente per navigare</span></div>
+        <div class="dna-row"><span class="dna-l">Nessuna consultazione esterna</span><span class="dna-r">Zero latenza di
+            recupero; il contesto viaggia con il codice</span></div>
+      </div>
 
-<p>La proprietà olografica — tagliare un ologramma a metà produce due immagini complete più piccole, non due metà — spiega la robustezza di CodeDNA alla sliding-window: anche quando un LLM legge solo le righe 50–80 di un file, incontra docstring di funzione L2 e commenti inline L3 che riaffermano le regole architetturali critiche esattamente nel punto di rischio.</p>
+      <p>La proprietà olografica — tagliare un ologramma a metà produce due immagini complete più piccole, non due metà
+        — spiega la robustezza di CodeDNA alla sliding-window: anche quando un LLM legge solo le righe 50–80 di un file,
+        incontra docstring di funzione L2 e commenti inline L3 che riaffermano le regole architetturali critiche
+        esattamente nel punto di rischio.</p>
 
-<h3 class="subsection">3.2 Livello 1 — Module Header</h3>
-<p class="ni">Una module docstring Python-nativa che deve essere il primo contenuto in ogni file. Codifica la posizione architetturale completa del file in circa 70 token.</p>
+      <h3 class="subsection">3.2 Livello 1 — Module Header</h3>
+      <p class="ni">Una module docstring Python-nativa che deve essere il primo contenuto in ogni file. Codifica la
+        posizione architetturale completa del file in circa 70 token.</p>
 
-<pre>"""analytics/revenue.py — Aggregazione ricavi mensili.
+      <pre>"""analytics/revenue.py — Aggregazione ricavi mensili.
 
 deps:    payments/models.py → get_invoices_for_period
          tenants/models.py → is_suspended
@@ -148,15 +418,21 @@ rules:   get_invoices_for_period() restituisce TUTTI i tenant,
          PRIMA di aggregare i ricavi
 """</pre>
 
-<p>L'uso del formato triple-quote nativo di Python (invece di un blocco di commenti personalizzato) massimizza la comprensione degli LLM: i modelli addestrati su miliardi di file Python applicano il pattern-matching esistente alla struttura della docstring, invece di analizzare un protocollo non familiare.</p>
+      <p>L'uso del formato triple-quote nativo di Python (invece di un blocco di commenti personalizzato) massimizza la
+        comprensione degli LLM: i modelli addestrati su miliardi di file Python applicano il pattern-matching esistente
+        alla struttura della docstring, invece di analizzare un protocollo non familiare.</p>
 
-<p>Il campo <code>rules</code> codifica vincoli rigidi che si applicano a ogni modifica nel file. A differenza delle annotazioni inline (a livello di funzione), <code>rules</code> si applica globalmente, agendo come il genoma della cellula: disponibile ovunque nel file senza richiedere al lettore di navigare verso una funzione specifica.</p>
+      <p>Il campo <code>rules</code> codifica vincoli rigidi che si applicano a ogni modifica nel file. A differenza
+        delle annotazioni inline (a livello di funzione), <code>rules</code> si applica globalmente, agendo come il
+        genoma della cellula: disponibile ovunque nel file senza richiedere al lettore di navigare verso una funzione
+        specifica.</p>
 
-<h3 class="subsection">3.3 Livello 2 — Annotazioni Sliding-Window</h3>
-<p class="ni">Gli agenti spesso estraggono 50–100 righe dal mezzo di un file, bypassando il module header. Il Livello 2 incorpora cues di navigazione a livello di funzione attraverso due sotto-livelli.</p>
+      <h3 class="subsection">3.3 Livello 2 — Annotazioni Sliding-Window</h3>
+      <p class="ni">Gli agenti spesso estraggono 50–100 righe dal mezzo di un file, bypassando il module header. Il
+        Livello 2 incorpora cues di navigazione a livello di funzione attraverso due sotto-livelli.</p>
 
-<p><strong>Livello 2a — Docstring di funzione</strong> (stile Google):</p>
-<pre>def monthly_revenue(year: int, month: int) -> dict:
+      <p><strong>Livello 2a — Docstring di funzione</strong> (stile Google):</p>
+      <pre>def monthly_revenue(year: int, month: int) -> dict:
     """Aggrega le fatture pagate nei totali mensili.
 
     Dipende: payments.models.get_invoices_for_period
@@ -164,18 +440,22 @@ rules:   get_invoices_for_period() restituisce TUTTI i tenant,
     Regole:  DEVE filtrare is_suspended() PRIMA di sommare.
     """</pre>
 
-<p><strong>Livello 2b — Commento inline al sito di chiamata</strong> (ultima linea di difesa):</p>
-<pre>    # include tenant sospesi — filtrare sotto
+      <p><strong>Livello 2b — Commento inline al sito di chiamata</strong> (ultima linea di difesa):</p>
+      <pre>    # include tenant sospesi — filtrare sotto
     raw = get_invoices_for_period(year, month)
     # ZONA BUG: fatture sospesi incluse nel totale
     total = sum(i['amount_cents'] for i in raw)</pre>
 
-<p>Il commento al sito di chiamata garantisce che anche una finestra di 10 righe centrata sulla chiamata pericolosa porti il contesto critico. Questa è la codifica a livello di codone: l'unità più piccola che trasmette ancora significato architetturale.</p>
+      <p>Il commento al sito di chiamata garantisce che anche una finestra di 10 righe centrata sulla chiamata
+        pericolosa porti il contesto critico. Questa è la codifica a livello di codone: l'unità più piccola che
+        trasmette ancora significato architetturale.</p>
 
-<h3 class="subsection">3.4 Livello 3 — Naming Semantico</h3>
-<p class="ni">I nomi delle variabili codificano tipo, shape, dominio e origine. Formato: <code>&lt;tipo&gt;_&lt;shape&gt;_&lt;dominio&gt;_&lt;origine&gt;</code>.</p>
+      <h3 class="subsection">3.4 Livello 3 — Naming Semantico</h3>
+      <p class="ni">I nomi delle variabili codificano tipo, shape, dominio e origine. Formato:
+        <code>&lt;tipo&gt;_&lt;shape&gt;_&lt;dominio&gt;_&lt;origine&gt;</code>.
+      </p>
 
-<pre># ❌ Standard — l'agente deve tracciare per capire
+      <pre># ❌ Standard — l'agente deve tracciare per capire
 data  = get_users()
 price = request.json["price"]
 
@@ -183,169 +463,416 @@ price = request.json["price"]
 list_dict_users_from_db  = get_users()
 int_cents_price_from_req = request.json["price"]</pre>
 
-<!-- 4. DESIGN DEL BENCHMARK -->
-<h2 class="section">4. Design del Benchmark</h2>
+      <!-- 4. DESIGN DEL BENCHMARK -->
+      <h2 class="section">4. Design del Benchmark</h2>
 
-<p class="ni">Misuriamo l'<em>efficienza di navigazione</em> — quante interazioni con gli strumenti richiede un agente autonomo per localizzare correttamente la causa radice di un bug in un codebase multi-file — in due contesti di complessità crescente.</p>
+      <p class="ni">Misuriamo l'<em>efficienza di navigazione</em> — quante interazioni con gli strumenti richiede un
+        agente autonomo per localizzare correttamente la causa radice di un bug in un codebase multi-file — in due
+        contesti di complessità crescente.</p>
 
-<h3 class="subsection">4.1 Implementazione dell'Agente</h3>
-<p class="ni">Abbiamo implementato un agente autonomo con Gemini 2.5 Flash (temperatura 0, deterministico) con tre strumenti function-calling: <code>read_file(path)</code>, <code>list_files(directory)</code> e <code>grep(pattern, directory)</code>. Nessun contenuto di file viene pre-caricato. L'agente gira fino al completamento (max 20 turni). Metriche: <strong>chiamate agli strumenti totali</strong>, <strong>read_file</strong>, <strong>grep</strong>, <strong>turni di conversazione</strong>, e <strong>found_correct</strong> (booleano).</p>
+      <h3 class="subsection">4.1 Implementazione dell'Agente</h3>
+      <p class="ni">Abbiamo implementato un agente autonomo con Gemini 2.5 Flash (temperatura 0, deterministico) con tre
+        strumenti function-calling: <code>read_file(path)</code>, <code>list_files(directory)</code> e
+        <code>grep(pattern, directory)</code>. Nessun contenuto di file viene pre-caricato. L'agente gira fino al
+        completamento (max 20 turni). Metriche: <strong>chiamate agli strumenti totali</strong>,
+        <strong>read_file</strong>, <strong>grep</strong>, <strong>turni di conversazione</strong>, e
+        <strong>found_correct</strong> (booleano).
+      </p>
 
-<h3 class="subsection">4.2 Benchmark 1 — Codebase da 11 File</h3>
-<p class="ni">Abbiamo generato due versioni di un'applicazione Python SaaS da 11 file. <strong>Control:</strong> Python standard, zero annotazioni. <strong>CodeDNA:</strong> logica identica, ogni file annotato secondo v0.5. Le annotazioni descrivono solo l'architettura — nessun indizio sul bug.</p>
+      <h3 class="subsection">4.2 Benchmark 1 — Codebase da 11 File</h3>
+      <p class="ni">Abbiamo generato due versioni di un'applicazione Python SaaS da 11 file. <strong>Control:</strong>
+        Python standard, zero annotazioni. <strong>CodeDNA:</strong> logica identica, ogni file annotato secondo v0.5.
+        Le annotazioni descrivono solo l'architettura — nessun indizio sul bug.</p>
 
-<p><strong>Bug piantato (B0).</strong> Il sistema utenti implementa la <em>soft delete</em>: <code>delete_user()</code> imposta <code>users.deleted_at = NOW()</code> senza rimuovere la riga. <code>orders/orders.py::get_active_orders()</code> non effettua join sulla tabella utenti, restituendo tutti gli ordini non cancellati indipendentemente dallo stato di cancellazione dell'utente, gonfiando la dashboard dei ricavi.</p>
+      <p><strong>Bug piantato (B0).</strong> Il sistema utenti implementa la <em>soft delete</em>:
+        <code>delete_user()</code> imposta <code>users.deleted_at = NOW()</code> senza rimuovere la riga.
+        <code>orders/orders.py::get_active_orders()</code> non effettua join sulla tabella utenti, restituendo tutti gli
+        ordini non cancellati indipendentemente dallo stato di cancellazione dell'utente, gonfiando la dashboard dei
+        ricavi.
+      </p>
 
-<h3 class="subsection">4.3 Benchmark 2 — Piattaforma Enterprise da 105 File</h3>
-<p class="ni">Abbiamo generato una piattaforma marketplace enterprise da 105 file (MarketCore) che comprende 57 moduli core e 48 file distractor realistici su domain <code>analytics</code>, <code>api</code>, <code>core</code>, <code>orders</code>, <code>payments</code>, <code>reports</code>, <code>services</code>, <code>utils</code> e altri. I file distractor contengono funzioni con nomi simili alla catena del bug (es. <code>get_X_for_period</code>, <code>list_active_X</code>), rendendo la navigazione basata su grep rumorosa.</p>
+      <h3 class="subsection">4.3 Benchmark 2 — Piattaforma Enterprise da 105 File</h3>
+      <p class="ni">Abbiamo generato una piattaforma marketplace enterprise da 105 file (MarketCore) che comprende 57
+        moduli core e 48 file distractor realistici su domain <code>analytics</code>, <code>api</code>,
+        <code>core</code>, <code>orders</code>, <code>payments</code>, <code>reports</code>, <code>services</code>,
+        <code>utils</code> e altri. I file distractor contengono funzioni con nomi simili alla catena del bug (es.
+        <code>get_X_for_period</code>, <code>list_active_X</code>), rendendo la navigazione basata su grep rumorosa.
+      </p>
 
-<p>Versione Control: 1.461 righe, zero annotazioni. Versione CodeDNA: 2.437 righe. Tre bug piantati:</p>
-<p class="ni">• <strong>B1.</strong> <code>analytics/revenue.py</code> somma le fatture dei tenant sospesi senza filtrarle.</p>
-<p class="ni">• <strong>B3.</strong> <code>api/products.py</code> controlla <code>user['is_admin']</code> invece di <code>payload['role'] == 'admin'</code>.</p>
-<p class="ni">• <strong>B4.</strong> <code>orders/fulfillment.py</code> non chiama <code>decrement_stock()</code> dopo la conferma dell'ordine.</p>
+      <p>Versione Control: 1.461 righe, zero annotazioni. Versione CodeDNA: 2.437 righe. Tre bug piantati:</p>
+      <p class="ni">• <strong>B1.</strong> <code>analytics/revenue.py</code> somma le fatture dei tenant sospesi senza
+        filtrarle.</p>
+      <p class="ni">• <strong>B3.</strong> <code>api/products.py</code> controlla <code>user['is_admin']</code> invece
+        di <code>payload['role'] == 'admin'</code>.</p>
+      <p class="ni">• <strong>B4.</strong> <code>orders/fulfillment.py</code> non chiama <code>decrement_stock()</code>
+        dopo la conferma dell'ordine.</p>
 
-<!-- 5. RISULTATI -->
-<h2 class="section">5. Risultati</h2>
+      <!-- 5. RISULTATI -->
+      <h2 class="section">5. Risultati</h2>
 
-<h3 class="subsection">5.1 Benchmark 1 (11 file)</h3>
-<p class="ni">Entrambi gli agenti hanno identificato correttamente <code>orders/orders.py</code>.</p>
+      <h3 class="subsection">5.1 Benchmark 1 (11 file)</h3>
+      <p class="ni">Entrambi gli agenti hanno identificato correttamente <code>orders/orders.py</code>.</p>
 
-<p class="tcap"><span class="tnum">Tabella 1.</span> Navigazione agente — B0, codebase da 11 file.</p>
-<table>
-  <thead><tr><th>Metrica</th><th>Control</th><th>CodeDNA</th><th>Δ</th></tr></thead>
-  <tbody>
-    <tr><td>Chiamate totali strumenti</td><td>4</td><td>3</td><td class="green">−25%</td></tr>
-    <tr><td>Chiamate read_file</td><td>3</td><td>2</td><td class="green">−33%</td></tr>
-    <tr><td>Chiamate grep</td><td>0</td><td>0</td><td>—</td></tr>
-    <tr><td>Turni conversazione</td><td>5</td><td>4</td><td class="green">−20%</td></tr>
-    <tr><td>Causa radice corretta</td><td>✓ Sì</td><td>✓ Sì</td><td>Uguale</td></tr>
-  </tbody>
-</table>
+      <p class="tcap"><span class="tnum">Tabella 1.</span> Navigazione agente — B0, codebase da 11 file.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Metrica</th>
+            <th>Control</th>
+            <th>CodeDNA</th>
+            <th>Δ</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Chiamate totali strumenti</td>
+            <td>4</td>
+            <td>3</td>
+            <td class="green">−25%</td>
+          </tr>
+          <tr>
+            <td>Chiamate read_file</td>
+            <td>3</td>
+            <td>2</td>
+            <td class="green">−33%</td>
+          </tr>
+          <tr>
+            <td>Chiamate grep</td>
+            <td>0</td>
+            <td>0</td>
+            <td>—</td>
+          </tr>
+          <tr>
+            <td>Turni conversazione</td>
+            <td>5</td>
+            <td>4</td>
+            <td class="green">−20%</td>
+          </tr>
+          <tr>
+            <td>Causa radice corretta</td>
+            <td>✓ Sì</td>
+            <td>✓ Sì</td>
+            <td>Uguale</td>
+          </tr>
+        </tbody>
+      </table>
 
-<h3 class="subsection">5.2 Benchmark 2 (105 file)</h3>
+      <h3 class="subsection">5.2 Benchmark 2 (105 file)</h3>
 
-<p class="tcap"><span class="tnum">Tabella 2.</span> Navigazione agente — B1/B3/B4, codebase enterprise da 105 file.</p>
-<table>
-  <thead><tr><th>Bug</th><th>Chiamate Ctrl</th><th>Chiamate DNA</th><th>Δ</th><th>Corretto</th></tr></thead>
-  <tbody>
-    <tr><td>B1 ricavi_sospesi</td><td>5</td><td>3</td><td class="green">−40%</td><td>Ctrl ❌ · DNA ✅</td></tr>
-    <tr><td>B3 permesso_admin</td><td>3</td><td>3</td><td>—</td><td>Entrambi ✅</td></tr>
-    <tr><td>B4 fulfillment_inv</td><td>6</td><td>4</td><td class="green">−33%</td><td>Entrambi ✅</td></tr>
-    <tr><td><strong>Totale</strong></td><td><strong>14</strong></td><td><strong>10</strong></td><td class="green"><strong>−29%</strong></td><td>1 errore · 0 errori</td></tr>
-  </tbody>
-</table>
+      <p class="tcap"><span class="tnum">Tabella 2.</span> Navigazione agente — B1/B3/B4, codebase enterprise da 105
+        file.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Bug</th>
+            <th>Chiamate Ctrl</th>
+            <th>Chiamate DNA</th>
+            <th>Δ</th>
+            <th>Corretto</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>B1 ricavi_sospesi</td>
+            <td>5</td>
+            <td>3</td>
+            <td class="green">−40%</td>
+            <td>Ctrl ❌ · DNA ✅</td>
+          </tr>
+          <tr>
+            <td>B3 permesso_admin</td>
+            <td>3</td>
+            <td>3</td>
+            <td>—</td>
+            <td>Entrambi ✅</td>
+          </tr>
+          <tr>
+            <td>B4 fulfillment_inv</td>
+            <td>6</td>
+            <td>4</td>
+            <td class="green">−33%</td>
+            <td>Entrambi ✅</td>
+          </tr>
+          <tr>
+            <td><strong>Totale</strong></td>
+            <td><strong>14</strong></td>
+            <td><strong>10</strong></td>
+            <td class="green"><strong>−29%</strong></td>
+            <td>1 errore · 0 errori</td>
+          </tr>
+        </tbody>
+      </table>
 
-<div class="key-result">
-  <strong>Risultato chiave:</strong> Su entrambi i benchmark, CodeDNA ha ridotto le chiamate agli strumenti del 25–29% ed eliminato le identificazioni errate della causa radice (0 vs. 1 nel benchmark enterprise). Su B1, l'agente Control ha identificato <code>payments/models.py</code> — la posizione della query SQL sottostante — invece di <code>analytics/revenue.py</code> — il file architetturalmente corretto dove il filtro dovrebbe essere applicato. Correggere il livello sbagliato avrebbe rotto altri consumer di <code>get_invoices_for_period()</code>.
-</div>
+      <div class="key-result">
+        <strong>Risultato chiave:</strong> Su entrambi i benchmark, CodeDNA ha ridotto le chiamate agli strumenti del
+        25–29% ed eliminato le identificazioni errate della causa radice (0 vs. 1 nel benchmark enterprise). Su B1,
+        l'agente Control ha identificato <code>payments/models.py</code> — la posizione della query SQL sottostante —
+        invece di <code>analytics/revenue.py</code> — il file architetturalmente corretto dove il filtro dovrebbe essere
+        applicato. Correggere il livello sbagliato avrebbe rotto altri consumer di
+        <code>get_invoices_for_period()</code>.
+      </div>
 
-<h3 class="subsection">5.3 Analisi del Percorso di Navigazione</h3>
-<p class="ni"><strong>B1 Control (5 chiamate, errata):</strong> <code>list_files</code> → grep("revenue") → grep("invoice") → grep("suspended") → <code>read_file(payments/models.py)</code>. Tre chiamate grep furono necessarie perché il codebase da 105 file contiene 12 file con funzioni legate ai ricavi; l'agente usò grep come bussola, aprendo un file a metà catena invece che seguire il percorso architetturale.</p>
+      <h3 class="subsection">5.3 Analisi del Percorso di Navigazione</h3>
+      <p class="ni"><strong>B1 Control (5 chiamate, errata):</strong> <code>list_files</code> → grep("revenue") →
+        grep("invoice") → grep("suspended") → <code>read_file(payments/models.py)</code>. Tre chiamate grep furono
+        necessarie perché il codebase da 105 file contiene 12 file con funzioni legate ai ricavi; l'agente usò grep come
+        bussola, aprendo un file a metà catena invece che seguire il percorso architetturale.</p>
 
-<p class="ni"><strong>B1 CodeDNA (3 chiamate, corretta):</strong> <code>list_files</code> → grep("revenue") → <code>read_file(analytics/revenue.py)</code>. Il campo <code>rules</code> del module header — <em>"get_invoices_for_period() restituisce TUTTI i tenant, NESSUN filtro → DEVE chiamare is_suspended() PRIMA di aggregare"</em> — e il commento inline — <em>"include tenant sospesi — filtrare sotto"</em> — hanno fornito all'agente informazioni sufficienti per produrre una diagnosi corretta senza ulteriori letture.</p>
+      <p class="ni"><strong>B1 CodeDNA (3 chiamate, corretta):</strong> <code>list_files</code> → grep("revenue") →
+        <code>read_file(analytics/revenue.py)</code>. Il campo <code>rules</code> del module header —
+        <em>"get_invoices_for_period() restituisce TUTTI i tenant, NESSUN filtro → DEVE chiamare is_suspended() PRIMA di
+          aggregare"</em> — e il commento inline — <em>"include tenant sospesi — filtrare sotto"</em> — hanno fornito
+        all'agente informazioni sufficienti per produrre una diagnosi corretta senza ulteriori letture.
+      </p>
 
-<h3 class="subsection">5.4 Proiezione di Scalabilità</h3>
+      <h3 class="subsection">5.4 Proiezione di Scalabilità</h3>
 
-<p class="tcap"><span class="tnum">Tabella 3.</span> Risparmio proiettato su più sotto-task (−29% costante).</p>
-<table>
-  <thead><tr><th>Sotto-task</th><th>Chiamate Control</th><th>Chiamate CodeDNA</th><th>Risparmiate</th></tr></thead>
-  <tbody>
-    <tr><td>10</td><td>50</td><td>35</td><td>15</td></tr>
-    <tr><td>50</td><td>250</td><td>177</td><td>73</td></tr>
-    <tr><td>100</td><td>500</td><td>355</td><td>145</td></tr>
-  </tbody>
-</table>
+      <p class="tcap"><span class="tnum">Tabella 3.</span> Risparmio proiettato su più sotto-task (−29% costante).</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Sotto-task</th>
+            <th>Chiamate Control</th>
+            <th>Chiamate CodeDNA</th>
+            <th>Risparmiate</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>10</td>
+            <td>50</td>
+            <td>35</td>
+            <td>15</td>
+          </tr>
+          <tr>
+            <td>50</td>
+            <td>250</td>
+            <td>177</td>
+            <td>73</td>
+          </tr>
+          <tr>
+            <td>100</td>
+            <td>500</td>
+            <td>355</td>
+            <td>145</td>
+          </tr>
+        </tbody>
+      </table>
 
-<!-- 6. DISCUSSIONE -->
-<h2 class="section">6. Discussione</h2>
+      <!-- 6. DISCUSSIONE -->
+      <h2 class="section">6. Discussione</h2>
 
-<h3 class="subsection">6.1 Posizionamento rispetto ai Lavori Correlati</h3>
-<p class="tcap"><span class="tnum">Tabella 4.</span> Mappatura Problema–Soluzione.</p>
-<table>
-  <thead><tr><th>Lavoro</th><th>Problema esposto</th><th>Risposta CodeDNA</th></tr></thead>
-  <tbody>
-    <tr><td>SWE-bench [1]</td><td>Navigazione multi-file è il collo di bottiglia</td><td>Riduce il costo di navigazione via grafo embedded</td></tr>
-    <tr><td>LoCoBench [2]</td><td>Inefficienza nell'uso strumenti</td><td>−25–29% di chiamate agli strumenti</td></tr>
-    <tr><td>PRDBench [3]</td><td>Sovraesplorazione su codebase opachi</td><td>Struttura trasparente elimina l'esplorazione cieca</td></tr>
-    <tr><td>ETH Zurigo [4]</td><td>File di contesto esterni degradano −3%, costi +20%</td><td>Contesto embedded viaggia con il codice</td></tr>
-    <tr><td>MemGPT [7]</td><td>LLM dimentica contesto tra i turni</td><td>Nessuna memoria necessaria: contesto è nel codice</td></tr>
-    <tr><td>RAG [6]</td><td>Latenza di recupero e infrastruttura embedding</td><td>Zero recupero: contesto è già al momento della lettura</td></tr>
-  </tbody>
-</table>
+      <h3 class="subsection">6.1 Posizionamento rispetto ai Lavori Correlati</h3>
+      <p class="tcap"><span class="tnum">Tabella 4.</span> Mappatura Problema–Soluzione.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Lavoro</th>
+            <th>Problema esposto</th>
+            <th>Risposta CodeDNA</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>SWE-bench [1]</td>
+            <td>Navigazione multi-file è il collo di bottiglia</td>
+            <td>Riduce il costo di navigazione via grafo embedded</td>
+          </tr>
+          <tr>
+            <td>LoCoBench [2]</td>
+            <td>Inefficienza nell'uso strumenti</td>
+            <td>−25–29% di chiamate agli strumenti</td>
+          </tr>
+          <tr>
+            <td>PRDBench [3]</td>
+            <td>Sovraesplorazione su codebase opachi</td>
+            <td>Struttura trasparente elimina l'esplorazione cieca</td>
+          </tr>
+          <tr>
+            <td>ETH Zurigo [4]</td>
+            <td>File di contesto esterni degradano −3%, costi +20%</td>
+            <td>Contesto embedded viaggia con il codice</td>
+          </tr>
+          <tr>
+            <td>MemGPT [7]</td>
+            <td>LLM dimentica contesto tra i turni</td>
+            <td>Nessuna memoria necessaria: contesto è nel codice</td>
+          </tr>
+          <tr>
+            <td>RAG [6]</td>
+            <td>Latenza di recupero e infrastruttura embedding</td>
+            <td>Zero recupero: contesto è già al momento della lettura</td>
+          </tr>
+        </tbody>
+      </table>
 
-<h3 class="subsection">6.2 Perché l'Annotazione In-Source Funziona</h3>
-<p class="ni">Il meccanismo rispecchia l'intuizione biologica: quando il contratto che governa una funzione è dichiarato <em>alla funzione</em>, gli agenti capaci non hanno bisogno di recuperarlo dalla sua definizione originale. Il campo <code>rules</code> in <code>analytics/revenue.py</code> ha propagato il contratto del filtro-sospensione a valle, nel luogo esatto in cui era violato, permettendo all'agente CodeDNA di diagnosticare B1 correttamente senza leggere <code>payments/models.py</code>.</p>
+      <h3 class="subsection">6.2 Perché l'Annotazione In-Source Funziona</h3>
+      <p class="ni">Il meccanismo rispecchia l'intuizione biologica: quando il contratto che governa una funzione è
+        dichiarato <em>alla funzione</em>, gli agenti capaci non hanno bisogno di recuperarlo dalla sua definizione
+        originale. Il campo <code>rules</code> in <code>analytics/revenue.py</code> ha propagato il contratto del
+        filtro-sospensione a valle, nel luogo esatto in cui era violato, permettendo all'agente CodeDNA di diagnosticare
+        B1 correttamente senza leggere <code>payments/models.py</code>.</p>
 
-<p>La scoperta ETH Zurigo [4] che i file di contesto generati da LLM <em>degradano</em> le performance motiva precisamente questo approccio: se i file di contesto esterni causano sovraesplorazione, la soluzione non è file migliori ma contesto embedded che arriva <em>con il codice che l'agente avrebbe comunque letto</em>.</p>
+      <p>La scoperta ETH Zurigo [4] che i file di contesto generati da LLM <em>degradano</em> le performance motiva
+        precisamente questo approccio: se i file di contesto esterni causano sovraesplorazione, la soluzione non è file
+        migliori ma contesto embedded che arriva <em>con il codice che l'agente avrebbe comunque letto</em>.</p>
 
-<h3 class="subsection">6.3 Razionale del Formato</h3>
-<p class="ni">La scelta di module docstring Python-native (invece di blocchi di commenti personalizzati) per il Livello 1 è stata validata empiricamente: i modelli addestrati su corpora Python applicano il pattern-matching esistente alla struttura <code>deps:</code> / <code>exports:</code> / <code>rules:</code>. Il formato personalizzato <code># === CODEDNA:0.5 ===</code>, pur essendo parsabile dalla macchina, richiedeva al modello di processare un schema sintattico non familiare, producendo catene di ragionamento marginalmente più lunghe.</p>
+      <h3 class="subsection">6.3 Razionale del Formato</h3>
+      <p class="ni">La scelta di module docstring Python-native (invece di blocchi di commenti personalizzati) per il
+        Livello 1 è stata validata empiricamente: i modelli addestrati su corpora Python applicano il pattern-matching
+        esistente alla struttura <code>deps:</code> / <code>exports:</code> / <code>rules:</code>. Il formato
+        personalizzato <code># === CODEDNA:0.5 ===</code>, pur essendo parsabile dalla macchina, richiedeva al modello
+        di processare un schema sintattico non familiare, producendo catene di ragionamento marginalmente più lunghe.
+      </p>
 
-<h3 class="subsection">6.4 Overhead di Annotazione e il Framing Agentico</h3>
-<p class="ni">Un'obiezione comune agli standard di annotazione è il costo di scrittura e manutenzione. Per CodeDNA, questa obiezione deve essere valutata nel contesto corretto. CodeDNA è progettato per <em>workflow di code generation agentica</em> — ambienti in cui un agente LLM genera e modifica i file sorgente. In questo contesto, l'agente stesso produce i module header e le function docstring come sottoprodotto naturale della generazione. Lo sviluppatore umano non annota 500 file manualmente: l'agente di coding lascia la propria memoria architetturale nel codice mentre scrive. Il costo marginale dell'annotazione si avvicina a zero.</p>
-<p>Questo framing ridefinisce anche cosa <em>è</em> CodeDNA: non uno standard che chiede agli sviluppatori di scrivere più commenti, ma una convenzione che dà agli agenti un formato strutturato in cui registrare la propria comprensione architetturale locale. Lo standard trasforma il codice generato dall'agente da output passivo in un grafo di navigazione attivo e auto-descrittivo per l'agente successivo che lo leggerà.</p>
-<p>Un'osservazione secondaria: i campi strutturati di CodeDNA (<code>deps:</code>, <code>rules:</code>, <code>Depends:</code>) non richiedono nuova sintassi — vivono dentro docstring Python-native. Molte codebase hanno già docstring; CodeDNA aggiunge <em>intenzione di navigazione</em> alla documentazione già esistente. La distinzione tra una docstring standard e una CodeDNA non è sintattica ma semantica: quest'ultima deve essere <em>machine-oriented e navigation-oriented</em>, non solo human-readable.
+      <h3 class="subsection">6.4 Overhead di Annotazione e il Framing Agentico</h3>
+      <p class="ni">Un'obiezione comune agli standard di annotazione è il costo di scrittura e manutenzione. Per
+        CodeDNA, questa obiezione deve essere valutata nel contesto corretto. CodeDNA è progettato per <em>workflow di
+          code generation agentica</em> — ambienti in cui un agente LLM genera e modifica i file sorgente. In questo
+        contesto, l'agente stesso produce i module header e le function docstring come sottoprodotto naturale della
+        generazione. Lo sviluppatore umano non annota 500 file manualmente: l'agente di coding lascia la propria memoria
+        architetturale nel codice mentre scrive. Il costo marginale dell'annotazione si avvicina a zero.</p>
+      <p>Questo framing ridefinisce anche cosa <em>è</em> CodeDNA: non uno standard che chiede agli sviluppatori di
+        scrivere più commenti, ma una convenzione che dà agli agenti un formato strutturato in cui registrare la propria
+        comprensione architetturale locale. Lo standard trasforma il codice generato dall'agente da output passivo in un
+        grafo di navigazione attivo e auto-descrittivo per l'agente successivo che lo leggerà.</p>
+      <p>Un'osservazione secondaria: i campi strutturati di CodeDNA (<code>deps:</code>, <code>rules:</code>,
+        <code>Depends:</code>) non richiedono nuova sintassi — vivono dentro docstring Python-native. Molte codebase
+        hanno già docstring; CodeDNA aggiunge <em>intenzione di navigazione</em> alla documentazione già esistente. La
+        distinzione tra una docstring standard e una CodeDNA non è sintattica ma semantica: quest'ultima deve essere
+        <em>machine-oriented e navigation-oriented</em>, non solo human-readable.
 
-<h3 class="subsection">6.5 Limitazioni</h3>
-<p class="ni"><strong>Dimensione del campione.</strong> La temperatura 0 garantisce il determinismo, ma i risultati su singola esecuzione per bug limitano la confidenza statistica. I lavori futuri dovrebbero variare i seed, i tipi di bug e valutare su task SWE-bench completi con toolchain agentiche reali (Devin-style, Cursor, GPT-tools loop).</p>
-<p><strong>Sincronizzazione delle annotazioni.</strong> La sfida di manutenzione principale non è la <em>scrittura</em> delle annotazioni (in workflow agentici il costo è quasi zero) ma garantire che rimangano <em>consistenti</em> col codice nel tempo. Se un agente modifica una funzione senza aggiornare i campi <code>rules:</code> o <code>Depends:</code>, l'annotazione diventa fuorviante — potenzialmente peggio di nessuna annotazione. Questo sposta il problema di ricerca dal costo di produzione all'<em>enforcement della consistenza</em>: pre-commit hook, validazione CI e obblighi di ri-annotazione lato agente sono le mitigazioni corrette. Le future integrazioni dovrebbero trattare l'annotation drift come modalità di fallimento di primo livello.</p>
-<p><strong>Modello singolo.</strong> I risultati sono specifici a Gemini 2.5 Flash. I modelli con finestre di contesto effettive più lunghe potrebbero mostrare differenze minori su codebase piccole; i risultati su 105 file sono più rappresentativi delle condizioni reali.</p>
-<p><strong>Complessità dei bug.</strong> I bug piantati richiedono la comprensione di uno o due contratti cross-file. I bug che si estendono su cinque o più layer architetturali potrebbero amplificare ulteriormente il vantaggio — un'ipotesi per cui il benchmark enterprise (3 bug, 48 distractor) fornisce evidenza iniziale.</p>
+      <h3 class="subsection">6.5 Limitazioni</h3>
+      <p class="ni"><strong>Dimensione del campione.</strong> La temperatura 0 garantisce il determinismo, ma i
+        risultati su singola esecuzione per bug limitano la confidenza statistica. I lavori futuri dovrebbero variare i
+        seed, i tipi di bug e valutare su task SWE-bench completi con toolchain agentiche reali (Devin-style, Cursor,
+        GPT-tools loop).</p>
+      <p><strong>Sincronizzazione delle annotazioni.</strong> La sfida di manutenzione principale non è la
+        <em>scrittura</em> delle annotazioni (in workflow agentici il costo è quasi zero) ma garantire che rimangano
+        <em>consistenti</em> col codice nel tempo. Se un agente modifica una funzione senza aggiornare i campi
+        <code>rules:</code> o <code>Depends:</code>, l'annotazione diventa fuorviante — potenzialmente peggio di nessuna
+        annotazione. Questo sposta il problema di ricerca dal costo di produzione all'<em>enforcement della
+          consistenza</em>: pre-commit hook, validazione CI e obblighi di ri-annotazione lato agente sono le mitigazioni
+        corrette. Le future integrazioni dovrebbero trattare l'annotation drift come modalità di fallimento di primo
+        livello.
+      </p>
+      <p><strong>Modello singolo.</strong> I risultati sono specifici a Gemini 2.5 Flash. I modelli con finestre di
+        contesto effettive più lunghe potrebbero mostrare differenze minori su codebase piccole; i risultati su 105 file
+        sono più rappresentativi delle condizioni reali.</p>
+      <p><strong>Complessità dei bug.</strong> I bug piantati richiedono la comprensione di uno o due contratti
+        cross-file. I bug che si estendono su cinque o più layer architetturali potrebbero amplificare ulteriormente il
+        vantaggio — un'ipotesi per cui il benchmark enterprise (3 bug, 48 distractor) fornisce evidenza iniziale.</p>
 
-<!-- 7. CONCLUSIONE -->
-<h2 class="section">7. Conclusione</h2>
+      <!-- 7. CONCLUSIONE -->
+      <h2 class="section">7. Conclusione</h2>
 
-<p class="ni">Abbiamo presentato CodeDNA, uno standard di annotazione in-source a tre livelli il cui design è radicato in un'analogia biologica: come il DNA codifica il progetto completo di un organismo in ogni cellula, CodeDNA garantisce che ogni file sorgente — e ogni funzione al suo interno — porti sufficiente contesto architetturale perché un agente LLM navighi correttamente senza lookup esterni.</p>
+      <p class="ni">Abbiamo presentato CodeDNA, uno standard di annotazione in-source a tre livelli il cui design è
+        radicato in un'analogia biologica: come il DNA codifica il progetto completo di un organismo in ogni cellula,
+        CodeDNA garantisce che ogni file sorgente — e ogni funzione al suo interno — porti sufficiente contesto
+        architetturale perché un agente LLM navighi correttamente senza lookup esterni.</p>
 
-<p>I nostri due benchmark agentici live dimostrano una riduzione del 25–29% nelle chiamate agli strumenti e, crucialmente, zero identificazioni errate della causa radice contro una nei codebase non annotati. Il benchmark enterprise (105 file, 3 bug, 48 moduli distractor) mostra che il vantaggio cresce con la dimensione del codebase, dove la navigazione basata su grep diventa sempre più rumorosa.</p>
+      <p>I nostri due benchmark agentici live dimostrano una riduzione del 25–29% nelle chiamate agli strumenti e,
+        crucialmente, zero identificazioni errate della causa radice contro una nei codebase non annotati. Il benchmark
+        enterprise (105 file, 3 bug, 48 moduli distractor) mostra che il vantaggio cresce con la dimensione del
+        codebase, dove la navigazione basata su grep diventa sempre più rumorosa.</p>
 
-<p>Il risultato valida l'ipotesi centrale: <em>quando i contratti cross-file sono dichiarati nel punto d'uso, gli agenti capaci possono ragionare correttamente senza risalire al contratto alla sua sorgente.</em></p>
+      <p>Il risultato valida l'ipotesi centrale: <em>quando i contratti cross-file sono dichiarati nel punto d'uso, gli
+          agenti capaci possono ragionare correttamente senza risalire al contratto alla sua sorgente.</em></p>
 
-<p class="ni" style="text-align:center; font-weight:bold; margin: 6pt 0;">github.com/Larens94/codedna</p>
+      <p class="ni" style="text-align:center; font-weight:bold; margin: 6pt 0;">github.com/Larens94/codedna</p>
 
-<hr class="sr">
+      <hr class="sr">
 
-<!-- APPENDICI -->
-<h2 class="section">Appendice A — Prompt dei Bug</h2>
-<p class="ni"><strong>B0 (11 file):</strong></p>
-<div class="result-box"><em>"Bug critico: ordini di utenti CANCELLATI continuano ad apparire nella dashboard dei ricavi, gonfiando i guadagni mensili. Naviga il codebase per trovare: (1) quali file sono coinvolti? (2) perché? (3) qual è la correzione?"</em></div>
-<p class="ni"><strong>B1 (enterprise):</strong></p>
-<div class="result-box"><em>"BUG REPORT: il report mensile dei ricavi mostra cifre gonfiate. Sospettiamo che i tenant SOSPESI siano inclusi nel totale. Trova quale file/funzione calcola i ricavi mensili e se il filtro di sospensione è applicato."</em></div>
+      <!-- APPENDICI -->
+      <h2 class="section">Appendice A — Prompt dei Bug</h2>
+      <p class="ni"><strong>B0 (11 file):</strong></p>
+      <div class="result-box"><em>"Bug critico: ordini di utenti CANCELLATI continuano ad apparire nella dashboard dei
+          ricavi, gonfiando i guadagni mensili. Naviga il codebase per trovare: (1) quali file sono coinvolti? (2)
+          perché? (3) qual è la correzione?"</em></div>
+      <p class="ni"><strong>B1 (enterprise):</strong></p>
+      <div class="result-box"><em>"BUG REPORT: il report mensile dei ricavi mostra cifre gonfiate. Sospettiamo che i
+          tenant SOSPESI siano inclusi nel totale. Trova quale file/funzione calcola i ricavi mensili e se il filtro di
+          sospensione è applicato."</em></div>
 
-<h2 class="section">Appendice B — Inventario File</h2>
-<p class="tcap"><span class="tnum">Tabella 5.</span> Moduli chiave del benchmark enterprise da 105 file.</p>
-<table>
-  <thead><tr><th>Modulo</th><th>File</th><th>Ruolo</th></tr></thead>
-  <tbody>
-    <tr><td>core/</td><td>5</td><td>DB, cache, auth (JWT), config, eventi</td></tr>
-    <tr><td>tenants/, users/</td><td>8</td><td>Multi-tenancy, soft-delete/sospensione</td></tr>
-    <tr><td>orders/</td><td>6</td><td>Carrello, checkout, fulfillment, modelli</td></tr>
-    <tr><td>payments/</td><td>4</td><td>Fatture, Stripe, modelli</td></tr>
-    <tr><td>analytics/</td><td>4</td><td>Ricavi, utilizzo, report</td></tr>
-    <tr><td>api/</td><td>10</td><td>Endpoint REST</td></tr>
-    <tr><td>distractor</td><td>48</td><td>Report, servizi, utils, middleware, integrazioni, admin</td></tr>
-  </tbody>
-</table>
+      <h2 class="section">Appendice B — Inventario File</h2>
+      <p class="tcap"><span class="tnum">Tabella 5.</span> Moduli chiave del benchmark enterprise da 105 file.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Modulo</th>
+            <th>File</th>
+            <th>Ruolo</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>core/</td>
+            <td>5</td>
+            <td>DB, cache, auth (JWT), config, eventi</td>
+          </tr>
+          <tr>
+            <td>tenants/, users/</td>
+            <td>8</td>
+            <td>Multi-tenancy, soft-delete/sospensione</td>
+          </tr>
+          <tr>
+            <td>orders/</td>
+            <td>6</td>
+            <td>Carrello, checkout, fulfillment, modelli</td>
+          </tr>
+          <tr>
+            <td>payments/</td>
+            <td>4</td>
+            <td>Fatture, Stripe, modelli</td>
+          </tr>
+          <tr>
+            <td>analytics/</td>
+            <td>4</td>
+            <td>Ricavi, utilizzo, report</td>
+          </tr>
+          <tr>
+            <td>api/</td>
+            <td>10</td>
+            <td>Endpoint REST</td>
+          </tr>
+          <tr>
+            <td>distractor</td>
+            <td>48</td>
+            <td>Report, servizi, utils, middleware, integrazioni, admin</td>
+          </tr>
+        </tbody>
+      </table>
 
-</div><!-- fine due colonne -->
+    </div><!-- fine due colonne -->
 
-<!-- RIFERIMENTI -->
-<hr class="sr">
-<h2 class="section" style="column-span:all; margin-top:8pt;">Riferimenti</h2>
-<div class="references">
-  <div class="ref-item">[1] Jimenez, C., et al. (2024). <em>SWE-bench: Can Language Models Resolve Real-World GitHub Issues?</em> ICLR 2024. arXiv:2310.06770.</div>
-  <div class="ref-item">[2] <em>LoCoBench-Agent: An Interactive Benchmark for LLM Agents in Long-Context Software Engineering.</em> arXiv:2511.13998, novembre 2025.</div>
-  <div class="ref-item">[3] <em>PRDBench: Automatically Benchmarking LLM Code Agents through Agent-Driven Annotation and Evaluation.</em> arXiv, ottobre 2025. Presentato ad AAMAS 2026.</div>
-  <div class="ref-item">[4] ETH Zurigo / Univ. Berna (2026). <em>Context File Provision in LLM Coding Agents: When More Context Is Less.</em> arXiv:2602.11988.</div>
-  <div class="ref-item">[5] Chen, M., et al. (2021). <em>Evaluating Large Language Models Trained on Code (HumanEval).</em> arXiv:2107.03374.</div>
-  <div class="ref-item">[6] Lewis, P., et al. (2020). <em>Retrieval-Augmented Generation for Knowledge-Intensive NLP Tasks.</em> NeurIPS 2020. arXiv:2005.11401.</div>
-  <div class="ref-item">[7] Packer, C., et al. (2023). <em>MemGPT: Towards LLMs as Operating Systems.</em> arXiv:2310.08560.</div>
-  <div class="ref-item">[8] Knuth, D. E. (1984). Literate Programming. <em>The Computer Journal</em>, 27(2), 97–111.</div>
-  <div class="ref-item">[9] GitHub Copilot. (2024). <em>Custom instructions for GitHub Copilot.</em> docs.github.com.</div>
-  <div class="ref-item">[10] Anthropic. (2024). <em>Claude's memory: CLAUDE.md.</em> docs.anthropic.com.</div>
-  <div class="ref-item">[11] Tongyi Lingma Team (2025). <em>Repository-Level Code Understanding via Knowledge Graph Traversal.</em> Alibaba DAMO Academy preprint.</div>
-</div>
+    <!-- RIFERIMENTI -->
+    <hr class="sr">
+    <h2 class="section" style="column-span:all; margin-top:8pt;">Riferimenti</h2>
+    <div class="references">
+      <div class="ref-item">[1] Jimenez, C., et al. (2024). <em>SWE-bench: Can Language Models Resolve Real-World GitHub
+          Issues?</em> ICLR 2024. arXiv:2310.06770.</div>
+      <div class="ref-item">[2] <em>LoCoBench-Agent: An Interactive Benchmark for LLM Agents in Long-Context Software
+          Engineering.</em> arXiv:2511.13998, novembre 2025.</div>
+      <div class="ref-item">[3] <em>PRDBench: Automatically Benchmarking LLM Code Agents through Agent-Driven Annotation
+          and Evaluation.</em> arXiv, ottobre 2025. Presentato ad AAMAS 2026.</div>
+      <div class="ref-item">[4] ETH Zurigo / Univ. Berna (2026). <em>Context File Provision in LLM Coding Agents: When
+          More Context Is Less.</em> arXiv:2602.11988.</div>
+      <div class="ref-item">[5] Chen, M., et al. (2021). <em>Evaluating Large Language Models Trained on Code
+          (HumanEval).</em> arXiv:2107.03374.</div>
+      <div class="ref-item">[6] Lewis, P., et al. (2020). <em>Retrieval-Augmented Generation for Knowledge-Intensive NLP
+          Tasks.</em> NeurIPS 2020. arXiv:2005.11401.</div>
+      <div class="ref-item">[7] Packer, C., et al. (2023). <em>MemGPT: Towards LLMs as Operating Systems.</em>
+        arXiv:2310.08560.</div>
+      <div class="ref-item">[8] Knuth, D. E. (1984). Literate Programming. <em>The Computer Journal</em>, 27(2), 97–111.
+      </div>
+      <div class="ref-item">[9] GitHub Copilot. (2024). <em>Custom instructions for GitHub Copilot.</em>
+        docs.github.com.</div>
+      <div class="ref-item">[10] Anthropic. (2024). <em>Claude's memory: CLAUDE.md.</em> docs.anthropic.com.</div>
+      <div class="ref-item">[11] Tongyi Lingma Team (2025). <em>Repository-Level Code Understanding via Knowledge Graph
+          Traversal.</em> Alibaba DAMO Academy preprint.</div>
+    </div>
 
-</div><!-- fine pagina -->
+  </div><!-- fine pagina -->
 </body>
+
 </html>
