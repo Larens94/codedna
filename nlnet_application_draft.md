@@ -52,7 +52,7 @@ CodeDNA solves this with 4 layers: a project manifest (.codedna), module headers
 
 Crucially, this is agent-to-agent communication, not human-to-agent. When Agent A discovers a constraint, it writes a rules: annotation. Agent B — different model, different session — reads it and avoids the same mistake. Knowledge accumulates organically.
 
-Benchmarks on SWE-bench (5 Django tasks, 5 LLMs) show +20% F1 improvement in file localization, with fewer tokens consumed.
+Benchmarks on SWE-bench (5 Django tasks, 3 LLMs tested): Gemini 2.5 Flash +13pp F1 (p=0.040), DeepSeek Chat +9pp F1, with fewer tokens consumed. Results consistent across models.
 
 Fully open source (MIT), vendor-neutral, zero dependencies.
 ```
@@ -68,7 +68,7 @@ I developed the CodeDNA protocol iteratively through real-world usage:
 - v0.6: consolidated to the current 3-field module header (exports, used_by, rules)
 - v0.7: current version, validated on Python, with CLI tooling, benchmark infrastructure, and integration templates for 6 AI coding tools
 
-I built a benchmark suite based on SWE-bench (real GitHub issues from Django) that measures how annotations affect AI agent file localization accuracy. The benchmark compares control (vanilla code) vs CodeDNA (annotated code) using the same LLM, tools, and constraints. Results across 5 models show consistent improvement on 4 out of 5 LLMs.
+I built a benchmark suite based on SWE-bench (real GitHub issues from Django) that measures how annotations affect AI agent file localization accuracy. The benchmark compares control (vanilla code) vs CodeDNA (annotated code) using the same LLM, tools, and constraints. Results across 2 completed models (Gemini 2.5 Flash p=0.040 ✅, DeepSeek Chat p=0.11) show positive Δ on 4/5 tasks each. A third model (Gemini 2.5 Pro) is in progress.
 
 I have also created a one-line installer for integration with Claude Code, Cursor, Copilot, Windsurf, and other tools, plus a documentation website.
 
@@ -152,7 +152,7 @@ KEY DIFFERENTIATORS:
 - Cumulative: rules accumulate across agent sessions (knowledge doesn't evaporate)
 - Zero dependencies: plain text, no build step, no runtime, no infrastructure
 - Vendor-neutral: works with any AI tool, any language, any editor
-- Measurable: +20% F1 on SWE-bench (5 tasks, 5 models)
+- Measurable: +13pp F1 on SWE-bench (Gemini 2.5 Flash, p=0.040); +9pp on DeepSeek Chat (5 tasks, 3 models tested)
 ```
 
 ### Technical challenges (max 5000 chars)

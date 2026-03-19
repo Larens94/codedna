@@ -565,7 +565,7 @@ data  = get_users()
   <div class="full-bleed-inner">
     <div class="eyebrow" data-i18n="mmEyebrow">Multi-Model SWE-bench</div>
     <h2 data-i18n="mmH2">Works across every major LLM.</h2>
-    <p class="section-lead" data-i18n-html="mmLead">5 real Django issues from <strong>SWE-bench</strong>, tested across multiple LLMs. Same prompt, same tools, same tasks. <strong>Gemini 2.5 Flash confirmed: +13pp F1, p=0.040. DeepSeek Chat &amp; Claude Haiku 4.5 in progress.</strong></p>
+    <p class="section-lead" data-i18n-html="mmLead">5 real Django issues from <strong>SWE-bench</strong>, tested across multiple LLMs. Same prompt, same tools, same tasks. <strong>Gemini 2.5 Flash: +13pp F1, p=0.040 ✅ · DeepSeek Chat: +9pp F1, p=0.11 · Gemini 2.5 Pro in progress.</strong></p>
 
     <div class="chart-pair">
       <div class="chart-card" style="grid-column: span 2;">
@@ -585,11 +585,12 @@ data  = get_users()
         </div>
       </div>
       <div class="sc-card">
-        <div class="sc-tag">Biggest Surprise</div>
-        <div class="sc-title" data-i18n="mmSurpTitle">⏳ DeepSeek Chat &amp; Claude Haiku 4.5</div>
-        <div class="sc-body" data-i18n="mmSurpBody">Multi-model benchmark in progress. Testing the cheaper-model hypothesis: less capable models are expected to show larger Δ because CodeDNA provides the navigation scaffolding they lack.</div>
+        <div class="sc-tag">DeepSeek Chat</div>
+        <div class="sc-title" data-i18n="mmSurpTitle">✅ DeepSeek Chat — +9pp F1 (p=0.11)</div>
+        <div class="sc-body" data-i18n="mmSurpBody">From 50% to 60%. Wins 4/5 tasks. Notable: +35pp on cross-cutting task 11808 — opposite direction from Gemini Flash (−1pp). Task 13495 anomaly (−9pp) under investigation. Not statistically significant.</div>
         <div class="sc-scores">
-          <div class="sc-score" style="flex:2;background:rgba(100,100,120,0.08);border-color:rgba(100,100,120,0.3);">Results coming soon</div>
+          <div class="sc-score bad">Control<strong>50%</strong></div>
+          <div class="sc-score good">CodeDNA<strong>60%</strong></div>
         </div>
       </div>
       <div class="sc-card">
@@ -603,7 +604,7 @@ data  = get_users()
     </div>
 
     <p style="margin-top:1.75rem; font-size:0.8rem; color:var(--muted); padding:1rem 1.25rem; background:var(--bg2); border:1px solid var(--border); border-radius:10px;" data-i18n-html="mmMethod">
-      🔬 <strong style="color:var(--text2)">Methodology:</strong> 5 SWE-bench Django tasks × multiple models (Gemini 2.5 Flash ✓, DeepSeek Chat ⏳, Claude Haiku 4.5 ⏳). ≥5 runs per task at T=0.1. Identical system prompt, same 3 tools (read_file, list_files, grep), max 30 turns. Metric: File Localization F1 (ground-truth files from patch). Statistical test: Wilcoxon signed-rank (one-tailed). Script: <code>benchmark_agent/swebench/run_agent_multi.py</code>.
+      🔬 <strong style="color:var(--text2)">Methodology:</strong> 5 SWE-bench Django tasks × 3 models (Gemini 2.5 Flash ✓, DeepSeek Chat ✓, Gemini 2.5 Pro ⏳). 5 runs/task at T=0.1. Identical system prompt, same 3 tools (read_file, list_files, grep), max 30 turns. Metric: File Localization F1 (ground-truth files from patch). Statistical test: Wilcoxon signed-rank (one-tailed). Script: <code>benchmark_agent/swebench/run_agent_multi.py</code>.
     </p>
   </div>
 </div>
@@ -639,7 +640,7 @@ data  = get_users()
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Level 3 — Semantic Naming + CONTEXT_BUDGET (v0.3)</div><div class="rm-sub" data-i18n-html="rm3Sub">Naming <code>&lt;type&gt;_&lt;shape&gt;_&lt;domain&gt;_&lt;origin&gt;</code>. Manifest-Only Planner Read.</div></div></div>
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">LLM-Optimised Format (v0.5)</div><div class="rm-sub" data-i18n="rm4Sub">Python-native module docstring (L1) + function-level Rules: docstrings (L2). Maximises LLM comprehension trained on Python corpora.</div></div></div>
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm5Title">Enterprise Benchmark — 105-file, 3 bugs, 48 distractors</div><div class="rm-sub" data-i18n="rm5Sub">−29% tool calls, 0 incorrect root-cause identifications (vs 1 Control). Replicable on disk.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm6Title">Multi-Model SWE-bench Benchmark — 5 tasks, ≥5 runs/task</div><div class="rm-sub" data-i18n="rm6Sub">Gemini 2.5 Flash: ctrl=60%, DNA=72%, Δ=+13pp, p=0.040. DeepSeek Chat &amp; Claude Haiku 4.5 in progress.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm6Title">Multi-Model SWE-bench Benchmark — 5 tasks, 5 runs/task</div><div class="rm-sub" data-i18n="rm6Sub">Gemini 2.5 Flash: ctrl=60%, DNA=72%, Δ=+13pp, p=0.040 ✅ · DeepSeek Chat: ctrl=50%, DNA=60%, Δ=+9pp, p=0.11 · Gemini 2.5 Pro in progress ⏳</div></div></div>
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm7Title">White Paper / arXiv preprint</div><div class="rm-sub" data-i18n="rm7Sub">Formal study with reproducible methodology, DNA analogy, and comparison against SWE-bench, LoCoBench-Agent, ETH Zurich (2026).</div></div></div>
 
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Redundancy Audit (v0.7) ✦ Current</div><div class="rm-sub">Header reduced to 3 fields: exports, used_by, rules. rules: promoted to required — the inter-agent communication channel. Python-only focus.</div></div></div>
@@ -819,10 +820,10 @@ function updateCharts(l) {
   window.chartM = new Chart(mCtx.getContext('2d'), {
     type: 'bar',
     data: {
-      labels: ['Gemini 2.5\nFlash ✓', 'DeepSeek\nChat ⏳', 'Claude\nHaiku 4.5 ⏳'],
+      labels: ['Gemini 2.5\nFlash ✓', 'DeepSeek\nChat ✓', 'Gemini 2.5\nPro ⏳'],
       datasets: [
-        { label:'Control', data:[60,null,null], backgroundColor:'rgba(220,38,38,0.15)', borderColor:'rgba(220,38,38,0.7)', borderWidth:1.5, borderRadius:5 },
-        { label:'CodeDNA', data:[72,null,null], backgroundColor:'rgba(67,56,202,0.15)', borderColor:'rgba(67,56,202,0.7)', borderWidth:1.5, borderRadius:5 }
+        { label:'Control', data:[60,50,null], backgroundColor:'rgba(220,38,38,0.15)', borderColor:'rgba(220,38,38,0.7)', borderWidth:1.5, borderRadius:5 },
+        { label:'CodeDNA', data:[72,60,null], backgroundColor:'rgba(67,56,202,0.15)', borderColor:'rgba(67,56,202,0.7)', borderWidth:1.5, borderRadius:5 }
       ]
     },
     options:{

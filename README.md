@@ -84,12 +84,12 @@ Then annotate your first file → see [QUICKSTART.md](./QUICKSTART.md)
 | Model | Ctrl F1 | DNA F1 | **Δ F1** | p-value | Tasks Won |
 |---|---|---|---|---|---|
 | **Gemini 2.5 Flash** | 60% | **72%** | **+13%** | 0.040* | 4/5 |
-| **DeepSeek Chat** | — | — | — | in progress | — |
-| **Claude Haiku 4.5** | — | — | — | in progress | — |
+| **DeepSeek Chat** | 50% | **60%** | **+9%** | 0.11 | 4/5 |
+| **Gemini 2.5 Pro** | — | — | — | ⏳ in progress | — |
 
-> ⚠️ Multi-model benchmark in progress. Final results will be updated when all runs complete. Full data: [`benchmark_agent/runs/`](./benchmark_agent/runs/)
+> 2 of 3 models complete. Gemini 2.5 Pro in progress. Full data: [`benchmark_agent/runs/`](./benchmark_agent/runs/)
 >
-> Gemini 2.5 Flash: 5 tasks × ≥5 runs at T=0.1. Wilcoxon W+=14, N=5, p=0.040 (one-tailed).
+> Gemini 2.5 Flash: W+=14, N=5, p=0.040 ✅ significant. DeepSeek Chat: W+=12, N=5, p=0.11 (not significant). All runs: 5 tasks × ≥5 runs at T=0.1.
 
 ### When CodeDNA Helps Most
 
@@ -131,9 +131,11 @@ A full audit of the benchmark annotations was performed to verify that no task-s
 
 ### The Cheaper-Model Hypothesis
 
-The working hypothesis — supported by early results and to be confirmed with full multi-model data:
+The working hypothesis — now supported by two data points:
 
 > **Less capable, cheaper models benefit more from CodeDNA.** A frontier model navigates large codebases well by general reasoning. A cheaper model without structural guidance gets lost, loops, or stops early. CodeDNA provides the scaffolding that lets a cheap model approach the navigation quality of a more expensive one.
+
+**Early evidence:** DeepSeek Chat (Δ=+9%, 4/5 tasks) and Gemini 2.5 Flash (Δ=+13%, 4/5 tasks) both show positive results, with DeepSeek gaining notably on the cross-cutting task 11808 (Δ=+35%). The anomaly on task 13495 (DeepSeek Δ=−9%) is under investigation. Gemini 2.5 Pro results pending.
 
 This makes CodeDNA economically attractive: annotate once, run cheaper models with comparable accuracy.
 

@@ -128,40 +128,55 @@ python swebench/analyze_multi.py --annotation-cost   # auto-annotation overhead
 
 ---
 
-## Results (in progress — multi-model, multi-run)
+## Results — multi-model, multi-run (2 of 3 models complete)
 
-### Gemini 2.5 Flash — 5 tasks, ≥5 runs/task at T=0.1
+### Gemini 2.5 Flash — 5 tasks, 5 runs/task at T=0.1 ✅
 
 | Task | GT Files | Ctrl F1 | DNA F1 | Δ | Notes |
 |------|----------|---------|--------|---|-------|
-| django__django-14480 | 7 | ~64% | 75% | **+11%** | XOR Q() — dependency chain |
-| django__django-13495 | 7 | ~63% | 74% | **+11%** | Trunc tzinfo — delegation chain |
-| django__django-12508 | 8 | ~85% | 87% | **+2%** | dbshell --args — linear chain |
-| django__django-11991 | 9 | 59% | TBD | TBD | INCLUDE index — in re-run after file fix |
-| django__django-11808 | 10 | 57% | TBD | TBD | `__eq__` cross-cutting — in re-run after file fix |
+| django__django-14480 | 7 | 55% | 72% | **+17%** | XOR Q() — dependency chain |
+| django__django-13495 | 7 | 52% | 74% | **+22%** | Trunc tzinfo — delegation chain |
+| django__django-12508 | 8 | 84% | 93% | **+9%** | dbshell --args — linear chain |
+| django__django-11991 | 9 | 49% | 66% | **+17%** | INCLUDE index — fan-out |
+| django__django-11808 | 10 | 58% | 57% | **−1%** | `__eq__` cross-cutting |
 
-**Wilcoxon W+=14, N=5, p=0.04 (one-tailed)** — significant on first 3 tasks + preliminary 11991/11808.
+**Wilcoxon W+=14, N=5, p=0.040 (one-tailed)** ✅ significant. Overall ctrl=60%, DNA=72%, Δ=+13%.
+
+### DeepSeek Chat — 5 tasks, 5 runs/task at T=0.1 ✅
+
+| Task | GT Files | Ctrl F1 | DNA F1 | Δ | Notes |
+|------|----------|---------|--------|---|-------|
+| django__django-14480 | 7 | 55% | 69% | **+14%** | XOR Q() |
+| django__django-13495 | 7 | 45% | 36% | **−9%** | ⚠️ anomaly — under investigation |
+| django__django-12508 | 8 | 82% | 83% | **+1%** | dbshell --args |
+| django__django-11991 | 9 | 50% | 56% | **+6%** | INCLUDE index |
+| django__django-11808 | 10 | 20% | 55% | **+35%** | `__eq__` cross-cutting — opposite of Flash! |
+
+**Wilcoxon W+=12, N=5, p=0.11 (one-tailed)** ✗ not significant. Overall ctrl=50%, DNA=60%, Δ=+9%.
+
+**Notable:** DeepSeek gained +35pp on the cross-cutting task 11808 (vs Flash's −1pp), suggesting the model uses a different navigation strategy. Task 13495 anomaly (−9pp) is unexplained.
+
+### Gemini 2.5 Pro — in progress ⏳
 
 ### Task Type Analysis
 
-| Task type | Tasks | Avg Δ |
-|---|---|---|
-| Dependency/delegation chain | 14480, 13495, 12508, 11991 | **+13%** |
-| Cross-cutting (no shared ancestor) | 11808 | **~0%** |
+| Task type | Tasks | Flash Δ | DeepSeek Δ |
+|---|---|---|---|
+| Dependency/delegation chain | 14480, 12508, 11991 | **+14%** | **+7%** |
+| Delegation with backend fan-out | 13495 | **+22%** | **−9%** ⚠️ |
+| Cross-cutting (no shared ancestor) | 11808 | **−1%** | **+35%** |
 
 **Transparency note on 11808 (cross-cutting task):**
 
 Task 11808 (`__eq__` returning `NotImplemented` across 10 independent classes) was deliberately included to test the protocol's limits. The benchmark annotations contain **no list of affected files** — each file's `rules:` describes only local Python data model conventions. The agent must discover all 10 files independently.
 
-CodeDNA v0.7 shows Δ ≈ 0% on this task. This is an honest result: the `used_by:` navigation graph has no shared ancestor connecting the 10 classes, so structural navigation provides no advantage. Both conditions find the same ~6/10 obvious ORM files and miss the 4 peripheral ones (`validators.py`, `messages/`, `template/`, `postgres/constraints.py`).
+Gemini 2.5 Flash shows Δ ≈ 0% on this task — as expected, since the `used_by:` graph has no shared ancestor. DeepSeek Chat shows Δ=+35%, which may reflect different sampling behaviour at T=0.1 or a model-specific tendency to explore more broadly.
 
 The proposed fix (v0.8 `cross_cutting_patterns:` in `.codedna`) would be written by an agent **post-fix** as accumulated knowledge — not pre-populated for evaluation. This distinction is documented in SPEC.md §2.4.
 
-### The Cheaper-Model Hypothesis (to be confirmed)
+### The Cheaper-Model Hypothesis — partial evidence
 
-Weaker models are expected to show larger Δ because they lack the reasoning ability to navigate large codebases without structural guidance. CodeDNA provides that scaffolding. Results for DeepSeek Chat, Claude Haiku, GPT-4o-mini in progress.
-
-> **Note**: Tasks 11991 and 11808 were initially run with truncated codedna files (stub docstrings, no code). Those results were discarded and re-runs are in progress with corrected files.
+Two models complete. Both show positive Δ on 4/5 tasks. The hypothesis that weaker models benefit more from CodeDNA is consistent with DeepSeek's results but requires Gemini 2.5 Pro data to fully evaluate (stronger model expected to show smaller Δ).
 
 ---
 

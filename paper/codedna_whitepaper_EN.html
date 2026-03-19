@@ -530,12 +530,37 @@
 </p>
 
 <!-- ROADMAP -->
+<h2>5.3 SWE-bench Multi-Model Evaluation (v0.7)</h2>
+
+<p>Beyond the custom benchmarks above, CodeDNA v0.7 has been evaluated on 5 real Django issues from <strong>SWE-bench</strong> — a public benchmark of real GitHub issues. Each task was run 5 times per condition at T=0.1 across 3 LLMs (max 30 turns). Statistical significance is evaluated with the Wilcoxon signed-rank test (one-tailed).</p>
+
+<table style="width:100%; border-collapse:collapse; margin:10pt 0 14pt; font-size:9pt;">
+  <thead>
+    <tr style="border-bottom:2px solid #3730a3; text-align:left;">
+      <th style="padding:5pt 8pt;">Model</th><th style="padding:5pt 8pt;">Ctrl F1</th><th style="padding:5pt 8pt;">DNA F1</th><th style="padding:5pt 8pt;">Δ F1</th><th style="padding:5pt 8pt;">p-value</th><th style="padding:5pt 8pt;">Tasks Won</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr style="border-bottom:1px solid #e5e5ea;">
+      <td style="padding:5pt 8pt;">Gemini 2.5 Flash</td><td style="padding:5pt 8pt;">60%</td><td style="padding:5pt 8pt;font-weight:600;">72%</td><td style="padding:5pt 8pt;color:#16a34a;font-weight:600;">+13pp</td><td style="padding:5pt 8pt;">0.040 ✅</td><td style="padding:5pt 8pt;">4 / 5</td>
+    </tr>
+    <tr style="border-bottom:1px solid #e5e5ea;">
+      <td style="padding:5pt 8pt;">DeepSeek Chat</td><td style="padding:5pt 8pt;">50%</td><td style="padding:5pt 8pt;font-weight:600;">60%</td><td style="padding:5pt 8pt;color:#16a34a;font-weight:600;">+9pp</td><td style="padding:5pt 8pt;">0.11</td><td style="padding:5pt 8pt;">4 / 5</td>
+    </tr>
+    <tr>
+      <td style="padding:5pt 8pt;">Gemini 2.5 Pro</td><td colspan="4" style="padding:5pt 8pt;color:#888;font-style:italic;">in progress</td><td style="padding:5pt 8pt;">—</td>
+    </tr>
+  </tbody>
+</table>
+
+<p>Both completed models show positive Δ on 4/5 tasks. Gemini 2.5 Flash achieves statistical significance (Wilcoxon W+=14, p=0.040). The benefit is strongest on tasks with navigable dependency chains (e.g., task 13495: +22pp on Flash). The cross-cutting task 11808 — 10 independent files with no shared ancestor — shows Δ≈0% for Flash and +35pp for DeepSeek, illustrating model-specific navigation strategies.</p>
+
 <h2>6. Research Roadmap</h2>
 
-<p>The current v1.0 benchmark establishes the proof of concept. Planned research extensions include:</p>
+<p>The current benchmark establishes the proof of concept across B1/B2 (custom codebases) and B3 (SWE-bench, multi-model). Planned extensions include:</p>
 
 <ul style="padding-left: 16pt; margin-bottom: 7pt;">
-  <li style="margin-bottom: 4pt;"><strong>Statistical validation</strong> — replicate across 3+ LLM models, 5+ bug categories, 500+ file codebases</li>
+  <li style="margin-bottom: 4pt;"><strong>Statistical validation</strong> — expand B3 to 3+ completed LLMs, 20+ tasks, multiple repositories</li>
   <li style="margin-bottom: 4pt;"><strong>Annotation drift enforcement</strong> — pre-commit hooks and CI validation to keep annotations consistent as code evolves</li>
   <li style="margin-bottom: 4pt;"><strong>Multi-language adapters</strong> — JavaScript/TypeScript, Go, Rust, Java formal grammars</li>
   <li style="margin-bottom: 4pt;"><strong>IDE plugin</strong> — real-time annotation consistency validation in VS Code / Neovim</li>
