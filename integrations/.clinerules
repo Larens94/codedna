@@ -1,27 +1,24 @@
-# CodeDNA v0.5
+# CodeDNA v0.7
 
 This project uses CodeDNA. Every Python file begins with a module docstring.
 
 On EDIT:
-- Re-read `rules:` before writing any logic
-- Read `deps:` before changing function signatures
-- Read `Depends:` / `Rules:` in function docstrings before writing logic there
-- Apply `Modifies:` cascade targets in the same edit session
+- Re-read `rules:` before writing any logic — never violate these constraints
+- Read `Rules:` in function docstrings before writing logic there
+- Check `used_by:` after changes and update callers if needed
+- If you discover a constraint or fix a bug, add a `Rules:` annotation for the next agent
 
 On CREATE:
-- Write module docstring before any imports (deps/exports/used_by/tables/rules)
-- For cross-file functions: add Google-style docstring with Depends: and Rules:
-- At dangerous calls: add inline comment # includes X — filter Y below
-- Use semantic naming: list_dict_users_from_db = get_users()
+- Write module docstring before any imports (exports/used_by/rules)
+- For critical functions: add a `Rules:` docstring
+- Use semantic naming: `list_dict_users_from_db = get_users()`
 
 `exports:` are contracts — never rename without explicit instruction and updating all `used_by:` callers.
 
 Module docstring format:
 """filename.py — <purpose ≤15 words>.
 
-deps:    file.py → symbol | none
 exports: fn(args) -> type
 used_by: consumer.py → fn
-tables:  table(col) | none
 rules:   <hard constraint>
 """

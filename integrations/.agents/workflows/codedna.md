@@ -1,8 +1,8 @@
 ---
-description: CodeDNA v0.6 — how to read, write, and edit Python files in this project
+description: CodeDNA v0.7 — how to read, write, and edit Python files in this project
 ---
 
-# CodeDNA v0.6 Protocol
+# CodeDNA v0.7 Protocol
 
 This project uses CodeDNA. Every source file carries its own context in a Python-native module docstring.
 
@@ -17,7 +17,7 @@ This project uses CodeDNA. Every source file carries its own context in a Python
 ## Editing a file
 
 1. Before writing any logic: re-read `rules:` in the module docstring and `Rules:` in the function docstring
-2. Check `used_by:` and `cascade:` targets after changes
+2. Check `used_by:` targets after changes
 3. Do not change `exports:` signatures without explicit user instruction
 4. If you discover a constraint or fix a bug, add a `Rules:` annotation for the next agent
 
@@ -30,7 +30,6 @@ Every new Python source file must start with:
 
 exports: public_function(arg) -> return_type
 used_by: consumer_file.py → consumer_function
-tables:  table_name(col1, col2) | none
 rules:   <hard constraint agents must never violate>
 """
 ```

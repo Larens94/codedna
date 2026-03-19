@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CodeDNA v0.5 — Integration Installer
+# CodeDNA v0.7 — Integration Installer
 #
 # Usage:
 #   bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh)
@@ -13,7 +13,7 @@ TOOL="${1:-all}"
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || pwd)"
 RAW="https://raw.githubusercontent.com/Larens94/codedna/main/integrations"
 
-echo "🧬 CodeDNA v0.5 Integration Installer"
+echo "🧬 CodeDNA v0.7 Integration Installer"
 echo "   Target: $REPO_ROOT"
 echo ""
 
@@ -36,4 +36,4 @@ case "$TOOL" in
 esac
 
 echo ""
-echo "🧬 Done. Verify: ask your AI to create a file — it should start with a CodeDNA v0.5 module docstring."
+echo "🧬 Done. Verify: ask your AI to create a file — it should start with a CodeDNA v0.7 module docstring."
