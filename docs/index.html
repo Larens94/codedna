@@ -290,14 +290,14 @@ footer a { color:var(--accent); text-decoration:none; }
 <!-- STATS ROW -->
 <div class="stats-row">
   <div class="stat-cell">
-    <div class="stat-number red count-up" data-to="47" data-suf="%">0%</div>
-    <div class="stat-label" data-i18n="stat1Label">Error Rate — Control</div>
-    <div class="stat-note" data-i18n="stat1Note">across 5 hard scenarios</div>
+    <div class="stat-number green">+13pp</div>
+    <div class="stat-label" data-i18n="stat1Label">F1 improvement</div>
+    <div class="stat-note" data-i18n="stat1Note">Gemini 2.5 Flash, p=0.040 ✅</div>
   </div>
   <div class="stat-cell">
-    <div class="stat-number green">0%</div>
-    <div class="stat-label" data-i18n="stat2Label">Error Rate — CodeDNA</div>
-    <div class="stat-note" data-i18n="stat2Note">zero violations, zero cascade miss</div>
+    <div class="stat-number blue">3</div>
+    <div class="stat-label" data-i18n="stat2Label">LLMs tested</div>
+    <div class="stat-note" data-i18n="stat2Note">positive Δ on all 3 models</div>
   </div>
   <div class="stat-cell">
     <div class="stat-number blue">~70</div>
@@ -585,10 +585,10 @@ data  = get_users()
           <tr><th data-i18n="thApproach">Approach</th><th>Token overhead</th><th>Context drift</th><th data-i18n="thLatency">Retrieval latency</th><th>Sliding-window</th><th data-i18n="thInfra">Infrastructure</th></tr>
         </thead>
         <tbody>
-          <tr><td><strong>CLAUDE.md / CursorRules</strong></td><td><span class="pill pill-r" data-i18n="pillHigh">High</span></td><td><span class="pill pill-r" data-i18n="pillHigh">High</span></td><td><span class="pill pill-g">Zero</span></td><td><span class="pill pill-r">No</span></td><td><span class="pill pill-a" data-i18n="pillExtFile">External file</span></td></tr>
+          <tr><td><strong>CLAUDE.md / CursorRules</strong></td><td><span class="pill pill-g" data-i18n="pillLow">Low</span></td><td><span class="pill pill-a" data-i18n="pillMed">Medium</span></td><td><span class="pill pill-g">Zero</span></td><td><span class="pill pill-r">No</span></td><td><span class="pill pill-a" data-i18n="pillExtFile">External file</span></td></tr>
           <tr><td><strong>RAG / Vector DB</strong></td><td><span class="pill pill-g" data-i18n="pillLow">Low</span></td><td><span class="pill pill-a" data-i18n="pillMed">Medium</span></td><td><span class="pill pill-r" data-i18n="pillHigh">High</span></td><td><span class="pill pill-r">No</span></td><td><span class="pill pill-r">DB + embedding</span></td></tr>
           <tr><td><strong>MemGPT</strong></td><td><span class="pill pill-a" data-i18n="pillMed">Medium</span></td><td><span class="pill pill-g" data-i18n="pillLow">Low</span></td><td><span class="pill pill-a" data-i18n="pillMed">Medium</span></td><td><span class="pill pill-r">No</span></td><td><span class="pill pill-r" data-i18n="pillComplex">Complex system</span></td></tr>
-          <tr class="hl"><td><strong>CodeDNA ✦</strong></td><td><span class="pill pill-g">Zero</span></td><td><span class="pill pill-g">Zero</span></td><td><span class="pill pill-g">Zero</span></td><td><span class="pill pill-g" data-i18n="pillYes">Yes ✓</span></td><td><span class="pill pill-g" data-i18n="pillNone">None</span></td></tr>
+          <tr class="hl"><td><strong>CodeDNA ✦</strong></td><td><span class="pill pill-g">Low (inline)</span></td><td><span class="pill pill-g" data-i18n="pillLow">Low</span></td><td><span class="pill pill-g">Zero</span></td><td><span class="pill pill-g" data-i18n="pillYes">Yes ✓</span></td><td><span class="pill pill-g" data-i18n="pillNone">None</span></td></tr>
         </tbody>
       </table>
     </div>
@@ -630,7 +630,7 @@ data  = get_users()
 const IT = {
   navProblem:'Il Problema', navHow:'Come Funziona',
   h1:'Il codice che si<br><em>spiega da solo.</em>',
-  heroSub:'Gli AI che modificano il tuo codice commettono errori perch\u00e9 <strong>non hanno contesto</strong>. CodeDNA lo incorpora direttamente nei file \u2014 come il DNA in ogni cellula. Zero RAG. Zero deriva.',
+  heroSub:'Gli AI che modificano il tuo codice commettono errori perch\u00e9 <strong>non hanno contesto</strong>. CodeDNA lo incorpora direttamente nei file \u2014 come il DNA in ogni cellula. Zero RAG. Deriva minima.',
   heroCta1:'Vedi le prove \u2192', heroCta2:'Leggi la Spec',
   stat1Label:'Tasso errore \u2014 Control', stat1Note:'nei 5 scenari difficili',
   stat2Label:'Tasso errore \u2014 CodeDNA', stat2Note:'zero violazioni, zero cascade miss',
