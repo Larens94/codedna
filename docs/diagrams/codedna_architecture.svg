@@ -1,0 +1,128 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 600" width="900" height="600">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#0d1117"/>
+    <stop offset="100%" stop-color="#080c11"/>
+  </linearGradient>
+  <filter id="sh" x="-4%" y="-4%" width="108%" height="108%">
+    <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#000" flood-opacity="0.55"/>
+  </filter>
+  <filter id="sh-sm" x="-4%" y="-4%" width="108%" height="108%">
+    <feDropShadow dx="0" dy="1" stdDeviation="3" flood-color="#000" flood-opacity="0.4"/>
+  </filter>
+  <marker id="arr" markerWidth="9" markerHeight="9" refX="6" refY="4.5" orient="auto">
+    <path d="M1,1 L7,4.5 L1,8" fill="none" stroke="#3d444d" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  </marker>
+  <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+    <circle cx="12" cy="12" r="0.9" fill="#161b22"/>
+  </pattern>
+</defs>
+
+<!-- Background -->
+<rect width="900" height="600" fill="url(#bg)"/>
+<rect width="900" height="600" fill="url(#dots)"/>
+
+<!-- Header -->
+<rect width="900" height="78" fill="#161b22" opacity="0.98"/>
+<rect y="77" width="900" height="1" fill="#21262d"/>
+
+<!-- Version badge -->
+<rect x="32" y="22" width="112" height="28" rx="14" fill="#1c2128" stroke="#30363d" stroke-width="1"/>
+<text x="88" y="40" text-anchor="middle" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" font-weight="600" fill="#58a6ff">CodeDNA  v0.7</text>
+
+<!-- Title -->
+<text x="490" y="42" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="22" font-weight="700" fill="#e6edf3" letter-spacing="-0.3">Architecture</text>
+<text x="490" y="63" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="12" fill="#8b949e">Four levels of in-source context — navigated by AI agents on every session</text>
+
+<!-- Granularity arrow -->
+<line x1="22" y1="106" x2="22" y2="518" stroke="#21262d" stroke-width="1.5" marker-end="url(#arr)"/>
+<text font-family="-apple-system,sans-serif" font-size="9" fill="#3d444d" letter-spacing="2" transform="rotate(-90,10,316)">
+  <tspan x="10" y="316">GRANULARITY</tspan>
+</text>
+
+<!-- ── LEVEL 0 ── -->
+<rect x="42" y="96" width="816" height="100" rx="10" fill="#161b22" stroke="#21262d" stroke-width="1" filter="url(#sh)"/>
+<rect x="42" y="96" width="5" height="100" rx="2.5" fill="#d29922"/>
+<linearGradient id="l0g" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#d29922" stop-opacity="0.08"/><stop offset="40%" stop-color="#d29922" stop-opacity="0"/></linearGradient>
+<rect x="47" y="96" width="811" height="100" rx="8" fill="url(#l0g)"/>
+<!-- badge -->
+<circle cx="82" cy="146" r="18" fill="#1a1608"/>
+<circle cx="82" cy="146" r="18" fill="none" stroke="#d29922" stroke-width="1.5"/>
+<text x="82" y="151" text-anchor="middle" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="12" font-weight="700" fill="#d29922">L0</text>
+<!-- text -->
+<text x="116" y="132" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="15" font-weight="700" fill="#e6edf3">.codedna</text>
+<text x="116" y="152" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="12" fill="#8b949e">Project manifest · agent session log · global architectural context</text>
+<rect x="116" y="165" width="84" height="18" rx="9" fill="#1a1608" stroke="#d29922" stroke-width="0.75"/>
+<text x="158" y="177" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#d29922" font-weight="600">GLOBAL · YAML</text>
+<rect x="208" y="165" width="124" height="18" rx="9" fill="#0d1117" stroke="#21262d" stroke-width="0.75"/>
+<text x="270" y="177" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#8b949e">packages · sessions · version</text>
+<!-- code box -->
+<rect x="570" y="107" width="278" height="78" rx="8" fill="#0a0d12" stroke="#21262d" stroke-width="1"/>
+<text x="584" y="128" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#8b949e">project: <tspan fill="#a5d6ff">codedna</tspan></text>
+<text x="584" y="146" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#8b949e">version: <tspan fill="#a5d6ff">"0.7"</tspan></text>
+<text x="584" y="164" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#8b949e">session_id: <tspan fill="#a5d6ff">s_20260320_001</tspan></text>
+
+<!-- ── LEVEL 1 ── -->
+<rect x="42" y="206" width="816" height="100" rx="10" fill="#161b22" stroke="#21262d" stroke-width="1" filter="url(#sh)"/>
+<rect x="42" y="206" width="5" height="100" rx="2.5" fill="#58a6ff"/>
+<linearGradient id="l1g" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#58a6ff" stop-opacity="0.07"/><stop offset="40%" stop-color="#58a6ff" stop-opacity="0"/></linearGradient>
+<rect x="47" y="206" width="811" height="100" rx="8" fill="url(#l1g)"/>
+<circle cx="82" cy="256" r="18" fill="#091424"/>
+<circle cx="82" cy="256" r="18" fill="none" stroke="#58a6ff" stroke-width="1.5"/>
+<text x="82" y="261" text-anchor="middle" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="12" font-weight="700" fill="#58a6ff">L1</text>
+<text x="116" y="242" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="15" font-weight="700" fill="#e6edf3">Module Docstring</text>
+<text x="116" y="262" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="12" fill="#8b949e">exports · used_by · rules · agent — per-file contracts and session history</text>
+<rect x="116" y="275" width="82" height="18" rx="9" fill="#091424" stroke="#58a6ff" stroke-width="0.75"/>
+<text x="157" y="287" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#58a6ff" font-weight="600">FILE · PYTHON</text>
+<rect x="206" y="275" width="134" height="18" rx="9" fill="#0d1117" stroke="#21262d" stroke-width="0.75"/>
+<text x="273" y="287" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#8b949e">contracts · constraints · history</text>
+<rect x="570" y="217" width="278" height="78" rx="8" fill="#0a0d12" stroke="#21262d" stroke-width="1"/>
+<text x="584" y="238" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#79c0ff">exports: <tspan fill="#8b949e">render(fn) -&gt; str</tspan></text>
+<text x="584" y="256" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#79c0ff">rules:   <tspan fill="#8b949e">never call DB directly</tspan></text>
+<text x="584" y="274" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#79c0ff">agent:   <tspan fill="#8b949e">claude | 2026-03-20</tspan></text>
+
+<!-- ── LEVEL 2 ── -->
+<rect x="42" y="316" width="816" height="100" rx="10" fill="#161b22" stroke="#21262d" stroke-width="1" filter="url(#sh)"/>
+<rect x="42" y="316" width="5" height="100" rx="2.5" fill="#bc8cff"/>
+<linearGradient id="l2g" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#bc8cff" stop-opacity="0.07"/><stop offset="40%" stop-color="#bc8cff" stop-opacity="0"/></linearGradient>
+<rect x="47" y="316" width="811" height="100" rx="8" fill="url(#l2g)"/>
+<circle cx="82" cy="366" r="18" fill="#110d1c"/>
+<circle cx="82" cy="366" r="18" fill="none" stroke="#bc8cff" stroke-width="1.5"/>
+<text x="82" y="371" text-anchor="middle" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="12" font-weight="700" fill="#bc8cff">L2</text>
+<text x="116" y="352" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="15" font-weight="700" fill="#e6edf3">Function Rules:</text>
+<text x="116" y="372" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="12" fill="#8b949e">Per-function constraints — always visible in the sliding context window</text>
+<rect x="116" y="385" width="98" height="18" rx="9" fill="#110d1c" stroke="#bc8cff" stroke-width="0.75"/>
+<text x="165" y="397" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#bc8cff" font-weight="600">FUNCTION · PYTHON</text>
+<rect x="222" y="385" width="118" height="18" rx="9" fill="#0d1117" stroke="#21262d" stroke-width="0.75"/>
+<text x="281" y="397" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#8b949e">critical logic · safety nets</text>
+<rect x="570" y="327" width="278" height="78" rx="8" fill="#0a0d12" stroke="#21262d" stroke-width="1"/>
+<text x="584" y="348" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#8b949e">def render(query_fn):</text>
+<text x="584" y="366" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#8b949e">  """Render dashboard.</text>
+<text x="584" y="384" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#d2a8ff">  Rules: <tspan fill="#8b949e">cap rows at 1000</tspan></text>
+
+<!-- ── LEVEL 3 ── -->
+<rect x="42" y="426" width="816" height="100" rx="10" fill="#161b22" stroke="#21262d" stroke-width="1" filter="url(#sh)"/>
+<rect x="42" y="426" width="5" height="100" rx="2.5" fill="#3fb950"/>
+<linearGradient id="l3g" x1="0" y1="0" x2="1" y2="0"><stop offset="0%" stop-color="#3fb950" stop-opacity="0.07"/><stop offset="40%" stop-color="#3fb950" stop-opacity="0"/></linearGradient>
+<rect x="47" y="426" width="811" height="100" rx="8" fill="url(#l3g)"/>
+<circle cx="82" cy="476" r="18" fill="#0a1a0e"/>
+<circle cx="82" cy="476" r="18" fill="none" stroke="#3fb950" stroke-width="1.5"/>
+<text x="82" y="481" text-anchor="middle" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="12" font-weight="700" fill="#3fb950">L3</text>
+<text x="116" y="462" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="15" font-weight="700" fill="#e6edf3">Semantic Naming</text>
+<text x="116" y="482" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="12" fill="#8b949e">Variable names encode type · shape · domain · origin — zero-cost documentation</text>
+<rect x="116" y="495" width="98" height="18" rx="9" fill="#0a1a0e" stroke="#3fb950" stroke-width="0.75"/>
+<text x="165" y="507" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#3fb950" font-weight="600">VARIABLE · PYTHON</text>
+<rect x="222" y="495" width="132" height="18" rx="9" fill="#0d1117" stroke="#21262d" stroke-width="0.75"/>
+<text x="288" y="507" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#8b949e">type · shape · domain · origin</text>
+<rect x="570" y="437" width="278" height="78" rx="8" fill="#0a0d12" stroke="#21262d" stroke-width="1"/>
+<text x="584" y="457" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="#7ee787">list_dict_orders_from_db</text>
+<text x="584" y="473" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="#8b949e">  = query(sql)</text>
+<text x="584" y="493" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="#7ee787">str_html_dashboard_rendered</text>
+<text x="584" y="509" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="#8b949e">  = template.render(...)</text>
+
+<!-- Footer -->
+<rect y="538" width="900" height="62" fill="#161b22" opacity="0.9"/>
+<rect y="537" width="900" height="1" fill="#21262d"/>
+<text x="450" y="562" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="12" fill="#8b949e">CodeDNA: An In-Source Communication Protocol for AI Coding Agents</text>
+<text x="450" y="582" text-anchor="middle" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#3d444d">v0.7  ·  2026</text>
+</svg>

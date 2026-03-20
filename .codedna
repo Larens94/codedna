@@ -22,6 +22,13 @@ packages:
   paper/:
     purpose: "Scientific paper — EN and IT HTML versions + whitepaper"
 
+  docs/diagrams/:
+    purpose: "SVG diagrams — architecture, workflow, audit tiers, message lifecycle"
+    key_files: [codedna_architecture.svg, codedna_agent_workflow.svg, codedna_three_tier_audit.svg, codedna_message_lifecycle.svg]
+
+  tutorials/:
+    purpose: "Step-by-step tutorials for onboarding agents and developers"
+
 cross_cutting_patterns: {}
 
 agent_sessions:
@@ -140,3 +147,38 @@ agent_sessions:
       measurable F1 delta — rare contrastive structure for agentic navigation training.
       Note: reasoning_log in existing results is intermediate model output, NOT
       chain-of-thought. Not usable as thinking trace for PRM step reasoning.
+
+  - agent: claude-sonnet-4-6
+    provider: anthropic
+    date: 2026-03-20
+    session_id: s_20260320_005
+    task: "create SVG diagrams and update all integration files to v0.7+v0.8"
+    changed:
+      - integrations/.cursorrules
+      - integrations/.windsurfrules
+      - integrations/.clinerules
+      - integrations/copilot-instructions.md
+      - integrations/.agents/workflows/codedna.md
+      - docs/diagrams/codedna_architecture.svg
+      - docs/diagrams/codedna_agent_workflow.svg
+      - docs/diagrams/codedna_three_tier_audit.svg
+      - docs/diagrams/codedna_message_lifecycle.svg
+      - .codedna
+    visited:
+      - .codedna
+      - integrations/.cursorrules
+      - integrations/.windsurfrules
+      - integrations/.clinerules
+      - integrations/copilot-instructions.md
+      - integrations/.agents/workflows/codedna.md
+      - integrations/CLAUDE.md
+    message: >
+      All 5 integration files now aligned to v0.7+v0.8: agent: field in docstring
+      format, .codedna read on session start, message: agent chat layer, git trailer
+      commit convention, session end protocol with session_id and visited fields.
+      Created 4 SVG diagrams in docs/diagrams/: architecture (4 levels), agent
+      workflow (flowchart with edit-cycle loop), three-tier audit (git/.codedna/file
+      agent: columns linked by session_id), message: lifecycle (state machine).
+      docs/diagrams/ and tutorials/ packages added to .codedna manifest.
+      Next: create tutorials/ content (quickstart, workflow, sessions, git trailers,
+      message: layer) and rewrite codedna_setup.py UNIVERSAL_PROMPT from v0.4 to v0.7.

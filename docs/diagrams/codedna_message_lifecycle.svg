@@ -1,0 +1,152 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 900 480" width="900" height="480">
+<defs>
+  <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1">
+    <stop offset="0%" stop-color="#0d1117"/>
+    <stop offset="100%" stop-color="#080c11"/>
+  </linearGradient>
+  <filter id="sh" x="-8%" y="-8%" width="116%" height="116%">
+    <feDropShadow dx="0" dy="2" stdDeviation="6" flood-color="#000" flood-opacity="0.55"/>
+  </filter>
+  <filter id="glow-g" x="-20%" y="-20%" width="140%" height="140%">
+    <feGaussianBlur stdDeviation="3" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <filter id="glow-r" x="-20%" y="-20%" width="140%" height="140%">
+    <feGaussianBlur stdDeviation="3" result="b"/>
+    <feMerge><feMergeNode in="b"/><feMergeNode in="SourceGraphic"/></feMerge>
+  </filter>
+  <marker id="arr-r" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+    <path d="M1,1 L9,5 L1,9" fill="none" stroke="#58a6ff" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  </marker>
+  <marker id="arr-g" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+    <path d="M1,1 L9,5 L1,9" fill="none" stroke="#3fb950" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  </marker>
+  <marker id="arr-red" markerWidth="10" markerHeight="10" refX="8" refY="5" orient="auto">
+    <path d="M1,1 L9,5 L1,9" fill="none" stroke="#f85149" stroke-width="1.5" stroke-linejoin="round" stroke-linecap="round"/>
+  </marker>
+  <pattern id="dots" width="24" height="24" patternUnits="userSpaceOnUse">
+    <circle cx="12" cy="12" r="0.9" fill="#161b22"/>
+  </pattern>
+</defs>
+
+<rect width="900" height="480" fill="url(#bg)"/>
+<rect width="900" height="480" fill="url(#dots)"/>
+
+<!-- Header -->
+<rect width="900" height="78" fill="#161b22" opacity="0.98"/>
+<rect y="77" width="900" height="1" fill="#21262d"/>
+<rect x="32" y="22" width="112" height="28" rx="14" fill="#1c2128" stroke="#30363d" stroke-width="1"/>
+<text x="88" y="40" text-anchor="middle" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" font-weight="600" fill="#58a6ff">CodeDNA  v0.8</text>
+<!-- v0.8 experimental badge -->
+<rect x="760" y="22" width="112" height="28" rx="14" fill="#1a1608" stroke="#d29922" stroke-width="1"/>
+<text x="816" y="40" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" font-weight="600" fill="#d29922">experimental</text>
+
+<text x="450" y="42" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="22" font-weight="700" fill="#e6edf3" letter-spacing="-0.3">message:  Lifecycle</text>
+<text x="450" y="63" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="12" fill="#8b949e">Agent-to-agent conversational layer — observation · promotion · dismissal</text>
+
+<!-- ════════════════════════════════════
+     STATE 1: OBSERVATION (blue)
+     ════════════════════════════════════ -->
+<rect x="30" y="104" width="228" height="198" rx="12" fill="#161b22" stroke="#21262d" stroke-width="1" filter="url(#sh)"/>
+<rect x="30" y="104" width="228" height="5" rx="5" fill="#58a6ff"/>
+<rect x="30" y="104" width="228" height="44" rx="10" fill="#091424"/>
+<rect x="30" y="136" width="228" height="12" fill="#091424"/>
+
+<!-- State label -->
+<text x="144" y="124" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="12" font-weight="700" fill="#58a6ff" letter-spacing="0.5">OBSERVATION</text>
+<text x="144" y="140" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="10" fill="#8b949e">agent writes message:</text>
+
+<!-- Code example -->
+<rect x="46" y="158" width="196" height="130" rx="8" fill="#0a0d12" stroke="#21262d" stroke-width="1"/>
+<text x="60" y="178" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="#79c0ff">agent:   <tspan fill="#8b949e">claude |</tspan></text>
+<text x="60" y="194" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="#8b949e">  2026-03-20 |</tspan></text>
+<text x="60" y="210" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="#8b949e">  implemented X</text>
+<text x="60" y="230" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="#d2a8ff">  message:</text>
+<text x="60" y="246" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="#8b949e">  "noticed Y perf</text>
+<text x="60" y="262" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="#8b949e">   issue — unsure</text>
+<text x="60" y="278" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="#8b949e">   if this = rule"</text>
+
+<!-- ════════════════════════════════════
+     STATE 2: ACTIVE (yellow/center)
+     ════════════════════════════════════ -->
+<!-- Connecting arrow 1→2 -->
+<line x1="258" y1="205" x2="294" y2="205" stroke="#58a6ff" stroke-width="1.5" marker-end="url(#arr-r)"/>
+<text x="276" y="198" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#8b949e">append</text>
+
+<rect x="298" y="104" width="304" height="198" rx="12" fill="#161b22" stroke="#21262d" stroke-width="1" filter="url(#sh)"/>
+<rect x="298" y="104" width="304" height="5" rx="5" fill="#d29922"/>
+<rect x="298" y="104" width="304" height="44" rx="10" fill="#1c1608"/>
+<rect x="298" y="136" width="304" height="12" fill="#1c1608"/>
+
+<text x="450" y="124" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="12" font-weight="700" fill="#d29922" letter-spacing="0.5">ACTIVE</text>
+<text x="450" y="140" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="10" fill="#8b949e">next agent reads · evaluates · replies</text>
+
+<rect x="314" y="158" width="272" height="130" rx="8" fill="#0a0d12" stroke="#21262d" stroke-width="1"/>
+<!-- Decision prompt -->
+<text x="330" y="180" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="#8b949e"># next agent sees:</text>
+<text x="330" y="200" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="#d2a8ff">message: <tspan fill="#8b949e">"noticed Y perf</tspan></text>
+<text x="330" y="216" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="#8b949e">  issue — unsure</tspan></text>
+<text x="330" y="232" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="#8b949e">  if this = rule"</text>
+<!-- Divider -->
+<line x1="330" y1="245" x2="570" y2="245" stroke="#21262d" stroke-width="1"/>
+<text x="450" y="263" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#d29922" font-weight="600">Evaluate: promote?  or  dismiss?</text>
+<text x="450" y="278" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="9" fill="#8b949e">reply with  @prev:  — append-only, never delete</text>
+
+<!-- Arrows from ACTIVE to outcomes -->
+<!-- Promote arrow: up-right toward STATE 3 -->
+<line x1="602" y1="170" x2="636" y2="170" stroke="#3fb950" stroke-width="1.5" marker-end="url(#arr-g)"/>
+<text x="619" y="163" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#3fb950" font-weight="600">promote</text>
+<!-- Dismiss arrow: down-right toward STATE 4 -->
+<line x1="602" y1="246" x2="636" y2="246" stroke="#f85149" stroke-width="1.5" marker-end="url(#arr-red)"/>
+<text x="619" y="265" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#f85149" font-weight="600">dismiss</text>
+
+<!-- ════════════════════════════════════
+     STATE 3: PROMOTED TO rules:
+     ════════════════════════════════════ -->
+<rect x="640" y="94" width="232" height="116" rx="12" fill="#161b22" stroke="#1a4b1e" stroke-width="1.5" filter="url(#sh)"/>
+<rect x="640" y="94" width="232" height="5" rx="5" fill="#3fb950"/>
+<rect x="640" y="94" width="232" height="40" rx="10" fill="#0a1a0e"/>
+<rect x="640" y="124" width="232" height="10" fill="#0a1a0e"/>
+<text x="756" y="112" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="11" font-weight="700" fill="#3fb950" letter-spacing="0.5">PROMOTED  →  rules:</text>
+<text x="756" y="128" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="10" fill="#8b949e">becomes architectural constraint</text>
+<rect x="654" y="140" width="204" height="60" rx="8" fill="#0a0d12" stroke="#1a4b1e" stroke-width="1"/>
+<text x="666" y="160" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="#79c0ff">rules:   <tspan fill="#7ee787">cap rows at 1000</tspan></text>
+<text x="666" y="178" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="#d2a8ff">@prev:   <tspan fill="#8b949e">promoted to rules:</tspan></text>
+<text x="666" y="194" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="#8b949e">  (verified by bench)</text>
+
+<!-- ════════════════════════════════════
+     STATE 4: DISMISSED
+     ════════════════════════════════════ -->
+<rect x="640" y="228" width="232" height="116" rx="12" fill="#161b22" stroke="#3d1a1a" stroke-width="1.5" filter="url(#sh)"/>
+<rect x="640" y="228" width="232" height="5" rx="5" fill="#f85149"/>
+<rect x="640" y="228" width="232" height="40" rx="10" fill="#1a0a0a"/>
+<rect x="640" y="258" width="232" height="10" fill="#1a0a0a"/>
+<text x="756" y="246" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="11" font-weight="700" fill="#f85149" letter-spacing="0.5">DISMISSED</text>
+<text x="756" y="262" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="10" fill="#8b949e">verified · not applicable</text>
+<rect x="654" y="274" width="204" height="60" rx="8" fill="#0a0d12" stroke="#3d1a1a" stroke-width="1"/>
+<text x="666" y="294" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="#d2a8ff">@prev:   <tspan fill="#8b949e">verified, not a</tspan></text>
+<text x="666" y="312" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="#8b949e">  rule — cache</text>
+<text x="666" y="328" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="10" fill="#8b949e">  was warm</text>
+
+<!-- ════════════════════════════════════
+     FUNCTION-LEVEL (L2) note
+     ════════════════════════════════════ -->
+<rect x="30" y="322" width="580" height="98" rx="12" fill="#161b22" stroke="#21262d" stroke-width="1" filter="url(#sh)"/>
+<rect x="30" y="322" width="580" height="5" rx="5" fill="#bc8cff"/>
+<!-- label -->
+<rect x="46" y="336" width="184" height="18" rx="9" fill="#110d1c" stroke="#bc8cff" stroke-width="0.75"/>
+<text x="138" y="348" text-anchor="middle" font-family="-apple-system,sans-serif" font-size="10" fill="#bc8cff" font-weight="600">LEVEL 2 — FUNCTION DOCSTRING</text>
+<!-- note text -->
+<text x="250" y="348" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="11" fill="#8b949e">sliding-window safe: always visible in context</text>
+<!-- code example inline -->
+<rect x="46" y="358" width="548" height="52" rx="8" fill="#0a0d12" stroke="#21262d" stroke-width="1"/>
+<text x="62" y="378" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#8b949e">def render(query_fn):</text>
+<text x="62" y="378" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#8b949e">                          # ← function-level</text>
+<text x="62" y="396" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#79c0ff">    Rules:   <tspan fill="#8b949e">cap rows at 1000</tspan>     <tspan fill="#d2a8ff">  message: <tspan fill="#8b949e">claude | 2026 | noticed N+1 on sort</tspan></tspan></text>
+
+<!-- Footer -->
+<rect y="432" width="900" height="48" fill="#161b22" opacity="0.9"/>
+<rect y="431" width="900" height="1" fill="#21262d"/>
+<text x="450" y="453" text-anchor="middle" font-family="-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif" font-size="11" fill="#8b949e">message:  is append-only — never delete entries · lifecycle: observation → rules: promotion or dismissal</text>
+<text x="450" y="470" text-anchor="middle" font-family="'SF Mono',Menlo,Consolas,monospace" font-size="11" fill="#3d444d">CodeDNA v0.8 experimental  ·  2026</text>
+</svg>
