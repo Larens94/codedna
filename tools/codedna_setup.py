@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-codedna — CLI setup tool for the CodeDNA Annotation Standard v0.5
+codedna — CLI setup tool for the CodeDNA Communication Protocol v0.7
 Usage:
     python tools/codedna_setup.py install          # interactive setup
     python tools/codedna_setup.py install cursor   # install for Cursor
@@ -30,7 +30,7 @@ REPO_ROOT = Path(__file__).parent.parent
 INTEG_DIR = REPO_ROOT / "integrations"
 
 LOGO = f"""
-{C}{W}🧬 CodeDNA v0.5{D}  {Y}github.com/Larens94/codedna{D}
+{C}{W}🧬 CodeDNA v0.7{D}  {Y}github.com/Larens94/codedna{D}
 {D}Every file carries the complete genome of the project.
 """
 
@@ -74,7 +74,7 @@ TOOLS = {
     },
 }
 
-UNIVERSAL_PROMPT = """You follow the CodeDNA v0.5 Annotation Standard (github.com/Larens94/codedna).
+UNIVERSAL_PROMPT = """You follow the CodeDNA v0.7 Communication Protocol (github.com/Larens94/codedna).
 
 ON READ: parse the Manifest Header first (first 14 lines). Check AGENT_RULES before
 writing. Follow every DEPENDS_ON edge. Follow every @REQUIRES-READ before writing logic.
@@ -166,7 +166,7 @@ def cmd_install(args: list[str], target_dir: Path):
 
     print()
     info("Done! Now ask your AI to annotate your first file:")
-    info(f'{Y}"Annotate this file with the CodeDNA v0.5 standard"{D}')
+    info(f'{Y}"Annotate this file with the CodeDNA v0.7 protocol"{D}')
     info(f"Spec: {C}github.com/Larens94/codedna/blob/main/SPEC.md{D}")
 
 
@@ -240,7 +240,7 @@ def cmd_annotate(args: list[str], _):
 Paste this prompt to your AI tool:
 
 ─────────────────────────────────────────────────────────────────
-Annotate the file `{file_path}` following the CodeDNA v0.5 standard.
+Annotate the file `{file_path}` following the CodeDNA v0.7 protocol.
 
 1. Add a CODEDNA:0.4 manifest header before any imports:
    FILE, PURPOSE, CONTEXT_BUDGET (always/normal/minimal),

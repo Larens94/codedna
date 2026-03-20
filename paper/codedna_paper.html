@@ -323,7 +323,7 @@
       mitigations — RAG, project-level rules files (CLAUDE.md, AGENTS.md), or long-context injection — impose retrieval
       latency, maintenance overhead, or infrastructure cost. Recent work (ETH Zurich, 2026) shows that LLM-generated
       context files can <em>degrade</em> task success by 3% and increase inference costs by over 20%. We present
-      <strong>CodeDNA</strong>, an in-source annotation standard that embeds dependency graphs, public contracts, agent
+      <strong>CodeDNA</strong>, an in-source communication protocol that embeds dependency graphs, public contracts, agent
       constraints, and semantic naming conventions directly into source files. The standard is named after its
       biological parallel: just as DNA encodes the complete blueprint of an organism in every cell, CodeDNA ensures that
       every code fragment carries sufficient architectural context for an agent to act correctly in isolation. We
@@ -368,8 +368,8 @@
         fragment an agent reads is already self-sufficient.</p>
 
       <p class="no-indent"><strong>Contributions:</strong></p>
-      <p class="no-indent">(1) The <strong>CodeDNA Annotation Standard v0.7</strong>: a three-level, language-agnostic
-        in-source annotation protocol.</p>
+      <p class="no-indent">(1) The <strong>CodeDNA Communication Protocol v0.7</strong>: a three-level, language-agnostic
+        in-source communication protocol for AI coding agents.</p>
       <p class="no-indent">(2) A biological analogy that frames the standard's design principle and motivates its
         redundancy property.</p>
       <p class="no-indent">(3) Two <strong>live agentic benchmarks</strong> (11 files and 105 files) using Gemini 2.5
@@ -430,7 +430,7 @@
         targeting the failure modes of LLM agents rather than human readers.</p>
 
       <!-- ─── 3. THE CODEDNA STANDARD ─── -->
-      <h2 class="section">3. The CodeDNA Annotation Standard v0.7</h2>
+      <h2 class="section">3. The CodeDNA Communication Protocol v0.7</h2>
 
       <h3 class="subsection">3.1 Biological Analogy</h3>
 
@@ -942,7 +942,7 @@ int_cents_price_from_req = request.json["price"]</pre>
       <!-- ─── 7. CONCLUSION ─── -->
       <h2 class="section">7. Conclusion</h2>
 
-      <p class="no-indent">We presented CodeDNA, a three-level in-source annotation standard whose design uses a
+      <p class="no-indent">We presented CodeDNA, a three-level in-source communication protocol whose design uses a
         biological analogy as a guiding intuition: just as DNA encodes a complete organism blueprint in every cell,
         CodeDNA ensures that every source file — and every function within it — carries enough architectural context for
         an LLM agent to navigate correctly without external lookup.</p>

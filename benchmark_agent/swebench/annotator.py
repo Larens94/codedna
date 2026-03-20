@@ -1,5 +1,5 @@
 """
-swebench/annotator.py — Genera annotazioni CodeDNA v0.5 per i file rilevanti.
+swebench/annotator.py — Genera annotazioni CodeDNA v0.7 per i file rilevanti.
 
 deps:    google-genai (google.genai), tasks.json, projects_swebench/*/codedna/
 exports: annotated Python files with module docstrings in codedna/ dirs

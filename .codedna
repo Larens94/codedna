@@ -63,3 +63,39 @@ agent_sessions:
       for AI Coding Agents".
       Next: test whether this methodology actually improves development of this repo itself.
       .codedna created for the first time — this is session 001.
+
+  - agent: claude-sonnet-4-6
+    provider: anthropic
+    date: 2026-03-20
+    session_id: s_20260320_002
+    task: "align all docs to new title and v0.7 version — remove v0.5 references"
+    changed:
+      - tools/codedna_setup.py
+      - benchmark_agent/swebench/annotator.py
+      - examples/python/dashboard.py
+      - integrations/copilot-instructions.md
+      - integrations/CLAUDE.md
+      - CONTRIBUTING.md
+      - README.md
+      - paper/codedna_paper.html
+      - paper/codedna_whitepaper_EN.html
+      - .codedna
+    visited:
+      - .codedna
+      - tools/codedna_setup.py
+      - benchmark_agent/swebench/annotator.py
+      - examples/python/dashboard.py
+      - integrations/copilot-instructions.md
+      - integrations/CLAUDE.md
+      - CONTRIBUTING.md
+      - README.md
+      - paper/codedna_paper.html
+      - paper/codedna_paper_IT.html
+      - paper/codedna_whitepaper_EN.html
+    message: >
+      Found 3 categories of misalignment: v0.5 refs outside historical docs,
+      old "annotation standard" title, old paper section headings.
+      Left intact: paper_IT.html v0.5 sections (benchmark was run on v0.5 — historically correct),
+      CHANGELOG.md (version history), nlnet drafts (historical).
+      Note: codedna_setup.py UNIVERSAL_PROMPT still uses v0.4 syntax (CODEDNA:0.4,
+      AGENT_RULES, @REQUIRES-READ) — needs full rewrite to v0.7 format in a dedicated session.

@@ -1,6 +1,6 @@
 """Monthly revenue KPI dashboard with chart and table.
 
-Module (CodeDNA v0.5):
+Module (CodeDNA v0.7):
     file: dashboard.py
     purpose: Render monthly revenue KPI dashboard as HTML
     deps: utils.py (calculate_kpi, format_currency)

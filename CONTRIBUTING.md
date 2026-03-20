@@ -1,6 +1,6 @@
 # Contributing to CodeDNA
 
-Thank you for your interest in contributing! CodeDNA is a language-adaptable annotation standard, so contributions from any ecosystem are welcome.
+Thank you for your interest in contributing! CodeDNA is a language-adaptable in-source communication protocol, so contributions from any ecosystem are welcome.
 
 ## Ways to Contribute
 

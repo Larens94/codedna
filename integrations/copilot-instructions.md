@@ -1,6 +1,6 @@
 # CodeDNA v0.7 — GitHub Copilot Instructions
 
-This codebase uses the CodeDNA annotation standard (v0.7). Apply these rules in every suggestion.
+This codebase uses the CodeDNA communication protocol (v0.7). Apply these rules in every suggestion.
 
 ## Module header (required in every Python file)
 

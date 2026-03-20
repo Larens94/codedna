@@ -1,6 +1,6 @@
 # 🧬 CodeDNA: An In-Source Communication Protocol for AI Coding Agents
 
-> *An in-source annotation standard where the writing agent encodes architectural context and the reading agent decodes it. The file is the channel. Every fragment carries the whole.*
+> *An in-source communication protocol where the writing agent encodes architectural context and the reading agent decodes it. The file is the channel. Every fragment carries the whole.*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
 [![Version](https://img.shields.io/badge/CodeDNA-v0.7-6366f1)](./SPEC.md)
