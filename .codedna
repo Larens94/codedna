@@ -182,3 +182,27 @@ agent_sessions:
       docs/diagrams/ and tutorials/ packages added to .codedna manifest.
       Next: create tutorials/ content (quickstart, workflow, sessions, git trailers,
       message: layer) and rewrite codedna_setup.py UNIVERSAL_PROMPT from v0.4 to v0.7.
+
+  - agent: claude-sonnet-4-6
+    provider: anthropic
+    date: 2026-03-21
+    session_id: s_20260321_001
+    task: "align codedna_setup.py and ai-benchmark-validator.md to v0.7"
+    changed:
+      - tools/codedna_setup.py
+      - .claude/agents/ai-benchmark-validator.md
+      - .codedna
+    visited:
+      - tools/codedna_setup.py
+      - .claude/agents/ai-benchmark-validator.md
+      - .codedna
+    message: >
+      Rewrote codedna_setup.py UNIVERSAL_PROMPT from v0.4 syntax (CODEDNA:0.4,
+      AGENT_RULES, @REQUIRES-READ, @MODIFIES-ALSO, @BREAKS-IF-RENAMED, CONTEXT_BUDGET,
+      DEPENDS_ON, LAST_MODIFIED, REQUIRED_BY) to v0.7 module docstring format
+      (exports/used_by/rules/agent, Rules: docstrings, semantic naming).
+      Updated cmd_validate required fields from v0.4 keys to v0.7 keys.
+      Updated cmd_annotate prompt to generate v0.7 annotations.
+      Added CodeDNA v0.7 module docstring to codedna_setup.py itself.
+      Updated ai-benchmark-validator.md §6 from CODEDNA:0.3 reference to v0.7
+      module docstring field descriptions. All documents now consistent on v0.7.

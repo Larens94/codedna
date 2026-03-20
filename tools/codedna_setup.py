@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
-"""
-codedna — CLI setup tool for the CodeDNA Communication Protocol v0.7
+"""codedna_setup.py — CLI setup tool for CodeDNA Communication Protocol v0.7.
+
+exports: main() -> int, cmd_install(args, target_dir), cmd_validate(args, target_dir) -> int, cmd_annotate(args, _), cmd_check(_, target_dir)
+used_by: users via CLI, integrations/install.sh
+rules:   UNIVERSAL_PROMPT must always reflect current CodeDNA version syntax; cmd_validate required fields must match current module docstring fields (exports/used_by/rules/agent)
+agent:   claude-sonnet-4-6 | 2026-03-21 | updated from v0.4 syntax to v0.7; aligned UNIVERSAL_PROMPT, cmd_validate required fields, and cmd_annotate prompt
+
 Usage:
     python tools/codedna_setup.py install          # interactive setup
     python tools/codedna_setup.py install cursor   # install for Cursor
@@ -76,18 +81,27 @@ TOOLS = {
 
 UNIVERSAL_PROMPT = """You follow the CodeDNA v0.7 Communication Protocol (github.com/Larens94/codedna).
 
-ON READ: parse the Manifest Header first (first 14 lines). Check AGENT_RULES before
-writing. Follow every DEPENDS_ON edge. Follow every @REQUIRES-READ before writing logic.
+ON READ: read the module docstring first (first 10-14 lines). Parse exports:, used_by:,
+rules:, and agent: before reading any code. Read the Rules: docstring of any function
+you plan to edit.
 
-ON WRITE: generate the CODEDNA:0.4 manifest header before any imports.
-Set CONTEXT_BUDGET (always/normal/minimal). Add @REQUIRES-READ and @MODIFIES-ALSO
-to functions that cross file boundaries. Tag load-bearing symbols with @BREAKS-IF-RENAMED.
+ON WRITE: every new Python file must begin with a CodeDNA module docstring:
+
+  filename.py — <purpose ≤15 words>.
+
+  exports: public_function(arg) -> return_type
+  used_by: consumer_file.py → consumer_function
+  rules:   <hard architectural constraint agents must never violate>
+  agent:   <model-id> | <YYYY-MM-DD> | <what you implemented and what you noticed>
+
+For functions with non-obvious constraints, add a Rules: docstring inside the function.
 Use semantic naming: list_dict_users_from_db = get_users().
 
-ON EDIT: first change = update LAST_MODIFIED (≤8 words). Then cascade all @MODIFIES-ALSO.
+ON EDIT: re-read rules: and agent: history before writing. After editing, check
+used_by: targets. Append a new agent: line (never edit existing ones). Update
+rules: if you discover new architectural constraints.
 
-EXPORTS are public contracts — never rename without explicit instruction + updating
-all REQUIRED_BY callers."""
+EXPORTS are public contracts — never rename or remove without explicit instruction."""
 
 
 # ── Helpers ───────────────────────────────────────────────────────────────────
@@ -175,7 +189,7 @@ def cmd_validate(args: list[str], target_dir: Path):
     section("🔍 Validating CodeDNA Manifests")
 
     scan_dir = Path(args[0]) if args else target_dir
-    required = ["FILE:", "PURPOSE:", "CONTEXT_BUDGET:", "DEPENDS_ON:", "EXPORTS:", "LAST_MODIFIED:"]
+    required = ["exports:", "used_by:", "rules:", "agent:"]
 
     ok = bad = skipped = 0
     problems = []
@@ -191,7 +205,7 @@ def cmd_validate(args: list[str], target_dir: Path):
             continue
 
         header = "\n".join(lines[:20])
-        has_codedna = "CODEDNA" in header or any(f in header for f in required[:2])
+        has_codedna = "exports:" in header and "used_by:" in header
 
         if not has_codedna:
             skipped += 1
@@ -242,18 +256,24 @@ Paste this prompt to your AI tool:
 ─────────────────────────────────────────────────────────────────
 Annotate the file `{file_path}` following the CodeDNA v0.7 protocol.
 
-1. Add a CODEDNA:0.4 manifest header before any imports:
-   FILE, PURPOSE, CONTEXT_BUDGET (always/normal/minimal),
-   DEPENDS_ON, EXPORTS, REQUIRED_BY (if known), AGENT_RULES (if needed),
-   LAST_MODIFIED.
+1. Replace or add the module docstring at the top of the file in this format:
 
-2. Add @REQUIRES-READ and @MODIFIES-ALSO inline hyperlinks to any
-   function that reads from or modifies another file's state.
+   filename.py — <purpose ≤15 words>.
 
-3. Add @BREAKS-IF-RENAMED to any symbol that is imported by name
-   in other files.
+   exports: public_function(arg) -> return_type
+   used_by: consumer_file.py → consumer_function
+   rules:   <hard architectural constraint agents must never violate>
+   agent:   <your-model-id> | <YYYY-MM-DD> | <what you implemented and noticed>
 
-4. Rename ambiguous local variables using the format:
+2. For any function with non-obvious domain constraints, add a Rules: docstring:
+
+   def my_function(arg):
+       \"\"\"Short description.
+
+       Rules: What the agent MUST or MUST NOT do here.
+       \"\"\"
+
+3. Rename ambiguous local variables using the format:
    <type>_<shape>_<domain>_<origin>
    Example: list_dict_orders_from_db = get_orders()
 
