@@ -1,4 +1,4 @@
-# CodeDNA Inter-Agent Communication Protocol — Specification
+# CodeDNA: An In-Source Communication Protocol for AI Coding Agents — Specification
 
 **Version:** 0.7  
 **Status:** Draft  
@@ -275,17 +275,56 @@ packages:
   payments/:
     purpose: "Invoice generation, payment processing, Stripe integration"
     key_files: [models.py, stripe_client.py, webhooks.py]
-    
+
   analytics/:
     purpose: "Revenue reports, KPI dashboards, data aggregation"
     depends_on: [payments/, tenants/]
-    
+
   tenants/:
     purpose: "Multi-tenant management, suspension, soft-delete"
     key_files: [models.py, middleware.py]
+
+agent_sessions:
+  - agent: claude-sonnet-4-6
+    date: 2026-03-10
+    task: "Implement monthly revenue aggregation"
+    changed: [analytics/revenue.py]
+    message: >
+      Implemented monthly_revenue(). Found that get_invoices_for_period() returns ALL tenants
+      with no suspended filter. Added rule to analytics/revenue.py. annual_summary() not yet
+      implemented — left TODO in file.
+
+  - agent: gemini-2.5-pro
+    date: 2026-03-18
+    task: "Add annual_summary to revenue module"
+    changed: [analytics/revenue.py, api/serializers.py]
+    message: >
+      Added annual_summary(). Updated RevenueSchema in serializers.py [cascade].
+      Discovered TenantSuspendedError case when all tenants suspended — added to rules.
+      Note: the suspended filter is NOT idempotent — calling is_suspended() twice on the same
+      result set causes double-exclusion. Added this to rules.
 ```
 
-### 3.2 Generation
+### 3.2 `agent_sessions:` Field
+
+`agent_sessions:` is the **project-level session log** — the manifest-scope counterpart to the file-level `agent:` entries. Each entry captures what an agent did in a session and why, at project scope.
+
+**Required subfields per entry:**
+
+| Field | Description |
+|---|---|
+| `agent` | Model identifier (e.g., `claude-sonnet-4-6`, `gemini-2.5-pro`) |
+| `date` | ISO date of the session (`YYYY-MM-DD`) |
+| `task` | Brief description of the task (≤15 words) |
+| `changed` | List of files meaningfully modified |
+| `message` | Narrative: what was done, what was discovered, what the next agent should know |
+
+**Agent behaviour:**
+- On session start: read the last 3–5 `agent_sessions:` entries to understand recent project history
+- On session end: append a new entry — never edit existing ones
+- If new packages were discovered: also update `packages:` with their `purpose:` and `depends_on:`
+
+### 3.3 Generation
 
 ```bash
 codedna init          # generates .codedna from project structure
@@ -314,8 +353,11 @@ The Module Header is written as a **Python module docstring** (triple-quoted str
 exports: <symbol(signature)> → <return_type> | none
 used_by: <file> → <symbol> | none
 rules:   <hard constraints for AI agents; what to do and what to avoid> | none
+agent:   <model-id> | <YYYY-MM-DD> | <what I did and what I noticed — one or two lines>
 """
 ```
+
+The `agent:` field is **append-only and multi-entry** — each agent session that significantly touches this file adds a new `agent:` line. Lines are never removed or edited. The field grows over time and becomes the session history of the file.
 
 
 
@@ -326,7 +368,8 @@ rules:   <hard constraints for AI agents; what to do and what to avoid> | none
 | first line | ✅ | `<filename> — <purpose>` (≤15 words, describes *what*, not *how*) |
 | `exports` | ✅ | Public API with signatures |
 | `used_by` | ✅ | Inverse of deps; who calls this file's exports. Optional `[cascade]` tag marks targets that **MUST** be updated when exports change. |
-| `rules` | ✅ | **The inter-agent communication channel.** Hard constraints, domain knowledge, what to do and what to avoid. Agents MUST read before editing and MUST update when they discover new constraints. |
+| `rules` | ✅ | **Architectural truth channel.** Hard constraints, domain knowledge, what to do and what to avoid. Updated in-place — always reflects the current correct state. |
+| `agent` | ✅ | **Session narrative channel.** Append-only log of agent messages. Format: `model-id \| YYYY-MM-DD \| message`. One line per agent session. Never deleted. |
 
 ### 4.4 `rules:` Field — The Inter-Agent Communication Channel
 
@@ -387,7 +430,178 @@ rules:   get_invoices_for_period() returns ALL tenants, NO suspended filter →
          callers MUST call is_suspended() BEFORE aggregating revenue.
          DB: invoices(tenant_id, amount_cents, status), tenants(suspended_at, deleted_at).
          Raises TenantSuspendedError if all tenants in period are suspended.
-"""```
+agent:   claude-sonnet-4-6 | 2026-03-10 | Implemented monthly_revenue. Discovered NO suspended
+         filter in upstream — added rule above. annual_summary not yet implemented.
+agent:   gemini-2.5-pro    | 2026-03-18 | Added annual_summary. Reused monthly_revenue loop.
+         TenantSuspendedError now raised when all tenants in period are suspended — added to rules.
+"""
+```
+
+---
+
+### 4.7 `message:` — The Agent Chat Layer *(v0.8 — Experimental, not yet tested)*
+
+> **Status:** design proposal. Not validated in benchmark. Behaviour and format may change before finalisation.
+
+The `agent:` field is a **narrative log** — what the agent did and what it noticed. The `message:` sub-field extends this with a **conversational layer**: observations not yet certain enough to become `rules:`, open questions, and explicit forward-looking notes for the next agent.
+
+**Three channels, three purposes:**
+
+| Field | Nature | Update policy |
+|---|---|---|
+| `rules:` | Architectural truth — hard constraints | updated in-place, always current |
+| `agent:` | Session log — what happened and when | append-only, never edited |
+| `message:` | Agent-to-agent chat — soft observations and open questions | append-only, resolved by reply |
+
+`rules:` is the **law**. `agent:` is the **diary**. `message:` is the **conversation that precedes the law**.
+
+#### Format at Level 1 (module docstring)
+
+```python
+"""analytics/revenue.py — Monthly/annual revenue aggregation from paid invoices.
+
+exports: monthly_revenue(year, month) -> dict | annual_summary(year) -> list[dict]
+used_by: api/reports.py → revenue_route | api/serializers.py → RevenueSchema [cascade]
+rules:   get_invoices_for_period() returns ALL tenants, NO suspended filter →
+         callers MUST call is_suspended() BEFORE aggregating revenue.
+agent:   claude-sonnet-4-6 | anthropic | 2026-03-10 | Implemented monthly_revenue.
+         message: "rounding edge case in multi-currency — not certain enough for rules:,
+                  investigate before next release"
+agent:   gemini-2.5-pro    | google    | 2026-03-18 | Added annual_summary.
+         message: "@prev: confirmed rounding issue → promoted to rules:. New open item:
+                  timezone handling in January rollover — check utils/dates.py first"
+"""
+```
+
+#### Format at Level 2 (function docstring) — sliding window safe
+
+The same `message:` field can appear in function-level docstrings. This is critical for agents that read the file via a sliding window and never see the module header:
+
+```python
+def monthly_revenue(year: int, month: int) -> dict:
+    """Aggregate paid invoices into monthly revenue total.
+
+    Rules:   MUST filter is_suspended() BEFORE summing.
+    message: claude-sonnet-4-6 | 2026-03-10 | rounding edge case in multi-currency,
+             investigate before next release — not yet promoted to Rules:
+    message: gemini-2.5-pro    | 2026-03-18 | @prev: confirmed, promoted to Rules:.
+             New: timezone rollover in January — check utils/dates.py
+    """
+```
+
+An agent reading only lines 55–90 receives both the `Rules:` constraint and the active `message:` thread — no need to scroll to the top.
+
+#### Lifecycle
+
+1. Agent A leaves a `message:` — observation, open question, or soft warning
+2. Agent B reads it, investigates, then:
+   - **Confirmed as truth** → promotes to `rules:` (or `Rules:`), replies `"@prev: promoted to rules:"`
+   - **Irrelevant** → replies `"@prev: verified, not applicable because..."` and closes the thread
+   - **Still open** → extends the thread with a new `message:` and additional information
+3. Old `message:` entries are never deleted — append-only, part of the permanent history
+
+---
+
+### 4.8 Agent Telemetry via Git Trailers *(v0.8 — Experimental, not yet tested)*
+
+> **Status:** design proposal. Not validated in benchmark conditions. Format may change before finalisation.
+
+#### Design principle: git is the audit log
+
+Git is already immutable, append-only, diff-complete, and universally available. No additional infrastructure is needed. The only missing piece is a **structured commit message convention** that makes AI agent sessions filterable by model, provider, and session.
+
+CodeDNA uses **git trailers** — the same standard mechanism as `Co-Authored-By:`, natively recognised by GitHub and GitLab — to embed agent metadata in every commit produced by an AI session.
+
+#### Commit message format
+
+```
+implement monthly revenue aggregation
+
+AI-Agent:    claude-sonnet-4-6
+AI-Provider: anthropic
+AI-Session:  s_a1b2c3
+AI-Visited:  analytics/revenue.py, payments/models.py, api/reports.py
+AI-Message:  found rounding edge case in multi-currency — investigate before next release
+```
+
+`AI-Visited:` is the only field not natively tracked by git. Git records files **changed** (the diff); `AI-Visited:` adds files **read** during the session. This is the critical distinction:
+- `AI-Visited:` = navigation trace — where the agent looked
+- git diff = modification trace — what the agent changed
+
+All other audit data (exact diff, date, author, changed files) is already in git.
+
+#### Queries available immediately via git
+
+```bash
+# all commits produced by AI agents
+git log --grep="AI-Agent:"
+
+# commits by a specific model
+git log --grep="AI-Agent: claude-sonnet-4-6"
+
+# all models that have touched a specific file, with diffs
+git log --grep="AI-Agent:" -p -- analytics/revenue.py
+
+# model distribution across the project
+git log --format="%b" | grep "AI-Agent:" | sort | uniq -c | sort -rn
+
+# full session reconstruction: what the agent read and changed
+git show <commit-hash>
+```
+
+#### Three-tier architecture
+
+```
+git log (AI trailers)       ← authoritative audit log — immutable, diff-complete
+        ↕ session_id
+.codedna agent_sessions:    ← last N sessions, lean summary for agent navigation
+        ↕ session_id
+file agent: field           ← one-liner per file, sliding-window safe
+```
+
+The `session_id` is the link across all three tiers. The **authoritative source** for history is git. The `agent:` docstring field and `agent_sessions:` in `.codedna` are lightweight caches — read by agents during work, not the source of truth for audit.
+
+#### Extended `agent:` entry in module docstring
+
+The file-level `agent:` field gains `provider` and `session_id` to enable cross-referencing with git:
+
+```python
+# v0.7
+agent:   claude-sonnet-4-6 | 2026-03-10 | Implemented monthly_revenue.
+
+# v0.8 proposed
+agent:   claude-sonnet-4-6 | anthropic | 2026-03-10 | s_a1b2c3 | Implemented monthly_revenue.
+         message: "rounding edge case in multi-currency — investigate before next release"
+```
+
+Fields in order: `model-id | provider | YYYY-MM-DD | session_id | narrative`
+
+#### Extended `agent_sessions:` in `.codedna`
+
+```yaml
+agent_sessions:
+  - agent: claude-sonnet-4-6
+    provider: anthropic
+    date: 2026-03-10
+    session_id: s_a1b2c3          # links to git commit with matching AI-Session trailer
+    task: "implement monthly revenue aggregation"
+    changed: [analytics/revenue.py]
+    visited:  [analytics/revenue.py, utils/dates.py, payments/models.py, api/reports.py]
+    message: >
+      Implemented monthly_revenue(). Found rounding edge case in multi-currency —
+      not yet a rule. Investigate before next release.
+```
+
+#### VSCode Extension (planned, M3)
+
+The git trailers are the data source for a planned VSCode extension:
+
+- **CodeLens inline** — last AI agent + commit count per file and function (from `git log`)
+- **File Explorer overlay** — heat map of AI sessions per file, provider badge
+- **Agent Timeline panel** — chronological session log with git diff per session
+- **Stats panel** — model distribution chart, most visited files, navigation efficiency per model (`AI-Visited` length vs changed files ratio)
+
+This is **`git blame` for AI agents**: not just who changed a line, but which model, which session, and the full navigation path that preceded the change.
 
 ---
 
@@ -519,16 +733,19 @@ When an AI agent must plan edits across a multi-file codebase, it should:
 
 ### 8.2 On WRITE (generate mode)
 1. Generate the module docstring as the **first output block**, before any imports.
-2. Populate all three fields: `exports`, `used_by`, `rules`.
+2. Populate all four fields: `exports`, `used_by`, `rules`, `agent`.
 3. For critical functions with non-obvious domain constraints, add a `Rules:` docstring.
 4. Apply semantic naming to data-carrying variables.
+5. At session end: append an `agent_sessions:` entry to `.codedna` describing what was created and why.
 
 ### 8.3 On EDIT
-1. **First step**: re-read `rules:` and the `Rules:` of the function you are editing.
+1. **First step**: re-read `rules:`, the existing `agent:` log, and the `Rules:` of the function you are editing. The `agent:` history tells you why the current state exists.
 2. Apply all file-level constraints before writing.
 3. After editing, check `used_by:` targets (especially `[cascade]`-tagged ones).
 4. If renaming an `exports:` symbol: update all `used_by:` callers.
-5. **If you discover a constraint or fix a bug, update `rules:` for the next agent.** This is how agents communicate.
+5. **If you discover a constraint or fix a bug, update `rules:` for the next agent.** This is the architectural channel.
+6. **After editing, append an `agent:` line** to the module docstring: `model-id | YYYY-MM-DD | what you did and what you noticed`. This is the narrative channel. Never edit existing `agent:` lines.
+7. At session end: append an `agent_sessions:` entry to `.codedna`.
 
 ### 8.4 Migration
 
@@ -569,6 +786,66 @@ This is analogous to code review for comments: the cost of reviewing is justifie
 - Before a release
 - On a periodic schedule (e.g., weekly for active codebases)
 - When an agent's edit produces unexpected failures
+
+#### 8.6.1 Git Telemetry as Verification Input *(v0.8 — Experimental, not yet tested)*
+
+> **Status:** design proposal. Not validated in benchmark conditions.
+
+The git trailer convention described in §4.8 transforms verification agents from reactive (checking annotations after the fact) to **proactive** — able to audit agent behaviour systematically using structured telemetry from every AI session.
+
+A verification agent with access to `git log` AI trailers can perform five distinct audit types:
+
+**Audit 1 — Navigation correctness**
+
+Did the agent read the files it should have given the `used_by:` graph?
+
+```bash
+git log --grep="AI-Agent:" --format="%H %b" | extract AI-Visited
+# compare AI-Visited against used_by: targets of each changed file
+```
+
+If a commit modifies `analytics/revenue.py` (which has `used_by: api/serializers.py [cascade]`) but `api/serializers.py` is absent from both `AI-Visited:` and the diff — the verification agent flags a **cascade violation**.
+
+**Audit 2 — Rule compliance from diff**
+
+Did the agent respect the `rules:` of every file it modified?
+
+The verification agent reads the diff of each AI commit and cross-checks it against the `rules:` field of the modified files. Because `rules:` is structured and co-located with the code, this check is automatable — no manual review required.
+
+**Audit 3 — Annotation accuracy**
+
+Are the `rules:` still accurate after the change?
+
+If a commit modifies `get_invoices_for_period()` but does not update the `rules:` that describes its behaviour, the verification agent flags a **stale annotation** — the field describes code that no longer exists.
+
+**Audit 4 — `message:` lifecycle**
+
+Are there `message:` entries that have been open for too long without resolution?
+
+```bash
+git log --grep="AI-Message:" --format="%ai %b"
+# find messages with no @prev: reply in any subsequent AI commit touching the same file
+```
+
+A `message:` unresolved for N sessions signals either a known open issue (acceptable) or a forgotten observation (verification agent bumps it into `rules:` or closes it with a reply).
+
+**Audit 5 — Navigation efficiency per model**
+
+```
+navigation_efficiency = len(changed_files) / len(AI-Visited)
+```
+
+Aggregated per model over time, this is a real signal of navigational quality — not a proxy metric. An agent that reads 20 files and changes 1 is navigating poorly relative to the `used_by:` graph. The verification agent can surface this per model and per file domain.
+
+**The verification agent as a first-class consumer of telemetry**
+
+| Consumer | Reads | Purpose |
+|---|---|---|
+| Operational agent | `.codedna` + file `agent:` | navigate the codebase during work |
+| Verification agent | `git log` AI trailers | audit compliance, flag violations, close message: threads |
+| VSCode extension | `git log` AI trailers | visualise history for the human team |
+
+The verification agent closes the quality loop: operational agents write code and annotations; the verification agent checks that both are coherent and flags divergences before they propagate.
 
 ### 8.7 Maintenance Cost Model
 
@@ -617,6 +894,79 @@ Review agent    → reads updated rules:       → validates consistency, extend
 ```
 
 Each agent leaves the codebase more navigable for the next. Unlike documentation, annotations are co-located with the code they describe — they are read every time the file is edited, not forgotten in a wiki.
+
+---
+
+## 1.2 Session Continuity and the Agent Chat
+
+### The Session Problem
+
+Every agent session starts cold. The agent has no memory of what previous sessions did, why they made specific choices, or what they discovered along the way. `rules:` addresses the *what* — the architectural constraints. But it does not address the *who*, the *when*, or the *why I did it this way*.
+
+A `rules:` field like `MUST filter is_suspended() before aggregating` tells the next agent what to do. It does not tell them:
+- Which agent wrote this rule
+- When it was discovered
+- What went wrong before the rule was added
+- What the agent was trying to accomplish when it found this
+
+This temporal, narrative layer is what the `agent:` field provides.
+
+### `rules:` vs `agent:` — Two Distinct Channels
+
+| | `rules:` | `agent:` |
+|---|---|---|
+| **Nature** | Architectural truth | Session narrative |
+| **Time** | Timeless — always valid | Temporal — stamped with date and model |
+| **Update mode** | In-place — always the current correct state | Append-only — history is preserved |
+| **Content** | Constraints: what to do, what to avoid | Messages: what I did, what I noticed, what surprised me |
+| **Recipient** | Any future agent about to edit this file | Any future agent wanting to understand the history |
+
+Think of `rules:` as a shared wiki page — it is updated to always be correct. `agent:` is a chat log — it accumulates entries, each timestamped, each signed.
+
+### Session Continuity Model
+
+A CodeDNA-aware agent session has a defined lifecycle:
+
+```
+Session Start:
+  1. Read .codedna manifest — understand current project state + session history
+  2. Read module docstrings — collect rules: and agent: logs for relevant files
+  3. Read function Rules: on functions to edit
+
+During Session:
+  4. Respect rules: constraints
+  5. Discover new constraints → update rules: immediately (do not wait until end)
+
+Session End:
+  6. Append agent: entry to every file significantly touched
+  7. Append agent_sessions: entry to .codedna manifest
+  8. Update manifest packages: if new structure was discovered
+```
+
+The manifest becomes a **living document** — not a static snapshot generated by `codedna init`, but a continuously updated record of the project's evolution through agent sessions.
+
+### The Persistent Chat in Code
+
+When multiple agents work on the same file over time, the `agent:` entries form a **conversation embedded in the source**:
+
+```python
+"""analytics/revenue.py — Monthly/annual revenue aggregation from paid invoices.
+
+exports: monthly_revenue(year, month) -> dict | annual_summary(year) -> list[dict]
+used_by: api/reports.py → revenue_route | api/serializers.py → RevenueSchema [cascade]
+rules:   get_invoices_for_period() returns ALL tenants, NO suspended filter →
+         callers MUST call is_suspended() BEFORE aggregating.
+         Suspended filter is NOT idempotent — calling twice causes double-exclusion.
+agent:   claude-sonnet-4-6 | 2026-03-10 | Implemented monthly_revenue. Found no suspended filter
+         in get_invoices_for_period — added rule above. Verified with test_revenue_suspended.
+agent:   gemini-2.5-pro    | 2026-03-18 | Added annual_summary. Reused monthly loop.
+         Noticed double-exclusion risk on suspended filter — updated rules above.
+agent:   deepseek-chat      | 2026-04-02 | Refactored to batch DB call. Rules unchanged.
+         Perf note: old version made N queries per tenant — now 1 query total.
+"""
+```
+
+This is not documentation. This is a **chat between agents who never shared a session**, reconstructed from entries left over time. A new agent reading this file instantly knows the history of decisions made, problems encountered, and solutions applied — without access to any external system.
 
 ---
 

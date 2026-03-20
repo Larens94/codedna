@@ -1,0 +1,65 @@
+# .codedna — CodeDNA project manifest
+project: codedna
+description: "An In-Source Communication Protocol for AI Coding Agents — spec, benchmark, tools"
+version: "0.7"
+
+packages:
+  benchmark_agent/swebench/:
+    purpose: "Multi-model SWE-bench benchmark runner and result analyzer"
+    key_files: [run_agent_multi.py, analyze_multi.py, annotator.py, setup_agent_annotated.py]
+
+  benchmark_agent/projects_swebench/:
+    purpose: "5 Django SWE-bench tasks with control/ and codedna/ variant dirs"
+    depends_on: [benchmark_agent/swebench/]
+
+  integrations/:
+    purpose: "AI tool integration files — CLAUDE.md, .cursorrules, copilot-instructions.md"
+
+  tools/:
+    purpose: "AST-based auto-annotator for existing codebases"
+    key_files: [auto_annotate.py]
+
+  paper/:
+    purpose: "Scientific paper — EN and IT HTML versions + whitepaper"
+
+cross_cutting_patterns: {}
+
+agent_sessions:
+  - agent: claude-sonnet-4-6
+    provider: anthropic
+    date: 2026-03-20
+    session_id: s_20260320_001
+    task: "design v0.8 features: message: field, git telemetry, verification agents"
+    changed:
+      - SPEC.md
+      - README.md
+      - integrations/CLAUDE.md
+      - paper/codedna_paper.html
+      - paper/codedna_paper_IT.html
+      - paper/codedna_whitepaper_EN.html
+      - .codedna
+    visited:
+      - SPEC.md
+      - README.md
+      - integrations/CLAUDE.md
+      - paper/codedna_paper.html
+      - paper/codedna_paper_IT.html
+      - paper/codedna_whitepaper_EN.html
+      - benchmark_agent/swebench/run_agent_multi.py
+      - benchmark_agent/swebench/analyze_multi.py
+      - benchmark_agent/swebench/annotator.py
+      - benchmark_agent/swebench/setup_agent_annotated.py
+      - tools/auto_annotate.py
+    message: >
+      Designed v0.8 features in collaboration with Fabrizio:
+      (1) message: field — agent-to-agent conversational layer at Level 1 and Level 2,
+      lifecycle: observation → rules: promotion or dismissal, append-only.
+      (2) Git trailers as audit log — AI-Agent:, AI-Provider:, AI-Session:, AI-Visited:,
+      AI-Message: — git is the authoritative history, .codedna is the lean cache.
+      (3) Verification agent integration — 5 audit types enabled by git telemetry:
+      navigation correctness, rule compliance, annotation accuracy, message: lifecycle,
+      navigation efficiency per model.
+      (4) Title updated across all files to "CodeDNA: An In-Source Communication Protocol
+      for AI Coding Agents".
+      Next: test whether this methodology actually improves development of this repo itself.
+      .codedna created for the first time — this is session 001.

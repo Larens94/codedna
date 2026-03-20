@@ -1,4 +1,4 @@
-# 🧬 CodeDNA — Inter-Agent Communication Protocol v0.7
+# 🧬 CodeDNA: An In-Source Communication Protocol for AI Coding Agents
 
 > *An in-source annotation standard where the writing agent encodes architectural context and the reading agent decodes it. The file is the channel. Every fragment carries the whole.*
 
@@ -152,11 +152,74 @@ CodeDNA v0.7 is the research prototype. The planned development path:
 |---|---|---|
 | **M1 — Protocol & CLI** | v1.0 spec · `codedna verify` · `codedna update` · AST-based auto-extraction · PyPI | 🔜 |
 | **M2 — Benchmark Expansion** | 20+ SWE-bench tasks · 5+ LLMs · Zenodo dataset · public dashboard | 🔜 |
-| **M3 — Editor & Workflow** | VS Code extension (used_by graph) · pre-commit hook · GitHub Action CI | 🔜 |
+| **M3 — Editor & Workflow** | VS Code extension (used_by graph · agent timeline · model heatmap) · pre-commit hook · GitHub Action CI | 🔜 |
 | **M4 — Language Extension** | JavaScript/TypeScript · Go · Rust · full docs rewrite | 🔜 |
 | **M5 — Research & Dissemination** | arXiv preprint · ICSE NIER/workshop submission · annotate Flask, FastAPI | 🔜 |
 
 > This roadmap is part of a funding application to [NLnet NGI0 Commons Fund](https://nlnet.nl/commonsfund/) (deadline April 1st 2026). If you find CodeDNA useful and want to support its development, ⭐ the repo and share it.
+
+---
+
+## 🔬 In Development — v0.8 Features *(not yet tested)*
+
+The following features are being designed for v0.8. They are **not part of the current spec**, have not been validated in benchmark conditions, and the format may change before release.
+
+### `message:` — Persistent Agent Chat in Code
+
+The `agent:` field records what an agent did. The proposed `message:` sub-field adds a **conversational layer** — soft observations, open questions, and forward-looking notes left directly for the next agent.
+
+```python
+"""analytics/revenue.py — Monthly/annual revenue aggregation.
+
+...
+agent:   claude-sonnet-4-6 | anthropic | 2026-03-10 | Implemented monthly_revenue.
+         message: "rounding edge case in multi-currency — investigate before next release"
+agent:   gemini-2.5-pro    | google    | 2026-03-18 | Added annual_summary.
+         message: "@prev: confirmed, promoted to rules:. New: timezone rollover in January"
+"""
+```
+
+`message:` works at **both levels**:
+- **Level 1 (module docstring)** — for agents that read the full file
+- **Level 2 (function docstring)** — for agents using a sliding window that never sees the top of the file
+
+The lifecycle: an observation left in `message:` either gets promoted to `rules:` (architectural truth confirmed) or dismissed with a reply. Append-only, never deleted.
+
+### Agent Telemetry via Git Trailers
+
+Git is already immutable, append-only, and diff-complete. The proposed approach uses **git trailers** — the same standard as `Co-Authored-By:`, natively recognised by GitHub — to embed AI session metadata directly in commit messages:
+
+```
+implement monthly revenue aggregation
+
+AI-Agent:    claude-sonnet-4-6
+AI-Provider: anthropic
+AI-Session:  s_a1b2c3
+AI-Visited:  analytics/revenue.py, payments/models.py, api/reports.py
+AI-Message:  found rounding edge case in multi-currency — investigate before next release
+```
+
+Git already records the diff, date, and changed files. `AI-Visited:` is the only addition — files **read** during the session, which git does not track natively.
+
+This gives you audit queries immediately:
+
+```bash
+git log --grep="AI-Agent:"                          # all AI commits
+git log --grep="AI-Agent: claude" -p -- revenue.py  # claude's changes to a file
+git log --format="%b" | grep "AI-Agent:" | sort | uniq -c  # model distribution
+```
+
+Three-tier architecture: **git** (authoritative audit, full diff) ↔ **`.codedna`** (lean session summary for agent navigation) ↔ **file `agent:` field** (one-liner, sliding-window safe). A `session_id` links all three.
+
+### VSCode Extension (planned, M3)
+
+Built on top of `git log` with AI trailers:
+- **CodeLens** — last AI agent + commit count inline on every file and function
+- **File heatmap** — how many AI sessions touched each file, by provider
+- **Agent Timeline** — chronological session log with git diff per session
+- **Stats panel** — model distribution chart, navigation efficiency per model
+
+> Full spec: [SPEC.md §4.7–4.8](./SPEC.md)
 
 ---
 
