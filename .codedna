@@ -120,3 +120,23 @@ agent_sessions:
       note_missing field in trace doc: reasoning/chain-of-thought still not captured.
       Next opportunity: claude-opus-4-6 extended thinking exposes thinking blocks —
       could be captured as trace[n].thinking if budget_tokens is set. Worth a dedicated pass.
+
+  - agent: claude-sonnet-4-6
+    provider: anthropic
+    date: 2026-03-20
+    session_id: s_20260320_004
+    task: "add traces_to_training.py — SFT/DPO/PRM converter from benchmark results"
+    changed:
+      - tools/traces_to_training.py
+      - .codedna
+    visited:
+      - .codedna
+      - benchmark_agent/runs/gemini-2.5-flash/results.json
+      - tools/traces_to_training.py
+    message: >
+      From 32 existing runs (4 models, 5 tasks): 21 SFT examples (F1>=0.6),
+      10 DPO pairs (6 codedna_vs_control + 4 cross_model), 32 PRM examples.
+      DPO cross_model pairs are the most interesting — same task, different models,
+      measurable F1 delta — rare contrastive structure for agentic navigation training.
+      Note: reasoning_log in existing results is intermediate model output, NOT
+      chain-of-thought. Not usable as thinking trace for PRM step reasoning.
