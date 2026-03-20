@@ -3,9 +3,16 @@ swebench/run_agent_multi.py — Runs CodeDNA benchmark on multiple LLM providers
 
 deps:    google-genai, anthropic, openai — install with: pip install anthropic openai
 exports: results_<model>/results.json per model
+         runs/<model>/session_traces/<session_id>.json per run (v0.8)
 rules:   Same system prompt, same tools, same tasks for all models.
          Only the LLM client changes — comparison is clean.
          Two conditions: control (no annotations), codedna (curated).
+         trace: is ordered and timestamped — DO NOT sort or reorder entries.
+         session_id format: bench_<model>_<task_short>_<condition>_<YYYYMMDD_HHMMSS>
+agent:   claude-sonnet-4-6 | anthropic | 2026-03-20 | s_20260320_003 | added session trace logging
+         message: "reasoning still not captured — trace has tool sequence + timestamps but not
+                  model chain-of-thought. Models with extended thinking (claude-opus-4-6 budget_tokens)
+                  could expose thinking blocks — worth capturing separately in a future pass"
 
 Usage:
   # Test all configured models
@@ -118,9 +125,19 @@ Do not stop at finding just the first root cause. Use the `used_by:` graph and `
 # ─────────────────── Tool execution (shared) ───────────────────
 
 def make_fns(repo_root: Path):
+    float_t0 = time.time()
     log = {"tool_calls": 0, "read_calls": 0, "grep_calls": 0, "list_calls": 0,
            "files_read": [], "greps": [], "total_chars_consumed": 0,
-           "input_tokens": 0, "output_tokens": 0}
+           "input_tokens": 0, "output_tokens": 0,
+           "trace": []}   # ordered sequence of tool calls with relative timestamps
+
+    def _record(tool: str, args: dict, result_len: int):
+        log["trace"].append({
+            "t":          round(time.time() - float_t0, 2),
+            "tool":       tool,
+            "args":       args,
+            "result_len": result_len,
+        })
 
     def list_files(directory=".", **kw):
         log["tool_calls"] += 1; log["list_calls"] += 1
@@ -135,6 +152,7 @@ def make_fns(repo_root: Path):
                  and i.name != "__pycache__"]
         result = "\n".join(items) or "(empty)"
         log["total_chars_consumed"] += len(result)
+        _record("list_files", {"directory": directory}, len(result))
         return result
 
     def read_file(path, **kw):
@@ -147,6 +165,7 @@ def make_fns(repo_root: Path):
         log["files_read"].append(path)
         result = target.read_text(encoding="utf-8", errors="replace")[:READ_FILE_LIMIT]
         log["total_chars_consumed"] += len(result)
+        _record("read_file", {"path": path}, len(result))
         return result
 
     def grep(pattern, directory=".", **kw):
@@ -160,6 +179,7 @@ def make_fns(repo_root: Path):
             r = type('R', (), {'stdout': '(grep timed out)'})()
         result = r.stdout[:GREP_LIMIT] or "(no matches)"
         log["total_chars_consumed"] += len(result)
+        _record("grep", {"pattern": pattern, "directory": directory}, len(result))
         return result
 
     return {"list_files": list_files, "read_file": read_file, "grep": grep}, log
@@ -183,10 +203,17 @@ def file_metrics(files: set, ground_truth: list) -> dict:
     return {"recall": R, "precision": P, "f1": F1}
 
 
-def build_result(log: dict, final_text: str, ground_truth: list) -> dict:
+def build_result(log: dict, final_text: str, ground_truth: list,
+                 session_id: str = "", model: str = "", provider: str = "",
+                 task: str = "", condition: str = "") -> dict:
     read_set = set(log["files_read"])
     proposed = extract_proposed_files(final_text)
     return {
+        "session_id":           session_id,
+        "model":                model,
+        "provider":             provider,
+        "task":                 task,
+        "condition":            condition,
         "tool_calls":           log["tool_calls"],
         "read_calls":           log["read_calls"],
         "grep_calls":           log["grep_calls"],
@@ -201,6 +228,7 @@ def build_result(log: dict, final_text: str, ground_truth: list) -> dict:
         "final_response":       final_text,
         "metrics_read":         file_metrics(read_set, ground_truth),
         "metrics_proposed":     file_metrics(proposed, ground_truth),
+        "trace":                log["trace"],   # ordered tool call sequence with timestamps
     }
 
 
@@ -716,6 +744,8 @@ def main():
         run_dir = RUNS_DIR / model_name.replace('/', '-')
         run_dir.mkdir(parents=True, exist_ok=True)
         out_file = run_dir / "results.json"
+        traces_dir = run_dir / "session_traces"
+        traces_dir.mkdir(exist_ok=True)
 
         def _save_results(run_dir, out_file, new_entries, avg_f1, args):
             existing = []
@@ -767,28 +797,63 @@ def main():
             for run_i in range(args.runs):
                 run_label = f" [run {run_i+1}/{args.runs}]" if args.runs > 1 else ""
 
+                def _make_session_id(mdl, task_id, cond, run_idx):
+                    str_ts = time.strftime("%Y%m%d_%H%M%S")
+                    str_task_short = task_id.split("-")[-1]
+                    return f"bench_{mdl}_{str_task_short}_{cond}_{str_ts}_r{run_idx}"
+
+                def _save_trace(traces_dir, session_id, result, ground_truth):
+                    """Rules: save trace independently of results.json — do not inline."""
+                    dict_trace_doc = {
+                        "session_id":    session_id,
+                        "model":         result["model"],
+                        "provider":      result["provider"],
+                        "task":          result["task"],
+                        "condition":     result["condition"],
+                        "ground_truth":  ground_truth,
+                        "metrics_read":  result["metrics_read"],
+                        "trace":         result["trace"],
+                        "note_missing":  (
+                            "reasoning/chain-of-thought not captured — "
+                            "trace contains tool sequence + timestamps only"
+                        ),
+                    }
+                    path_trace = traces_dir / f"{session_id}.json"
+                    path_trace.write_text(json.dumps(dict_trace_doc, indent=2))
+                    return path_trace
+
                 if run_ctrl:
                     print(f"  → CONTROL{run_label} ...", flush=True)
                     log, text = dispatch(problem, ctrl_dir, cfg, args.max_turns,
                                          temperature=args.temperature, system_prompt=SYSTEM_PROMPT)
-                    r = build_result(log, text, gt)
+                    str_sid = _make_session_id(model_name, iid, "control", run_i)
+                    r = build_result(log, text, gt,
+                                     session_id=str_sid, model=model_name,
+                                     provider=cfg["provider"], task=iid, condition="control")
                     cr = r["metrics_read"]
+                    path_trace = _save_trace(traces_dir, str_sid, r, gt)
                     print(f"  Control: {r['tool_calls']} calls "
                           f"({r['read_calls']} reads, {r['grep_calls']} greps) | "
                           f"{r['total_chars_consumed']:,} chars | "
                           f"read(R={cr['recall']:.0%} P={cr['precision']:.0%} F1={cr['f1']:.0%})")
+                    print(f"  📋 trace → {path_trace.name}  ({len(r['trace'])} steps)")
                     ctrl_runs.append(r)
 
                 if run_cdna:
                     print(f"  → CODEDNA{run_label} ...", flush=True)
                     log, text = dispatch(problem, cdna_dir, cfg, args.max_turns,
                                          temperature=args.temperature, system_prompt=CODEDNA_PROMPT)
-                    r = build_result(log, text, gt)
+                    str_sid = _make_session_id(model_name, iid, "codedna", run_i)
+                    r = build_result(log, text, gt,
+                                     session_id=str_sid, model=model_name,
+                                     provider=cfg["provider"], task=iid, condition="codedna")
                     dr = r["metrics_read"]
+                    path_trace = _save_trace(traces_dir, str_sid, r, gt)
                     print(f"  CodeDNA: {r['tool_calls']} calls "
                           f"({r['read_calls']} reads, {r['grep_calls']} greps) | "
                           f"{r['total_chars_consumed']:,} chars | "
                           f"read(R={dr['recall']:.0%} P={dr['precision']:.0%} F1={dr['f1']:.0%})")
+                    print(f"  📋 trace → {path_trace.name}  ({len(r['trace'])} steps)")
                     cdna_runs.append(r)
 
             # Build result entry (backward-compatible for single run)

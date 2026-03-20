@@ -99,3 +99,24 @@ agent_sessions:
       CHANGELOG.md (version history), nlnet drafts (historical).
       Note: codedna_setup.py UNIVERSAL_PROMPT still uses v0.4 syntax (CODEDNA:0.4,
       AGENT_RULES, @REQUIRES-READ) — needs full rewrite to v0.7 format in a dedicated session.
+
+  - agent: claude-sonnet-4-6
+    provider: anthropic
+    date: 2026-03-20
+    session_id: s_20260320_003
+    task: "add session trace logging to benchmark runner and agent_history.py"
+    changed:
+      - benchmark_agent/swebench/run_agent_multi.py
+      - tools/agent_history.py
+      - .codedna
+    visited:
+      - .codedna
+      - benchmark_agent/swebench/run_agent_multi.py
+      - tools/agent_history.py
+    message: >
+      Added trace: field to make_fns log — ordered tool call sequence with relative timestamps.
+      Each step: {t, tool, args, result_len}. Saved per run as session_traces/<session_id>.json
+      alongside results.json. session_id format: bench_<model>_<task_short>_<condition>_<ts>_r<n>.
+      note_missing field in trace doc: reasoning/chain-of-thought still not captured.
+      Next opportunity: claude-opus-4-6 extended thinking exposes thinking blocks —
+      could be captured as trace[n].thinking if budget_tokens is set. Worth a dedicated pass.
