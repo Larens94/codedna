@@ -1,4 +1,4 @@
-# CodeDNA v0.7
+# CodeDNA v0.7 — In-Source Communication Protocol
 
 Every source file in this project must have a CodeDNA module docstring as the very first block.
 
@@ -10,16 +10,19 @@ Every source file in this project must have a CodeDNA module docstring as the ve
 exports: public_function(arg) -> return_type
 used_by: consumer_file.py → consumer_function
 rules:   <hard constraint agents must never violate>
+agent:   <model-id> | <YYYY-MM-DD> | <what you did and what you noticed>
 """
 ```
 
 ## Rules on every edit
 
+- Read `.codedna` at repo root first — project structure and recent session history
 - Re-read `rules:` as your **first** step — never violate these constraints
 - Read `Rules:` in function docstrings before writing logic there
 - Check `used_by:` after changes — update callers if signatures change
 - Never rename `exports:` symbols without explicit instruction
-- If you discover a constraint or fix a bug, add a `Rules:` annotation for the next agent
+- If you discover a constraint or fix a bug, add it to `rules:` for the next agent
+- After editing a file, append a new `agent:` line to the module docstring
 
 ## Rules on generate
 
@@ -34,11 +37,24 @@ def process(arg: type) -> return_type:
     """Short description.
 
     Rules:   MUST cap before returning; exceed = compliance bug.
+    message: <model-id> | <date> | open observation for next agent (optional)
     """
-    raw = get_all_items()  # includes inactive items — filter is_active=True below
-    ...
 ```
 
 ## Planner read protocol
 
-When planning changes across multiple files, read only the module docstring (first 8–12 lines) of each file. Use `rules:` presence to filter for task-relevant files. Build an `exports:` → `used_by:` graph. Open only the relevant files in full.
+Read `.codedna` first. Then read only the module docstring (first 8–12 lines) of each file. Build an `exports:` → `used_by:` graph. Open only relevant files in full.
+
+## Session end protocol
+
+At session end, append to `.codedna` `agent_sessions:`:
+```yaml
+- agent: <model-id>
+  provider: <provider>
+  date: <YYYY-MM-DD>
+  session_id: <s_YYYYMMDD_NNN>
+  task: "<what you did ≤15 words>"
+  changed: [files, modified]
+  visited: [files, read]
+  message: > what you found and what the next agent should know
+```

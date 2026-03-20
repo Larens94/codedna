@@ -2,9 +2,14 @@
 description: CodeDNA v0.7 — how to read, write, and edit Python files in this project
 ---
 
-# CodeDNA v0.7 Protocol
+# CodeDNA v0.7 — In-Source Communication Protocol
 
-This project uses CodeDNA. Every source file carries its own context in a Python-native module docstring.
+This project uses **CodeDNA**. Every source file carries its own context in a Python-native module docstring. Agents communicate across sessions through structured annotations co-located with the code.
+
+## Session start
+
+1. Read `.codedna` at repo root — project map and last 3–5 `agent_sessions:` entries
+2. Read only the module docstring (first 8–12 lines) of each file you plan to touch — build an `exports:` → `used_by:` graph before opening any file in full
 
 ## Reading a file
 
@@ -12,14 +17,8 @@ This project uses CodeDNA. Every source file carries its own context in a Python
 2. Note `exports:` → symbols you must not rename or remove
 3. Note `used_by:` → callers that depend on this file's exports
 4. Note `rules:` → hard constraints that apply everywhere in this file
-5. For any function, check its docstring for `Rules:`
-
-## Editing a file
-
-1. Before writing any logic: re-read `rules:` in the module docstring and `Rules:` in the function docstring
-2. Check `used_by:` targets after changes
-3. Do not change `exports:` signatures without explicit user instruction
-4. If you discover a constraint or fix a bug, add a `Rules:` annotation for the next agent
+5. Note `agent:` → session history from previous agents; read to understand *why* the current state exists
+6. For any function, check its docstring for `Rules:` before writing logic there
 
 ## Creating a file
 
@@ -31,30 +30,102 @@ Every new Python source file must start with:
 exports: public_function(arg) -> return_type
 used_by: consumer_file.py → consumer_function
 rules:   <hard constraint agents must never violate>
+agent:   <model-id> | <YYYY-MM-DD> | <what you implemented and what you noticed>
 """
 ```
 
+| Field | Required | Rule |
+|---|---|---|
+| First line | ✅ | `filename.py — <purpose ≤15 words>` |
+| `exports:` | ✅ | Public API with return type |
+| `used_by:` | ✅ | Who calls this file's exports |
+| `rules:` | ✅ | Architectural truth — hard constraints, updated in-place |
+| `agent:` | ✅ | Session narrative — append-only, never delete existing lines |
+
+## Editing a file
+
+1. **First step**: re-read `rules:`, the `agent:` history, and any function-level `Rules:` before writing
+2. Apply all file-level constraints before writing any logic
+3. Check `used_by:` targets after changes — update callers if signatures change
+4. Never remove `exports:` symbols — they are contracts
+5. If you discover a constraint or fix a bug, **update `rules:`** for the next agent
+6. **Append a new `agent:` line** after editing: `model-id | YYYY-MM-DD | what you did and noticed`. Never edit existing lines.
+
 ## Critical functions
 
-For functions with non-obvious domain constraints, add:
+For functions with non-obvious domain constraints, add a `Rules:` docstring:
 
 ```python
 def my_function(arg: type) -> return_type:
     """Short description.
 
     Rules:   What the agent MUST or MUST NOT do here.
+    message: <model-id> | <YYYY-MM-DD> | open observation for next agent (optional)
     """
 ```
 
-## Planning across a codebase
+## `message:` — Agent Chat Layer *(v0.8 experimental)*
 
-Read `.codedna` first for the project overview. Then read only the module docstring (first 8–12 lines) of each file. Build a graph from `exports:`/`used_by:`. Load only the relevant files in full.
+Use `message:` for observations not yet certain enough to become `rules:`, open questions, and notes for the next agent.
+
+**In module docstrings (Level 1):**
+```python
+agent:   claude-sonnet-4-6 | 2026-03-20 | Implemented X.
+         message: "noticed Y behaviour — not yet sure if this should be a rule"
+```
+
+**In function docstrings (Level 2) — sliding-window safety:**
+```python
+def my_function():
+    """Short description.
+
+    Rules:   hard constraint here
+    message: claude-sonnet-4-6 | 2026-03-20 | open observation for next agent
+    """
+```
+
+**Lifecycle:** promote to `rules:` with `@prev: promoted to rules:` or dismiss with `@prev: verified, not applicable because...`. Always append-only — never delete.
 
 ## Semantic variable naming
 
 ```python
-# CodeDNA style — type + shape + domain + origin
+# ✅ CodeDNA style — type + shape + domain + origin
 list_dict_orders_from_db = db.query(sql)
 str_html_view_rendered = render(query_fn)
 int_cents_price_from_request = req.json["price"]
+
+# ❌ avoid
+data = db.query(sql)
+result = render(query_fn)
+price = req.json["price"]
 ```
+
+## Session end protocol
+
+1. Append an `agent_sessions:` entry to `.codedna`:
+
+```yaml
+- agent: <model-id>
+  provider: <anthropic|google|openai|...>
+  date: <YYYY-MM-DD>
+  session_id: <s_YYYYMMDD_NNN>
+  task: "<brief task description ≤15 words>"
+  changed: [list, of, modified, files]
+  visited: [all, files, read, during, session]
+  message: >
+    What you did, what you discovered, what the next agent should know.
+```
+
+2. **Commit with AI git trailers** — every commit from an AI session must include:
+
+```
+<imperative summary of changes>
+
+AI-Agent:    <model-id>
+AI-Provider: <provider>
+AI-Session:  <session_id>
+AI-Visited:  <comma-separated list of files read>
+AI-Message:  <one-line summary of what was found or left open>
+```
+
+Git is the authoritative audit log. `.codedna` and file-level `agent:` fields are lightweight navigation caches — git trailers are the source of truth for history and verification.

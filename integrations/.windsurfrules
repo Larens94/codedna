@@ -1,6 +1,6 @@
-# CodeDNA v0.7
+# CodeDNA v0.7 — In-Source Communication Protocol
 
-This project uses the CodeDNA annotation standard (Python-native docstring format).
+This project uses the CodeDNA in-source communication protocol (Python-native docstring format).
 
 ## Module docstring format (required in every Python file)
 
@@ -10,19 +10,26 @@ This project uses the CodeDNA annotation standard (Python-native docstring forma
 exports: public_function(arg) -> return_type
 used_by: consumer_file.py → consumer_function
 rules:   <hard constraint agents must never violate>
+agent:   <model-id> | <YYYY-MM-DD> | <what you did and what you noticed>
 """
 ```
 
 ## Editing rules
 
-1. Re-read `rules:` before writing any logic — never violate these constraints
-2. Read `Rules:` in function docstrings before writing logic there
-3. Check `used_by:` after changes — callers will be affected
-4. Never rename `exports:` symbols without explicit instruction
-5. If you discover a constraint or fix a bug, add a `Rules:` annotation for the next agent
+1. Read `.codedna` at repo root first — project map and recent agent history
+2. Re-read `rules:` before writing any logic — never violate these constraints
+3. Read `Rules:` in function docstrings before writing logic there
+4. Check `used_by:` after changes — callers will be affected
+5. Never rename `exports:` symbols without explicit instruction
+6. If you discover a constraint or fix a bug, add it to `rules:` for the next agent
+7. Append a new `agent:` line to the module docstring after editing
 
 ## Generation rules
 
 1. Write module docstring before any imports
 2. For critical functions: add a `Rules:` docstring
 3. Use semantic variable names: `list_dict_orders_from_db` not `data`
+
+## Session end
+
+Append to `.codedna` → `agent_sessions:` with: agent, provider, date, session_id, task, changed, visited, message.
