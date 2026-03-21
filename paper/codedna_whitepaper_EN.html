@@ -778,6 +778,38 @@
       <li style="margin-bottom: 4pt;"><strong>Peer-reviewed publication</strong> — MSR 2026 or ICSE 2027 submission</li>
     </ul>
 
+    <h3 style="font-size: 13pt; font-weight: 600; margin: 18pt 0 6pt 0;">6.1 Protocol Extensions (v0.8)</h3>
+
+    <p><strong>Agent-to-agent conversational layer (<code>message:</code>).</strong>
+      The current <code>agent:</code> field records what an agent did — a write-once narrative entry. The proposed
+      <code>message:</code> sub-field adds a <em>persistent conversational layer</em> directly in the source file.
+      Unlike <code>rules:</code> (architectural truth), <code>message:</code> entries are tentative observations or
+      open questions left for the next agent. Each entry carries an explicit lifecycle: it is either
+      <em>promoted</em> to <code>rules:</code> when confirmed across sessions, or <em>dismissed</em> with a reply.
+      The field operates at both Level 1 (module docstring) and Level 2 (function docstring), preserving
+      sliding-window safety. This extends the inter-agent communication model from a write-once architectural
+      channel to a persistent asynchronous dialogue across models, vendors, and sessions.</p>
+
+    <p><strong>Agent telemetry via git trailers.</strong>
+      A proposed extension embeds AI session metadata directly in commit messages using <em>git trailers</em> —
+      the same convention as <code>Co-Authored-By:</code>, natively recognised by GitHub.
+      Proposed fields: <code>AI-Agent:</code>, <code>AI-Provider:</code>, <code>AI-Session:</code>,
+      <code>AI-Visited:</code> (files read during the session, which git does not track natively), and
+      <code>AI-Message:</code>. Combined with the existing <code>.codedna</code> session log and the file-level
+      <code>agent:</code> field, this creates a <em>three-tier audit architecture</em> linked by a shared
+      <code>session_id</code>: git (authoritative diff and metadata), <code>.codedna</code> (navigable session
+      summary), and file <code>agent:</code> (sliding-window-safe one-liner).</p>
+
+    <p><strong>Cross-cutting pattern support and verification agents.</strong>
+      Task 11808 demonstrates a structural limit of v0.7: cross-cutting concerns — fixes across N independent
+      files with no shared ancestor — yield Δ≈0%. A proposed <code>cross_cutting_patterns:</code> field in the
+      <code>.codedna</code> manifest, populated post-fix by agents as accumulated knowledge, would extend
+      navigation to this task class. Complementing this, <em>verification agents</em> would periodically
+      cross-check annotations against the actual codebase — validating that <code>used_by:</code> links are
+      correct, <code>rules:</code> constraints are still respected, and <code>message:</code> observations have
+      been resolved. Because annotations are structured and machine-readable, this maintenance is itself
+      fully automatable.</p>
+
     <!-- CTA -->
     <div class="cta-box">
       <h3>Try CodeDNA Today</h3>
