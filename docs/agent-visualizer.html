@@ -1,0 +1,886 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeDNA — Live Agent Visualizer</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{--bg:#f0f2f8;--surface:#fff;--border:#dde1ee;--accent:#6366f1;--text:#1e2040;--dim:#6b7280;}
+body{background:var(--bg);color:var(--text);font-family:'Segoe UI',system-ui,sans-serif;height:100vh;overflow:hidden;display:flex;flex-direction:column}
+
+/* HEADER */
+.hdr{display:flex;align-items:center;justify-content:space-between;padding:10px 20px;border-bottom:1px solid var(--border);background:rgba(255,255,255,.97);flex-shrink:0;z-index:100;box-shadow:0 1px 6px rgba(0,0,0,.06)}
+.logo{display:flex;align-items:center;gap:10px;font-size:17px;font-weight:800;letter-spacing:-.5px}
+.logo-accent{color:var(--accent)}
+.badge{font-size:10px;background:rgba(99,102,241,.1);color:var(--accent);border:1px solid rgba(99,102,241,.25);padding:2px 9px;border-radius:20px;font-weight:600}
+.controls{display:flex;align-items:center;gap:14px}
+.spd{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--dim)}
+.spd input{width:75px;accent-color:var(--accent);cursor:pointer}
+#btn{padding:8px 20px;border-radius:8px;border:none;font-size:13px;font-weight:700;cursor:pointer;background:var(--accent);color:#fff;transition:all .2s}
+#btn:hover{filter:brightness(1.1);transform:translateY(-1px)}
+#btn.stop{background:#ef4444}
+
+/* MAIN */
+.main{display:flex;flex:1;overflow:hidden}
+
+/* GRAPH */
+.graph{flex:1;position:relative;overflow:hidden;background:var(--bg)}
+canvas{position:absolute;inset:0;pointer-events:none}
+#bg{z-index:0}
+#trails{z-index:3}
+svg#svg{position:absolute;inset:0;width:100%;height:100%;pointer-events:none;z-index:1}
+
+/* FILE CARDS */
+.card{position:absolute;width:192px;background:#fff;border:1px solid var(--border);border-radius:10px;padding:8px 10px;transform:translate(-50%,-50%);transition:box-shadow .35s,border-color .35s;cursor:pointer;z-index:4;box-shadow:0 2px 8px rgba(0,0,0,.07)}
+.card:hover{border-color:rgba(99,102,241,.4);box-shadow:0 4px 18px rgba(99,102,241,.12)}
+.card.lit{border-color:var(--c,var(--accent));box-shadow:0 0 0 2px color-mix(in srgb,var(--c) 20%,transparent),0 4px 20px color-mix(in srgb,var(--c) 20%,transparent)}
+.cname{font-size:9px;font-weight:700;color:var(--accent);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.row{font-size:8px;font-family:'Consolas',monospace;line-height:1.65;display:flex;gap:3px;overflow:hidden}
+.key{flex-shrink:0;color:#c4c9d8;transition:color .2s}
+.val{overflow:hidden;text-overflow:ellipsis;white-space:nowrap;flex:1;color:#b0b8cc;transition:color .2s}
+.row.hl-e .key{color:#3b82f6}.row.hl-e .val{color:#1d4ed8}
+.row.hl-u .key{color:#f97316}.row.hl-u .val{color:#c2410c}
+.row.hl-r .key{color:#ef4444}.row.hl-r .val{color:#b91c1c}
+.row.hl-a .key{color:#10b981}.row.hl-a .val{color:#047857}
+.row.hl-m .key{color:#8b5cf6}.row.hl-m .val{color:#6d28d9}
+.scan{position:absolute;left:0;right:0;height:2px;pointer-events:none;animation:scanA 1.4s ease-in-out forwards;z-index:5}
+@keyframes scanA{0%{top:0;opacity:1}100%{top:100%;opacity:0}}
+
+/* MESSAGE THREAD ON CARD */
+.msg-thread{margin-top:6px;display:flex;flex-direction:column;gap:4px}
+.msg-entry{display:flex;flex-direction:column;gap:2px;animation:msgIn .35s cubic-bezier(.2,1.4,.4,1)}
+@keyframes msgIn{from{opacity:0;transform:scale(.85) translateY(6px)}to{opacity:1;transform:none}}
+.msg-bubble{border-radius:8px 8px 8px 2px;padding:5px 8px;font-size:9px;line-height:1.45;font-style:italic;position:relative;max-width:100%;word-break:break-word;box-shadow:0 2px 8px rgba(0,0,0,.1)}
+.msg-bubble::before{content:'💬';font-style:normal;margin-right:4px;font-size:9px}
+.msg-bubble.is-reply{border-radius:8px 8px 2px 8px;background:#f0fdf4 !important;color:#065f46 !important;border:1px solid #bbf7d0}
+.msg-bubble.is-reply::before{content:'↩️'}
+.msg-who{font-size:8px;font-weight:800;display:flex;align-items:center;gap:4px}
+.msg-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;display:inline-block}
+.msg-badge{display:inline-flex;align-items:center;justify-content:center;background:#8b5cf6;color:#fff;font-size:8px;font-weight:800;border-radius:10px;padding:1px 5px;min-width:16px;margin-left:auto}
+
+/* AGENTS — improved */
+#agents{position:absolute;inset:0;pointer-events:none;z-index:6}
+.agent{
+  position:absolute;width:40px;height:40px;border-radius:50%;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;
+  font-size:6.5px;font-weight:800;color:#fff;text-align:center;line-height:1.2;
+  transform:translate(-50%,-50%);
+  transition:left .9s cubic-bezier(.4,0,.2,1),top .9s cubic-bezier(.4,0,.2,1);
+  pointer-events:all;cursor:pointer;
+  box-shadow:0 3px 12px rgba(0,0,0,.2);
+}
+/* State ring */
+.agent::before{
+  content:'';position:absolute;inset:-5px;border-radius:50%;
+  border:2px solid transparent;transition:border-color .3s;
+}
+.agent.s-idle::before{border-color:rgba(0,0,0,.1)}
+.agent.s-nav::before{border-color:#60a5fa;animation:spin 1.2s linear infinite}
+.agent.s-read::before{border-color:#fbbf24;animation:pulse-ring .8s ease-in-out infinite}
+.agent.s-write::before{border-color:#34d399;animation:pulse-ring .6s ease-in-out infinite}
+.agent.s-msg::before{border-color:#a78bfa;animation:pulse-ring 1s ease-in-out infinite}
+.agent.s-verify::before{border-color:#f59e0b;animation:spin .8s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+@keyframes pulse-ring{0%,100%{transform:scale(1);opacity:1}50%{transform:scale(1.15);opacity:.6}}
+/* State icon */
+.agent::after{
+  content:var(--icon,'');position:absolute;bottom:-2px;right:-2px;
+  width:14px;height:14px;border-radius:50%;background:var(--icon-bg,#fff);
+  display:flex;align-items:center;justify-content:center;
+  font-size:8px;border:1.5px solid #fff;line-height:14px;text-align:center;
+}
+.agent.s-idle{--icon:'';--icon-bg:#e5e7eb}
+.agent.s-nav{--icon:'→';--icon-bg:#3b82f6}
+.agent.s-read{--icon:'👁';--icon-bg:#fbbf24}
+.agent.s-write{--icon:'✍';--icon-bg:#10b981}
+.agent.s-msg{--icon:'💬';--icon-bg:#8b5cf6}
+.agent.s-verify{--icon:'🔍';--icon-bg:#f59e0b}
+.agent.s-pass{--icon:'✅';--icon-bg:#10b981}
+.agent.s-fail{--icon:'❌';--icon-bg:#ef4444}
+/* Verifier special */
+.agent.verifier{border:2.5px dashed #f59e0b !important}
+/* Ripple */
+.agent .ripple{position:absolute;inset:0;border-radius:50%;background:inherit;opacity:.2;animation:agRipple 2.5s infinite}
+@keyframes agRipple{0%,100%{transform:scale(1);opacity:.2}50%{transform:scale(1.8);opacity:0}}
+
+/* TOAST NOTIFICATIONS */
+.toast{position:absolute;top:14px;left:50%;transform:translateX(-50%);z-index:200;pointer-events:none;
+  padding:10px 18px;border-radius:10px;font-size:11px;font-weight:700;white-space:nowrap;
+  animation:toastIn .3s ease-out, toastOut .5s ease-in 2.8s forwards;
+  box-shadow:0 4px 20px rgba(0,0,0,.12);border:1.5px solid;
+}
+.toast.ok{background:#f0fdf4;border-color:#10b981;color:#065f46}
+.toast.fail{background:#fef2f2;border-color:#ef4444;color:#7f1d1d}
+.toast.info{background:#f5f3ff;border-color:#8b5cf6;color:#4c1d95}
+.toast.check{background:#fffbeb;border-color:#f59e0b;color:#78350f}
+@keyframes toastIn{from{opacity:0;transform:translateX(-50%) translateY(-12px)}to{opacity:1;transform:translateX(-50%) translateY(0)}}
+@keyframes toastOut{to{opacity:0;transform:translateX(-50%) translateY(-12px)}}
+
+/* SUBTITLE */
+.sub{position:absolute;bottom:8px;left:50%;transform:translateX(-50%);
+  font-size:10px;color:#6b7280;pointer-events:none;z-index:9;white-space:nowrap;
+  background:rgba(255,255,255,.92);padding:4px 12px;border-radius:20px;
+  border:1px solid var(--border);transition:opacity .5s;box-shadow:0 2px 8px rgba(0,0,0,.06)}
+
+/* PARTICLES */
+.px{position:absolute;width:5px;height:5px;border-radius:50%;pointer-events:none;z-index:8;animation:pRise 1.4s ease-out forwards}
+@keyframes pRise{0%{opacity:1;transform:translate(0,0) scale(1)}100%{opacity:0;transform:translate(var(--dx),calc(-70px)) scale(0)}}
+
+/* RIGHT PANEL */
+.rpanel{width:310px;border-left:1px solid var(--border);display:flex;flex-direction:column;flex-shrink:0;background:#fff}
+
+/* ACTIVITY FEED */
+.feed{flex:1;display:flex;flex-direction:column;overflow:hidden;min-height:0}
+.panel-hdr{padding:9px 14px;border-bottom:1px solid var(--border);font-size:10px;font-weight:700;color:var(--dim);text-transform:uppercase;letter-spacing:.8px;display:flex;align-items:center;gap:6px;flex-shrink:0}
+.pulse-dot{width:6px;height:6px;border-radius:50%;background:#10b981;animation:pdot 1.5s infinite}
+@keyframes pdot{0%,100%{opacity:1}50%{opacity:.3}}
+.feed-body{flex:1;overflow-y:auto;padding:5px;display:flex;flex-direction:column;gap:2px;background:#fafbff}
+.feed-body::-webkit-scrollbar,.git-body::-webkit-scrollbar{width:2px}
+.feed-body::-webkit-scrollbar-thumb,.git-body::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+.fi{padding:6px 8px;border-radius:6px;background:#fff;border-left:2px solid transparent;font-size:9px;line-height:1.45;animation:fiIn .25s ease-out;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+@keyframes fiIn{from{opacity:0;transform:translateX(6px)}to{opacity:1;transform:none}}
+.fi.r{border-color:#3b82f6}.fi.w{border-color:#10b981}.fi.m{border-color:#8b5cf6}.fi.ru{border-color:#ef4444}.fi.v{border-color:#f59e0b}
+.fi-who{font-weight:700;font-size:8px}
+.fi-txt{color:var(--dim);margin-top:1px}
+
+/* GIT HISTORY */
+.git-panel{height:230px;display:flex;flex-direction:column;border-top:2px solid var(--border);flex-shrink:0}
+.git-body{flex:1;overflow-y:auto;padding:5px;display:flex;flex-direction:column;gap:3px;background:#fafbff}
+.commit{padding:6px 8px;border-radius:6px;background:#fff;border:1px solid var(--border);font-size:8px;animation:fiIn .4s ease-out;box-shadow:0 1px 3px rgba(0,0,0,.04)}
+.c-head{display:flex;align-items:center;gap:5px;margin-bottom:3px}
+.c-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0}
+.c-hash{font-family:monospace;font-size:7.5px;color:#8b5cf6;font-weight:700}
+.c-msg{font-weight:700;color:var(--text);font-size:8.5px;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.c-trailers{font-family:monospace;font-size:7.5px;color:var(--dim);line-height:1.7;padding-left:13px}
+.c-trailers .tk{color:#6366f1}.c-trailers .tv{color:#374151}
+.c-trailers .tm{color:#8b5cf6;font-style:italic}
+
+/* STATS BAR */
+.stats{border-top:1px solid var(--border);padding:8px 18px;display:flex;align-items:center;gap:24px;background:#fff;flex-shrink:0;box-shadow:0 -1px 4px rgba(0,0,0,.04)}
+.st{display:flex;flex-direction:column;gap:1px}
+.sv{font-size:18px;font-weight:800;color:var(--accent);font-variant-numeric:tabular-nums;line-height:1}
+.sl{font-size:8.5px;color:var(--dim);text-transform:uppercase;letter-spacing:.6px}
+.kb-wrap{margin-left:auto;display:flex;flex-direction:column;gap:4px;min-width:170px}
+.kb-lbl{font-size:8.5px;color:var(--dim);display:flex;justify-content:space-between}
+.kb-track{height:5px;background:#e5e7f0;border-radius:3px;overflow:hidden}
+.kb-fill{height:100%;background:linear-gradient(90deg,#6366f1,#8b5cf6,#a78bfa);border-radius:3px;transition:width .6s ease;width:0%}
+
+/* TOOLTIP */
+.tip{position:fixed;z-index:300;background:#fff;border:1px solid var(--border);border-radius:10px;padding:11px 13px;font-size:10px;max-width:240px;pointer-events:none;line-height:1.6;box-shadow:0 8px 24px rgba(0,0,0,.1)}
+.tip-title{font-weight:700;color:var(--accent);margin-bottom:5px;font-size:11px}
+.tip-row{display:flex;gap:5px;margin-bottom:2px}
+.tip-k{color:var(--dim);flex-shrink:0;font-family:monospace;font-size:8.5px}
+.tip-v{color:var(--text);font-family:monospace;font-size:8.5px}
+</style>
+</head>
+<body>
+
+<div class="hdr">
+  <div class="logo">🧬 Code<span class="logo-accent">DNA</span> <span class="badge">Live Simulation v0.7</span></div>
+  <div class="controls">
+    <div class="spd">Speed <input type="range" id="spd" min=".3" max="3" step=".1" value="1"> <span id="spdv">1×</span></div>
+    <button id="btn">▶ Play</button>
+  </div>
+</div>
+
+<div class="main">
+  <div class="graph" id="graph">
+    <canvas id="bg"></canvas>
+    <canvas id="trails"></canvas>
+    <svg id="svg"></svg>
+    <div id="cards"></div>
+    <div id="agents"></div>
+    <div id="fx"></div>
+    <div class="sub" id="sub">Press Play to start</div>
+  </div>
+
+  <div class="rpanel">
+    <div class="feed">
+      <div class="panel-hdr"><span class="pulse-dot" id="pdot" style="opacity:0"></span>Activity Feed</div>
+      <div class="feed-body" id="fbody"></div>
+    </div>
+    <div class="git-panel">
+      <div class="panel-hdr">🔀 Git History <span style="margin-left:auto;font-size:8px;font-weight:400">AI trailers</span></div>
+      <div class="git-body" id="gbody"></div>
+    </div>
+  </div>
+</div>
+
+<div class="stats">
+  <div class="st"><span class="sv" id="ss">0</span><span class="sl">Sessions</span></div>
+  <div class="st"><span class="sv" id="sr">0</span><span class="sl">Reads</span></div>
+  <div class="st"><span class="sv" id="sw">0</span><span class="sl">Writes</span></div>
+  <div class="st"><span class="sv" id="sm">0</span><span class="sl">Messages</span></div>
+  <div class="st"><span class="sv" id="sru">0</span><span class="sl">Rules</span></div>
+  <div class="st"><span class="sv" id="sv2">0</span><span class="sl">Verified</span></div>
+  <div class="kb-wrap">
+    <div class="kb-lbl"><span>Collective Knowledge</span><span id="kbpct">0%</span></div>
+    <div class="kb-track"><div class="kb-fill" id="kbfill"></div></div>
+  </div>
+</div>
+
+<div class="tip" id="tip" style="display:none"></div>
+
+<script>
+// ── DATA ───────────────────────────────────────────────────────────────────
+const FILES = [
+  { id:'revenue',  name:'analytics/revenue.py',  px:.33,py:.13,
+    exports:'monthly_revenue() → dict',
+    usedBy:'api/reports.py · workers/gen.py',
+    rules:'NEVER return suspended tenant data',
+    agent:'claude-sonnet | 2026-03-01',
+    messages:[] },
+  { id:'reports',  name:'api/reports.py',         px:.74,py:.13,
+    exports:'revenue_route() → Response',
+    usedBy:'workers/generator.py → schedule',
+    rules:'Rate-limit 100 req/min per tenant',
+    agent:'gemini-flash | 2026-03-05',
+    messages:[] },
+  { id:'payments', name:'payments/models.py',     px:.13,py:.47,
+    exports:'Invoice, Payment',
+    usedBy:'analytics/revenue.py → aggregate',
+    rules:'soft-delete: filter deleted_at IS NULL',
+    agent:'deepseek-chat | 2026-03-08',
+    messages:[] },
+  { id:'utils',    name:'utils/format.py',        px:.50,py:.45,
+    exports:'format_currency(), format_date()',
+    usedBy:'analytics/revenue.py · api/dashboard.py',
+    rules:'Always locale-aware formatting',
+    agent:'gpt-4o | 2026-03-10',
+    messages:[] },
+  { id:'workers',  name:'workers/generator.py',   px:.83,py:.46,
+    exports:'generate_report(tenant_id)',
+    usedBy:'scheduler/cron.py → daily_job',
+    rules:'Must complete within 30s timeout',
+    agent:'mistral | 2026-03-12',
+    messages:[] },
+  { id:'tenants',  name:'tenants/models.py',      px:.17,py:.79,
+    exports:'Tenant, is_suspended()',
+    usedBy:'payments/models.py · db/queries.py',
+    rules:'Suspension check REQUIRED before billing',
+    agent:'llama-3 | 2026-03-15',
+    messages:[] },
+  { id:'db',       name:'db/queries.py',          px:.51,py:.78,
+    exports:'get_active_tenants() → list',
+    usedBy:'analytics/revenue.py → rows',
+    rules:'Always use read replicas for SELECT',
+    agent:'qwen | 2026-03-17',
+    messages:[] },
+  { id:'dashboard',name:'api/dashboard.py',       px:.81,py:.79,
+    exports:'dashboard_route() → Response',
+    usedBy:'api/auth.py → middleware',
+    rules:'Cache 60s per tenant, vary locale',
+    agent:'codestral | 2026-03-19',
+    messages:[] },
+];
+
+const EDGES = [
+  ['revenue','reports'],['revenue','workers'],
+  ['payments','revenue'],['utils','revenue'],['utils','dashboard'],
+  ['tenants','payments'],['tenants','db'],['db','revenue'],
+];
+
+const AGENTS = [
+  { id:0, name:'Claude\nSonnet', color:'#D97757', fileId:'revenue'  },
+  { id:1, name:'Claude\nOpus',   color:'#b55535', fileId:'reports'  },
+  { id:2, name:'Gemini\nFlash',  color:'#4285F4', fileId:'payments' },
+  { id:3, name:'Gemini\nPro',    color:'#1a5fc8', fileId:'utils'    },
+  { id:4, name:'DeepSeek',       color:'#10b981', fileId:'workers'  },
+  { id:5, name:'GPT-4o',         color:'#06b6d4', fileId:'tenants'  },
+  { id:6, name:'Mistral',        color:'#8b5cf6', fileId:'db'       },
+  { id:7, name:'Codestral',      color:'#a78bfa', fileId:'dashboard'},
+  { id:8, name:'Llama 3',        color:'#f59e0b', fileId:'revenue'  },
+  { id:9, name:'Qwen',           color:'#ef4444', fileId:'payments' },
+  // Special: Verifier (id=10)
+  { id:10,name:'CodeDNA\nVerifier',color:'#f59e0b',fileId:'revenue',isVerifier:true},
+];
+
+const MSG_POOL = [
+  'rounding edge case in multi-currency — investigate',
+  'filter suspended tenants confirmed critical',
+  'cache TTL too short on peak traffic',
+  'read replica lag > 500ms at 18:00',
+  'locale format breaks for ja-JP',
+  'soft-delete check missing in 2 callers',
+  'worker timeout on tenants > 50k rows',
+  'API rate-limit triggering false positives',
+  'timezone rollover edge case in January',
+];
+const MSG_REPLIES = [
+  '@prev: confirmed, promoted to rules: ✓',
+  '@prev: fixed in commit a3f2b1 ✓',
+  '@prev: verified — not applicable here',
+  '@prev: opened issue #847 for tracking',
+  '@prev: reproduced — added to rules: ✓',
+];
+const COMMIT_VERBS = ['feat:','fix:','refactor:','chore:','docs:'];
+const COMMIT_ACTIONS = [
+  'update agent: entry in',
+  'add Rules: docstring to',
+  'annotate exports/used_by in',
+  'update rules: constraint in',
+  'add message: thread to',
+];
+
+// ── ADJACENCY ───────────────────────────────────────────────────────────────
+const adj = {};
+FILES.forEach(f => adj[f.id] = new Set());
+EDGES.forEach(([a,b]) => { adj[a].add(b); adj[b].add(a); });
+const fileMap = Object.fromEntries(FILES.map(f => [f.id, f]));
+
+// ── STATE ───────────────────────────────────────────────────────────────────
+const S = {
+  running:false, speed:1,
+  stats:{sessions:0,reads:0,writes:0,messages:0,rules:0,verified:0},
+  knowledge:0,
+  verifierTimer: 25000, // trigger verifier every 25s sim-time
+  agents: AGENTS.map(a => ({
+    ...a, state:'idle',
+    timer: a.isVerifier ? 99999 : 500 + Math.random()*4000,
+    fileId: a.fileId, targetId:null,
+    el:null, trail:[], verifyFiles:[], verifyStep:0,
+  })),
+};
+
+// ── DOM ──────────────────────────────────────────────────────────────────────
+const graphEl  = document.getElementById('graph');
+const cardsEl  = document.getElementById('cards');
+const agentsEl = document.getElementById('agents');
+const fxEl     = document.getElementById('fx');
+const svgEl    = document.getElementById('svg');
+const feedEl   = document.getElementById('fbody');
+const gitEl    = document.getElementById('gbody');
+const subEl    = document.getElementById('sub');
+const tipEl    = document.getElementById('tip');
+const bgC      = document.getElementById('bg');
+const trC      = document.getElementById('trails');
+const bgX      = bgC.getContext('2d');
+const trX      = trC.getContext('2d');
+
+// ── UTILS ────────────────────────────────────────────────────────────────────
+function pos(fileId){ const f=fileMap[fileId],r=graphEl.getBoundingClientRect(); return{x:f.px*r.width,y:f.py*r.height}; }
+function rand(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+function rn(a,b){ return a+Math.random()*(b-a); }
+function randHash(){ return Math.random().toString(16).slice(2,9); }
+
+// ── INIT CARDS ───────────────────────────────────────────────────────────────
+FILES.forEach(f => {
+  const d = document.createElement('div');
+  d.className='card'; d.id='card-'+f.id;
+  d.innerHTML=`
+    <div class="cname" style="display:flex;align-items:center">${f.name}<span class="msg-badge" id="mb-${f.id}" style="display:none">0</span></div>
+    <div class="row" id="re-${f.id}"><span class="key">exports: </span><span class="val">${f.exports}</span></div>
+    <div class="row" id="ru-${f.id}"><span class="key">used_by: </span><span class="val">${f.usedBy}</span></div>
+    <div class="row" id="rr-${f.id}"><span class="key">rules:   </span><span class="val">${f.rules}</span></div>
+    <div class="row" id="ra-${f.id}"><span class="key">agent:   </span><span class="val" id="av-${f.id}">${f.agent}</span></div>
+    <div class="row" id="rm-${f.id}" style="display:none"><span class="key" style="color:#8b5cf6;font-weight:800">message: </span><span class="val" id="mv-${f.id}" style="color:#6d28d9"></span></div>
+    <div class="msg-thread" id="mt-${f.id}"></div>
+  `;
+  d.style.left=(f.px*100)+'%'; d.style.top=(f.py*100)+'%';
+  cardsEl.appendChild(d);
+  d.addEventListener('mouseenter',e=>showTip(f,e));
+  d.addEventListener('mouseleave',()=>tipEl.style.display='none');
+  d.addEventListener('mousemove',e=>moveTip(e));
+});
+
+function showTip(f,e){
+  const msgs = f.messages.map(m=>`<div class="tip-row"><span class="tip-k">  💬 </span><span class="tip-v" style="color:#8b5cf6">${m.text.slice(0,40)}…</span></div>`).join('');
+  tipEl.innerHTML=`<div class="tip-title">${f.name}</div>
+    <div class="tip-row"><span class="tip-k">exports: </span><span class="tip-v">${f.exports}</span></div>
+    <div class="tip-row"><span class="tip-k">used_by: </span><span class="tip-v">${f.usedBy}</span></div>
+    <div class="tip-row"><span class="tip-k">rules:   </span><span class="tip-v">${f.rules}</span></div>
+    <div class="tip-row"><span class="tip-k">agent:   </span><span class="tip-v">${document.getElementById('av-'+f.id).textContent}</span></div>
+    ${msgs}`;
+  tipEl.style.display='block'; moveTip(e);
+}
+function moveTip(e){ tipEl.style.left=(e.clientX+12)+'px'; tipEl.style.top=(e.clientY-10)+'px'; }
+
+// ── MESSAGE THREAD ON CARD ───────────────────────────────────────────────────
+function updateMsgBadge(fileId){
+  const f = fileMap[fileId];
+  const badge = document.getElementById('mb-'+fileId);
+  const msgRow = document.getElementById('rm-'+fileId);
+  const cnt = f.messages.filter(m=>!m.isReply).length;
+  if(cnt > 0){
+    badge.style.display='inline-flex'; badge.textContent=cnt;
+    msgRow.style.display='flex';
+    document.getElementById('mv-'+fileId).textContent = '"'+f.messages[f.messages.length-1].text.slice(0,28)+'…"';
+  } else {
+    badge.style.display='none';
+    msgRow.style.display='none';
+  }
+}
+
+function addCardMessage(fileId, agent, text, isReply=false){
+  const f = fileMap[fileId];
+  if(f.messages.filter(m=>!m.isReply).length >= 3 && !isReply) return;
+
+  const entry = { agent, text, isReply };
+  f.messages.push(entry);
+
+  const thread = document.getElementById('mt-'+fileId);
+  const row = document.createElement('div');
+  row.className='msg-entry';
+  const bgColor = isReply ? '#f0fdf4' : agent.color+'18';
+  const textColor = isReply ? '#065f46' : agent.color;
+  row.innerHTML=`
+    <div class="msg-who">
+      <span class="msg-dot" style="background:${agent.color}"></span>
+      <span style="color:${agent.color}">${agent.name.replace('\n',' ')}</span>
+    </div>
+    <div class="msg-bubble${isReply?' is-reply':''}" style="background:${bgColor};color:${textColor};border:1px solid ${agent.color}33">
+      ${text}
+    </div>`;
+  thread.appendChild(row);
+  updateMsgBadge(fileId);
+
+  // Auto-clean after 20s
+  setTimeout(()=>{
+    row.remove();
+    f.messages = f.messages.filter(m=>m!==entry);
+    updateMsgBadge(fileId);
+  }, 20000);
+}
+
+// ── INIT AGENTS ──────────────────────────────────────────────────────────────
+S.agents.forEach(a => {
+  const d=document.createElement('div');
+  d.className='agent s-idle'+(a.isVerifier?' verifier':'');
+  d.id='ag-'+a.id;
+  d.style.cssText=`background:${a.color};box-shadow:0 3px 12px ${a.color}44`;
+  const ripple=document.createElement('div');
+  ripple.className='ripple';
+  d.appendChild(ripple);
+  const label=document.createElement('div');
+  label.style.cssText='position:relative;z-index:1;display:flex;flex-direction:column;align-items:center;gap:1px';
+  a.name.split('\n').forEach(l=>{ const s=document.createElement('span');s.textContent=l;label.appendChild(s); });
+  d.appendChild(label);
+  const p=pos(a.fileId);
+  d.style.left=p.x+'px'; d.style.top=p.y+'px';
+  if(a.isVerifier) d.style.display='none'; // hidden until triggered
+  agentsEl.appendChild(d);
+  a.el=d;
+});
+
+function setAgentState(a, state){
+  a.el.className='agent s-'+state+(a.isVerifier?' verifier':'');
+  a.el.style.cssText=`background:${a.color};box-shadow:0 3px 12px ${a.color}44`;
+}
+
+// ── SVG EDGES ────────────────────────────────────────────────────────────────
+function buildEdges(){
+  svgEl.innerHTML='';
+  const r=graphEl.getBoundingClientRect(), W=r.width, H=r.height;
+  const defs=document.createElementNS('http://www.w3.org/2000/svg','defs');
+
+  // Arrow markers per agent color
+  AGENTS.forEach(ag=>{
+    const m=document.createElementNS('http://www.w3.org/2000/svg','marker');
+    m.setAttribute('id','arr-'+ag.id);m.setAttribute('markerWidth','6');m.setAttribute('markerHeight','6');
+    m.setAttribute('refX','5');m.setAttribute('refY','3');m.setAttribute('orient','auto');
+    const p=document.createElementNS('http://www.w3.org/2000/svg','path');
+    p.setAttribute('d','M0,0 L0,6 L6,3 z');p.setAttribute('fill',ag.color);
+    m.appendChild(p);defs.appendChild(m);
+  });
+  const dm=document.createElementNS('http://www.w3.org/2000/svg','marker');
+  dm.setAttribute('id','arr');dm.setAttribute('markerWidth','6');dm.setAttribute('markerHeight','6');
+  dm.setAttribute('refX','5');dm.setAttribute('refY','3');dm.setAttribute('orient','auto');
+  const dp=document.createElementNS('http://www.w3.org/2000/svg','path');
+  dp.setAttribute('d','M0,0 L0,6 L6,3 z');dp.setAttribute('fill','#c7cbdf');
+  dm.appendChild(dp);defs.appendChild(dm);
+  svgEl.appendChild(defs);
+
+  EDGES.forEach(([a,b],i)=>{
+    const fa=fileMap[a],fb=fileMap[b];
+    const x1=fa.px*W,y1=fa.py*H,x2=fb.px*W,y2=fb.py*H;
+    const line=document.createElementNS('http://www.w3.org/2000/svg','line');
+    line.setAttribute('x1',x1);line.setAttribute('y1',y1);line.setAttribute('x2',x2);line.setAttribute('y2',y2);
+    line.setAttribute('stroke','#c7cbdf');line.setAttribute('stroke-width','1.3');
+    line.setAttribute('stroke-dasharray','4 5');line.setAttribute('marker-end','url(#arr)');
+    line.id=`edge-${a}-${b}`;svgEl.appendChild(line);
+
+    const pathEl=document.createElementNS('http://www.w3.org/2000/svg','path');
+    const pid=`fp-${a}-${b}`;pathEl.setAttribute('id',pid);
+    pathEl.setAttribute('d',`M${x1},${y1} L${x2},${y2}`);pathEl.setAttribute('fill','none');
+    svgEl.insertBefore(pathEl,svgEl.firstChild);
+
+    const circ=document.createElementNS('http://www.w3.org/2000/svg','circle');
+    circ.setAttribute('r','2.5');circ.setAttribute('fill','#a5b4fc');circ.setAttribute('opacity','0.7');
+    const am=document.createElementNS('http://www.w3.org/2000/svg','animateMotion');
+    am.setAttribute('dur',(2.2+Math.random()*2)+'s');am.setAttribute('repeatCount','indefinite');
+    am.setAttribute('begin',(i*0.45)+'s');
+    const mp=document.createElementNS('http://www.w3.org/2000/svg','mpath');
+    mp.setAttributeNS('http://www.w3.org/1999/xlink','href','#'+pid);
+    am.appendChild(mp);circ.appendChild(am);svgEl.appendChild(circ);
+  });
+}
+
+// ── BACKGROUND ───────────────────────────────────────────────────────────────
+const GCOLS=22,GROWS=14; const gridNodes=[];
+function initBg(){
+  const W=bgC.width=trC.width=graphEl.offsetWidth;
+  const H=bgC.height=trC.height=graphEl.offsetHeight;
+  gridNodes.length=0;
+  for(let i=0;i<=GCOLS;i++) for(let j=0;j<=GROWS;j++)
+    gridNodes.push({x:(i/GCOLS)*W,y:(j/GROWS)*H,phase:Math.random()*Math.PI*2,spd:.3+Math.random()*.7});
+}
+function drawBg(t){
+  const W=bgC.width,H=bgC.height;bgX.clearRect(0,0,W,H);
+  bgX.strokeStyle='rgba(175,180,215,.3)';bgX.lineWidth=.5;
+  for(let i=0;i<=GCOLS;i++){const x=(i/GCOLS)*W;bgX.beginPath();bgX.moveTo(x,0);bgX.lineTo(x,H);bgX.stroke();}
+  for(let j=0;j<=GROWS;j++){const y=(j/GROWS)*H;bgX.beginPath();bgX.moveTo(0,y);bgX.lineTo(W,y);bgX.stroke();}
+  gridNodes.forEach(n=>{
+    const g=(Math.sin(t*n.spd*.001+n.phase)+1)/2;
+    const al=.03+g*.1,r=1+g*1.5;
+    const gr=bgX.createRadialGradient(n.x,n.y,0,n.x,n.y,r*4);
+    gr.addColorStop(0,`rgba(99,102,241,${al})`);gr.addColorStop(1,'transparent');
+    bgX.fillStyle=gr;bgX.beginPath();bgX.arc(n.x,n.y,r*4,0,Math.PI*2);bgX.fill();
+  });
+}
+function drawTrails(){
+  const W=trC.width,H=trC.height;
+  trX.fillStyle='rgba(240,242,248,.22)';trX.fillRect(0,0,W,H);
+  S.agents.forEach(a=>{
+    if(a.trail.length<2||a.isVerifier&&a.el.style.display==='none') return;
+    trX.beginPath();trX.strokeStyle=a.color+'55';trX.lineWidth=2;trX.lineCap='round';
+    trX.moveTo(a.trail[0].x,a.trail[0].y);
+    a.trail.forEach((p,i)=>{ trX.globalAlpha=(i/a.trail.length)*.5; trX.lineTo(p.x,p.y); });
+    trX.stroke();trX.globalAlpha=1;
+  });
+}
+
+// ── SIMULATION ───────────────────────────────────────────────────────────────
+function startNav(a){
+  const nb=[...adj[a.fileId]];
+  a.targetId=(nb.length&&Math.random()<.72)?rand(nb):rand(FILES).id;
+  if(a.targetId===a.fileId){a.timer=rn(800,2500);return;}
+  a.state='navigating'; a.timer=950; setAgentState(a,'nav');
+  const p=pos(a.targetId);
+  a.el.style.left=p.x+'px'; a.el.style.top=p.y+'px';
+  glowEdge(a.fileId,a.targetId,a.color);
+  setSubtitle(`${a.name.replace('\n',' ')} → ${fileMap[a.targetId].name} via used_by:`);
+}
+
+function glowEdge(from,to,color){
+  const e=document.getElementById(`edge-${from}-${to}`)||document.getElementById(`edge-${to}-${from}`);
+  if(!e) return;
+  e.setAttribute('stroke',color+'99');e.setAttribute('stroke-width','2');
+  setTimeout(()=>{e.setAttribute('stroke','#c7cbdf');e.setAttribute('stroke-width','1.3');},900);
+}
+
+function startRead(a){
+  a.fileId=a.targetId; a.state='reading'; a.timer=1700;
+  S.stats.reads++;S.stats.sessions++; setAgentState(a,'read');
+
+  const card=document.getElementById('card-'+a.fileId);
+  card.style.setProperty('--c',a.color); card.classList.add('lit');
+
+  const scan=document.createElement('div');
+  scan.className='scan';
+  scan.style.background=`linear-gradient(90deg,transparent,${a.color},transparent)`;
+  card.appendChild(scan); setTimeout(()=>scan.remove(),1400);
+
+  const fields=[
+    {id:`re-${a.fileId}`,cls:'hl-e',d:150},
+    {id:`ru-${a.fileId}`,cls:'hl-u',d:500},
+    {id:`rr-${a.fileId}`,cls:'hl-r',d:900},
+    {id:`ra-${a.fileId}`,cls:'hl-a',d:1250},
+  ];
+  // If there's a message: row, highlight it prominently
+  const mrow=document.getElementById(`rm-${a.fileId}`);
+  if(mrow&&mrow.style.display!=='none'){
+    fields.push({id:`rm-${a.fileId}`,cls:'hl-m',d:1100});
+    // Briefly pulse the thread
+    const thread=document.getElementById(`mt-${a.fileId}`);
+    if(thread) setTimeout(()=>{
+      thread.style.outline='2px solid #8b5cf6';thread.style.borderRadius='6px';
+      setTimeout(()=>{thread.style.outline='none';},700);
+    },1100);
+  }
+
+  fields.forEach(({id,cls,d})=>{
+    setTimeout(()=>{
+      const r=document.getElementById(id);if(!r)return;
+      r.classList.add(cls);setTimeout(()=>r.classList.remove(cls),600);
+    },d);
+  });
+
+  addFeed('r',a,`reads <b style="color:#3b82f6">${fileMap[a.fileId].name}</b>`);
+  setSubtitle(`${a.name.replace('\n',' ')} decodes module docstring — exports, used_by, rules, agent:`);
+
+  // Maybe reply to existing message
+  const f=fileMap[a.fileId];
+  if(f.messages.length>0 && Math.random()<.35){
+    setTimeout(()=>{
+      const reply=rand(MSG_REPLIES);
+      addCardMessage(a.fileId,a,reply,true);
+      addFeed('m',a,`💬 replies: <em style="color:#10b981">"${reply}"</em>`);
+      S.stats.messages++;
+    }, 1200);
+  }
+}
+
+function doAction(a){
+  const card=document.getElementById('card-'+a.fileId);
+  card.classList.remove('lit');
+  const r=Math.random();
+  if(r<.28)      doWrite(a);
+  else if(r<.68) doMessage(a);
+  else if(r<.84) doRules(a);
+  else           returnIdle(a);
+}
+
+function doWrite(a){
+  a.state='writing'; a.timer=1600; S.stats.writes++; setAgentState(a,'write');
+  const avEl=document.getElementById('av-'+a.fileId);
+  const newEntry=`${a.name.replace('\n','-').toLowerCase()} | 2026-03-21`;
+  let i=0; avEl.textContent='';
+  const cur=document.createElement('span');
+  cur.style.cssText='display:inline-block;width:5px;height:10px;background:#10b981;vertical-align:middle;animation:pulse-ring .5s infinite';
+  avEl.appendChild(cur);
+  const tw=setInterval(()=>{
+    if(i<newEntry.length){ cur.insertAdjacentText('beforebegin',newEntry[i++]); }
+    else{ clearInterval(tw);cur.remove(); }
+  },45);
+
+  addFeed('w',a,`writes <span style="color:#10b981">agent:</span> → <b>${fileMap[a.fileId].name}</b>`);
+  setSubtitle(`${a.name.replace('\n',' ')} appends agent: — session logged`);
+
+  // Occasionally generate a git commit
+  if(Math.random()<.5) setTimeout(()=>genCommit(a),800);
+}
+
+function doMessage(a){
+  a.state='messaging'; a.timer=3000; S.stats.messages++; setAgentState(a,'msg');
+  const msg=rand(MSG_POOL);
+  addCardMessage(a.fileId,a,msg,false);
+  addFeed('m',a,`💬 <span style="color:#8b5cf6">message:</span> "${msg.slice(0,45)}…"`);
+  setSubtitle(`${a.name.replace('\n',' ')} leaves message: — picked up by next agent`);
+}
+
+function doRules(a){
+  a.state='writing'; a.timer=1800; S.stats.rules++;
+  S.knowledge=Math.min(100,S.knowledge+rn(.8,3.5)); setAgentState(a,'write');
+  const p=pos(a.fileId);
+  for(let i=0;i<8;i++) setTimeout(()=>{
+    const px=document.createElement('div'); px.className='px';
+    px.style.cssText=`background:${a.color};left:${p.x+rn(-20,20)}px;top:${p.y+rn(-10,10)}px`;
+    px.style.setProperty('--dx',rn(-30,30)+'px');
+    fxEl.appendChild(px); setTimeout(()=>px.remove(),1400);
+  },i*80);
+  const rr=document.getElementById(`rr-${a.fileId}`);
+  if(rr){rr.classList.add('hl-r');setTimeout(()=>rr.classList.remove('hl-r'),1300);}
+  addFeed('ru',a,`🔴 updates <span style="color:#ef4444">rules:</span> in <b>${fileMap[a.fileId].name}</b>`);
+  setSubtitle(`${a.name.replace('\n',' ')} updates rules: — architectural knowledge persisted`);
+  if(Math.random()<.4) setTimeout(()=>genCommit(a),1000);
+}
+
+function returnIdle(a){ a.state='idle'; a.timer=rn(1000,4000)/S.speed; setAgentState(a,'idle'); }
+
+// ── GIT COMMITS ──────────────────────────────────────────────────────────────
+function genCommit(a){
+  const hash=randHash();
+  const verb=rand(COMMIT_VERBS);
+  const action=rand(COMMIT_ACTIONS);
+  const fname=fileMap[a.fileId].name.split('/').pop();
+  const msg=`${verb} ${action} ${fname}`;
+  const visited=[a.fileId,...[...adj[a.fileId]].slice(0,2)].map(id=>fileMap[id].name.split('/').pop());
+  const msgText=fileMap[a.fileId].messages.length>0
+    ? fileMap[a.fileId].messages[0].text.slice(0,45)
+    : `updated ${fname} annotations`;
+
+  const c=document.createElement('div'); c.className='commit';
+  c.innerHTML=`
+    <div class="c-head">
+      <div class="c-dot" style="background:${a.color}"></div>
+      <span class="c-hash">${hash}</span>
+      <span class="c-msg">${msg}</span>
+    </div>
+    <div class="c-trailers">
+      <span class="tk">AI-Agent:   </span><span class="tv">${a.name.replace('\n',' ')}</span><br>
+      <span class="tk">AI-Session: </span><span class="tv">s_${randHash().slice(0,8)}</span><br>
+      <span class="tk">AI-Visited: </span><span class="tv">${visited.join(', ')}</span><br>
+      <span class="tk">AI-Message: </span><span class="tm">"${msgText}"</span>
+    </div>`;
+  gitEl.insertBefore(c,gitEl.firstChild);
+  while(gitEl.children.length>8) gitEl.lastChild.remove();
+}
+
+// ── VERIFIER AGENT ────────────────────────────────────────────────────────────
+function triggerVerifier(){
+  const v=S.agents[10];
+  if(v.state!=='idle') return;
+  v.el.style.display='flex';
+  const startFile=rand(FILES).id;
+  v.fileId=startFile; v.targetId=null;
+  const p=pos(startFile);
+  v.el.style.left=p.x+'px'; v.el.style.top=p.y+'px';
+  v.verifyFiles=FILES.map(f=>f.id).sort(()=>Math.random()-.5).slice(0,5);
+  v.verifyStep=0;
+  v.state='verifying';
+  v.timer=600;
+  setAgentState(v,'verify');
+  showToast('🔍 CodeDNA Verifier spawned — pre-commit check starting…','check');
+  addFeed('v',v,'🟡 <b>Verifier</b> started — checking annotations in 5 files');
+  setSubtitle('CodeDNA Verifier running pre-commit annotation check…');
+}
+
+function verifierStep(v){
+  if(v.verifyStep >= v.verifyFiles.length){
+    // All done → pass or occasional fail
+    const failed = Math.random()<.15;
+    if(failed){
+      setAgentState(v,'fail');
+      showToast('❌ Pre-commit FAILED — rules: outdated in payments/models.py','fail');
+      addFeed('v',v,'❌ <span style="color:#ef4444">Pre-commit FAILED</span> — rules: outdated in payments/models.py');
+    } else {
+      setAgentState(v,'pass');
+      S.stats.verified++;
+      S.knowledge=Math.min(100,S.knowledge+rn(2,5));
+      showToast(`✅ Pre-commit PASSED — ${v.verifyFiles.length}/${v.verifyFiles.length} files valid → deploying…`,'ok');
+      addFeed('v',v,`✅ <span style="color:#10b981">All annotations valid</span> → push + deploy triggered`);
+      // Generate verifier commit
+      setTimeout(()=>genVerifierCommit(v, v.verifyFiles),500);
+    }
+    v.state='idle'; v.timer=2000;
+    setTimeout(()=>{ v.el.style.display='none'; },2500);
+    return;
+  }
+
+  const fileId=v.verifyFiles[v.verifyStep];
+  v.targetId=fileId; v.verifyStep++;
+  v.state='verifying'; v.timer=900;
+
+  const p=pos(fileId);
+  v.el.style.left=p.x+'px'; v.el.style.top=p.y+'px';
+  glowEdge(v.fileId,fileId,'#f59e0b');
+  v.fileId=fileId;
+
+  // Flash the card
+  const card=document.getElementById('card-'+fileId);
+  card.style.setProperty('--c','#f59e0b');card.classList.add('lit');
+  setTimeout(()=>card.classList.remove('lit'),700);
+
+  addFeed('v',v,`🔍 checking <b>${fileMap[fileId].name}</b> — exports, rules, agent: ✓`);
+}
+
+function genVerifierCommit(v, files){
+  const hash=randHash();
+  const visited=files.map(id=>fileMap[id].name.split('/').pop());
+  const c=document.createElement('div'); c.className='commit';
+  c.style.borderLeft='3px solid #10b981';
+  c.innerHTML=`
+    <div class="c-head">
+      <div class="c-dot" style="background:#10b981"></div>
+      <span class="c-hash">${hash}</span>
+      <span class="c-msg" style="color:#065f46">chore: pre-commit verification passed ✅</span>
+    </div>
+    <div class="c-trailers">
+      <span class="tk">AI-Agent:   </span><span class="tv">CodeDNA-Verifier</span><br>
+      <span class="tk">AI-Session: </span><span class="tv">verify_${randHash().slice(0,6)}</span><br>
+      <span class="tk">AI-Visited: </span><span class="tv">${visited.join(', ')}</span><br>
+      <span class="tk">AI-Message: </span><span class="tm">"all exports, rules, agent: fields verified — deploy OK"</span>
+    </div>`;
+  gitEl.insertBefore(c,gitEl.firstChild);
+  while(gitEl.children.length>8) gitEl.lastChild.remove();
+}
+
+// ── TOAST ─────────────────────────────────────────────────────────────────────
+function showToast(text, type='ok'){
+  document.querySelectorAll('.toast').forEach(t=>t.remove());
+  const t=document.createElement('div');
+  t.className='toast '+type; t.textContent=text;
+  graphEl.appendChild(t);
+  setTimeout(()=>t.remove(), 3500);
+}
+
+// ── MAIN TICK ─────────────────────────────────────────────────────────────────
+let last=0;
+function tick(now){
+  if(!S.running) return;
+  const dt=Math.min(now-last,100)*S.speed; last=now;
+  drawBg(now); drawTrails();
+
+  // Verifier trigger
+  S.verifierTimer-=dt;
+  if(S.verifierTimer<=0){ S.verifierTimer=rn(20000,35000); triggerVerifier(); }
+
+  S.agents.forEach(a=>{
+    // Trail
+    const ex=parseFloat(a.el.style.left), ey=parseFloat(a.el.style.top);
+    if(!isNaN(ex)){ a.trail.push({x:ex,y:ey}); if(a.trail.length>16) a.trail.shift(); }
+
+    a.timer-=dt; if(a.timer>0) return;
+
+    if(a.isVerifier){
+      if(a.state==='verifying') verifierStep(a);
+      return;
+    }
+
+    switch(a.state){
+      case 'idle':      startNav(a);  break;
+      case 'navigating':startRead(a); break;
+      case 'reading':   doAction(a);  break;
+      case 'writing':
+      case 'messaging': returnIdle(a);break;
+    }
+  });
+
+  updateStats();
+  requestAnimationFrame(tick);
+}
+
+// ── FEED ──────────────────────────────────────────────────────────────────────
+function addFeed(type,agent,html){
+  const fi=document.createElement('div'); fi.className='fi '+type;
+  fi.innerHTML=`<div class="fi-who" style="color:${agent.color}">${agent.name.replace('\n',' ')}</div><div class="fi-txt">${html}</div>`;
+  feedEl.insertBefore(fi,feedEl.firstChild);
+  while(feedEl.children.length>60) feedEl.lastChild.remove();
+}
+
+function setSubtitle(t){ subEl.textContent=t; subEl.style.opacity='1'; clearTimeout(subEl._t); subEl._t=setTimeout(()=>subEl.style.opacity='.5',3500); }
+
+// ── STATS ─────────────────────────────────────────────────────────────────────
+const els={ss:document.getElementById('ss'),sr:document.getElementById('sr'),sw:document.getElementById('sw'),sm:document.getElementById('sm'),sru:document.getElementById('sru'),sv2:document.getElementById('sv2'),kbfill:document.getElementById('kbfill'),kbpct:document.getElementById('kbpct')};
+const prev={};
+function animC(el,v){ const s=parseInt(el.textContent)||0;if(s===v)return;const t0=performance.now();const f=n=>{const p=Math.min((n-t0)/350,1);el.textContent=Math.round(s+(v-s)*p);if(p<1)requestAnimationFrame(f);};requestAnimationFrame(f); }
+function updateStats(){
+  const st=S.stats;
+  if(st.sessions!==prev.sessions){ animC(els.ss,st.sessions);prev.sessions=st.sessions; }
+  if(st.reads!==prev.reads){ animC(els.sr,st.reads);prev.reads=st.reads; }
+  if(st.writes!==prev.writes){ animC(els.sw,st.writes);prev.writes=st.writes; }
+  if(st.messages!==prev.messages){ animC(els.sm,st.messages);prev.messages=st.messages; }
+  if(st.rules!==prev.rules){ animC(els.sru,st.rules);prev.rules=st.rules; }
+  if(st.verified!==prev.verified){ animC(els.sv2,st.verified);prev.verified=st.verified; }
+  els.kbfill.style.width=S.knowledge.toFixed(1)+'%';
+  els.kbpct.textContent=S.knowledge.toFixed(1)+'%';
+}
+
+// ── CONTROLS ──────────────────────────────────────────────────────────────────
+const btnEl=document.getElementById('btn');
+document.getElementById('spd').addEventListener('input',e=>{
+  S.speed=parseFloat(e.target.value);
+  document.getElementById('spdv').textContent=S.speed.toFixed(1).replace('.0','')+'×';
+});
+btnEl.addEventListener('click',()=>{
+  S.running=!S.running;
+  btnEl.textContent=S.running?'⏹ Stop':'▶ Play';
+  btnEl.classList.toggle('stop',S.running);
+  document.getElementById('pdot').style.opacity=S.running?'1':'0';
+  if(S.running){ last=performance.now(); setSubtitle('Agents navigating the codebase via CodeDNA protocol…'); requestAnimationFrame(tick); }
+  else setSubtitle('Simulation paused');
+});
+
+// ── RESIZE + BOOT ─────────────────────────────────────────────────────────────
+function onResize(){
+  bgC.width=trC.width=graphEl.offsetWidth;
+  bgC.height=trC.height=graphEl.offsetHeight;
+  initBg(); buildEdges();
+  S.agents.forEach(a=>{ const p=pos(a.fileId); a.el.style.left=p.x+'px'; a.el.style.top=p.y+'px'; });
+}
+window.addEventListener('resize',onResize);
+onResize(); drawBg(0);
+</script>
+</body>
+</html>
