@@ -895,6 +895,50 @@ Review agent    → reads updated rules:       → validates consistency, extend
 
 Each agent leaves the codebase more navigable for the next. Unlike documentation, annotations are co-located with the code they describe — they are read every time the file is edited, not forgotten in a wiki.
 
+### CodeDNA as a Self-Generating Training Corpus
+
+A less obvious but consequential property: a CodeDNA-annotated codebase with active agent usage constitutes a **self-generating training corpus** across three complementary levels of supervision signal.
+
+#### Level 1 — SFT (Supervised Fine-Tuning)
+
+The append-only `agent:` field records an ordered, file-scoped narrative of correct navigational decisions. Each line encodes — in natural language — what an agent did, what constraint it discovered, and what it left for the next session. Across thousands of files and sessions, this is a dense demonstration dataset of expert codebase navigation grounded in real task outcomes. No labelling cost; the annotations are produced as a side effect of normal agent work.
+
+#### Level 2 — DPO / Preference Alignment
+
+The git history with AI trailers (§4.8) produces naturally occurring `(rejected, chosen)` pairs. When Agent A introduces an incorrect annotation or violates a domain constraint, and Agent B subsequently corrects it and updates `rules:`, the two commits form a labeled preference pair:
+
+```
+commit a3f2b1                            ← rejected
+AI-Agent:   gemini-flash
+AI-Message: "added invoice logic — skipped suspension check"
+
+commit b7c903                            ← chosen
+AI-Agent:   claude-sonnet
+AI-Message: "FIXED: suspension check was missing — bug from prev agent"
+rules: updated → "Suspension check REQUIRED before billing"
+```
+
+The pair is complete with visited-file lists (`AI-Visited:`), session IDs (`AI-Session:`), and agent-written rationale (`AI-Message:`). Unlike synthetic preference data, these pairs are grounded in the actual codebase state at the time of each decision. They are produced at zero marginal cost during normal development.
+
+#### Level 3 — PRM (Process Reward Model)
+
+The session trace infrastructure (`traces_to_training.py`) records the full ordered sequence of tool calls per session. Combined with the binary task outcome (patch applied successfully or not), each trace becomes a labelled reasoning trajectory. Steps on a successful session receive positive reward; steps on a failed session can be assigned negative signal — enabling a process-level reward model trained on real agent behaviour, not on human-generated chain-of-thought.
+
+#### The Data Flywheel
+
+These three levels are mutually reinforcing:
+
+```
+Better models
+    → more accurate annotations
+    → more informative preference pairs (DPO)
+    → better process reward models (PRM)
+    → sharper navigational policy
+    → better models  ↺
+```
+
+Each agent session that writes or corrects a CodeDNA annotation improves the training signal available to all future model generations — without additional human labelling or dedicated data collection infrastructure. The codebase is simultaneously the environment, the protocol, and the training dataset.
+
 ---
 
 ## 1.2 Session Continuity and the Agent Chat

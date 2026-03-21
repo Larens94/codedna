@@ -344,6 +344,43 @@ CodeDNA's `rules:` field is an **asynchronous message channel between agents**. 
 
 This scales naturally to multi-agent pipelines: a planning agent annotates while exploring, an implementation agent reads and acts, a review agent checks and updates `rules:` with discovered constraints. Each agent leaves the codebase more navigable for the next.
 
+### CodeDNA as a Self-Generating Training Corpus
+
+A CodeDNA-annotated codebase with active agent usage is simultaneously a **protocol**, an **environment**, and a **training dataset** — at three levels of supervision signal:
+
+**SFT (Supervised Fine-Tuning)**
+The append-only `agent:` field accumulates an ordered, file-scoped log of correct navigational decisions. Each line encodes what an agent did, what constraint it discovered, and what it left for the next session. Across thousands of files and sessions, this is a dense demonstration dataset of expert codebase navigation grounded in real task outcomes — zero labelling cost.
+
+**DPO / Preference Alignment**
+The git history with [AI trailers](#agent-telemetry-via-git-trailers) produces naturally occurring `(rejected, chosen)` pairs:
+
+```
+commit a3f2b1 — Agent A: "added invoice logic — skipped suspension check"
+commit b7c903 — Agent B: "FIXED: suspension check was missing"
+                         rules: updated → "Suspension check REQUIRED before billing"
+```
+
+Agent A's commit is `rejected`. Agent B's corrective commit is `chosen`. The pair is already labelled, complete with visited-file lists (`AI-Visited:`), session IDs, and agent-written rationale (`AI-Message:`) — produced at zero marginal cost during normal development.
+
+**PRM (Process Reward Model)**
+The session trace infrastructure (`traces_to_training.py`) records the full ordered sequence of tool calls per session. Combined with the binary task outcome, each trace becomes a labelled reasoning trajectory. Steps on a successful session receive positive reward; steps on a failed session can be assigned negative signal — enabling a process-level reward model trained on real agent behaviour.
+
+**The Data Flywheel**
+
+```
+Better models → more accurate annotations
+                        ↓
+           More informative preference pairs
+                        ↓
+             Better process reward models
+                        ↓
+              Sharper navigational policy
+                        ↓
+             Better models  ←─────────────┘
+```
+
+Each agent session that writes or corrects a CodeDNA annotation improves the training signal available to all future model generations — without additional human labelling or dedicated data collection infrastructure.
+
 ---
 
 ## 🔄 Inter-Agent Knowledge Accumulation

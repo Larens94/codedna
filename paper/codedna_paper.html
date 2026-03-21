@@ -988,6 +988,41 @@ int_cents_price_from_req = request.json["price"]</pre>
         natural complement to annotation-writing agents — closing the feedback loop between the protocol and the code
         it describes.</p>
 
+      <p><strong>CodeDNA as a self-generating training corpus.</strong>
+        A consequential but under-explored property of the protocol is that a CodeDNA-annotated codebase with active
+        agent usage constitutes a <em>self-generating training corpus</em> across three complementary levels of
+        supervision signal.</p>
+
+      <p>At the <em>supervised fine-tuning</em> (SFT) level, the append-only <code>agent:</code> field accumulates
+        an ordered, file-scoped narrative of correct navigational decisions. Each line encodes — in natural language —
+        what an agent did, what constraint it discovered, and what it left for the next session. Across thousands of
+        files and sessions, this constitutes a dense demonstration dataset of expert codebase navigation grounded in
+        real task outcomes.</p>
+
+      <p>At the <em>preference alignment</em> (DPO/RLHF) level, the git history with AI trailers provides
+        naturally occurring <em>(rejected, chosen)</em> pairs. When Agent A introduces an incorrect annotation or
+        violates a domain constraint, and Agent B subsequently corrects it and updates <code>rules:</code>, the two
+        commits form a labeled preference pair — complete with visited-file lists, session identifiers, and
+        agent-written rationale in <code>AI-Message:</code>. Unlike synthetic preference data, these pairs are
+        grounded in the actual codebase state at the time of each decision, carry the full navigational context
+        via <code>AI-Visited:</code>, and are produced at zero marginal cost during normal development.</p>
+
+      <p>At the <em>process reward</em> (PRM) level, the session trace infrastructure already present in the
+        benchmark runner (<code>traces_to_training.py</code>) records the full ordered sequence of tool calls per
+        session. Combined with the binary task outcome (patch applied successfully or not), each trace becomes a
+        labeled reasoning trajectory. Steps that led to a correct outcome receive positive reward; steps on a
+        session that failed can be assigned negative signal, enabling a process-level reward model trained on
+        real agent behaviour rather than on human-generated chain-of-thought.</p>
+
+      <p>These three levels are mutually reinforcing. Models fine-tuned on CodeDNA-derived SFT data navigate
+        annotated codebases more accurately, producing higher-quality annotations; higher-quality annotations
+        yield more informative preference pairs; more informative preference pairs improve process reward models
+        that further sharpen navigational policy. This constitutes a <em>data flywheel</em>: each agent session
+        that writes or corrects a CodeDNA annotation improves the training signal available to all future model
+        generations — without requiring additional human labelling effort or dedicated data collection
+        infrastructure. The codebase is simultaneously the environment, the protocol, and the training
+        dataset.</p>
+
       <!-- ─── 7. CONCLUSION ─── -->
       <h2 class="section">7. Conclusion</h2>
 
