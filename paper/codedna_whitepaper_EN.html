@@ -432,8 +432,7 @@
         <span class="logo-tag">v1.0 WHITE PAPER</span>
       </div>
       <h1 class="wp-title">An In-Source Communication Protocol<br>for AI Coding Agents</h1>
-      <p class="wp-subtitle">How embedding architectural context directly in source files reduces LLM agent tool calls
-        by 25–29% and eliminates root-cause misidentification</p>
+      <p class="wp-subtitle">How embedding architectural context directly in source files improves LLM agent file localization F1 across multiple model families</p>
       <div class="meta-line">
         <div>Author: <span>Fabrizio Corpora</span></div>
         <div>Date: <span>March 2026</span></div>
@@ -454,8 +453,7 @@
       <p style="margin-top:6pt;">
         <strong>CodeDNA</strong> is a lightweight, language-agnostic in-source communication protocol that solves this by embedding a
         navigable dependency graph directly inside every source file — no external systems, no retrieval latency, no
-        build step. Two controlled agentic benchmarks show a consistent <strong>25–29% reduction in tool calls</strong>
-        and <strong>zero root-cause misidentifications</strong> compared to unannotated codebases. The standard is open
+        build step. A multi-model SWE-bench evaluation across 3 LLMs shows <strong>+13pp file localization F1</strong> on Gemini 2.5 Flash (p=0.040), with positive gains on all 3 models. The standard is open
         source (MIT), already integrated with the four major AI coding tools, and available at <a
           href="https://github.com/Larens94/codedna">github.com/Larens94/codedna</a>.
       </p>
@@ -464,16 +462,16 @@
     <!-- STATS -->
     <div class="stats-row">
       <div class="stat-box">
-        <span class="stat-number">−29%</span>
-        <span class="stat-label">tool calls on 105-file enterprise codebase</span>
+        <span class="stat-number">+13pp</span>
+        <span class="stat-label">file localization F1 on Gemini 2.5 Flash (SWE-bench, p=0.040)</span>
       </div>
       <div class="stat-box">
-        <span class="stat-number">−33%</span>
-        <span class="stat-label">file reads on 11-file benchmark</span>
+        <span class="stat-number">3/3</span>
+        <span class="stat-label">models improved on SWE-bench multi-model evaluation</span>
       </div>
       <div class="stat-box">
-        <span class="stat-number">0 vs 1</span>
-        <span class="stat-label">root-cause misidentifications (CodeDNA vs control)</span>
+        <span class="stat-number">52%→25%</span>
+        <span class="stat-label">high-risk run rate reduced across SWE-bench models</span>
       </div>
       <div class="stat-box">
         <span class="stat-number">0</span>
@@ -532,6 +530,15 @@
     </p>
 
     <div class="level-row">
+      <div class="level-badge">LEVEL 0<br>Project Manifest</div>
+      <div class="level-desc">
+        <strong>Repo-level map</strong> — a single <code>.codedna</code> YAML file at the repo root. The agent reads
+        this first — before opening any source file — to understand package purposes and inter-package dependencies.
+        Injected into the agent's first message so it has the full structural map before making any tool call.
+      </div>
+    </div>
+
+    <div class="level-row">
       <div class="level-badge">LEVEL 1<br>Module Header</div>
       <div class="level-desc">
         <strong>File-level manifest</strong> — placed at the top of every source file. Encodes the complete
@@ -568,113 +575,16 @@
          <span class="code-warn">→ MUST call is_suspended() BEFORE aggregating revenue</span>
 <span class="code-comment">"""</span></pre>
 
-    <!-- BENCHMARK RESULTS -->
-    <h2>3. Evidence: Two Live Agentic Benchmarks</h2>
-
-    <p>
-      We implemented an autonomous agent using Gemini 2.5 Flash (temperature 0, deterministic) with three
-      function-calling tools: <code>read_file</code>, <code>list_files</code>, and <code>grep</code>. No file content is
-      pre-loaded. The agent runs until completion (max 20 turns). We measured tool calls, file reads, and root-cause
-      correctness across two codebase scales.
-    </p>
-
-    <h3>Benchmark 1 — 11-File Python SaaS Application</h3>
-    <p>Bug B0: orders from <em>soft-deleted</em> users appear in the revenue dashboard because
-      <code>get_active_orders()</code> does not join on the users table.</p>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Metric</th>
-          <th>Control (unannotated)</th>
-          <th>CodeDNA</th>
-          <th>Delta</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>Total tool calls</td>
-          <td>4</td>
-          <td>3</td>
-          <td class="green">−25%</td>
-        </tr>
-        <tr>
-          <td>File reads</td>
-          <td>3</td>
-          <td>2</td>
-          <td class="green">−33%</td>
-        </tr>
-        <tr>
-          <td>Conversation turns</td>
-          <td>5</td>
-          <td>4</td>
-          <td class="green">−20%</td>
-        </tr>
-        <tr>
-          <td>Root cause correct</td>
-          <td>✓ Yes</td>
-          <td>✓ Yes</td>
-          <td>Equal</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <h3>Benchmark 2 — 105-File Enterprise Marketplace Platform</h3>
-    <p>Three planted bugs, 48 realistic distractor files with similar function names (making grep-based navigation
-      noisy). Bug B1: suspended-tenant invoices included in monthly revenue total.</p>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Bug</th>
-          <th>Control calls</th>
-          <th>CodeDNA calls</th>
-          <th>Delta</th>
-          <th>Root cause</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr>
-          <td>B1 — suspended revenue</td>
-          <td>5</td>
-          <td>3</td>
-          <td class="green">−40%</td>
-          <td>Control <span class="red">✗</span> &nbsp; CodeDNA <span class="green">✓</span></td>
-        </tr>
-        <tr>
-          <td>B3 — admin permission</td>
-          <td>3</td>
-          <td>3</td>
-          <td>—</td>
-          <td>Both <span class="green">✓</span></td>
-        </tr>
-        <tr>
-          <td>B4 — fulfillment stock</td>
-          <td>6</td>
-          <td>4</td>
-          <td class="green">−33%</td>
-          <td>Both <span class="green">✓</span></td>
-        </tr>
-        <tr>
-          <td><strong>Total</strong></td>
-          <td><strong>14</strong></td>
-          <td><strong>10</strong></td>
-          <td class="green"><strong>−29%</strong></td>
-          <td>1 error vs 0 errors</td>
-        </tr>
-      </tbody>
-    </table>
-
-    <p>
-      The critical finding on B1: the Control agent identified <code>payments/models.py</code> (the SQL query layer) as
-      the location to fix, rather than <code>analytics/revenue.py</code> (the correct architectural layer where the
-      filter should be enforced). Patching the wrong layer would have broken other consumers of
-      <code>get_invoices_for_period()</code>. The CodeDNA agent, guided by the <code>rules:</code> field in the module
-      header, diagnosed the correct file in 3 tool calls instead of 5.
-    </p>
+    <h3 style="font-size: 11pt; font-weight: 600; margin: 14pt 0 5pt 0;">Planner Read Protocol</h3>
+    <p>For agents planning edits across 10+ files, CodeDNA enables a structured read protocol: (1) read
+      <code>.codedna</code> first to get the full package map; (2) read only the module docstring of each relevant
+      file (first 8–12 lines); (3) build an <code>exports:</code> → <code>used_by:</code> navigation graph; (4) open
+      only the files where the graph intersects with the task. This pattern reduces unnecessary file reads while
+      maximising coverage of architecturally relevant files — the same mechanism responsible for CodeDNA's improved
+      precision in the benchmarks.</p>
 
     <!-- USE CASES -->
-    <h2>4. Who Benefits</h2>
+    <h2>3. Who Benefits</h2>
 
     <div class="use-grid">
       <div class="use-box">
@@ -698,7 +608,7 @@
     </div>
 
     <!-- ADOPTION -->
-    <h2>5. Adoption: Zero-Cost Start</h2>
+    <h2>4. Adoption: Zero-Cost Start</h2>
 
     <p>
       CodeDNA requires no new toolchain. Annotations are plain comments and docstrings in whichever comment syntax the
@@ -712,10 +622,10 @@
       GitHub Actions configuration is provided out of the box.
     </p>
 
-    <!-- ROADMAP -->
-    <h2>5.3 SWE-bench Multi-Model Evaluation (v0.7)</h2>
+    <!-- BENCHMARK RESULTS -->
+    <h2>5. SWE-bench Multi-Model Evaluation (v0.7)</h2>
 
-    <p>Beyond the custom benchmarks above, CodeDNA v0.7 has been evaluated on 5 real Django issues from
+    <p>CodeDNA v0.7 has been evaluated on 5 real Django issues from
       <strong>SWE-bench</strong> — a public benchmark of real GitHub issues. Each task was run 5 times per condition at
       T=0.1 across 3 LLMs (max 30 turns). Statistical significance is evaluated with the Wilcoxon signed-rank test
       (one-tailed).</p>
@@ -750,21 +660,203 @@
         </tr>
         <tr>
           <td style="padding:5pt 8pt;">Gemini 2.5 Pro</td>
-          <td colspan="4" style="padding:5pt 8pt;color:#888;font-style:italic;">in progress</td>
-          <td style="padding:5pt 8pt;">—</td>
+          <td style="padding:5pt 8pt;">60%</td>
+          <td style="padding:5pt 8pt;font-weight:600;">69%</td>
+          <td style="padding:5pt 8pt;color:#16a34a;font-weight:600;">+9pp</td>
+          <td style="padding:5pt 8pt;">0.11</td>
+          <td style="padding:5pt 8pt;">3 / 5</td>
         </tr>
       </tbody>
     </table>
 
-    <p>Both completed models show positive Δ on 4/5 tasks. Gemini 2.5 Flash achieves statistical significance (Wilcoxon
-      W+=14, p=0.040). The benefit is strongest on tasks with navigable dependency chains (e.g., task 13495: +22pp on
-      Flash). The cross-cutting task 11808 — 10 independent files with no shared ancestor — shows Δ≈0% for Flash and
-      +35pp for DeepSeek, illustrating model-specific navigation strategies.</p>
+    <p>All 3 models complete. Gemini 2.5 Flash achieves statistical significance (Wilcoxon W+=14, N=5, p=0.040,
+      Δ=+13pp). DeepSeek Chat: Δ=+9pp, p=0.11, 4/5 tasks won. Gemini 2.5 Pro: Δ=+9pp, p=0.11, 3/5 tasks won.
+      The benefit is strongest on tasks with navigable dependency chains (e.g., task 13495: +22pp on Flash). The
+      cross-cutting task 11808 — independent files with no shared ancestor — shows Δ≈0% for Flash but +35pp for
+      DeepSeek, illustrating model-specific navigation strategies. Task 13495 shows a consistent negative Δ for both
+      Pro (−8pp) and DeepSeek (−9pp) while Flash shows +22pp — a structural anomaly under investigation.</p>
+
+    <h3 style="font-size: 12pt; font-weight: 600; margin: 16pt 0 6pt 0;">5.1 When CodeDNA Helps Most</h3>
+
+    <p>Analysis across 5 tasks (Gemini 2.5 Flash, ≥5 runs each) reveals a clear pattern correlated with task type:</p>
+
+    <table style="width:100%; border-collapse:collapse; margin:8pt 0 12pt; font-size:9pt;">
+      <thead>
+        <tr style="border-bottom:2px solid #3730a3; text-align:left;">
+          <th style="padding:5pt 8pt;">Task type</th>
+          <th style="padding:5pt 8pt;">Example</th>
+          <th style="padding:5pt 8pt;">Δ F1 (Flash)</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #e5e5ea;">
+          <td style="padding:5pt 8pt;"><strong>Clear dependency chain</strong> — A calls B which delegates to C</td>
+          <td style="padding:5pt 8pt;"><code>dbshell → client → subprocess</code> (12508)</td>
+          <td style="padding:5pt 8pt;color:#16a34a;font-weight:600;">+9%</td>
+        </tr>
+        <tr style="border-bottom:1px solid #e5e5ea;">
+          <td style="padding:5pt 8pt;"><strong>Delegation with backend fan-out</strong> — one interface, N backends</td>
+          <td style="padding:5pt 8pt;"><code>Trunc → ops.date_trunc_sql</code> (13495)</td>
+          <td style="padding:5pt 8pt;color:#16a34a;font-weight:600;">+22%</td>
+        </tr>
+        <tr style="border-bottom:1px solid #e5e5ea;">
+          <td style="padding:5pt 8pt;"><strong>Feature addition with flag gating</strong> — across feature/schema layers</td>
+          <td style="padding:5pt 8pt;"><code>INCLUDE clause in Index</code> (11991)</td>
+          <td style="padding:5pt 8pt;color:#16a34a;font-weight:600;">+17%</td>
+        </tr>
+        <tr style="border-bottom:1px solid #e5e5ea;">
+          <td style="padding:5pt 8pt;"><strong>XOR feature with multi-layer propagation</strong></td>
+          <td style="padding:5pt 8pt;"><code>Q() XOR support</code> (14480)</td>
+          <td style="padding:5pt 8pt;color:#16a34a;font-weight:600;">+17%</td>
+        </tr>
+        <tr>
+          <td style="padding:5pt 8pt;"><strong>Cross-cutting fix</strong> — same pattern in N unrelated files, no shared ancestor</td>
+          <td style="padding:5pt 8pt;"><code>__eq__ NotImplemented</code> (11808)</td>
+          <td style="padding:5pt 8pt;color:#888;">≈0%</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><strong>CodeDNA is most effective when there is a navigable call chain.</strong> The <code>used_by:</code> graph
+      guides the agent from entry point to all affected files. For cross-cutting concerns (same fix across N independent
+      files with no common ancestor), the benefit is smaller because no navigation path connects them. The cross-cutting
+      task (11808) was included deliberately to test the protocol's limits — Δ≈0% is reported as a known limitation,
+      not hidden.</p>
+
+    <h3 style="font-size: 12pt; font-weight: 600; margin: 16pt 0 6pt 0;">5.2 The Cheaper-Model Hypothesis</h3>
+
+    <p>The empirical data supports a working hypothesis:</p>
+
+    <blockquote style="border-left:3px solid #3730a3;padding:8pt 12pt;margin:8pt 0;font-style:italic;background:#f8f9ff;">
+      <strong>Less capable, cheaper models benefit more from CodeDNA.</strong> A frontier model navigates large
+      codebases well by general reasoning. A cheaper model without structural guidance gets lost, loops, or stops early.
+      CodeDNA provides the scaffolding that lets a cheap model approach the navigation quality of a more expensive one.
+    </blockquote>
+
+    <p><strong>Evidence:</strong> Gemini 2.5 Flash (Δ=+13pp, p=0.040), DeepSeek Chat (Δ=+9pp), Gemini 2.5 Pro
+      (Δ=+9pp). Flash shows the strongest statistical significance. Notably, Pro ctrl=60% matches Flash — Pro is not
+      stronger than Flash on these navigation tasks, suggesting that navigation efficiency does not scale linearly with
+      model size. This makes CodeDNA economically attractive: <em>annotate once, run cheaper models with comparable
+      accuracy</em>.</p>
+
+    <p>Note: this hypothesis is supported by the Flash result (p=0.040, statistically significant) but DeepSeek-Chat
+      and Gemini 2.5 Pro show positive but non-significant trends (p=0.11). A larger multi-model study across more
+      task types is required to confirm or refute this hypothesis.</p>
+
+    <h3 style="font-size: 12pt; font-weight: 600; margin: 16pt 0 6pt 0;">5.3 Annotation Integrity Audit</h3>
+
+    <p>A key concern with any navigation benchmark is whether the annotations guide the agent to the right files by
+      describing the architecture, or by encoding the solution. We performed a full audit of the benchmark annotations
+      to verify that no task-specific hints were embedded.</p>
+
+    <p><strong>Methodology:</strong> For each task, every ground-truth file (from <code>files_in_patch</code>) was
+      inspected. The <code>used_by:</code> targets were classified as GT (ground-truth) or non-GT. The
+      <code>rules:</code> field was checked for task-specific prescriptions vs. architectural descriptions.</p>
+
+    <table style="width:100%; border-collapse:collapse; margin:8pt 0 12pt; font-size:8.5pt;">
+      <thead>
+        <tr style="border-bottom:2px solid #3730a3; text-align:left;">
+          <th style="padding:5pt 8pt;">Task</th>
+          <th style="padding:5pt 8pt;"><code>used_by:</code> verdict</th>
+          <th style="padding:5pt 8pt;"><code>rules:</code> verdict</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid #e5e5ea;">
+          <td style="padding:5pt 8pt;"><strong>11808</strong> (<code>__eq__</code>)</td>
+          <td style="padding:5pt 8pt;">Files are independent — no <code>used_by:</code> chain exists by design</td>
+          <td style="padding:5pt 8pt;">Describes Python data model convention, not a file list. Δ≈0% confirms no advantage</td>
+        </tr>
+        <tr style="border-bottom:1px solid #e5e5ea;">
+          <td style="padding:5pt 8pt;"><strong>14480</strong> (XOR)</td>
+          <td style="padding:5pt 8pt;">16 targets in <code>query_utils.py</code>; only 2 are GT, both genuine callers</td>
+          <td style="padding:5pt 8pt;">Describes connector system mechanics; agent still needs to reason which files to open</td>
+        </tr>
+        <tr style="border-bottom:1px solid #e5e5ea;">
+          <td style="padding:5pt 8pt;"><strong>13495</strong> (Trunc tzinfo)</td>
+          <td style="padding:5pt 8pt;"><code>base/operations.py</code> lists all 4 backends — they are all the backends that exist</td>
+          <td style="padding:5pt 8pt;"><code>_convert_field_to_tz()</code> mentioned per-backend: accurate architecture, not a fix prescription</td>
+        </tr>
+        <tr style="border-bottom:1px solid #e5e5ea;">
+          <td style="padding:5pt 8pt;"><strong>11991</strong> (INCLUDE)</td>
+          <td style="padding:5pt 8pt;"><code>base/schema.py</code> corrected during audit to include all 4 backend schema editors</td>
+          <td style="padding:5pt 8pt;">Architectural delegation pattern; no file list for the fix</td>
+        </tr>
+        <tr>
+          <td style="padding:5pt 8pt;"><strong>12508</strong> (dbshell)</td>
+          <td style="padding:5pt 8pt;"><code>base/client.py</code> lists all 4 backend clients — complete by definition</td>
+          <td style="padding:5pt 8pt;"><code>dbshell.py</code> rules describe existing architecture accurately</td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p><strong>Verdict: the benchmark annotations are architecturally accurate and do not encode task-specific
+      solutions.</strong> Where GT files appear in <code>used_by:</code> targets, it is because those files are genuine
+      callers or subclasses. The empirical results confirm this: tasks with navigable chains show Δ&gt;0%, the
+      cross-cutting task (11808) shows Δ≈0% regardless of the <code>rules:</code> text.</p>
+
+    <p><em>Annotation correction made during audit:</em> <code>django/db/backends/base/schema.py</code> in task 11991
+      had an incomplete <code>used_by:</code> listing only <code>postgresql/schema.py</code>. All four backend schema
+      editors genuinely inherit from <code>BaseDatabaseSchemaEditor</code>. The annotation was updated to reflect the
+      complete inheritance graph before benchmark runs.</p>
+
+    <p>Note: this audit was conducted by the paper's authors on their own benchmark annotations. Independent
+      verification on externally annotated codebases remains future work.</p>
+
+    <h3 style="font-size: 12pt; font-weight: 600; margin: 16pt 0 6pt 0;">5.4 Retry Cost Analysis</h3>
+
+    <p>File-localization F1 is typically framed as an efficiency metric. We argue it should also be treated as a
+      <strong>correctness proxy</strong>: an agent that reads fewer than half the ground-truth files is unlikely to
+      produce a complete patch, forcing the user to re-invoke the entire session. We define a run as
+      <em>high-risk</em> when per-run recall falls below 50%.</p>
+
+    <p>Across 131 multi-run trials (DeepSeek-Chat, Gemini&nbsp;2.5&nbsp;Flash, Gemini&nbsp;2.5&nbsp;Pro — 5 tasks
+      each, 3–6 runs per task):</p>
+
+    <table style="border-collapse: collapse; width: 100%; margin: 10pt 0; font-size: 10pt;">
+      <thead>
+        <tr style="background: #f0f0f0;">
+          <th style="border: 1px solid #ccc; padding: 5pt 8pt; text-align: left;">Condition</th>
+          <th style="border: 1px solid #ccc; padding: 5pt 8pt; text-align: center;">High-risk runs</th>
+          <th style="border: 1px solid #ccc; padding: 5pt 8pt; text-align: center;">Total runs</th>
+          <th style="border: 1px solid #ccc; padding: 5pt 8pt; text-align: center;">Risk rate</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr>
+          <td style="border: 1px solid #ccc; padding: 5pt 8pt;">Control</td>
+          <td style="border: 1px solid #ccc; padding: 5pt 8pt; text-align: center;">34</td>
+          <td style="border: 1px solid #ccc; padding: 5pt 8pt; text-align: center;">66</td>
+          <td style="border: 1px solid #ccc; padding: 5pt 8pt; text-align: center;"><strong>52%</strong></td>
+        </tr>
+        <tr style="background: #f9f9f9;">
+          <td style="border: 1px solid #ccc; padding: 5pt 8pt;">CodeDNA</td>
+          <td style="border: 1px solid #ccc; padding: 5pt 8pt; text-align: center;">16</td>
+          <td style="border: 1px solid #ccc; padding: 5pt 8pt; text-align: center;">65</td>
+          <td style="border: 1px solid #ccc; padding: 5pt 8pt; text-align: center;"><strong>25%</strong></td>
+        </tr>
+        <tr>
+          <td style="border: 1px solid #ccc; padding: 5pt 8pt;">Reduction</td>
+          <td colspan="2" style="border: 1px solid #ccc; padding: 5pt 8pt;"></td>
+          <td style="border: 1px solid #ccc; padding: 5pt 8pt; text-align: center;"><strong>−27&nbsp;pp (−52% relative)</strong></td>
+        </tr>
+      </tbody>
+    </table>
+
+    <p>The most pronounced case is DeepSeek-Chat on task&nbsp;11808 (10 ground-truth files): all five control runs
+      achieved recall of 10–20%; all five CodeDNA runs achieved 30–60% recall. Every control run would have produced
+      an incomplete patch. Gemini&nbsp;2.5&nbsp;Pro provides a complementary data point: CodeDNA reduced mean tool
+      calls by 14.3% while raising mean F1 by 9&nbsp;pp — fewer calls, higher accuracy simultaneously.</p>
+
+    <p>These results support an <strong>accuracy-first framing</strong> for annotation protocols: even if CodeDNA
+      were cost-neutral in tool calls, halving the rate of incomplete navigation would justify its adoption by
+      halving the rate of sessions the user must repeat.</p>
 
     <h2>6. Research Roadmap</h2>
 
-    <p>The current benchmark establishes the proof of concept across B1/B2 (custom codebases) and B3 (SWE-bench,
-      multi-model). Planned extensions include:</p>
+    <p>The following items represent planned extensions that have not yet been empirically evaluated.</p>
+
+    <p>The current SWE-bench evaluation establishes the proof of concept across 3 LLMs and 5 real Django tasks. Planned extensions include:</p>
 
     <ul style="padding-left: 16pt; margin-bottom: 7pt;">
       <li style="margin-bottom: 4pt;"><strong>Statistical validation</strong> — expand B3 to 3+ completed LLMs, 20+
@@ -778,7 +870,35 @@
       <li style="margin-bottom: 4pt;"><strong>Peer-reviewed publication</strong> — MSR 2026 or ICSE 2027 submission</li>
     </ul>
 
-    <h3 style="font-size: 13pt; font-weight: 600; margin: 18pt 0 6pt 0;">6.1 Protocol Extensions (v0.8)</h3>
+    <h3 style="font-size: 13pt; font-weight: 600; margin: 18pt 0 6pt 0;">6.1 CodeDNA as a Self-Generating Training Corpus</h3>
+
+    <p>The following section describes a speculative future direction with no current empirical validation.</p>
+
+    <p>A consequential property of the protocol is that a CodeDNA-annotated codebase with active agent usage
+      constitutes a <strong>self-generating training corpus</strong> across three complementary supervision levels:</p>
+
+    <p><strong>SFT (Supervised Fine-Tuning).</strong> The append-only <code>agent:</code> field accumulates an
+      ordered, file-scoped log of correct navigational decisions. Each line encodes what an agent did, what constraint
+      it discovered, and what it left for the next session. Across thousands of files and sessions, this is a dense
+      demonstration dataset of expert codebase navigation grounded in real task outcomes — zero labelling cost.</p>
+
+    <p><strong>DPO / Preference Alignment.</strong> The git history with AI trailers (see §6.2) produces naturally
+      occurring <em>(rejected, chosen)</em> pairs. When Agent A introduces an incorrect annotation and Agent B
+      corrects it and updates <code>rules:</code>, the two commits form a labelled preference pair — complete with
+      visited-file lists, session IDs, and agent-written rationale — produced at zero marginal cost during normal
+      development.</p>
+
+    <p><strong>PRM (Process Reward Model).</strong> The session trace infrastructure records the full ordered
+      sequence of tool calls per session. Combined with binary task outcome, each trace becomes a labelled reasoning
+      trajectory, enabling a process-level reward model trained on real agent behaviour.</p>
+
+    <p>These three levels are mutually reinforcing — a <strong>data flywheel</strong>: better models → more accurate
+      annotations → more informative preference pairs → better process reward models → sharper navigational policy →
+      better models. Each agent session that writes or corrects a CodeDNA annotation improves the training signal
+      available to all future model generations without additional human labelling effort. <em>The codebase is
+      simultaneously the environment, the protocol, and the training dataset.</em></p>
+
+    <h3 style="font-size: 13pt; font-weight: 600; margin: 18pt 0 6pt 0;">6.2 Protocol Extensions (v0.8)</h3>
 
     <p><strong>Agent-to-agent conversational layer (<code>message:</code>).</strong>
       The current <code>agent:</code> field records what an agent did — a write-once narrative entry. The proposed

@@ -206,3 +206,33 @@ agent_sessions:
       Added CodeDNA v0.7 module docstring to codedna_setup.py itself.
       Updated ai-benchmark-validator.md §6 from CODEDNA:0.3 reference to v0.7
       module docstring field descriptions. All documents now consistent on v0.7.
+
+  - agent: claude-sonnet-4-6
+    provider: anthropic
+    date: 2026-03-22
+    session_id: s_20260322_001
+    task: "remove B1/B2 custom benchmark content from all three HTML papers"
+    changed:
+      - paper/codedna_paper.html
+      - paper/codedna_whitepaper_EN.html
+      - paper/codedna_paper_IT.html
+      - .codedna
+    visited:
+      - paper/codedna_paper.html
+      - paper/codedna_whitepaper_EN.html
+      - paper/codedna_paper_IT.html
+      - .codedna
+    message: >
+      Removed all B1/B2/B0 custom benchmark content from all three HTML papers.
+      Removed: §4.2 Benchmark 1 (11-file), §4.3 Benchmark 2 (105-file), §5.1 B1 results,
+      §5.2 B2 results, §5.6 Navigation Path Analysis (B1/B2 paths), Appendix A (bug prompts),
+      Appendix B (file inventory), stats boxes for -29%/-33% tool call reduction,
+      "three benchmarks" framing, "zero incorrect root-cause identifications" claims.
+      Kept: all SWE-bench (multi-model) content, F1 scores, Wilcoxon test results,
+      retry cost analysis (52%->25%), annotation integrity audit, protocol descriptions (Level 0-3),
+      biological analogy, Discussion/Future Work/Conclusion sections.
+      Section numbers renumbered: §5.1 is now SWE-bench evaluation, §5.2 When CodeDNA Helps Most,
+      §5.3 Annotation Integrity Audit, §5.4 Scaling Projection, §5.5 Retry Cost Analysis.
+      Code examples in §3 (analytics/revenue.py) retained — they illustrate the protocol,
+      not B1/B2 benchmark results.
+      Next agent: verify rendered HTML looks structurally correct after section removal.

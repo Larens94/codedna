@@ -1,0 +1,566 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CodeDNA — Visual Explainer</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+
+body {
+  background: #1e1e1e;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+  color: #ccc;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  width: 100%;
+  background: #2d2d2d;
+  border-bottom: 1px solid #111;
+  padding: 10px 24px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+.topbar-title { font-size: 0.85rem; color: #888; letter-spacing: 0.3px; }
+.topbar-title strong { color: #ddd; }
+
+.play-btn {
+  background: #0e639c;
+  color: #fff;
+  border: none;
+  padding: 6px 20px;
+  border-radius: 4px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.play-btn:hover { background: #1177bb; }
+.play-btn:disabled { background: #3a3a3a; color: #666; cursor: default; }
+
+.speed-btn {
+  background: #3a3a3a;
+  color: #aaa;
+  border: 1px solid #555;
+  padding: 6px 14px;
+  border-radius: 4px;
+  font-size: 0.78rem;
+  cursor: pointer;
+  margin-right: 8px;
+}
+.speed-btn:hover { background: #444; }
+
+/* ── MAIN LAYOUT ── */
+.workspace {
+  display: flex;
+  gap: 1px;
+  width: 100%;
+  max-width: 1280px;
+  flex: 1;
+  padding: 0;
+  background: #111;
+}
+
+/* ── EDITOR PANE ── */
+.editor-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  background: #1e1e1e;
+  min-width: 0;
+}
+
+.pane-titlebar {
+  padding: 8px 14px;
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  text-transform: uppercase;
+  border-bottom: 2px solid #111;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+.pane-titlebar .dot { width: 8px; height: 8px; border-radius: 50%; }
+.pane.control .pane-titlebar { background: #2a1515; color: #e06c6c; border-color: #e06c6c44; }
+.pane.control .pane-titlebar .dot { background: #e06c6c; }
+.pane.codedna .pane-titlebar { background: #0e2218; color: #4ec9a0; border-color: #4ec9a044; }
+.pane.codedna .pane-titlebar .dot { background: #4ec9a0; }
+
+/* ── FILE TABS ── */
+.file-tabs {
+  display: flex;
+  background: #252526;
+  border-bottom: 1px solid #111;
+  overflow-x: auto;
+  min-height: 35px;
+  align-items: flex-end;
+  padding: 0 4px;
+  gap: 1px;
+}
+.file-tab {
+  padding: 6px 14px;
+  font-size: 0.73rem;
+  font-family: 'Consolas', monospace;
+  white-space: nowrap;
+  border-radius: 4px 4px 0 0;
+  cursor: default;
+  opacity: 0;
+  transition: opacity 0.3s;
+  margin-top: 4px;
+}
+.file-tab.visible { opacity: 1; }
+.file-tab.gt { background: #1e3a1e; color: #4ec9a0; border-top: 2px solid #4ec9a0; }
+.file-tab.wrong { background: #2a1e0a; color: #ce9178; border-top: 2px solid #ce9178; }
+.file-tab.active { background: #1e1e1e; color: #ddd; border-top: 2px solid #0e639c; }
+
+/* ── CODE AREA ── */
+.code-area {
+  flex: 1;
+  display: flex;
+  overflow: hidden;
+  min-height: 340px;
+}
+
+.line-numbers {
+  padding: 12px 0;
+  background: #1e1e1e;
+  color: #404040;
+  font-family: 'Consolas', monospace;
+  font-size: 0.78rem;
+  line-height: 1.7;
+  text-align: right;
+  padding-right: 10px;
+  padding-left: 16px;
+  user-select: none;
+  min-width: 44px;
+  border-right: 1px solid #2a2a2a;
+}
+.line-numbers div { height: 1.7em; }
+
+.code-content {
+  flex: 1;
+  padding: 12px 16px;
+  font-family: 'Consolas', monospace;
+  font-size: 0.78rem;
+  line-height: 1.7;
+  overflow-y: auto;
+  overflow-x: hidden;
+  position: relative;
+}
+
+.code-line {
+  min-height: 1.7em;
+  white-space: pre;
+  display: block;
+  border-radius: 2px;
+  transition: background 0.2s;
+}
+.code-line.highlight { background: #264f78; }
+.code-line.highlight-annotation { background: #1a3a2a; }
+.code-line.dim { opacity: 0.35; }
+
+/* Syntax colors */
+.kw { color: #569cd6; }
+.fn { color: #dcdcaa; }
+.st { color: #ce9178; }
+.cm { color: #6a9955; }
+.nm { color: #9cdcfe; }
+.ann { color: #4ec9a0; font-weight: 600; }
+.ann-key { color: #4ec9a0; }
+.ann-val { color: #ce9178; }
+.ann-arrow { color: #888; }
+
+/* ── AGENT CURSOR ── */
+.agent-cursor {
+  display: inline-block;
+  width: 2px;
+  height: 1.1em;
+  background: #569cd6;
+  animation: blink 1s infinite;
+  vertical-align: text-bottom;
+  margin-left: 2px;
+}
+@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
+
+/* ── STATUS BAR ── */
+.statusbar {
+  background: #007acc;
+  color: #fff;
+  font-size: 0.7rem;
+  padding: 3px 14px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.pane.control .statusbar { background: #8b2020; }
+.pane.codedna .statusbar { background: #0a6640; }
+.status-item { display: flex; align-items: center; gap: 5px; }
+.status-count { font-weight: 700; font-size: 0.82rem; }
+
+/* ── AGENT LOG (bottom terminal) ── */
+.agent-log {
+  background: #1a1a1a;
+  border-top: 1px solid #111;
+  font-family: 'Consolas', monospace;
+  font-size: 0.72rem;
+  color: #888;
+  padding: 8px 14px;
+  min-height: 60px;
+  max-height: 80px;
+  overflow-y: auto;
+  line-height: 1.6;
+}
+.log-line { opacity: 0; transition: opacity 0.3s; }
+.log-line.visible { opacity: 1; }
+.log-ok { color: #4ec9a0; }
+.log-warn { color: #ce9178; }
+.log-info { color: #569cd6; }
+.log-err { color: #e06c6c; }
+
+/* ── BOTTOM RESULT BAR ── */
+.result-bar {
+  width: 100%;
+  max-width: 1280px;
+  display: flex;
+  gap: 1px;
+  background: #111;
+}
+.result-panel {
+  flex: 1;
+  padding: 14px 20px;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+.result-panel.control { background: #1a0d0d; }
+.result-panel.codedna { background: #0a1a12; }
+.result-score {
+  font-size: 2.2rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.result-panel.control .result-score { color: #e06c6c; }
+.result-panel.codedna .result-score { color: #4ec9a0; }
+.result-details { flex: 1; }
+.result-title { font-size: 0.82rem; font-weight: 600; color: #bbb; }
+.result-sub { font-size: 0.7rem; color: #666; margin-top: 2px; }
+.result-verdict {
+  font-size: 0.75rem;
+  font-weight: 700;
+  padding: 4px 12px;
+  border-radius: 4px;
+}
+.result-panel.control .result-verdict { background: #3a1515; color: #e06c6c; }
+.result-panel.codedna .result-verdict { background: #0e2e1e; color: #4ec9a0; }
+</style>
+</head>
+<body>
+
+<!-- TOP BAR -->
+<div class="topbar">
+  <div>
+    <span class="topbar-title"><strong>CodeDNA</strong> — Agent Navigation Comparison &nbsp;·&nbsp; django__django-11808 &nbsp;·&nbsp; DeepSeek-Chat</span>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button class="speed-btn" onclick="toggleSpeed()" id="speed-btn">1×</button>
+    <button class="play-btn" onclick="startAnimation()" id="play-btn">▶ Run Simulation</button>
+  </div>
+</div>
+
+<!-- WORKSPACE -->
+<div class="workspace">
+
+  <!-- CONTROL PANE -->
+  <div class="editor-pane pane control" id="pane-control">
+    <div class="pane-titlebar"><span class="dot"></span>Without CodeDNA — no annotations</div>
+    <div class="file-tabs" id="tabs-control"></div>
+    <div class="code-area">
+      <div class="line-numbers" id="lines-control"></div>
+      <div class="code-content" id="code-control"></div>
+    </div>
+    <div class="agent-log" id="log-control"></div>
+    <div class="statusbar">
+      <div class="status-item">📄 <span id="ctrl-files-open">0 files opened</span></div>
+      <div class="status-item">✓ <span class="status-count" id="ctrl-gt-count" style="color:#e06c6c">0</span><span>/10 critical files found</span></div>
+    </div>
+  </div>
+
+  <!-- CODEDNA PANE -->
+  <div class="editor-pane pane codedna" id="pane-codedna">
+    <div class="pane-titlebar"><span class="dot"></span>With CodeDNA v0.7 — annotated</div>
+    <div class="file-tabs" id="tabs-codedna"></div>
+    <div class="code-area">
+      <div class="line-numbers" id="lines-codedna"></div>
+      <div class="code-content" id="code-codedna"></div>
+    </div>
+    <div class="agent-log" id="log-codedna"></div>
+    <div class="statusbar">
+      <div class="status-item">📄 <span id="dna-files-open">0 files opened</span></div>
+      <div class="status-item">✓ <span class="status-count" id="dna-gt-count" style="color:#4ec9a0">0</span><span>/10 critical files found</span></div>
+    </div>
+  </div>
+
+</div>
+
+<!-- RESULT BAR -->
+<div class="result-bar" id="result-bar" style="opacity:0;transition:opacity 0.6s">
+  <div class="result-panel control">
+    <div class="result-score" id="ctrl-final-score">2/10</div>
+    <div class="result-details">
+      <div class="result-title">Critical files found</div>
+      <div class="result-sub">4 runs of 5 found only 1 file. Patch is missing changes in 8 files.</div>
+    </div>
+    <div class="result-verdict">✗ Fix incomplete — user retries</div>
+  </div>
+  <div class="result-panel codedna">
+    <div class="result-score" id="dna-final-score">6/10</div>
+    <div class="result-details">
+      <div class="result-title">Critical files found</div>
+      <div class="result-sub">Agent followed used_by: chain directly. 3× more coverage. Fix viable.</div>
+    </div>
+    <div class="result-verdict">✓ Fix viable — no retry needed</div>
+  </div>
+</div>
+
+<script>
+// ── CODE CONTENT DEFINITIONS ──────────────────────────────────────────────
+
+const CODE_PLAIN = `<span class="kw">class</span> <span class="fn">Model</span>:
+    <span class="cm"># Base class for all Django models.</span>
+    <span class="cm"># 847 lines. No navigation hints.</span>
+
+    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="nm">self</span>, *args, **kwargs):
+        <span class="kw">pass</span>
+
+    <span class="kw">def</span> <span class="fn">save</span>(<span class="nm">self</span>, *args, **kwargs):
+        <span class="kw">pass</span>
+
+    <span class="kw">def</span> <span class="fn">__eq__</span>(<span class="nm">self</span>, other):
+        <span class="kw">if not</span> isinstance(other, Model):
+            <span class="kw">return</span> <span class="nm">False</span>  <span class="cm"># ← bug is here</span>
+        <span class="kw">return</span> <span class="nm">self</span>.pk == other.pk
+
+    <span class="kw">def</span> <span class="fn">delete</span>(<span class="nm">self</span>, *args, **kwargs):
+        <span class="kw">pass</span>
+
+    <span class="kw">def</span> <span class="fn">full_clean</span>(<span class="nm">self</span>, *args, **kwargs):
+        <span class="kw">pass</span>
+<span class="cm"># ... 820 more lines ...</span>`;
+
+const CODE_ANNOTATED = `<span class="cm">"""base.py — Core Model base class for all Django ORM models.</span>
+
+<span class="ann-key">exports:</span>  <span class="ann-val">Model.__eq__(other) -> bool</span>
+<span class="ann-key">used_by:</span>  <span class="ann-val">models/indexes.py     → Index.__eq__</span>
+          <span class="ann-val">models/constraints.py → Constraint.__eq__</span>
+          <span class="ann-val">models/expressions.py → Expression.__eq__</span>
+          <span class="ann-val">models/query.py       → QuerySet.__eq__</span>
+          <span class="ann-val">models/query_utils.py → Q.__eq__</span>
+<span class="ann-key">rules:</span>    <span class="ann-val">__eq__ MUST return NotImplemented for unknown</span>
+          <span class="ann-val">types — ALL subclasses must follow this contract</span>
+<span class="cm">"""</span>
+
+<span class="kw">class</span> <span class="fn">Model</span>:
+
+    <span class="kw">def</span> <span class="fn">__eq__</span>(<span class="nm">self</span>, other):
+        <span class="kw">if not</span> isinstance(other, Model):
+            <span class="kw">return</span> <span class="nm">False</span>  <span class="cm"># ← fix: return NotImplemented</span>
+        <span class="kw">return</span> <span class="nm">self</span>.pk == other.pk
+<span class="cm"># ...</span>`;
+
+// ── SEQUENCES ─────────────────────────────────────────────────────────────
+
+const GT = new Set(['models/base.py','models/indexes.py','models/constraints.py',
+  'models/expressions.py','models/query.py','models/query_utils.py',
+  'models/fields/__init__.py','models/fields/files.py',
+  'django/template/context.py','django/core/validators.py']);
+
+const CTRL_STEPS = [
+  { ms: 600,  type:'open', file:'models/base.py',       log:'info', msg:'Opening models/base.py ...' },
+  { ms: 1400, type:'read', file:'models/base.py',       log:'warn', msg:'847 lines. Searching for __eq__ pattern...' },
+  { ms: 2400, type:'grep', file:'models/base.py',       log:'warn', msg:'grep "__eq__" → 1 match. Context unclear.' },
+  { ms: 3400, type:'open', file:'tests/basic/tests.py', log:'info', msg:'Opening tests/basic/tests.py to understand usage...' },
+  { ms: 4400, type:'read', file:'tests/basic/tests.py', log:'warn', msg:'1200 lines. No clear pattern found.' },
+  { ms: 5400, type:'stop', file:null,                   log:'err',  msg:'No further navigation hints. Stopping exploration.' },
+];
+
+const DNA_STEPS = [
+  { ms: 600,  type:'open',   file:'models/base.py',       log:'info', msg:'Opening models/base.py ...' },
+  { ms: 1200, type:'read',   file:'models/base.py',       log:'ok',   msg:'Reading docstring: exports, used_by, rules → found in 8 lines.' },
+  { ms: 2000, type:'follow', file:'models/indexes.py',    log:'ok',   msg:'→ Following used_by: models/indexes.py (Index.__eq__)' },
+  { ms: 2700, type:'follow', file:'models/constraints.py',log:'ok',   msg:'→ Following used_by: models/constraints.py (Constraint.__eq__)' },
+  { ms: 3400, type:'follow', file:'models/expressions.py',log:'ok',   msg:'→ Following used_by: models/expressions.py (Expression.__eq__)' },
+  { ms: 4100, type:'follow', file:'models/query.py',      log:'ok',   msg:'→ Following used_by: models/query.py (QuerySet.__eq__)' },
+  { ms: 4800, type:'follow', file:'models/query_utils.py',log:'ok',   msg:'→ Following used_by: models/query_utils.py (Q.__eq__)' },
+  { ms: 5500, type:'done',   file:null,                   log:'ok',   msg:'Navigation complete. 6 files confirmed by annotation chain.' },
+];
+
+// ── STATE ──────────────────────────────────────────────────────────────────
+
+let timers = [];
+let speedMult = 1;
+let running = false;
+
+function toggleSpeed() {
+  const btn = document.getElementById('speed-btn');
+  if (speedMult === 1) { speedMult = 2; btn.textContent = '2×'; }
+  else if (speedMult === 2) { speedMult = 4; btn.textContent = '4×'; }
+  else { speedMult = 1; btn.textContent = '1×'; }
+}
+
+// ── INIT ───────────────────────────────────────────────────────────────────
+
+function initPane(side) {
+  document.getElementById(`tabs-${side}`).innerHTML = '';
+  document.getElementById(`log-${side}`).innerHTML = '';
+  const isControl = side === 'control';
+  const codeEl = document.getElementById(`code-${side}`);
+  const linesEl = document.getElementById(`lines-${side}`);
+  const raw = isControl ? CODE_PLAIN : CODE_ANNOTATED;
+  const lineCount = raw.split('\n').length;
+
+  // Line numbers
+  linesEl.innerHTML = Array.from({length: lineCount}, (_,i) =>
+    `<div>${i+1}</div>`).join('');
+
+  // Code lines (highlight annotation lines for CodeDNA)
+  codeEl.innerHTML = raw.split('\n').map((line, i) => {
+    const isDNA = !isControl;
+    const isAnn = isDNA && i >= 0 && i <= 10;
+    return `<span class="code-line${isAnn ? ' highlight-annotation' : ''}" id="cl-${side}-${i}">${line || ' '}</span>`;
+  }).join('\n');
+
+  // Reset counters
+  document.getElementById(`${isControl?'ctrl':'dna'}-files-open`).textContent = '0 files opened';
+  document.getElementById(`${isControl?'ctrl':'dna'}-gt-count`).textContent = '0';
+}
+
+// ── ANIMATION ─────────────────────────────────────────────────────────────
+
+function addTab(side, file) {
+  const tabs = document.getElementById(`tabs-${side}`);
+  const isGT = GT.has(file);
+  const name = file.split('/').pop();
+  const tab = document.createElement('div');
+  tab.className = `file-tab ${isGT ? 'gt' : 'wrong'} visible`;
+  tab.textContent = name;
+  tab.id = `tab-${side}-${file.replace(/\//g,'_').replace(/\./g,'_')}`;
+  tabs.appendChild(tab);
+}
+
+function setActiveTab(side, file) {
+  document.querySelectorAll(`#tabs-${side} .file-tab`).forEach(t => t.classList.remove('active'));
+  const tab = document.getElementById(`tab-${side}-${file.replace(/\//g,'_').replace(/\./g,'_')}`);
+  if (tab) tab.classList.add('active');
+}
+
+function addLog(side, cls, msg) {
+  const log = document.getElementById(`log-${side}`);
+  const div = document.createElement('div');
+  div.className = `log-line visible log-${cls}`;
+  const prefix = {ok:'✓', warn:'⚠', info:'›', err:'✗'}[cls] || '›';
+  div.textContent = `${prefix}  ${msg}`;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function highlightAnnotationLines(side) {
+  // Pulse the annotation block
+  for (let i = 0; i <= 10; i++) {
+    const el = document.getElementById(`cl-${side}-${i}`);
+    if (el) {
+      el.style.background = '#1e4a32';
+      setTimeout(() => { if(el) el.style.background = ''; }, 2000);
+    }
+  }
+}
+
+let ctrlOpened = 0, ctrlGTFound = 0;
+let dnaOpened = 0, dnaGTFound = 0;
+
+function runSteps(side, steps) {
+  const isControl = side === 'control';
+  steps.forEach(step => {
+    const t = setTimeout(() => {
+      if (step.type === 'open' || step.type === 'follow') {
+        addTab(side, step.file);
+        setActiveTab(side, step.file);
+        if (isControl) {
+          ctrlOpened++;
+          document.getElementById('ctrl-files-open').textContent = `${ctrlOpened} file${ctrlOpened>1?'s':''} opened`;
+          if (GT.has(step.file)) {
+            ctrlGTFound++;
+            document.getElementById('ctrl-gt-count').textContent = ctrlGTFound;
+          }
+        } else {
+          dnaOpened++;
+          document.getElementById('dna-files-open').textContent = `${dnaOpened} file${dnaOpened>1?'s':''} opened`;
+          if (GT.has(step.file)) {
+            dnaGTFound++;
+            document.getElementById('dna-gt-count').textContent = dnaGTFound;
+          }
+        }
+      }
+      if (step.type === 'read' && !isControl) {
+        highlightAnnotationLines(side);
+      }
+      if (step.log) addLog(side, step.log, step.msg);
+
+      if (step.type === 'stop' || step.type === 'done') {
+        // Final state
+        const t2 = setTimeout(() => {
+          document.getElementById('result-bar').style.opacity = '1';
+          document.getElementById('play-btn').textContent = '↺ Replay';
+          document.getElementById('play-btn').disabled = false;
+          document.getElementById('play-btn').onclick = resetAndStart;
+          running = false;
+        }, 800 / speedMult);
+        timers.push(t2);
+      }
+    }, step.ms / speedMult);
+    timers.push(t);
+  });
+}
+
+function startAnimation() {
+  if (running) return;
+  running = true;
+  ctrlOpened = 0; ctrlGTFound = 0;
+  dnaOpened = 0; dnaGTFound = 0;
+
+  timers.forEach(clearTimeout); timers = [];
+
+  initPane('control');
+  initPane('codedna');
+  document.getElementById('result-bar').style.opacity = '0';
+  document.getElementById('play-btn').textContent = '⏸ Running...';
+  document.getElementById('play-btn').disabled = true;
+
+  runSteps('control', CTRL_STEPS);
+  runSteps('codedna', DNA_STEPS);
+}
+
+function resetAndStart() {
+  timers.forEach(clearTimeout); timers = [];
+  running = false;
+  document.getElementById('play-btn').textContent = '▶ Run Simulation';
+  document.getElementById('play-btn').disabled = false;
+  document.getElementById('play-btn').onclick = startAnimation;
+  initPane('control');
+  initPane('codedna');
+  document.getElementById('result-bar').style.opacity = '0';
+}
+
+// ── BOOT ──────────────────────────────────────────────────────────────────
+initPane('control');
+initPane('codedna');
+document.getElementById('play-btn').onclick = startAnimation;
+</script>
+</body>
+</html>

@@ -269,7 +269,7 @@
       <h1 class="paper-title">CodeDNA: un protocollo di comunicazione in-source<br>per agenti AI di coding</h1>
       <div class="authors">Fabrizio Corpora</div>
       <div class="affiliation">Ricerca indipendente · <em>fabrizio.corpora@gmail.com</em></div>
-      <div class="date">Preprint arXiv · Marzo 2026</div>
+      <div class="date">Zenodo preprint · Marzo 2026 · <a href="https://doi.org/10.5281/zenodo.19110474">doi:10.5281/zenodo.19110474</a></div>
     </div>
 
     <!-- ABSTRACT -->
@@ -285,10 +285,12 @@
       pubblici, vincoli per gli agenti e convenzioni di naming semantico direttamente nei file sorgente. Il nome
       richiama la sua analogia biologica: come il DNA codifica il progetto completo dell'organismo in ogni cellula,
       CodeDNA garantisce che ogni frammento di codice porti sufficiente contesto architetturale perché un agente agisca
-      correttamente in isolamento. Valutiamo CodeDNA con due benchmark agentici controllati: (1) codebase da 11 file —
-      <strong>−25% di chiamate a strumenti, −33% di file letti</strong>; (2) piattaforma enterprise da 105 file —
-      <strong>−29% di chiamate, zero identificazioni errate della causa radice</strong> contro una nel control non
-      annotato. CodeDNA non richiede build step, sistemi esterni né latenza di recupero.
+      correttamente in isolamento. Valutiamo CodeDNA con una <strong>valutazione SWE-bench multi-modello</strong>
+      su 3 LLM (Gemini 2.5 Flash, DeepSeek Chat, Gemini 2.5 Pro) su 5 issue Django reali, 5 esecuzioni/task a
+      T=0.1 — CodeDNA ha migliorato la file localization F1 su tutti e 3 i modelli, con un guadagno
+      statisticamente significativo di <strong>+13pp su Gemini 2.5 Flash (60% → 72%, Wilcoxon p=0.040)</strong>,
+      +9pp su DeepSeek Chat e +9pp su Gemini 2.5 Pro.
+      CodeDNA non richiede build step, sistemi esterni né latenza di recupero.
     </div>
 
     <!-- CORPO A DUE COLONNE -->
@@ -321,13 +323,14 @@
         modo che qualsiasi frammento letto da un agente sia già autosufficiente.</p>
 
       <p class="ni"><strong>Contributi:</strong></p>
-      <p class="ni">(1) Il <strong>CodeDNA Annotation Standard v0.5</strong>: un protocollo di annotazione in-source a
-        tre livelli, language-agnostic.</p>
+      <p class="ni">(1) Il <strong>CodeDNA Communication Protocol v0.7</strong>: un protocollo di comunicazione in-source a
+        quattro livelli (Level 0–3), language-agnostic, per agenti di coding AI.</p>
       <p class="ni">(2) Un'analogia biologica che motiva il principio di ridondanza olografica dello standard.</p>
-      <p class="ni">(3) Due <strong>benchmark agentici live</strong> (11 e 105 file) con Gemini 2.5 Flash e
-        function-calling tools su codebase reali su disco.</p>
-      <p class="ni">(4) Evidenza di <strong>−25–29% di chiamate agli strumenti</strong> e zero diagnosi errate con
-        CodeDNA.</p>
+      <p class="ni">(3) Una <strong>valutazione multi-modello SWE-bench</strong> su 3 LLM (Gemini 2.5 Flash,
+        DeepSeek Chat, Gemini 2.5 Pro) su 5 issue Django reali, 5 esecuzioni/task a T=0.1 — CodeDNA ha migliorato
+        la file localization F1 su tutti e 3 i modelli, con un guadagno statisticamente significativo di +13pp su
+        Gemini 2.5 Flash (Wilcoxon p=0.040).</p>
+      <p class="ni">(4) Evidenza di <strong>+13pp F1</strong> sul modello migliore (Gemini 2.5 Flash, p=0.040), con Δ positivo su tutti e 3 i modelli.</p>
       <p class="ni">(5) Rilascio open-source di spec, codice benchmark e file di integrazione AI.</p>
 
       <!-- 2. LAVORI CORRELATI -->
@@ -365,7 +368,7 @@
           machine-readable</em> che punta ai fail mode degli agenti LLM, non ai lettori umani.</p>
 
       <!-- 3. LO STANDARD CODEDNA -->
-      <h2 class="section">3. Lo Standard CodeDNA v0.5</h2>
+      <h2 class="section">3. Il Protocollo di Comunicazione CodeDNA v0.7</h2>
 
       <h3 class="subsection">3.1 Analogia Biologica</h3>
 
@@ -377,7 +380,9 @@
 
       <p>CodeDNA applica lo stesso principio al software: ogni file sorgente codifica non solo la propria logica, ma
         anche la propria <em>posizione nell'organismo architetturale</em> — da cosa dipende, chi dipende da esso, quali
-        contratti deve rispettare. I tre livelli rispecchiano tre scale di codifica biologica:</p>
+        contratti deve rispettare. Il protocollo comprende quattro livelli (0–3): il Livello 0 è il manifest di
+        progetto (<code>.codedna</code>), che opera a scala di repository. I Livelli 1–3 operano a scala di file,
+        funzione e variabile, e rispecchiano tre scale di codifica biologica:</p>
 
       <div class="dna-box">
         <span class="dna-title">Tabella A. Analogia DNA biologico ↔ CodeDNA</span>
@@ -466,8 +471,7 @@ int_cents_price_from_req = request.json["price"]</pre>
       <h2 class="section">4. Design del Benchmark</h2>
 
       <p class="ni">Misuriamo l'<em>efficienza di navigazione</em> — quante interazioni con gli strumenti richiede un
-        agente autonomo per localizzare correttamente la causa radice di un bug in un codebase multi-file — in due
-        contesti di complessità crescente.</p>
+        agente autonomo per localizzare correttamente la causa radice di un bug in un codebase multi-file.</p>
 
       <h3 class="subsection">4.1 Implementazione dell'Agente</h3>
       <p class="ni">Abbiamo implementato un agente autonomo con Gemini 2.5 Flash (temperatura 0, deterministico) con tre
@@ -478,185 +482,133 @@ int_cents_price_from_req = request.json["price"]</pre>
         <strong>found_correct</strong> (booleano).
       </p>
 
-      <h3 class="subsection">4.2 Benchmark 1 — Codebase da 11 File</h3>
-      <p class="ni">Abbiamo generato due versioni di un'applicazione Python SaaS da 11 file. <strong>Control:</strong>
-        Python standard, zero annotazioni. <strong>CodeDNA:</strong> logica identica, ogni file annotato secondo v0.5.
-        Le annotazioni descrivono solo l'architettura — nessun indizio sul bug.</p>
-
-      <p><strong>Bug piantato (B0).</strong> Il sistema utenti implementa la <em>soft delete</em>:
-        <code>delete_user()</code> imposta <code>users.deleted_at = NOW()</code> senza rimuovere la riga.
-        <code>orders/orders.py::get_active_orders()</code> non effettua join sulla tabella utenti, restituendo tutti gli
-        ordini non cancellati indipendentemente dallo stato di cancellazione dell'utente, gonfiando la dashboard dei
-        ricavi.
-      </p>
-
-      <h3 class="subsection">4.3 Benchmark 2 — Piattaforma Enterprise da 105 File</h3>
-      <p class="ni">Abbiamo generato una piattaforma marketplace enterprise da 105 file (MarketCore) che comprende 57
-        moduli core e 48 file distractor realistici su domain <code>analytics</code>, <code>api</code>,
-        <code>core</code>, <code>orders</code>, <code>payments</code>, <code>reports</code>, <code>services</code>,
-        <code>utils</code> e altri. I file distractor contengono funzioni con nomi simili alla catena del bug (es.
-        <code>get_X_for_period</code>, <code>list_active_X</code>), rendendo la navigazione basata su grep rumorosa.
-      </p>
-
-      <p>Versione Control: 1.461 righe, zero annotazioni. Versione CodeDNA: 2.437 righe. Tre bug piantati:</p>
-      <p class="ni">• <strong>B1.</strong> <code>analytics/revenue.py</code> somma le fatture dei tenant sospesi senza
-        filtrarle.</p>
-      <p class="ni">• <strong>B3.</strong> <code>api/products.py</code> controlla <code>user['is_admin']</code> invece
-        di <code>payload['role'] == 'admin'</code>.</p>
-      <p class="ni">• <strong>B4.</strong> <code>orders/fulfillment.py</code> non chiama <code>decrement_stock()</code>
-        dopo la conferma dell'ordine.</p>
-
       <!-- 5. RISULTATI -->
       <h2 class="section">5. Risultati</h2>
 
-      <h3 class="subsection">5.1 Benchmark 1 (11 file)</h3>
-      <p class="ni">Entrambi gli agenti hanno identificato correttamente <code>orders/orders.py</code>.</p>
+      <h3 class="subsection">5.1 Valutazione Multi-Modello SWE-bench</h3>
+      <p class="ni">Per verificare se il beneficio di CodeDNA si generalizza a diverse architetture LLM, abbiamo
+        valutato 3 modelli su 5 issue Django reali da SWE-bench. Ogni modello ha ricevuto strumenti identici
+        (<code>read_file</code>, <code>list_files</code>, <code>grep</code>), lo stesso system prompt e un massimo
+        di 30 turni. Ogni condizione è stata ripetuta 5 volte per task a T=0.1 per ottenere stime medie stabili;
+        la significatività statistica è valutata con il test di Wilcoxon signed-rank (unilaterale,
+        H1: CodeDNA &gt; Control) sulle 5 coppie di F1 medie per task. La metrica primaria è la
+        <strong>file localization F1</strong>: la media armonica di precision (frazione di file letti presenti nel
+        ground truth del patch) e recall (frazione di file ground truth effettivamente letti dall'agente). Questa
+        metrica misura l'<em>accuratezza di navigazione</em>, non la correttezza del patch, isolando il
+        collo di bottiglia specificamente affrontato da CodeDNA.</p>
 
-      <p class="tcap"><span class="tnum">Tabella 1.</span> Navigazione agente — B0, codebase da 11 file.</p>
+      <p class="tcap"><span class="tnum">Tabella 3.</span> File localization F1 multi-modello — 5 task SWE-bench,
+        5 esecuzioni/task a T=0.1, Control vs. CodeDNA.</p>
       <table>
         <thead>
           <tr>
-            <th>Metrica</th>
-            <th>Control</th>
-            <th>CodeDNA</th>
-            <th>Δ</th>
+            <th>Modello</th>
+            <th>Ctrl F1</th>
+            <th>DNA F1</th>
+            <th>Δ F1</th>
+            <th>p-value</th>
+            <th>Task Vinti</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>Chiamate totali strumenti</td>
-            <td>4</td>
-            <td>3</td>
-            <td class="green">−25%</td>
+            <td>Gemini 2.5 Flash</td>
+            <td>60%</td>
+            <td>72%</td>
+            <td class="green">+13pp</td>
+            <td>0.040*</td>
+            <td>4 / 5</td>
           </tr>
           <tr>
-            <td>Chiamate read_file</td>
-            <td>3</td>
-            <td>2</td>
-            <td class="green">−33%</td>
+            <td>DeepSeek Chat</td>
+            <td>50%</td>
+            <td>60%</td>
+            <td class="green">+9pp</td>
+            <td>0.11</td>
+            <td>4 / 5</td>
           </tr>
           <tr>
-            <td>Chiamate grep</td>
-            <td>0</td>
-            <td>0</td>
-            <td>—</td>
-          </tr>
-          <tr>
-            <td>Turni conversazione</td>
-            <td>5</td>
-            <td>4</td>
-            <td class="green">−20%</td>
-          </tr>
-          <tr>
-            <td>Causa radice corretta</td>
-            <td>✓ Sì</td>
-            <td>✓ Sì</td>
-            <td>Uguale</td>
-          </tr>
-        </tbody>
-      </table>
-
-      <h3 class="subsection">5.2 Benchmark 2 (105 file)</h3>
-
-      <p class="tcap"><span class="tnum">Tabella 2.</span> Navigazione agente — B1/B3/B4, codebase enterprise da 105
-        file.</p>
-      <table>
-        <thead>
-          <tr>
-            <th>Bug</th>
-            <th>Chiamate Ctrl</th>
-            <th>Chiamate DNA</th>
-            <th>Δ</th>
-            <th>Corretto</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>B1 ricavi_sospesi</td>
-            <td>5</td>
-            <td>3</td>
-            <td class="green">−40%</td>
-            <td>Ctrl ❌ · DNA ✅</td>
-          </tr>
-          <tr>
-            <td>B3 permesso_admin</td>
-            <td>3</td>
-            <td>3</td>
-            <td>—</td>
-            <td>Entrambi ✅</td>
-          </tr>
-          <tr>
-            <td>B4 fulfillment_inv</td>
-            <td>6</td>
-            <td>4</td>
-            <td class="green">−33%</td>
-            <td>Entrambi ✅</td>
-          </tr>
-          <tr>
-            <td><strong>Totale</strong></td>
-            <td><strong>14</strong></td>
-            <td><strong>10</strong></td>
-            <td class="green"><strong>−29%</strong></td>
-            <td>1 errore · 0 errori</td>
+            <td>Gemini 2.5 Pro</td>
+            <td>60%</td>
+            <td>69%</td>
+            <td class="green">+9pp</td>
+            <td>0.11</td>
+            <td>3 / 5</td>
           </tr>
         </tbody>
       </table>
 
       <div class="key-result">
-        <strong>Risultato chiave:</strong> Su entrambi i benchmark, CodeDNA ha ridotto le chiamate agli strumenti del
-        25–29% ed eliminato le identificazioni errate della causa radice (0 vs. 1 nel benchmark enterprise). Su B1,
-        l'agente Control ha identificato <code>payments/models.py</code> — la posizione della query SQL sottostante —
-        invece di <code>analytics/revenue.py</code> — il file architetturalmente corretto dove il filtro dovrebbe essere
-        applicato. Correggere il livello sbagliato avrebbe rotto altri consumer di
-        <code>get_invoices_for_period()</code>.
+        <strong>Risultato chiave:</strong> Tutti e 3 i modelli completati. Gemini 2.5 Flash raggiunge la
+        significatività statistica (Wilcoxon W+=14, N=5, p=0.040, Δ=+13pp). DeepSeek Chat: Δ=+9pp, p=0.11.
+        Gemini 2.5 Pro: Δ=+9pp, p=0.11. Δ positivo su 3–4/5 task per modello. Il task 13495 mostra un Δ
+        negativo consistente per Pro (−8pp) e DeepSeek (−9pp) mentre Flash mostra +22pp — un'anomalia
+        strutturale in fase di indagine. Pro ctrl=60% eguaglia Flash — Pro non è superiore su questi task
+        di navigazione.
       </div>
 
-      <h3 class="subsection">5.3 Analisi del Percorso di Navigazione</h3>
-      <p class="ni"><strong>B1 Control (5 chiamate, errata):</strong> <code>list_files</code> → grep("revenue") →
-        grep("invoice") → grep("suspended") → <code>read_file(payments/models.py)</code>. Tre chiamate grep furono
-        necessarie perché il codebase da 105 file contiene 12 file con funzioni legate ai ricavi; l'agente usò grep come
-        bussola, aprendo un file a metà catena invece che seguire il percorso architetturale.</p>
+      <p>I risultati supportano un'ipotesi di lavoro: <em>i modelli meno capaci e meno costosi beneficiano
+        maggiormente di CodeDNA</em>. Un modello frontier naviga codebase complessi bene per ragionamento
+        generale. Un modello più economico senza guida strutturale si perde, entra in loop o si ferma presto.
+        CodeDNA fornisce l'impalcatura che permette a un modello economico di avvicinarsi alla qualità di
+        navigazione di uno più costoso. Questo rende CodeDNA economicamente attraente: <em>annotare una volta,
+        usare modelli più economici con accuratezza comparabile</em>.</p>
 
-      <p class="ni"><strong>B1 CodeDNA (3 chiamate, corretta):</strong> <code>list_files</code> → grep("revenue") →
-        <code>read_file(analytics/revenue.py)</code>. Il campo <code>rules</code> del module header —
-        <em>"get_invoices_for_period() restituisce TUTTI i tenant, NESSUN filtro → DEVE chiamare is_suspended() PRIMA di
-          aggregare"</em> — e il commento inline — <em>"include tenant sospesi — filtrare sotto"</em> — hanno fornito
-        all'agente informazioni sufficienti per produrre una diagnosi corretta senza ulteriori letture.
-      </p>
+      <p>Nota: questa ipotesi è supportata dal risultato di Flash (p=0,040, statisticamente significativo), ma
+        DeepSeek-Chat e Gemini 2.5 Pro mostrano Δ positivi ma non significativi (p=0,11). È necessario uno studio
+        multi-modello più ampio per confermare o confutare questa ipotesi.</p>
 
-      <h3 class="subsection">5.4 Proiezione di Scalabilità</h3>
+      <!-- 5.2 COSTO DEL RETRY -->
+      <h3 class="subsection">5.2 Analisi del Costo di Retry</h3>
+      <p class="ni">L'F1 di file-localization è tipicamente presentato come metrica di efficienza. Proponiamo di
+        trattarlo anche come <em>proxy di correttezza</em>: un agente che legge meno della metà dei file ground-truth
+        difficilmente produrrà una patch completa, costringendo l'utente a ripetere l'intera sessione. Definiamo un
+        run <em>ad alto rischio</em> quando il recall per-run scende sotto il 50%.</p>
 
-      <p class="tcap"><span class="tnum">Tabella 3.</span> Risparmio proiettato su più sotto-task (−29% costante).</p>
+      <p class="ni">Su 131 run multi-esecuzione (DeepSeek-Chat, Gemini&nbsp;2.5&nbsp;Flash,
+        Gemini&nbsp;2.5&nbsp;Pro — 5 task ciascuno, 3–6 run per task):</p>
+
+      <p class="tcap"><span class="tnum">Tabella 4.</span> Rischio di fix incompleto (recall &lt; 50%) aggregato su tre
+        modelli e cinque task SWE-bench.</p>
       <table>
         <thead>
           <tr>
-            <th>Sotto-task</th>
-            <th>Chiamate Control</th>
-            <th>Chiamate CodeDNA</th>
-            <th>Risparmiate</th>
+            <th>Condizione</th>
+            <th>Run ad alto rischio</th>
+            <th>Run totali</th>
+            <th>Tasso di rischio</th>
           </tr>
         </thead>
         <tbody>
           <tr>
-            <td>10</td>
-            <td>50</td>
-            <td>35</td>
-            <td>15</td>
+            <td>Control</td>
+            <td>34</td>
+            <td>66</td>
+            <td><strong>52%</strong></td>
           </tr>
           <tr>
-            <td>50</td>
-            <td>250</td>
-            <td>177</td>
-            <td>73</td>
+            <td>CodeDNA</td>
+            <td>16</td>
+            <td>65</td>
+            <td><strong>25%</strong></td>
           </tr>
           <tr>
-            <td>100</td>
-            <td>500</td>
-            <td>355</td>
-            <td>145</td>
+            <td>Riduzione</td>
+            <td colspan="2"></td>
+            <td><strong>−27&nbsp;pp (−52% relativo)</strong></td>
           </tr>
         </tbody>
       </table>
+
+      <p class="ni">Il caso più marcato è DeepSeek-Chat sul task&nbsp;11808 (10 file ground-truth): tutti e cinque i
+        run di controllo hanno ottenuto un recall del 10–20% (1–2 file su 10); tutti e cinque i run CodeDNA hanno
+        ottenuto recall del 30–60%. Ogni run di controllo avrebbe prodotto una patch incompleta. Gemini&nbsp;2.5&nbsp;Pro
+        offre un dato complementare: CodeDNA ha ridotto le chiamate medie agli strumenti del 14,3% aumentando
+        contemporaneamente l'F1 medio di 9&nbsp;pp — meno chiamate, maggiore accuratezza.</p>
+
+      <p class="ni">Questi risultati supportano un approccio <em>accuracy-first</em> per i protocolli di
+        annotazione: anche se CodeDNA fosse neutro in termini di tool call, dimezzare il tasso di navigazione
+        incompleta giustificherebbe la sua adozione dimezzando il numero di sessioni che l'utente deve ripetere.</p>
 
       <!-- 6. DISCUSSIONE -->
       <h2 class="section">6. Discussione</h2>
@@ -680,7 +632,7 @@ int_cents_price_from_req = request.json["price"]</pre>
           <tr>
             <td>LoCoBench [2]</td>
             <td>Inefficienza nell'uso strumenti</td>
-            <td>−25–29% di chiamate agli strumenti</td>
+            <td>Riduce le chiamate agli strumenti su task con catene di dipendenza (−14% su Gemini 2.5 Pro con +9pp F1)</td>
           </tr>
           <tr>
             <td>PRDBench [3]</td>
@@ -708,9 +660,8 @@ int_cents_price_from_req = request.json["price"]</pre>
       <h3 class="subsection">6.2 Perché l'Annotazione In-Source Funziona</h3>
       <p class="ni">Il meccanismo rispecchia l'intuizione biologica: quando il contratto che governa una funzione è
         dichiarato <em>alla funzione</em>, gli agenti capaci non hanno bisogno di recuperarlo dalla sua definizione
-        originale. Il campo <code>rules</code> in <code>analytics/revenue.py</code> ha propagato il contratto del
-        filtro-sospensione a valle, nel luogo esatto in cui era violato, permettendo all'agente CodeDNA di diagnosticare
-        B1 correttamente senza leggere <code>payments/models.py</code>.</p>
+        originale. Quando un campo <code>rules</code> propaga il contratto a valle, nel luogo esatto in cui è violato,
+        l'agente può diagnosticare il problema correttamente senza risalire alla definizione originale.</p>
 
       <p>La scoperta ETH Zurigo [4] che i file di contesto generati da LLM <em>degradano</em> le performance motiva
         precisamente questo approccio: se i file di contesto esterni causano sovraesplorazione, la soluzione non è file
@@ -755,92 +706,92 @@ int_cents_price_from_req = request.json["price"]</pre>
         corrette. Le future integrazioni dovrebbero trattare l'annotation drift come modalità di fallimento di primo
         livello.
       </p>
-      <p><strong>Modello singolo.</strong> I risultati sono specifici a Gemini 2.5 Flash. I modelli con finestre di
-        contesto effettive più lunghe potrebbero mostrare differenze minori su codebase piccole; i risultati su 105 file
-        sono più rappresentativi delle condizioni reali.</p>
-      <p><strong>Complessità dei bug.</strong> I bug piantati richiedono la comprensione di uno o due contratti
+      <p><strong>Valutazione multi-modello.</strong> Il Benchmark 3 estende la valutazione a 3 modelli su 5 task
+        SWE-bench con 5 esecuzioni/task a T=0.1. I risultati sono consistenti tra i modelli (Δ positivo su 3–4/5 task
+        ciascuno), ma il subset (5 task, tutti Django, singolo repository) limita la generalizzabilità. Il task 13495
+        mostra un Δ negativo consistente per Pro e DeepSeek non ancora spiegato. Le differenze di runtime
+        cross-provider introducono variabilità non completamente controllata. I risultati dovrebbero essere replicati
+        su un set di task più ampio e diversificato prima di rafforzare i claim di generalizzabilità.</p>
+      <p><strong>Complessità dei bug.</strong> I task SWE-bench valutati richiedono la comprensione di uno o due contratti
         cross-file. I bug che si estendono su cinque o più layer architetturali potrebbero amplificare ulteriormente il
-        vantaggio — un'ipotesi per cui il benchmark enterprise (3 bug, 48 distractor) fornisce evidenza iniziale.</p>
+        vantaggio — un'ipotesi che richiede una valutazione su scala più ampia per essere testata.</p>
+
+      <h3 class="subsection">6.6 Lavori Futuri</h3>
+
+      <p class="ni"><strong>Livello conversazionale agent-to-agent (<code>message:</code>).</strong>
+        Il campo attuale <code>agent:</code> registra cosa ha fatto un agente — una voce narrativa write-once.
+        Un'estensione proposta per v0.8 aggiunge un sotto-campo <code>message:</code> che introduce un
+        <em>livello conversazionale persistente</em> direttamente nel file sorgente. A differenza di
+        <code>rules:</code> (verità architetturale, aggiornata in-place), le voci <code>message:</code> sono
+        osservazioni tentative, domande aperte o note per l'agente successivo. Ogni voce ha un ciclo di vita
+        esplicito: viene <em>promossa</em> a <code>rules:</code> quando confermata, o <em>respinta</em> con una
+        risposta che cita il motivo. Il campo opera sia a Livello 1 (module docstring) che a Livello 2 (function
+        docstring), preservando la sicurezza in modalità sliding-window.</p>
+
+      <p><strong>Telemetria agente tramite git trailer.</strong>
+        Git è già immutabile, append-only e diff-completo. Un'estensione proposta incorpora i metadati di sessione
+        AI direttamente nei messaggi di commit usando <em>git trailer</em> — la stessa convenzione di
+        <code>Co-Authored-By:</code>, riconosciuta nativamente da GitHub. I campi proposti: <code>AI-Agent:</code>,
+        <code>AI-Provider:</code>, <code>AI-Session:</code>, <code>AI-Visited:</code> (file letti durante la
+        sessione, che git non traccia nativamente), e <code>AI-Message:</code>. Combinati con il log
+        <code>.codedna</code> e il campo <code>agent:</code> nel file, creano un'<em>architettura di audit a tre
+        livelli</em> collegata da un <code>session_id</code> condiviso: git (diff e metadati autorevoli),
+        <code>.codedna</code> (sommario di sessione navigabile per la pianificazione dell'agente), e
+        <code>agent:</code> nel file (one-liner sicuro in modalità sliding-window).</p>
+
+      <p><strong>Supporto ai pattern cross-cutting (<code>cross_cutting_patterns:</code>).</strong>
+        Il task 11808 dimostra un limite strutturale di v0.7: le fix cross-cutting — applicate a N file
+        indipendenti senza antenato comune nel grafo <code>used_by:</code> — producono Δ≈0% perché il protocollo
+        non fornisce percorsi di navigazione tra di essi. Un'estensione Level 0 proposta aggiunge un campo
+        <code>cross_cutting_patterns:</code> al manifest <code>.codedna</code>, popolato da un agente
+        <em>post-fix</em> come conoscenza accumulata.</p>
+
+      <p><strong>CodeDNA come corpus di addestramento auto-generante.</strong>
+        La seguente sezione descrive una direzione futura speculativa che non ha ancora ricevuto validazione empirica.
+        Una proprietà consequenziale del protocollo è che una codebase annotata con CodeDNA con utilizzo attivo
+        degli agenti costituisce un <em>corpus di addestramento auto-generante</em> a tre livelli:
+        (a) <em>SFT</em> — il campo <code>agent:</code> append-only accumula un log ordinato di decisioni di
+        navigazione corrette; (b) <em>DPO/RLHF</em> — la git history con trailer AI produce coppie
+        <em>(rejected, chosen)</em> naturali quando Agent B corregge Agent A e aggiorna <code>rules:</code>;
+        (c) <em>PRM</em> — l'infrastruttura di tracciamento delle sessioni registra l'intera sequenza di tool call
+        per sessione come traiettoria di ragionamento etichettata. Questi tre livelli si autopotenziano
+        costituendo un <em>data flywheel</em>: ogni sessione agente che scrive o corregge un'annotazione CodeDNA
+        migliora il segnale di addestramento disponibile a tutte le generazioni future di modelli — senza
+        ulteriore etichettatura umana. La codebase è contemporaneamente l'ambiente, il protocollo e il dataset
+        di addestramento.</p>
+
+      <p><strong>Agenti di verifica.</strong>
+        Il rischio di sincronizzazione delle annotazioni identificato in §6.5 motiva una classe di
+        <em>agenti di verifica</em> che periodicamente confrontano le annotazioni con la codebase reale. Poiché
+        le annotazioni sono strutturate e machine-readable, questa manutenzione è essa stessa automatizzabile:
+        verifica della correttezza della navigazione (<code>used_by:</code>), compliance delle regole
+        (<code>rules:</code>), accuratezza delle API pubbliche (<code>exports:</code>) e ciclo di vita delle
+        osservazioni (<code>message:</code>).</p>
 
       <!-- 7. CONCLUSIONE -->
       <h2 class="section">7. Conclusione</h2>
 
-      <p class="ni">Abbiamo presentato CodeDNA, uno standard di annotazione in-source a tre livelli il cui design è
-        radicato in un'analogia biologica: come il DNA codifica il progetto completo di un organismo in ogni cellula,
-        CodeDNA garantisce che ogni file sorgente — e ogni funzione al suo interno — porti sufficiente contesto
-        architetturale perché un agente LLM navighi correttamente senza lookup esterni.</p>
+      <p class="ni">Abbiamo presentato CodeDNA, un protocollo di comunicazione in-source a quattro livelli (Level 0–3)
+        il cui design è radicato in un'analogia biologica: come il DNA codifica il progetto completo di un organismo
+        in ogni cellula, CodeDNA garantisce che ogni file sorgente — e ogni funzione al suo interno — porti sufficiente
+        contesto architetturale perché un agente LLM navighi correttamente senza lookup esterni.</p>
 
-      <p>I nostri due benchmark agentici live dimostrano una riduzione del 25–29% nelle chiamate agli strumenti e,
-        crucialmente, zero identificazioni errate della causa radice contro una nei codebase non annotati. Il benchmark
-        enterprise (105 file, 3 bug, 48 moduli distractor) mostra che il vantaggio cresce con la dimensione del
-        codebase, dove la navigazione basata su grep diventa sempre più rumorosa.</p>
+      <p>La nostra valutazione SWE-bench multi-modello fornisce evidenza preliminare che il contesto architetturale
+        in-source riduce il costo di navigazione per gli agenti LLM: miglioramenti positivi della file localization F1
+        su tutti e 3 i modelli — Gemini 2.5 Flash +13pp (60% → 72%, p=0.040), DeepSeek Chat +9pp (50% → 60%),
+        Gemini 2.5 Pro +9pp (60% → 69%) — con Δ positivo su 3–4/5 task per modello.</p>
 
       <p>Il risultato valida l'ipotesi centrale: <em>quando i contratti cross-file sono dichiarati nel punto d'uso, gli
-          agenti capaci possono ragionare correttamente senza risalire al contratto alla sua sorgente.</em></p>
+          agenti capaci possono navigare più efficientemente senza risalire al contratto alla sua sorgente.</em>
+        I risultati attuali sono tutti <em>zero-shot</em>. Se i risultati correnti rappresentino un limite inferiore
+        rimane una domanda empirica aperta, subordinata alla validazione di tre questioni aperte:
+        (1) se il fine-tuning su corpus CodeDNA migliori i risultati;
+        (2) se il campo <code>message:</code> riduca il tasso di retry;
+        (3) se <code>cross_cutting_patterns:</code> recuperi i guadagni di navigazione sui task di tipo 11808.</p>
 
       <p class="ni" style="text-align:center; font-weight:bold; margin: 6pt 0;">github.com/Larens94/codedna</p>
 
       <hr class="sr">
-
-      <!-- APPENDICI -->
-      <h2 class="section">Appendice A — Prompt dei Bug</h2>
-      <p class="ni"><strong>B0 (11 file):</strong></p>
-      <div class="result-box"><em>"Bug critico: ordini di utenti CANCELLATI continuano ad apparire nella dashboard dei
-          ricavi, gonfiando i guadagni mensili. Naviga il codebase per trovare: (1) quali file sono coinvolti? (2)
-          perché? (3) qual è la correzione?"</em></div>
-      <p class="ni"><strong>B1 (enterprise):</strong></p>
-      <div class="result-box"><em>"BUG REPORT: il report mensile dei ricavi mostra cifre gonfiate. Sospettiamo che i
-          tenant SOSPESI siano inclusi nel totale. Trova quale file/funzione calcola i ricavi mensili e se il filtro di
-          sospensione è applicato."</em></div>
-
-      <h2 class="section">Appendice B — Inventario File</h2>
-      <p class="tcap"><span class="tnum">Tabella 5.</span> Moduli chiave del benchmark enterprise da 105 file.</p>
-      <table>
-        <thead>
-          <tr>
-            <th>Modulo</th>
-            <th>File</th>
-            <th>Ruolo</th>
-          </tr>
-        </thead>
-        <tbody>
-          <tr>
-            <td>core/</td>
-            <td>5</td>
-            <td>DB, cache, auth (JWT), config, eventi</td>
-          </tr>
-          <tr>
-            <td>tenants/, users/</td>
-            <td>8</td>
-            <td>Multi-tenancy, soft-delete/sospensione</td>
-          </tr>
-          <tr>
-            <td>orders/</td>
-            <td>6</td>
-            <td>Carrello, checkout, fulfillment, modelli</td>
-          </tr>
-          <tr>
-            <td>payments/</td>
-            <td>4</td>
-            <td>Fatture, Stripe, modelli</td>
-          </tr>
-          <tr>
-            <td>analytics/</td>
-            <td>4</td>
-            <td>Ricavi, utilizzo, report</td>
-          </tr>
-          <tr>
-            <td>api/</td>
-            <td>10</td>
-            <td>Endpoint REST</td>
-          </tr>
-          <tr>
-            <td>distractor</td>
-            <td>48</td>
-            <td>Report, servizi, utils, middleware, integrazioni, admin</td>
-          </tr>
-        </tbody>
-      </table>
 
     </div><!-- fine due colonne -->
 
