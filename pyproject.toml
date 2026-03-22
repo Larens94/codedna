@@ -1,3 +1,20 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "codedna"
+version = "0.8.0"
+description = "CodeDNA v0.8 — in-source annotation protocol for AI agents"
+requires-python = ">=3.11"
+dependencies = ["anthropic>=0.20"]
+
+[project.scripts]
+codedna = "codedna_tool.cli:main"
+
+[tool.setuptools.packages.find]
+include = ["codedna_tool*"]
+
 [tool.black]
 line-length = 120
 target-version = ["py311"]

@@ -27,58 +27,55 @@ from dataclasses import dataclass, field
 from typing import Optional
 
 # ── Colours ──────────────────────────────────────────────────────────────────
-R  = "\033[31m"
-G  = "\033[32m"
-Y  = "\033[33m"
-B  = "\033[34m"
-M  = "\033[35m"
-C  = "\033[36m"
-W  = "\033[1m"
+R = "\033[31m"
+G = "\033[32m"
+Y = "\033[33m"
+B = "\033[34m"
+M = "\033[35m"
+C = "\033[36m"
+W = "\033[1m"
 DIM = "\033[2m"
-D  = "\033[0m"
+D = "\033[0m"
 
 PROVIDER_COLOURS = {
     "anthropic": C,
-    "google":    G,
-    "openai":    B,
-    "deepseek":  M,
-    "mistral":   Y,
+    "google": G,
+    "openai": B,
+    "deepseek": M,
+    "mistral": Y,
 }
 
 
 @dataclass
 class AgentSession:
-    commit_hash:  str
-    commit_date:  str
+    commit_hash: str
+    commit_date: str
     commit_title: str
-    agent:        Optional[str] = None
-    provider:     Optional[str] = None
-    session_id:   Optional[str] = None
-    visited:      list[str]     = field(default_factory=list)
-    message:      Optional[str] = None
-    changed:      list[str]     = field(default_factory=list)   # from git diff
+    agent: Optional[str] = None
+    provider: Optional[str] = None
+    session_id: Optional[str] = None
+    visited: list[str] = field(default_factory=list)
+    message: Optional[str] = None
+    changed: list[str] = field(default_factory=list)  # from git diff
 
 
 def _run_git(args: list[str]) -> str:
-    result = subprocess.run(
-        ["git"] + args,
-        capture_output=True, text=True, cwd=_repo_root()
-    )
+    result = subprocess.run(["git"] + args, capture_output=True, text=True, cwd=_repo_root())
     return result.stdout.strip()
 
 
 def _repo_root() -> str:
-    return subprocess.run(
-        ["git", "rev-parse", "--show-toplevel"],
-        capture_output=True, text=True
-    ).stdout.strip()
+    return subprocess.run(["git", "rev-parse", "--show-toplevel"], capture_output=True, text=True).stdout.strip()
 
 
 def _parse_commits() -> list[AgentSession]:
     """Rules: parse only commits with at least one AI-* trailer."""
-    raw = _run_git([
-        "log", "--format=%H%n%ai%n%s%n%b%n<<<END>>>",
-    ])
+    raw = _run_git(
+        [
+            "log",
+            "--format=%H%n%ai%n%s%n%b%n<<<END>>>",
+        ]
+    )
 
     list_session_parsed = []
     for str_block_commit in raw.split("<<<END>>>"):
@@ -87,10 +84,10 @@ def _parse_commits() -> list[AgentSession]:
             continue
 
         list_line_block = str_block_commit.splitlines()
-        str_hash    = list_line_block[0].strip() if len(list_line_block) > 0 else ""
-        str_date    = list_line_block[1].strip()[:10] if len(list_line_block) > 1 else ""
-        str_title   = list_line_block[2].strip() if len(list_line_block) > 2 else ""
-        str_body    = "\n".join(list_line_block[3:])
+        str_hash = list_line_block[0].strip() if len(list_line_block) > 0 else ""
+        str_date = list_line_block[1].strip()[:10] if len(list_line_block) > 1 else ""
+        str_title = list_line_block[2].strip() if len(list_line_block) > 2 else ""
+        str_body = "\n".join(list_line_block[3:])
 
         session = AgentSession(
             commit_hash=str_hash,
@@ -133,6 +130,7 @@ def _bar(int_n: int, int_max: int, int_width: int = 20) -> str:
 
 
 # ── Views ─────────────────────────────────────────────────────────────────────
+
 
 def view_timeline(list_session: list[AgentSession]) -> None:
     print(f"\n{W}{'─'*70}{D}")
@@ -196,13 +194,10 @@ def view_file_map(list_session: list[AgentSession]) -> None:
 
     print(f"\n{W}  📁 File Map — visits / changes per file{D}\n")
     for str_file in sorted(set_all_files):
-        int_visits  = len(dict_file_visited.get(str_file, []))
+        int_visits = len(dict_file_visited.get(str_file, []))
         int_changes = len(dict_file_changed.get(str_file, []))
         str_bar = _bar(int_visits, int_max_visits, 16)
-        print(
-            f"  {str_bar}  {W}{str_file}{D}"
-            f"  {DIM}read:{int_visits}  changed:{int_changes}{D}"
-        )
+        print(f"  {str_bar}  {W}{str_file}{D}" f"  {DIM}read:{int_visits}  changed:{int_changes}{D}")
     print()
 
 
@@ -213,7 +208,7 @@ def view_model_stats(list_session: list[AgentSession]) -> None:
 
     for session in list_session:
         str_key = f"{session.agent} ({session.provider})"
-        dict_model_count[str_key]   += 1
+        dict_model_count[str_key] += 1
         dict_model_changed[str_key] += len(session.changed)
         dict_model_visited[str_key] += len(session.visited)
 
@@ -274,18 +269,18 @@ def view_missing_data() -> None:
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
+
 def main() -> None:
     import argparse
-    parser = argparse.ArgumentParser(
-        description="CodeDNA — AI agent session history reader"
-    )
-    parser.add_argument("--sessions",      action="store_true", help="one line per session")
-    parser.add_argument("--messages",      action="store_true", help="only sessions with AI-Message:")
-    parser.add_argument("--file-map",      action="store_true", help="file visit/change heatmap")
-    parser.add_argument("--stats",         action="store_true", help="model distribution stats")
-    parser.add_argument("--missing-data",  action="store_true", help="show what data is NOT captured")
-    parser.add_argument("--file",          type=str,            help="filter: sessions touching FILE")
-    parser.add_argument("--model",         type=str,            help="filter: sessions by MODEL substring")
+
+    parser = argparse.ArgumentParser(description="CodeDNA — AI agent session history reader")
+    parser.add_argument("--sessions", action="store_true", help="one line per session")
+    parser.add_argument("--messages", action="store_true", help="only sessions with AI-Message:")
+    parser.add_argument("--file-map", action="store_true", help="file visit/change heatmap")
+    parser.add_argument("--stats", action="store_true", help="model distribution stats")
+    parser.add_argument("--missing-data", action="store_true", help="show what data is NOT captured")
+    parser.add_argument("--file", type=str, help="filter: sessions touching FILE")
+    parser.add_argument("--model", type=str, help="filter: sessions by MODEL substring")
     args = parser.parse_args()
 
     if args.missing_data:
@@ -295,16 +290,10 @@ def main() -> None:
     list_session_all = _parse_commits()
 
     if args.file:
-        list_session_all = [
-            s for s in list_session_all
-            if any(args.file in f for f in s.visited + s.changed)
-        ]
+        list_session_all = [s for s in list_session_all if any(args.file in f for f in s.visited + s.changed)]
 
     if args.model:
-        list_session_all = [
-            s for s in list_session_all
-            if s.agent and args.model.lower() in s.agent.lower()
-        ]
+        list_session_all = [s for s in list_session_all if s.agent and args.model.lower() in s.agent.lower()]
 
     if not list_session_all:
         print(f"{DIM}No AI agent sessions found matching your filters.{D}")

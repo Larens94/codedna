@@ -30,38 +30,44 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
-RUNS_DIR      = Path(__file__).parent.parent / "benchmark_agent" / "runs"
-PROJECTS_DIR  = Path(__file__).parent.parent / "benchmark_agent" / "projects_swebench"
-TASKS_FILE    = Path(__file__).parent.parent / "benchmark_agent" / "swebench" / "tasks.json"
+RUNS_DIR = Path(__file__).parent.parent / "benchmark_agent" / "runs"
+PROJECTS_DIR = Path(__file__).parent.parent / "benchmark_agent" / "projects_swebench"
+TASKS_FILE = Path(__file__).parent.parent / "benchmark_agent" / "swebench" / "tasks.json"
 
-CONTENT_LIMIT = 2000    # chars per tool result in training examples
-DPO_MIN_DELTA = 0.15    # minimum F1 difference to form a DPO pair
-SFT_MIN_F1    = 0.60    # minimum F1 to include in SFT
+CONTENT_LIMIT = 2000  # chars per tool result in training examples
+DPO_MIN_DELTA = 0.15  # minimum F1 difference to form a DPO pair
+SFT_MIN_F1 = 0.60  # minimum F1 to include in SFT
 
 # ── Data model ────────────────────────────────────────────────────────────────
 
+
 @dataclass
 class RunRecord:
-    model:        str
-    provider:     str
-    task:         str
-    condition:    str                   # "control" or "codedna"
-    f1:           float
-    files_read:   list[str]             # ordered navigation sequence
-    greps:        list[str]
+    model: str
+    provider: str
+    task: str
+    condition: str  # "control" or "codedna"
+    f1: float
+    files_read: list[str]  # ordered navigation sequence
+    greps: list[str]
     ground_truth: list[str]
     final_answer: str
-    session_id:   str = ""
-    trace:        list[dict] = field(default_factory=list)   # new format
+    session_id: str = ""
+    trace: list[dict] = field(default_factory=list)  # new format
 
 
 # ── Loaders ───────────────────────────────────────────────────────────────────
 
+
 def _provider_for(model: str) -> str:
-    if "gemini" in model:    return "google"
-    if "claude" in model:    return "anthropic"
-    if "deepseek" in model:  return "deepseek"
-    if "gpt" in model or "o1" in model or "o3" in model: return "openai"
+    if "gemini" in model:
+        return "google"
+    if "claude" in model:
+        return "anthropic"
+    if "deepseek" in model:
+        return "deepseek"
+    if "gpt" in model or "o1" in model or "o3" in model:
+        return "openai"
     return "unknown"
 
 
@@ -78,26 +84,28 @@ def load_all_runs() -> list[RunRecord]:
 
         for dict_entry in list_task_entry:
             str_task = dict_entry["instance_id"]
-            list_gt  = dict_entry.get("ground_truth_files", [])
+            list_gt = dict_entry.get("ground_truth_files", [])
 
             for str_cond in ("control", "codedna"):
                 dict_run = dict_entry.get(str_cond)
                 if not dict_run:
                     continue
 
-                list_run_all.append(RunRecord(
-                    model        = str_model,
-                    provider     = str_provider,
-                    task         = str_task,
-                    condition    = str_cond,
-                    f1           = dict_run.get("metrics_read", {}).get("f1", 0.0),
-                    files_read   = dict_run.get("files_read", []),
-                    greps        = dict_run.get("greps", []),
-                    ground_truth = list_gt,
-                    final_answer = dict_run.get("final_response", ""),
-                    session_id   = dict_run.get("session_id", ""),
-                    trace        = dict_run.get("trace", []),
-                ))
+                list_run_all.append(
+                    RunRecord(
+                        model=str_model,
+                        provider=str_provider,
+                        task=str_task,
+                        condition=str_cond,
+                        f1=dict_run.get("metrics_read", {}).get("f1", 0.0),
+                        files_read=dict_run.get("files_read", []),
+                        greps=dict_run.get("greps", []),
+                        ground_truth=list_gt,
+                        final_answer=dict_run.get("final_response", ""),
+                        session_id=dict_run.get("session_id", ""),
+                        trace=dict_run.get("trace", []),
+                    )
+                )
 
     return list_run_all
 
@@ -126,6 +134,7 @@ def _load_task_problem(task: str) -> str:
 
 # ── Navigation sequence reconstruction ───────────────────────────────────────
 
+
 def _build_nav_sequence(run: RunRecord) -> list[dict]:
     """
     Rules: if trace field exists (new format), use it directly.
@@ -140,34 +149,41 @@ def _build_nav_sequence(run: RunRecord) -> list[dict]:
         list_step = []
         for dict_step in run.trace:
             str_path = dict_step.get("args", {}).get("path", "")
-            list_step.append({
-                "tool":        dict_step["tool"],
-                "args":        dict_step["args"],
-                "t":           dict_step.get("t", 0.0),
-                "is_gt_file":  str_path in set_gt,
-            })
+            list_step.append(
+                {
+                    "tool": dict_step["tool"],
+                    "args": dict_step["args"],
+                    "t": dict_step.get("t", 0.0),
+                    "is_gt_file": str_path in set_gt,
+                }
+            )
         return list_step
 
     # Old format — reconstruct from files_read + greps
     list_step = []
     for str_path in run.files_read:
-        list_step.append({
-            "tool":       "read_file",
-            "args":       {"path": str_path},
-            "t":          None,
-            "is_gt_file": str_path in set_gt,
-        })
+        list_step.append(
+            {
+                "tool": "read_file",
+                "args": {"path": str_path},
+                "t": None,
+                "is_gt_file": str_path in set_gt,
+            }
+        )
     for str_pattern in run.greps:
-        list_step.append({
-            "tool":       "grep",
-            "args":       {"pattern": str_pattern},
-            "t":          None,
-            "is_gt_file": False,
-        })
+        list_step.append(
+            {
+                "tool": "grep",
+                "args": {"pattern": str_pattern},
+                "t": None,
+                "is_gt_file": False,
+            }
+        )
     return list_step
 
 
 # ── SFT format ────────────────────────────────────────────────────────────────
+
 
 def build_sft(list_run: list[RunRecord], float_min_f1: float) -> list[dict]:
     """
@@ -191,13 +207,13 @@ def build_sft(list_run: list[RunRecord], float_min_f1: float) -> list[dict]:
         if run.f1 < float_min_f1:
             continue
 
-        str_system  = CODEDNA_PROMPT if run.condition == "codedna" else SYSTEM_PROMPT
+        str_system = CODEDNA_PROMPT if run.condition == "codedna" else SYSTEM_PROMPT
         str_problem = _load_task_problem(run.task)
-        list_nav    = _build_nav_sequence(run)
+        list_nav = _build_nav_sequence(run)
 
         list_messages = [
-            {"role": "system",  "content": str_system},
-            {"role": "user",    "content": f"Problem:\n\n{str_problem}"},
+            {"role": "system", "content": str_system},
+            {"role": "user", "content": f"Problem:\n\n{str_problem}"},
         ]
 
         for dict_step in list_nav:
@@ -205,13 +221,15 @@ def build_sft(list_run: list[RunRecord], float_min_f1: float) -> list[dict]:
             dict_args = dict_step["args"]
 
             # assistant: tool call
-            list_messages.append({
-                "role": "assistant",
-                "content": None,
-                "tool_calls": [{"type": "function", "function": {
-                    "name": str_tool, "arguments": json.dumps(dict_args)
-                }}],
-            })
+            list_messages.append(
+                {
+                    "role": "assistant",
+                    "content": None,
+                    "tool_calls": [
+                        {"type": "function", "function": {"name": str_tool, "arguments": json.dumps(dict_args)}}
+                    ],
+                }
+            )
 
             # tool: result
             if str_tool == "read_file":
@@ -224,27 +242,32 @@ def build_sft(list_run: list[RunRecord], float_min_f1: float) -> list[dict]:
             list_messages.append({"role": "tool", "content": str_result})
 
         # final assistant message
-        list_messages.append({
-            "role":    "assistant",
-            "content": run.final_answer[:3000],  # truncate very long answers
-        })
-
-        list_sft_example.append({
-            "messages":   list_messages,
-            "metadata": {
-                "session_id":    run.session_id,
-                "model":         run.model,
-                "task":          run.task,
-                "condition":     run.condition,
-                "f1":            round(run.f1, 4),
-                "ground_truth":  run.ground_truth,
+        list_messages.append(
+            {
+                "role": "assistant",
+                "content": run.final_answer[:3000],  # truncate very long answers
             }
-        })
+        )
+
+        list_sft_example.append(
+            {
+                "messages": list_messages,
+                "metadata": {
+                    "session_id": run.session_id,
+                    "model": run.model,
+                    "task": run.task,
+                    "condition": run.condition,
+                    "f1": round(run.f1, 4),
+                    "ground_truth": run.ground_truth,
+                },
+            }
+        )
 
     return list_sft_example
 
 
 # ── DPO format ────────────────────────────────────────────────────────────────
+
 
 def build_dpo(list_run: list[RunRecord], float_min_delta: float) -> list[dict]:
     """
@@ -266,8 +289,8 @@ def build_dpo(list_run: list[RunRecord], float_min_delta: float) -> list[dict]:
 
     # Strategy 1: codedna vs control, same task + model
     for (str_task, str_model), dict_cond in dict_by_task_model.items():
-        run_codedna  = dict_cond.get("codedna")
-        run_control  = dict_cond.get("control")
+        run_codedna = dict_cond.get("codedna")
+        run_control = dict_cond.get("control")
         if not (run_codedna and run_control):
             continue
 
@@ -277,22 +300,24 @@ def build_dpo(list_run: list[RunRecord], float_min_delta: float) -> list[dict]:
 
         str_problem = _load_task_problem(str_task)
 
-        list_dpo_pair.append({
-            "prompt": [
-                {"role": "system",  "content": "You are an expert software engineer."},
-                {"role": "user",    "content": f"Problem:\n\n{str_problem}"},
-            ],
-            "chosen":   _trajectory_to_messages(run_codedna),
-            "rejected": _trajectory_to_messages(run_control),
-            "metadata": {
-                "task":           str_task,
-                "model":          str_model,
-                "f1_chosen":      round(run_codedna.f1, 4),
-                "f1_rejected":    round(run_control.f1, 4),
-                "delta":          round(float_delta, 4),
-                "pair_type":      "codedna_vs_control",
+        list_dpo_pair.append(
+            {
+                "prompt": [
+                    {"role": "system", "content": "You are an expert software engineer."},
+                    {"role": "user", "content": f"Problem:\n\n{str_problem}"},
+                ],
+                "chosen": _trajectory_to_messages(run_codedna),
+                "rejected": _trajectory_to_messages(run_control),
+                "metadata": {
+                    "task": str_task,
+                    "model": str_model,
+                    "f1_chosen": round(run_codedna.f1, 4),
+                    "f1_rejected": round(run_control.f1, 4),
+                    "delta": round(float_delta, 4),
+                    "pair_type": "codedna_vs_control",
+                },
             }
-        })
+        )
 
     # Strategy 2: high-F1 vs low-F1, cross-model, same task
     dict_by_task: dict[str, list[RunRecord]] = defaultdict(list)
@@ -301,7 +326,7 @@ def build_dpo(list_run: list[RunRecord], float_min_delta: float) -> list[dict]:
 
     for str_task, list_task_run in dict_by_task.items():
         list_sorted = sorted(list_task_run, key=lambda r: r.f1, reverse=True)
-        run_best  = list_sorted[0]
+        run_best = list_sorted[0]
         run_worst = list_sorted[-1]
 
         if run_best.model == run_worst.model:
@@ -311,23 +336,25 @@ def build_dpo(list_run: list[RunRecord], float_min_delta: float) -> list[dict]:
 
         str_problem = _load_task_problem(str_task)
 
-        list_dpo_pair.append({
-            "prompt": [
-                {"role": "system",  "content": "You are an expert software engineer."},
-                {"role": "user",    "content": f"Problem:\n\n{str_problem}"},
-            ],
-            "chosen":   _trajectory_to_messages(run_best),
-            "rejected": _trajectory_to_messages(run_worst),
-            "metadata": {
-                "task":           str_task,
-                "model_chosen":   run_best.model,
-                "model_rejected": run_worst.model,
-                "f1_chosen":      round(run_best.f1, 4),
-                "f1_rejected":    round(run_worst.f1, 4),
-                "delta":          round(run_best.f1 - run_worst.f1, 4),
-                "pair_type":      "cross_model",
+        list_dpo_pair.append(
+            {
+                "prompt": [
+                    {"role": "system", "content": "You are an expert software engineer."},
+                    {"role": "user", "content": f"Problem:\n\n{str_problem}"},
+                ],
+                "chosen": _trajectory_to_messages(run_best),
+                "rejected": _trajectory_to_messages(run_worst),
+                "metadata": {
+                    "task": str_task,
+                    "model_chosen": run_best.model,
+                    "model_rejected": run_worst.model,
+                    "f1_chosen": round(run_best.f1, 4),
+                    "f1_rejected": round(run_worst.f1, 4),
+                    "delta": round(run_best.f1 - run_worst.f1, 4),
+                    "pair_type": "cross_model",
+                },
             }
-        })
+        )
 
     return list_dpo_pair
 
@@ -338,15 +365,18 @@ def _trajectory_to_messages(run: RunRecord) -> list[dict]:
     list_messages = []
 
     for dict_step in list_nav:
-        str_tool  = dict_step["tool"]
+        str_tool = dict_step["tool"]
         dict_args = dict_step["args"]
 
-        list_messages.append({
-            "role": "assistant", "content": None,
-            "tool_calls": [{"type": "function", "function": {
-                "name": str_tool, "arguments": json.dumps(dict_args)
-            }}],
-        })
+        list_messages.append(
+            {
+                "role": "assistant",
+                "content": None,
+                "tool_calls": [
+                    {"type": "function", "function": {"name": str_tool, "arguments": json.dumps(dict_args)}}
+                ],
+            }
+        )
 
         if str_tool == "read_file":
             str_result = _read_file_content(run.task, run.condition, dict_args["path"])
@@ -360,6 +390,7 @@ def _trajectory_to_messages(run: RunRecord) -> list[dict]:
 
 
 # ── PRM format ────────────────────────────────────────────────────────────────
+
 
 def build_prm(list_run: list[RunRecord]) -> list[dict]:
     """
@@ -394,32 +425,37 @@ def build_prm(list_run: list[RunRecord]) -> list[dict]:
             else:
                 float_reward = 0.0
 
-            list_step_annotated.append({
-                "tool":        str_tool,
-                "args":        dict_step["args"],
-                "t":           dict_step.get("t"),
-                "is_gt_file":  dict_step["is_gt_file"],
-                "reward":      float_reward,
-            })
+            list_step_annotated.append(
+                {
+                    "tool": str_tool,
+                    "args": dict_step["args"],
+                    "t": dict_step.get("t"),
+                    "is_gt_file": dict_step["is_gt_file"],
+                    "reward": float_reward,
+                }
+            )
 
-        list_prm_example.append({
-            "session_id":          run.session_id,
-            "model":               run.model,
-            "task":                run.task,
-            "condition":           run.condition,
-            "ground_truth":        run.ground_truth,
-            "steps":               list_step_annotated,
-            "trajectory_reward":   round(run.f1, 4),   # verifiable reward for GRPO
-            "note_missing":        (
-                "thinking/reasoning not captured — step rewards are tool-call-level only. "
-                "Add trace[n].thinking when extended thinking is available."
-            ),
-        })
+        list_prm_example.append(
+            {
+                "session_id": run.session_id,
+                "model": run.model,
+                "task": run.task,
+                "condition": run.condition,
+                "ground_truth": run.ground_truth,
+                "steps": list_step_annotated,
+                "trajectory_reward": round(run.f1, 4),  # verifiable reward for GRPO
+                "note_missing": (
+                    "thinking/reasoning not captured — step rewards are tool-call-level only. "
+                    "Add trace[n].thinking when extended thinking is available."
+                ),
+            }
+        )
 
     return list_prm_example
 
 
 # ── Stats ─────────────────────────────────────────────────────────────────────
+
 
 def print_stats(list_run: list[RunRecord], list_sft: list, list_dpo: list, list_prm: list) -> None:
     print(f"\n  runs loaded:      {len(list_run)}")
@@ -432,6 +468,7 @@ def print_stats(list_run: list[RunRecord], list_sft: list, list_dpo: list, list_
     if list_dpo:
         print(f"\n  DPO pair types:")
         from collections import Counter
+
         counter = Counter(p["metadata"]["pair_type"] for p in list_dpo)
         for str_ptype, int_n in counter.items():
             print(f"    {str_ptype}: {int_n}")
@@ -445,14 +482,16 @@ def print_stats(list_run: list[RunRecord], list_sft: list, list_dpo: list, list_
 
 # ── Main ──────────────────────────────────────────────────────────────────────
 
+
 def main() -> None:
     import argparse
+
     parser = argparse.ArgumentParser(description="Convert benchmark results to training formats")
-    parser.add_argument("--format",        choices=["sft", "dpo", "prm", "all"], default="all")
-    parser.add_argument("--f1-threshold",  type=float, default=SFT_MIN_F1)
-    parser.add_argument("--dpo-delta",     type=float, default=DPO_MIN_DELTA)
-    parser.add_argument("--output-dir",    type=str,   default="./training_data")
-    parser.add_argument("--stats",         action="store_true")
+    parser.add_argument("--format", choices=["sft", "dpo", "prm", "all"], default="all")
+    parser.add_argument("--f1-threshold", type=float, default=SFT_MIN_F1)
+    parser.add_argument("--dpo-delta", type=float, default=DPO_MIN_DELTA)
+    parser.add_argument("--output-dir", type=str, default="./training_data")
+    parser.add_argument("--stats", action="store_true")
     args = parser.parse_args()
 
     list_run_all = load_all_runs()
@@ -480,11 +519,11 @@ def main() -> None:
     print(f"\nWriting training data to {path_out}/\n")
 
     if args.format in ("sft", "all"):
-        _write_jsonl(path_out / "sft.jsonl",  list_sft)
+        _write_jsonl(path_out / "sft.jsonl", list_sft)
     if args.format in ("dpo", "all"):
-        _write_jsonl(path_out / "dpo.jsonl",  list_dpo)
+        _write_jsonl(path_out / "dpo.jsonl", list_dpo)
     if args.format in ("prm", "all"):
-        _write_jsonl(path_out / "prm.jsonl",  list_prm)
+        _write_jsonl(path_out / "prm.jsonl", list_prm)
 
     print_stats(list_run_all, list_sft, list_dpo, list_prm)
 
