@@ -262,10 +262,12 @@ img { max-width: 100%; height: auto; }
   nav { padding:0 1.25rem; }
   .nav-links {
     display:none; flex-direction:column; gap:0;
-    position:fixed; top:60px; left:0; right:0; bottom:0;
+    position:fixed; top:60px; left:0; right:0;
+    height:calc(100vh - 60px); height:calc(100svh - 60px);
     background:rgba(255,255,255,0.98); backdrop-filter:blur(20px);
     border-top:1px solid var(--border); padding:1.25rem 1.5rem 2rem;
-    z-index:199; overflow-y:auto;
+    z-index:199; overflow-y:scroll;
+    -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
   }
   .nav-links.open { display:flex; }
   .nav-links a {
@@ -832,12 +834,14 @@ function toggleLang() { setLang(currentLang === 'en' ? 'it' : 'en'); }
 function toggleNav() {
   const links = document.getElementById('nav-links');
   const btn = document.getElementById('nav-hamburger');
-  links.classList.toggle('open');
+  const isOpen = links.classList.toggle('open');
   btn.classList.toggle('open');
+  document.body.style.overflow = isOpen ? 'hidden' : '';
 }
 function closeNav() {
   document.getElementById('nav-links').classList.remove('open');
   document.getElementById('nav-hamburger').classList.remove('open');
+  document.body.style.overflow = '';
 }
 
 document.addEventListener('DOMContentLoaded', function() {
