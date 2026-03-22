@@ -5,562 +5,783 @@
 <title>CodeDNA — Visual Explainer</title>
 <style>
 * { box-sizing: border-box; margin: 0; padding: 0; }
-
 body {
-  background: #1e1e1e;
+  background: #f4f6fa;
   font-family: 'Segoe UI', system-ui, sans-serif;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
   min-height: 100vh;
-  color: #ccc;
-}
-
-/* ── TOP BAR ── */
-.topbar {
-  width: 100%;
-  background: #2d2d2d;
-  border-bottom: 1px solid #111;
-  padding: 10px 24px;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-}
-.topbar-title { font-size: 0.85rem; color: #888; letter-spacing: 0.3px; }
-.topbar-title strong { color: #ddd; }
-
-.play-btn {
-  background: #0e639c;
-  color: #fff;
-  border: none;
-  padding: 6px 20px;
-  border-radius: 4px;
-  font-size: 0.82rem;
-  font-weight: 600;
-  cursor: pointer;
-  transition: background 0.15s;
-}
-.play-btn:hover { background: #1177bb; }
-.play-btn:disabled { background: #3a3a3a; color: #666; cursor: default; }
-
-.speed-btn {
-  background: #3a3a3a;
-  color: #aaa;
-  border: 1px solid #555;
-  padding: 6px 14px;
-  border-radius: 4px;
-  font-size: 0.78rem;
-  cursor: pointer;
-  margin-right: 8px;
-}
-.speed-btn:hover { background: #444; }
-
-/* ── MAIN LAYOUT ── */
-.workspace {
-  display: flex;
-  gap: 1px;
-  width: 100%;
-  max-width: 1280px;
-  flex: 1;
-  padding: 0;
-  background: #111;
-}
-
-/* ── EDITOR PANE ── */
-.editor-pane {
-  flex: 1;
   display: flex;
   flex-direction: column;
-  background: #1e1e1e;
-  min-width: 0;
-}
-
-.pane-titlebar {
-  padding: 8px 14px;
-  font-size: 0.75rem;
-  font-weight: 700;
-  letter-spacing: 0.5px;
-  text-transform: uppercase;
-  border-bottom: 2px solid #111;
-  display: flex;
   align-items: center;
-  gap: 8px;
+  padding: 28px 16px 40px;
+  gap: 20px;
 }
-.pane-titlebar .dot { width: 8px; height: 8px; border-radius: 50%; }
-.pane.control .pane-titlebar { background: #2a1515; color: #e06c6c; border-color: #e06c6c44; }
-.pane.control .pane-titlebar .dot { background: #e06c6c; }
-.pane.codedna .pane-titlebar { background: #0e2218; color: #4ec9a0; border-color: #4ec9a044; }
-.pane.codedna .pane-titlebar .dot { background: #4ec9a0; }
 
-/* ── FILE TABS ── */
-.file-tabs {
-  display: flex;
-  background: #252526;
-  border-bottom: 1px solid #111;
-  overflow-x: auto;
-  min-height: 35px;
-  align-items: flex-end;
-  padding: 0 4px;
-  gap: 1px;
+header {
+  text-align: center;
 }
-.file-tab {
-  padding: 6px 14px;
-  font-size: 0.73rem;
-  font-family: 'Consolas', monospace;
-  white-space: nowrap;
-  border-radius: 4px 4px 0 0;
-  cursor: default;
-  opacity: 0;
-  transition: opacity 0.3s;
-  margin-top: 4px;
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  letter-spacing: -0.5px;
 }
-.file-tab.visible { opacity: 1; }
-.file-tab.gt { background: #1e3a1e; color: #4ec9a0; border-top: 2px solid #4ec9a0; }
-.file-tab.wrong { background: #2a1e0a; color: #ce9178; border-top: 2px solid #ce9178; }
-.file-tab.active { background: #1e1e1e; color: #ddd; border-top: 2px solid #0e639c; }
+header p {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: #889;
+}
 
-/* ── CODE AREA ── */
-.code-area {
-  flex: 1;
+.panels {
   display: flex;
+  gap: 16px;
+  width: 100%;
+  max-width: 1200px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.panel {
+  background: #ffffff;
+  border: 1px solid #dde3ee;
+  border-radius: 14px;
   overflow: hidden;
-  min-height: 340px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 300px;
+  max-width: 380px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
 }
 
-.line-numbers {
-  padding: 12px 0;
-  background: #1e1e1e;
-  color: #404040;
-  font-family: 'Consolas', monospace;
-  font-size: 0.78rem;
-  line-height: 1.7;
-  text-align: right;
-  padding-right: 10px;
-  padding-left: 16px;
-  user-select: none;
-  min-width: 44px;
-  border-right: 1px solid #2a2a2a;
+.panel-label {
+  text-align: center;
+  padding: 12px 16px 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #aab;
 }
-.line-numbers div { height: 1.7em; }
 
-.code-content {
+.panel-title {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 800;
+  padding: 2px 16px 10px;
+  color: #1a1a2e;
+}
+
+canvas {
+  width: 100%;
+  display: block;
+}
+
+.score-row {
+  display: flex;
+  border-top: 1px solid #eef1f7;
+}
+.score-half {
   flex: 1;
   padding: 12px 16px;
-  font-family: 'Consolas', monospace;
-  font-size: 0.78rem;
-  line-height: 1.7;
-  overflow-y: auto;
-  overflow-x: hidden;
-  position: relative;
-}
-
-.code-line {
-  min-height: 1.7em;
-  white-space: pre;
-  display: block;
-  border-radius: 2px;
-  transition: background 0.2s;
-}
-.code-line.highlight { background: #264f78; }
-.code-line.highlight-annotation { background: #1a3a2a; }
-.code-line.dim { opacity: 0.35; }
-
-/* Syntax colors */
-.kw { color: #569cd6; }
-.fn { color: #dcdcaa; }
-.st { color: #ce9178; }
-.cm { color: #6a9955; }
-.nm { color: #9cdcfe; }
-.ann { color: #4ec9a0; font-weight: 600; }
-.ann-key { color: #4ec9a0; }
-.ann-val { color: #ce9178; }
-.ann-arrow { color: #888; }
-
-/* ── AGENT CURSOR ── */
-.agent-cursor {
-  display: inline-block;
-  width: 2px;
-  height: 1.1em;
-  background: #569cd6;
-  animation: blink 1s infinite;
-  vertical-align: text-bottom;
-  margin-left: 2px;
-}
-@keyframes blink { 0%,100%{opacity:1} 50%{opacity:0} }
-
-/* ── STATUS BAR ── */
-.statusbar {
-  background: #007acc;
-  color: #fff;
-  font-size: 0.7rem;
-  padding: 3px 14px;
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: 3px;
 }
-.pane.control .statusbar { background: #8b2020; }
-.pane.codedna .statusbar { background: #0a6640; }
-.status-item { display: flex; align-items: center; gap: 5px; }
-.status-count { font-weight: 700; font-size: 0.82rem; }
-
-/* ── AGENT LOG (bottom terminal) ── */
-.agent-log {
-  background: #1a1a1a;
-  border-top: 1px solid #111;
-  font-family: 'Consolas', monospace;
-  font-size: 0.72rem;
-  color: #888;
-  padding: 8px 14px;
-  min-height: 60px;
-  max-height: 80px;
-  overflow-y: auto;
-  line-height: 1.6;
-}
-.log-line { opacity: 0; transition: opacity 0.3s; }
-.log-line.visible { opacity: 1; }
-.log-ok { color: #4ec9a0; }
-.log-warn { color: #ce9178; }
-.log-info { color: #569cd6; }
-.log-err { color: #e06c6c; }
-
-/* ── BOTTOM RESULT BAR ── */
-.result-bar {
-  width: 100%;
-  max-width: 1280px;
-  display: flex;
-  gap: 1px;
-  background: #111;
-}
-.result-panel {
-  flex: 1;
-  padding: 14px 20px;
-  display: flex;
-  align-items: center;
-  gap: 16px;
-}
-.result-panel.control { background: #1a0d0d; }
-.result-panel.codedna { background: #0a1a12; }
-.result-score {
-  font-size: 2.2rem;
-  font-weight: 800;
+.score-half:first-child { border-right: 1px solid #eef1f7; background: #fff8f8; }
+.score-half:last-child  { background: #f4fdf9; }
+.score-num {
+  font-size: 2rem;
+  font-weight: 900;
   font-variant-numeric: tabular-nums;
   line-height: 1;
 }
-.result-panel.control .result-score { color: #e06c6c; }
-.result-panel.codedna .result-score { color: #4ec9a0; }
-.result-details { flex: 1; }
-.result-title { font-size: 0.82rem; font-weight: 600; color: #bbb; }
-.result-sub { font-size: 0.7rem; color: #666; margin-top: 2px; }
-.result-verdict {
-  font-size: 0.75rem;
-  font-weight: 700;
-  padding: 4px 12px;
-  border-radius: 4px;
+.score-half:first-child .score-num { color: #d63c3c; }
+.score-half:last-child  .score-num { color: #00a87a; }
+.score-label {
+  font-size: 0.62rem;
+  color: #99a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
 }
-.result-panel.control .result-verdict { background: #3a1515; color: #e06c6c; }
-.result-panel.codedna .result-verdict { background: #0e2e1e; color: #4ec9a0; }
 </style>
 </head>
 <body>
 
-<!-- TOP BAR -->
-<div class="topbar">
-  <div>
-    <span class="topbar-title"><strong>CodeDNA</strong> — Agent Navigation Comparison &nbsp;·&nbsp; django__django-11808 &nbsp;·&nbsp; DeepSeek-Chat</span>
-  </div>
-  <div style="display:flex;align-items:center;gap:8px">
-    <button class="speed-btn" onclick="toggleSpeed()" id="speed-btn">1×</button>
-    <button class="play-btn" onclick="startAnimation()" id="play-btn">▶ Run Simulation</button>
-  </div>
-</div>
+<header>
+  <h1>How an AI Agent Navigates Code</h1>
+  <p>Real data · django__django-11808 · 10 critical files must be found to fix the bug</p>
+</header>
 
-<!-- WORKSPACE -->
-<div class="workspace">
+<div class="panels">
 
-  <!-- CONTROL PANE -->
-  <div class="editor-pane pane control" id="pane-control">
-    <div class="pane-titlebar"><span class="dot"></span>Without CodeDNA — no annotations</div>
-    <div class="file-tabs" id="tabs-control"></div>
-    <div class="code-area">
-      <div class="line-numbers" id="lines-control"></div>
-      <div class="code-content" id="code-control"></div>
-    </div>
-    <div class="agent-log" id="log-control"></div>
-    <div class="statusbar">
-      <div class="status-item">📄 <span id="ctrl-files-open">0 files opened</span></div>
-      <div class="status-item">✓ <span class="status-count" id="ctrl-gt-count" style="color:#e06c6c">0</span><span>/10 critical files found</span></div>
+  <!-- PANEL 1: CONSTELLATION -->
+  <div class="panel">
+    <div class="panel-label">Metaphor 1 — Night Sky</div>
+    <div class="panel-title">Stars vs. Constellation</div>
+    <canvas id="c1" height="340"></canvas>
+    <div class="score-row">
+      <div class="score-half">
+        <div class="score-num" id="s1a">2</div>
+        <div class="score-label">Without CodeDNA<br>files found</div>
+      </div>
+      <div class="score-half">
+        <div class="score-num" id="s1b">6</div>
+        <div class="score-label">With CodeDNA<br>files found</div>
+      </div>
     </div>
   </div>
 
-  <!-- CODEDNA PANE -->
-  <div class="editor-pane pane codedna" id="pane-codedna">
-    <div class="pane-titlebar"><span class="dot"></span>With CodeDNA v0.7 — annotated</div>
-    <div class="file-tabs" id="tabs-codedna"></div>
-    <div class="code-area">
-      <div class="line-numbers" id="lines-codedna"></div>
-      <div class="code-content" id="code-codedna"></div>
-    </div>
-    <div class="agent-log" id="log-codedna"></div>
-    <div class="statusbar">
-      <div class="status-item">📄 <span id="dna-files-open">0 files opened</span></div>
-      <div class="status-item">✓ <span class="status-count" id="dna-gt-count" style="color:#4ec9a0">0</span><span>/10 critical files found</span></div>
+  <!-- PANEL 2: FLASHLIGHT -->
+  <div class="panel">
+    <div class="panel-label">Metaphor 2 — Dark Room</div>
+    <div class="panel-title">Torch vs. Lights On</div>
+    <canvas id="c2" height="340"></canvas>
+    <div class="score-row">
+      <div class="score-half">
+        <div class="score-num">52%</div>
+        <div class="score-label">Sessions end<br>with wrong fix</div>
+      </div>
+      <div class="score-half">
+        <div class="score-num">25%</div>
+        <div class="score-label">Sessions end<br>with wrong fix</div>
+      </div>
     </div>
   </div>
 
-</div>
+  <!-- PANEL 3: GPS -->
+  <div class="panel">
+    <div class="panel-label">Metaphor 3 — Navigation</div>
+    <div class="panel-title">Lost vs. GPS Route</div>
+    <canvas id="c3" height="340"></canvas>
+    <div class="score-row">
+      <div class="score-half">
+        <div class="score-num">11</div>
+        <div class="score-label">Files opened<br>to find 2</div>
+      </div>
+      <div class="score-half">
+        <div class="score-num">6</div>
+        <div class="score-label">Files opened<br>to find 6</div>
+      </div>
+    </div>
+  </div>
 
-<!-- RESULT BAR -->
-<div class="result-bar" id="result-bar" style="opacity:0;transition:opacity 0.6s">
-  <div class="result-panel control">
-    <div class="result-score" id="ctrl-final-score">2/10</div>
-    <div class="result-details">
-      <div class="result-title">Critical files found</div>
-      <div class="result-sub">4 runs of 5 found only 1 file. Patch is missing changes in 8 files.</div>
-    </div>
-    <div class="result-verdict">✗ Fix incomplete — user retries</div>
-  </div>
-  <div class="result-panel codedna">
-    <div class="result-score" id="dna-final-score">6/10</div>
-    <div class="result-details">
-      <div class="result-title">Critical files found</div>
-      <div class="result-sub">Agent followed used_by: chain directly. 3× more coverage. Fix viable.</div>
-    </div>
-    <div class="result-verdict">✓ Fix viable — no retry needed</div>
-  </div>
 </div>
 
 <script>
-// ── CODE CONTENT DEFINITIONS ──────────────────────────────────────────────
+// ── UTILS ─────────────────────────────────────────────────────────────────
 
-const CODE_PLAIN = `<span class="kw">class</span> <span class="fn">Model</span>:
-    <span class="cm"># Base class for all Django models.</span>
-    <span class="cm"># 847 lines. No navigation hints.</span>
-
-    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="nm">self</span>, *args, **kwargs):
-        <span class="kw">pass</span>
-
-    <span class="kw">def</span> <span class="fn">save</span>(<span class="nm">self</span>, *args, **kwargs):
-        <span class="kw">pass</span>
-
-    <span class="kw">def</span> <span class="fn">__eq__</span>(<span class="nm">self</span>, other):
-        <span class="kw">if not</span> isinstance(other, Model):
-            <span class="kw">return</span> <span class="nm">False</span>  <span class="cm"># ← bug is here</span>
-        <span class="kw">return</span> <span class="nm">self</span>.pk == other.pk
-
-    <span class="kw">def</span> <span class="fn">delete</span>(<span class="nm">self</span>, *args, **kwargs):
-        <span class="kw">pass</span>
-
-    <span class="kw">def</span> <span class="fn">full_clean</span>(<span class="nm">self</span>, *args, **kwargs):
-        <span class="kw">pass</span>
-<span class="cm"># ... 820 more lines ...</span>`;
-
-const CODE_ANNOTATED = `<span class="cm">"""base.py — Core Model base class for all Django ORM models.</span>
-
-<span class="ann-key">exports:</span>  <span class="ann-val">Model.__eq__(other) -> bool</span>
-<span class="ann-key">used_by:</span>  <span class="ann-val">models/indexes.py     → Index.__eq__</span>
-          <span class="ann-val">models/constraints.py → Constraint.__eq__</span>
-          <span class="ann-val">models/expressions.py → Expression.__eq__</span>
-          <span class="ann-val">models/query.py       → QuerySet.__eq__</span>
-          <span class="ann-val">models/query_utils.py → Q.__eq__</span>
-<span class="ann-key">rules:</span>    <span class="ann-val">__eq__ MUST return NotImplemented for unknown</span>
-          <span class="ann-val">types — ALL subclasses must follow this contract</span>
-<span class="cm">"""</span>
-
-<span class="kw">class</span> <span class="fn">Model</span>:
-
-    <span class="kw">def</span> <span class="fn">__eq__</span>(<span class="nm">self</span>, other):
-        <span class="kw">if not</span> isinstance(other, Model):
-            <span class="kw">return</span> <span class="nm">False</span>  <span class="cm"># ← fix: return NotImplemented</span>
-        <span class="kw">return</span> <span class="nm">self</span>.pk == other.pk
-<span class="cm"># ...</span>`;
-
-// ── SEQUENCES ─────────────────────────────────────────────────────────────
-
-const GT = new Set(['models/base.py','models/indexes.py','models/constraints.py',
-  'models/expressions.py','models/query.py','models/query_utils.py',
-  'models/fields/__init__.py','models/fields/files.py',
-  'django/template/context.py','django/core/validators.py']);
-
-const CTRL_STEPS = [
-  { ms: 600,  type:'open', file:'models/base.py',       log:'info', msg:'Opening models/base.py ...' },
-  { ms: 1400, type:'read', file:'models/base.py',       log:'warn', msg:'847 lines. Searching for __eq__ pattern...' },
-  { ms: 2400, type:'grep', file:'models/base.py',       log:'warn', msg:'grep "__eq__" → 1 match. Context unclear.' },
-  { ms: 3400, type:'open', file:'tests/basic/tests.py', log:'info', msg:'Opening tests/basic/tests.py to understand usage...' },
-  { ms: 4400, type:'read', file:'tests/basic/tests.py', log:'warn', msg:'1200 lines. No clear pattern found.' },
-  { ms: 5400, type:'stop', file:null,                   log:'err',  msg:'No further navigation hints. Stopping exploration.' },
-];
-
-const DNA_STEPS = [
-  { ms: 600,  type:'open',   file:'models/base.py',       log:'info', msg:'Opening models/base.py ...' },
-  { ms: 1200, type:'read',   file:'models/base.py',       log:'ok',   msg:'Reading docstring: exports, used_by, rules → found in 8 lines.' },
-  { ms: 2000, type:'follow', file:'models/indexes.py',    log:'ok',   msg:'→ Following used_by: models/indexes.py (Index.__eq__)' },
-  { ms: 2700, type:'follow', file:'models/constraints.py',log:'ok',   msg:'→ Following used_by: models/constraints.py (Constraint.__eq__)' },
-  { ms: 3400, type:'follow', file:'models/expressions.py',log:'ok',   msg:'→ Following used_by: models/expressions.py (Expression.__eq__)' },
-  { ms: 4100, type:'follow', file:'models/query.py',      log:'ok',   msg:'→ Following used_by: models/query.py (QuerySet.__eq__)' },
-  { ms: 4800, type:'follow', file:'models/query_utils.py',log:'ok',   msg:'→ Following used_by: models/query_utils.py (Q.__eq__)' },
-  { ms: 5500, type:'done',   file:null,                   log:'ok',   msg:'Navigation complete. 6 files confirmed by annotation chain.' },
-];
-
-// ── STATE ──────────────────────────────────────────────────────────────────
-
-let timers = [];
-let speedMult = 1;
-let running = false;
-
-function toggleSpeed() {
-  const btn = document.getElementById('speed-btn');
-  if (speedMult === 1) { speedMult = 2; btn.textContent = '2×'; }
-  else if (speedMult === 2) { speedMult = 4; btn.textContent = '4×'; }
-  else { speedMult = 1; btn.textContent = '1×'; }
+function dpr(canvas) {
+  const r = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight || parseInt(canvas.getAttribute('height'));
+  canvas.width  = w * r;
+  canvas.height = h * r;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(r, r);
+  return { ctx, w, h };
 }
 
-// ── INIT ───────────────────────────────────────────────────────────────────
+function lerp(a, b, t) { return a + (b-a)*t; }
+function easeInOut(t) { return t<.5 ? 2*t*t : -1+(4-2*t)*t; }
+function rand(a,b) { return a + Math.random()*(b-a); }
 
-function initPane(side) {
-  document.getElementById(`tabs-${side}`).innerHTML = '';
-  document.getElementById(`log-${side}`).innerHTML = '';
-  const isControl = side === 'control';
-  const codeEl = document.getElementById(`code-${side}`);
-  const linesEl = document.getElementById(`lines-${side}`);
-  const raw = isControl ? CODE_PLAIN : CODE_ANNOTATED;
-  const lineCount = raw.split('\n').length;
+// ══════════════════════════════════════════════════════════════════════════
+// PANEL 1: CONSTELLATION
+// Left = random stars, no lines, agent lost
+// Right = constellation lines, agent follows the path
+// ══════════════════════════════════════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('c1');
+  const { ctx, w, h } = dpr(canvas);
 
-  // Line numbers
-  linesEl.innerHTML = Array.from({length: lineCount}, (_,i) =>
-    `<div>${i+1}</div>`).join('');
+  const cx = w/2; // divider x
+  const STARS_COUNT = 22;
+  const GT_COUNT = 10;
 
-  // Code lines (highlight annotation lines for CodeDNA)
-  codeEl.innerHTML = raw.split('\n').map((line, i) => {
-    const isDNA = !isControl;
-    const isAnn = isDNA && i >= 0 && i <= 10;
-    return `<span class="code-line${isAnn ? ' highlight-annotation' : ''}" id="cl-${side}-${i}">${line || ' '}</span>`;
-  }).join('\n');
+  // Fixed star positions (seeded visual layout)
+  const rawStars = [
+    // GT stars (first 10)
+    {rx:0.18,ry:0.25}, {rx:0.35,ry:0.15}, {rx:0.55,ry:0.12},
+    {rx:0.72,ry:0.22}, {rx:0.82,ry:0.42}, {rx:0.65,ry:0.58},
+    {rx:0.42,ry:0.72}, {rx:0.22,ry:0.65}, {rx:0.12,ry:0.48},
+    {rx:0.48,ry:0.42},
+    // Non-GT stars (12)
+    {rx:0.28,ry:0.38}, {rx:0.62,ry:0.32}, {rx:0.78,ry:0.65},
+    {rx:0.32,ry:0.85}, {rx:0.68,ry:0.82}, {rx:0.85,ry:0.18},
+    {rx:0.08,ry:0.78}, {rx:0.55,ry:0.88}, {rx:0.15,ry:0.12},
+    {rx:0.92,ry:0.55}, {rx:0.45,ry:0.30}, {rx:0.75,ry:0.48},
+  ];
 
-  // Reset counters
-  document.getElementById(`${isControl?'ctrl':'dna'}-files-open`).textContent = '0 files opened';
-  document.getElementById(`${isControl?'ctrl':'dna'}-gt-count`).textContent = '0';
-}
-
-// ── ANIMATION ─────────────────────────────────────────────────────────────
-
-function addTab(side, file) {
-  const tabs = document.getElementById(`tabs-${side}`);
-  const isGT = GT.has(file);
-  const name = file.split('/').pop();
-  const tab = document.createElement('div');
-  tab.className = `file-tab ${isGT ? 'gt' : 'wrong'} visible`;
-  tab.textContent = name;
-  tab.id = `tab-${side}-${file.replace(/\//g,'_').replace(/\./g,'_')}`;
-  tabs.appendChild(tab);
-}
-
-function setActiveTab(side, file) {
-  document.querySelectorAll(`#tabs-${side} .file-tab`).forEach(t => t.classList.remove('active'));
-  const tab = document.getElementById(`tab-${side}-${file.replace(/\//g,'_').replace(/\./g,'_')}`);
-  if (tab) tab.classList.add('active');
-}
-
-function addLog(side, cls, msg) {
-  const log = document.getElementById(`log-${side}`);
-  const div = document.createElement('div');
-  div.className = `log-line visible log-${cls}`;
-  const prefix = {ok:'✓', warn:'⚠', info:'›', err:'✗'}[cls] || '›';
-  div.textContent = `${prefix}  ${msg}`;
-  log.appendChild(div);
-  log.scrollTop = log.scrollHeight;
-}
-
-function highlightAnnotationLines(side) {
-  // Pulse the annotation block
-  for (let i = 0; i <= 10; i++) {
-    const el = document.getElementById(`cl-${side}-${i}`);
-    if (el) {
-      el.style.background = '#1e4a32';
-      setTimeout(() => { if(el) el.style.background = ''; }, 2000);
-    }
+  // Star objects for each half (left and right)
+  function makeStars(offsetX, width) {
+    return rawStars.map((s,i) => ({
+      x: offsetX + s.rx * width,
+      y: s.ry * h,
+      isGT: i < GT_COUNT,
+      r: i < GT_COUNT ? 4.5 : 2.5,
+      brightness: 0,
+      targetBrightness: 1,
+      i
+    }));
   }
-}
 
-let ctrlOpened = 0, ctrlGTFound = 0;
-let dnaOpened = 0, dnaGTFound = 0;
+  const starsL = makeStars(0,       cx - 2); // left half
+  const starsR = makeStars(cx + 2,  cx - 2); // right half
 
-function runSteps(side, steps) {
-  const isControl = side === 'control';
-  steps.forEach(step => {
-    const t = setTimeout(() => {
-      if (step.type === 'open' || step.type === 'follow') {
-        addTab(side, step.file);
-        setActiveTab(side, step.file);
-        if (isControl) {
-          ctrlOpened++;
-          document.getElementById('ctrl-files-open').textContent = `${ctrlOpened} file${ctrlOpened>1?'s':''} opened`;
-          if (GT.has(step.file)) {
-            ctrlGTFound++;
-            document.getElementById('ctrl-gt-count').textContent = ctrlGTFound;
-          }
+  // Constellation edges (between GT stars by index)
+  const EDGES = [[0,9],[9,1],[1,2],[2,3],[3,4],[4,5],[5,9],[9,6],[6,7],[7,8],[8,0]];
+
+  // Control sequence: visits 3 wrong + 2 GT then stops
+  const CTRL_VISIT = [10, 0, 11, 9, 12]; // indices, 0 and 9 are GT
+  // DNA sequence: follows constellation
+  const DNA_VISIT  = [9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10]; // 9 GT + 1 wrong
+
+  let phase = 0; // 0=init, 1=animating
+  let t = 0;
+  const STEP = 80;  // frames per step
+  let ctrlStep = 0, dnaStep = 0;
+  let edgesDrawn = new Set();
+
+  // Twinkle
+  const twinkle = rawStars.map(() => rand(0, Math.PI*2));
+
+  function draw(now) {
+    ctx.clearRect(0, 0, w, h);
+    t++;
+
+    // Backgrounds
+    // Left gradient (light pinkish)
+    const bgL = ctx.createLinearGradient(0,0,0,h);
+    bgL.addColorStop(0,'#fff6f6'); bgL.addColorStop(1,'#fdeaea');
+    ctx.fillStyle = bgL;
+    ctx.fillRect(0, 0, cx-1, h);
+
+    // Right gradient (light teal)
+    const bgR = ctx.createLinearGradient(0,0,0,h);
+    bgR.addColorStop(0,'#f4fdfb'); bgR.addColorStop(1,'#e8faf4');
+    ctx.fillStyle = bgR;
+    ctx.fillRect(cx+1, 0, cx-1, h);
+
+    // Divider
+    ctx.strokeStyle = '#dde3ee';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([6,4]);
+    ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,h); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Labels
+    ctx.font = '700 9px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#d6363660';
+    ctx.fillText('WITHOUT  CodeDNA', cx/2, 14);
+    ctx.fillStyle = '#00a87a80';
+    ctx.fillText('WITH  CodeDNA', cx + cx/2, 14);
+
+    // Draw constellation edges (right side only)
+    const edgeProgress = Math.min((t - STEP*2) / (STEP*EDGES.length), 1);
+    if (edgeProgress > 0) {
+      EDGES.forEach((e, ei) => {
+        const ep = Math.max(0, Math.min(1, edgeProgress * EDGES.length - ei));
+        if (ep <= 0) return;
+        const a = starsR[e[0]], b = starsR[e[1]];
+        ctx.save();
+        ctx.globalAlpha = ep * 0.6;
+        ctx.strokeStyle = '#00aaff';
+        ctx.lineWidth = 1.2;
+        ctx.shadowColor = '#00aaff';
+        ctx.shadowBlur = 8;
+        // Partial draw
+        const dx = b.x - a.x, dy = b.y - a.y;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(a.x + dx*ep, a.y + dy*ep);
+        ctx.stroke();
+        ctx.restore();
+      });
+    }
+
+    // Animate agent visits
+    const stepT = Math.floor(t / STEP);
+    const ctrlVisitsDone = Math.min(stepT, CTRL_VISIT.length);
+    const dnaVisitsDone  = Math.min(Math.max(0, stepT - 1), DNA_VISIT.length);
+
+    // Draw stars
+    [starsL, starsR].forEach((stars, side) => {
+      const visits = side === 0 ? CTRL_VISIT.slice(0, ctrlVisitsDone) : DNA_VISIT.slice(0, dnaVisitsDone);
+      const visitSet = new Set(visits);
+
+      stars.forEach((star, si) => {
+        const tw = Math.sin(t * 0.03 + twinkle[si]) * 0.15 + 0.85;
+        const visited = visitSet.has(si);
+        const isGT = si < GT_COUNT;
+
+        ctx.save();
+        if (visited && isGT) {
+          const col = side === 0 ? '#e05555' : '#00a87a';
+          ctx.shadowColor = col; ctx.shadowBlur = 12;
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.r * 1.5 * tw, 0, Math.PI*2);
+          ctx.fillStyle = col; ctx.fill();
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.r * 3, 0, Math.PI*2);
+          ctx.strokeStyle = col + '44'; ctx.lineWidth = 1.5; ctx.stroke();
+        } else if (visited && !isGT) {
+          ctx.shadowColor = '#f08030'; ctx.shadowBlur = 8;
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.r * tw, 0, Math.PI*2);
+          ctx.fillStyle = '#e07030'; ctx.fill();
+        } else if (isGT) {
+          const alpha = side === 1 ? 0.55 : 0.18;
+          ctx.globalAlpha = alpha;
+          ctx.shadowColor = side === 1 ? '#00a87a' : '#aaa';
+          ctx.shadowBlur = side === 1 ? 6 : 1;
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.r * tw, 0, Math.PI*2);
+          ctx.fillStyle = side === 1 ? '#00a87a' : '#999bbb';
+          ctx.fill();
         } else {
-          dnaOpened++;
-          document.getElementById('dna-files-open').textContent = `${dnaOpened} file${dnaOpened>1?'s':''} opened`;
-          if (GT.has(step.file)) {
-            dnaGTFound++;
-            document.getElementById('dna-gt-count').textContent = dnaGTFound;
-          }
+          ctx.globalAlpha = 0.2 * tw;
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.r * tw, 0, Math.PI*2);
+          ctx.fillStyle = '#99aabb'; ctx.fill();
+        }
+        ctx.restore();
+      });
+    });
+
+    // Draw agent cursor (left side - wandering)
+    if (ctrlVisitsDone > 0 && ctrlVisitsDone < CTRL_VISIT.length + 1) {
+      const cur = starsL[CTRL_VISIT[Math.min(ctrlVisitsDone-1, CTRL_VISIT.length-1)]];
+      const pulse = 0.5 + 0.5 * Math.sin(t * 0.15);
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cur.x, cur.y, 8 + pulse*3, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(255,200,100,${0.5 + pulse*0.3})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Draw agent cursor (right side - following constellation)
+    if (dnaVisitsDone > 0 && dnaVisitsDone < DNA_VISIT.length + 1) {
+      const cur = starsR[DNA_VISIT[Math.min(dnaVisitsDone-1, DNA_VISIT.length-1)]];
+      const pulse = 0.5 + 0.5 * Math.sin(t * 0.15);
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cur.x, cur.y, 8 + pulse*3, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(0,212,170,${0.5 + pulse*0.3})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Reset loop
+    const totalFrames = STEP * (Math.max(CTRL_VISIT.length, DNA_VISIT.length) + 4);
+    if (t > totalFrames + 60) t = 0;
+
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+})();
+
+
+// ══════════════════════════════════════════════════════════════════════════
+// PANEL 2: FLASHLIGHT
+// Left = tiny torch moving randomly in dark room with file icons
+// Right = room fully illuminated, arrows connect GT files
+// ══════════════════════════════════════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('c2');
+  const { ctx, w, h } = dpr(canvas);
+  const cx = w/2;
+
+  // File positions (same layout both sides)
+  const files = [
+    // GT files (index 0-9)
+    {rx:0.15,ry:0.20}, {rx:0.42,ry:0.14}, {rx:0.72,ry:0.18},
+    {rx:0.85,ry:0.42}, {rx:0.70,ry:0.68}, {rx:0.45,ry:0.78},
+    {rx:0.18,ry:0.72}, {rx:0.08,ry:0.48}, {rx:0.55,ry:0.45},
+    {rx:0.32,ry:0.50},
+    // non-GT
+    {rx:0.28,ry:0.32}, {rx:0.62,ry:0.34}, {rx:0.80,ry:0.22},
+    {rx:0.22,ry:0.88}, {rx:0.68,ry:0.88}, {rx:0.48,ry:0.92},
+    {rx:0.90,ry:0.72}, {rx:0.08,ry:0.92}, {rx:0.52,ry:0.28},
+    {rx:0.38,ry:0.68},
+  ];
+
+  // DNA path between GT files
+  const DNA_PATH = [8, 9, 0, 1, 2, 3, 4, 5, 6, 7]; // GT indices in order
+
+  let t = 0;
+  const SPEED = 0.007;
+  // Torch wander path (left side) — visits some non-GT then a few GT
+  const torchPath = [
+    {rx:0.50,ry:0.50}, {rx:0.28,ry:0.32}, {rx:0.45,ry:0.14},
+    {rx:0.62,ry:0.34}, {rx:0.55,ry:0.45}, {rx:0.32,ry:0.50},
+    {rx:0.80,ry:0.22}, {rx:0.50,ry:0.50},
+  ];
+  // GT indices visited by torch: 8,9
+  const CTRL_GT_VISITED = new Set([8, 9]);
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    t += SPEED;
+    if (t > 1) t = 0;
+
+    // Both halves: light background
+    ctx.fillStyle = '#fdf8f8';
+    ctx.fillRect(0, 0, cx-1, h);
+    ctx.fillStyle = '#f5fdf9';
+    ctx.fillRect(cx+1, 0, cx-1, h);
+
+    // Divider
+    ctx.strokeStyle = '#dde3ee';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([6,4]);
+    ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,h); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Labels
+    ctx.font = '700 9px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#d6363660';
+    ctx.fillText('WITHOUT  CodeDNA', cx/2, 14);
+    ctx.fillStyle = '#00a87a80';
+    ctx.fillText('WITH  CodeDNA', cx + cx/2, 14);
+
+    // ── LEFT: torch in dark room ──
+    // Compute torch position along wander path
+    const torchSegCount = torchPath.length - 1;
+    const torchTotal = t * torchSegCount;
+    const torchSeg = Math.min(Math.floor(torchTotal), torchSegCount - 1);
+    const torchFrac = easeInOut(torchTotal - torchSeg);
+    const ta = torchPath[torchSeg], tb = torchPath[torchSeg + 1] || torchPath[torchSeg];
+    const tx = lerp(ta.rx, tb.rx, torchFrac) * cx;
+    const ty = lerp(ta.ry, tb.ry, torchFrac) * h;
+
+    // Torch radial gradient (light mode: soft shadow around torch)
+    const torchR = w * 0.1;
+    // Darken everything outside torch
+    ctx.save();
+    ctx.fillStyle = 'rgba(200,170,160,0.45)';
+    ctx.fillRect(0, 0, cx-1, h);
+    // Erase torch circle
+    ctx.globalCompositeOperation = 'destination-out';
+    const grad = ctx.createRadialGradient(tx, ty, 0, tx, ty, torchR);
+    grad.addColorStop(0, 'rgba(0,0,0,0.55)');
+    grad.addColorStop(0.6, 'rgba(0,0,0,0.3)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(tx, ty, torchR, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+
+    // Draw files (left half)
+    files.forEach((f, i) => {
+      const fx = f.rx * cx, fy = f.ry * h;
+      const isGT = i < 10;
+      const dist = Math.hypot(fx - tx, fy - ty);
+      const lit  = dist < torchR * 1.1;
+      const visited = CTRL_GT_VISITED.has(i) && isGT;
+
+      ctx.save();
+      if (visited) {
+        ctx.shadowColor = '#e05555'; ctx.shadowBlur = 10;
+        drawFileIcon(ctx, fx, fy, 13, '#fff0f0', '#e05555');
+      } else if (lit) {
+        drawFileIcon(ctx, fx, fy, 11, '#fff', isGT ? '#c07030' : '#8899aa');
+      } else {
+        ctx.globalAlpha = 0.18;
+        drawFileIcon(ctx, fx, fy, 11, '#eee', '#bbb');
+        ctx.globalAlpha = 1;
+      }
+      ctx.restore();
+    });
+
+    // Torch cursor
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(tx, ty, 5, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(220,100,60,0.9)';
+    ctx.shadowColor = '#e05555'; ctx.shadowBlur = 10;
+    ctx.fill();
+    ctx.restore();
+
+    // ── RIGHT: fully lit room with arrows ──
+    // Already light background — no overlay needed
+
+    // Draw DNA path arrows
+    const pathProgress = Math.min(t * DNA_PATH.length * 1.2, DNA_PATH.length);
+    DNA_PATH.forEach((fi, pi) => {
+      if (pi >= pathProgress) return;
+      if (pi < DNA_PATH.length - 1) {
+        const segProgress = Math.min(pathProgress - pi, 1);
+        const a = files[fi], b = files[DNA_PATH[pi+1]];
+        const ax = cx+1 + a.rx * cx, ay = a.ry * h;
+        const bx = cx+1 + b.rx * cx, by = b.ry * h;
+        const ex = lerp(ax, bx, easeInOut(segProgress));
+        const ey = lerp(ay, by, easeInOut(segProgress));
+        ctx.save();
+        ctx.strokeStyle = '#00d4aa';
+        ctx.lineWidth = 1.8;
+        ctx.shadowColor = '#00d4aa'; ctx.shadowBlur = 8;
+        ctx.globalAlpha = 0.7;
+        ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ex, ey); ctx.stroke();
+        ctx.restore();
+      }
+    });
+
+    // Draw files (right half)
+    files.forEach((f, i) => {
+      const fx = cx+1 + f.rx * cx, fy = f.ry * h;
+      const isGT = i < 10;
+      const onPath = DNA_PATH.includes(i);
+      const visitedIdx = DNA_PATH.indexOf(i);
+      const isVisited = onPath && visitedIdx < pathProgress;
+
+      ctx.save();
+      if (isVisited) {
+        ctx.shadowColor = '#00a87a'; ctx.shadowBlur = 12;
+        drawFileIcon(ctx, fx, fy, 13, '#edfdf6', '#00a87a');
+      } else if (isGT) {
+        drawFileIcon(ctx, fx, fy, 11, '#f0faf6', '#66c9a8');
+      } else {
+        ctx.globalAlpha = 0.25;
+        drawFileIcon(ctx, fx, fy, 10, '#f0f4f0', '#aac4b8');
+      }
+      ctx.restore();
+    });
+
+    // Agent on right side (following path)
+    if (pathProgress > 0) {
+      const curIdx = Math.min(Math.floor(pathProgress), DNA_PATH.length-1);
+      const nxtIdx = Math.min(curIdx+1, DNA_PATH.length-1);
+      const frac = easeInOut(pathProgress - curIdx);
+      const cf = files[DNA_PATH[curIdx]], nf = files[DNA_PATH[nxtIdx]];
+      const ax = cx+1 + lerp(cf.rx, nf.rx, frac) * cx;
+      const ay = lerp(cf.ry, nf.ry, frac) * h;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(ax, ay, 5, 0, Math.PI*2);
+      ctx.fillStyle = '#00ff88'; ctx.shadowColor='#00ff88'; ctx.shadowBlur=16;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  function drawFileIcon(ctx, x, y, s, fill, stroke) {
+    const fold = s * 0.35;
+    ctx.beginPath();
+    ctx.moveTo(x-s, y-s);
+    ctx.lineTo(x+s-fold, y-s);
+    ctx.lineTo(x+s, y-s+fold);
+    ctx.lineTo(x+s, y+s);
+    ctx.lineTo(x-s, y+s);
+    ctx.closePath();
+    ctx.fillStyle = fill; ctx.fill();
+    ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke();
+    // fold triangle
+    ctx.beginPath();
+    ctx.moveTo(x+s-fold, y-s);
+    ctx.lineTo(x+s-fold, y-s+fold);
+    ctx.lineTo(x+s, y-s+fold);
+    ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke();
+    // lines inside
+    ctx.strokeStyle = stroke + '55'; ctx.lineWidth = 0.8;
+    [-0.15, 0.15, 0.45].forEach(fy => {
+      ctx.beginPath();
+      ctx.moveTo(x-s*0.6, y+s*fy);
+      ctx.lineTo(x+s*0.6, y+s*fy);
+      ctx.stroke();
+    });
+  }
+
+  requestAnimationFrame(draw);
+})();
+
+
+// ══════════════════════════════════════════════════════════════════════════
+// PANEL 3: GPS / ROUTE
+// Left = car wandering city streets, dead ends, confusion
+// Right = GPS route highlighted, car drives direct
+// ══════════════════════════════════════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('c3');
+  const { ctx, w, h } = dpr(canvas);
+  const cx = w/2;
+
+  // Grid of nodes (intersections = files)
+  const COLS = 5, ROWS = 5;
+  const PAD = 36;
+  const GW = (cx - PAD*2) / (COLS-1);
+  const GH = (h - PAD*2) / (ROWS-1);
+
+  function nodePos(side, col, row) {
+    const ox = side === 0 ? PAD : cx + PAD;
+    return { x: ox + col * GW, y: PAD + row * GH };
+  }
+
+  // Mark GT nodes (must visit)
+  const GT_NODES = new Set(['0,0','1,0','2,0','3,0','4,0','4,1','4,2','3,3','2,4','1,4']);
+  // Control wander path (many wrong turns)
+  const CTRL_PATH = [
+    [2,2],[1,2],[1,1],[0,1],[0,2],[1,2],[2,2],[3,2],[3,1],[2,1],
+    [2,0],[3,0],[4,0],[4,1],[3,1],[3,2],[4,2],[4,3],[3,3],[3,4],
+    [2,4],[2,3],[1,3],[1,4]
+  ];
+  // DNA path (optimal, follows annotations)
+  const DNA_PATH = [
+    [0,0],[1,0],[2,0],[3,0],[4,0],[4,1],[4,2],[3,3],[2,4],[1,4]
+  ];
+
+  // Which nodes are GT in control path
+  const ctrlGTVisited = new Set();
+  CTRL_PATH.forEach(([c,r]) => { if(GT_NODES.has(`${c},${r}`)) ctrlGTVisited.add(`${c},${r}`); });
+
+  let t = 0;
+  const SPEED = 0.004;
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    t += SPEED;
+    if (t > 1) t = 0;
+
+    // Background
+    ctx.fillStyle = '#faf8f8'; ctx.fillRect(0, 0, cx-1, h);
+    ctx.fillStyle = '#f5fdf9'; ctx.fillRect(cx+1, 0, cx-1, h);
+
+    // Divider
+    ctx.strokeStyle = '#dde3ee'; ctx.lineWidth = 1;
+    ctx.setLineDash([6,4]);
+    ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,h); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Labels
+    ctx.font = '700 9px Segoe UI'; ctx.textAlign='center';
+    ctx.fillStyle = '#d6363660';
+    ctx.fillText('WITHOUT  CodeDNA', cx/2, 14);
+    ctx.fillStyle = '#00a87a80';
+    ctx.fillText('WITH  CodeDNA', cx + cx/2, 14);
+
+    [0,1].forEach(side => {
+      const path  = side === 0 ? CTRL_PATH : DNA_PATH;
+      const color = side === 0 ? '#d63c3c' : '#00a87a';
+      const pathProgress = Math.min(t * path.length * 1.1, path.length);
+      const visitedNodes = new Set();
+      for(let i=0;i<Math.floor(pathProgress);i++) visitedNodes.add(`${path[i][0]},${path[i][1]}`);
+
+      // Draw grid streets
+      for(let row=0;row<ROWS;row++) for(let col=0;col<COLS;col++) {
+        const pos = nodePos(side, col, row);
+        if(col<COLS-1) {
+          const pos2 = nodePos(side, col+1, row);
+          ctx.strokeStyle='#dde4ee'; ctx.lineWidth=8;
+          ctx.beginPath(); ctx.moveTo(pos.x,pos.y); ctx.lineTo(pos2.x,pos2.y); ctx.stroke();
+        }
+        if(row<ROWS-1) {
+          const pos2 = nodePos(side, col, row+1);
+          ctx.strokeStyle='#dde4ee'; ctx.lineWidth=8;
+          ctx.beginPath(); ctx.moveTo(pos.x,pos.y); ctx.lineTo(pos2.x,pos2.y); ctx.stroke();
         }
       }
-      if (step.type === 'read' && !isControl) {
-        highlightAnnotationLines(side);
+
+      // Draw path traveled so far
+      ctx.save();
+      ctx.strokeStyle = color; ctx.lineWidth = 3;
+      ctx.shadowColor = color; ctx.shadowBlur = 10;
+      ctx.globalAlpha = 0.7;
+      ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.beginPath();
+      path.forEach(([col,row], i) => {
+        const pos = nodePos(side, col, row);
+        const segProgress = Math.min(pathProgress - i, 1);
+        if(segProgress <= 0) return;
+        if(i === 0) { ctx.moveTo(pos.x, pos.y); return; }
+        const prev = nodePos(side, path[i-1][0], path[i-1][1]);
+        const ex = lerp(prev.x, pos.x, easeInOut(segProgress));
+        const ey = lerp(prev.y, pos.y, easeInOut(segProgress));
+        if(i===1) ctx.moveTo(prev.x, prev.y);
+        ctx.lineTo(ex, ey);
+      });
+      ctx.stroke();
+      ctx.restore();
+
+      // Draw nodes
+      for(let row=0;row<ROWS;row++) for(let col=0;col<COLS;col++) {
+        const pos = nodePos(side, col, row);
+        const key = `${col},${row}`;
+        const isGT = GT_NODES.has(key);
+        const visited = visitedNodes.has(key);
+        ctx.save();
+        if(visited && isGT) {
+          ctx.shadowColor = color; ctx.shadowBlur = 14;
+          ctx.beginPath(); ctx.arc(pos.x, pos.y, 9, 0, Math.PI*2);
+          ctx.fillStyle = side===0 ? '#fff0f0' : '#edfdf6'; ctx.fill();
+          ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.stroke();
+          ctx.fillStyle = color; ctx.font = 'bold 10px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillText('●', pos.x, pos.y);
+        } else if(visited && !isGT) {
+          ctx.beginPath(); ctx.arc(pos.x, pos.y, 6, 0, Math.PI*2);
+          ctx.fillStyle = '#fff8f0'; ctx.fill();
+          ctx.strokeStyle = '#e08030'; ctx.lineWidth = 1.5; ctx.stroke();
+        } else if(isGT) {
+          ctx.globalAlpha = side===1 ? 0.7 : 0.3;
+          ctx.beginPath(); ctx.arc(pos.x, pos.y, 7, 0, Math.PI*2);
+          ctx.fillStyle = '#fff'; ctx.fill();
+          ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
+        } else {
+          ctx.globalAlpha = 0.35;
+          ctx.beginPath(); ctx.arc(pos.x, pos.y, 4, 0, Math.PI*2);
+          ctx.fillStyle = '#e8eef4'; ctx.fill();
+          ctx.strokeStyle = '#b0bdd0'; ctx.lineWidth = 1; ctx.stroke();
+        }
+        ctx.restore();
       }
-      if (step.log) addLog(side, step.log, step.msg);
 
-      if (step.type === 'stop' || step.type === 'done') {
-        // Final state
-        const t2 = setTimeout(() => {
-          document.getElementById('result-bar').style.opacity = '1';
-          document.getElementById('play-btn').textContent = '↺ Replay';
-          document.getElementById('play-btn').disabled = false;
-          document.getElementById('play-btn').onclick = resetAndStart;
-          running = false;
-        }, 800 / speedMult);
-        timers.push(t2);
-      }
-    }, step.ms / speedMult);
-    timers.push(t);
-  });
+      // Car (agent) position
+      const carIdx = Math.min(Math.floor(pathProgress), path.length-1);
+      const carNext = Math.min(carIdx+1, path.length-1);
+      const carFrac = easeInOut(pathProgress - carIdx);
+      const ca = nodePos(side, path[carIdx][0], path[carIdx][1]);
+      const cb = nodePos(side, path[carNext][0], path[carNext][1]);
+      const carX = lerp(ca.x, cb.x, carFrac);
+      const carY = lerp(ca.y, cb.y, carFrac);
+
+      ctx.save();
+      // Car body
+      ctx.shadowColor = color; ctx.shadowBlur = 14;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.roundRect(carX-7, carY-5, 14, 10, 3);
+      ctx.fill();
+      // Windows
+      ctx.fillStyle = side===0 ? '#fff0f0' : '#edfdf6';
+      ctx.beginPath();
+      ctx.roundRect(carX-4, carY-3, 8, 6, 2);
+      ctx.fill();
+      ctx.restore();
+    });
+
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+})();
+
+// Polyfill for roundRect if needed
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r) {
+    this.beginPath();
+    this.moveTo(x+r,y);
+    this.lineTo(x+w-r,y); this.arcTo(x+w,y,x+w,y+r,r);
+    this.lineTo(x+w,y+h-r); this.arcTo(x+w,y+h,x+w-r,y+h,r);
+    this.lineTo(x+r,y+h); this.arcTo(x,y+h,x,y+h-r,r);
+    this.lineTo(x,y+r); this.arcTo(x,y,x+r,y,r);
+    this.closePath();
+    return this;
+  };
 }
-
-function startAnimation() {
-  if (running) return;
-  running = true;
-  ctrlOpened = 0; ctrlGTFound = 0;
-  dnaOpened = 0; dnaGTFound = 0;
-
-  timers.forEach(clearTimeout); timers = [];
-
-  initPane('control');
-  initPane('codedna');
-  document.getElementById('result-bar').style.opacity = '0';
-  document.getElementById('play-btn').textContent = '⏸ Running...';
-  document.getElementById('play-btn').disabled = true;
-
-  runSteps('control', CTRL_STEPS);
-  runSteps('codedna', DNA_STEPS);
-}
-
-function resetAndStart() {
-  timers.forEach(clearTimeout); timers = [];
-  running = false;
-  document.getElementById('play-btn').textContent = '▶ Run Simulation';
-  document.getElementById('play-btn').disabled = false;
-  document.getElementById('play-btn').onclick = startAnimation;
-  initPane('control');
-  initPane('codedna');
-  document.getElementById('result-bar').style.opacity = '0';
-}
-
-// ── BOOT ──────────────────────────────────────────────────────────────────
-initPane('control');
-initPane('codedna');
-document.getElementById('play-btn').onclick = startAnimation;
 </script>
 </body>
 </html>
