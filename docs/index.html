@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CodeDNA — The Standard That Teaches AI Not to Make Mistakes</title>
+<title>CodeDNA — An In-Source Annotation Standard for LLM Agent Navigation</title>
 <meta name="description" content="CodeDNA embeds context directly in source code. Real benchmarks: without CodeDNA, AI makes deterministic errors. With CodeDNA: zero errors.">
 <link rel="icon" href="logo.png" type="image/png">
 <link rel="apple-touch-icon" href="logo.png">
@@ -300,9 +300,9 @@ footer a { color:var(--accent); text-decoration:none; }
     <div class="stat-note" data-i18n="stat2Note">positive Δ on all 3 models</div>
   </div>
   <div class="stat-cell">
-    <div class="stat-number blue">~70</div>
-    <div class="stat-label" data-i18n="stat3Label">Tokens per file</div>
-    <div class="stat-note" data-i18n="stat3Note">to map the entire codebase</div>
+    <div class="stat-number green">−52%</div>
+    <div class="stat-label" data-i18n="stat3Label">Retry risk reduction</div>
+    <div class="stat-note" data-i18n="stat3Note">high-risk runs: 52% → 25%</div>
   </div>
   <div class="stat-cell">
     <div class="stat-number green">0</div>
@@ -539,6 +539,17 @@ data  = get_users()
       </div>
     </div>
 
+    <!-- NAVIGATION DEMO GIF -->
+    <div style="margin:2rem 0; text-align:center;">
+      <p style="font-size:0.8rem; color:var(--muted); margin-bottom:0.75rem; text-transform:uppercase; letter-spacing:0.08em; font-weight:600;">Navigation Demo — django__django-11808 · DeepSeek Chat · 5 runs</p>
+      <img src="../paper/codedna_viz.gif" alt="CodeDNA navigation demo: without CodeDNA the agent wanders, with CodeDNA it follows the used_by chain" style="width:100%; max-width:900px; border-radius:12px; border:1px solid var(--border); box-shadow:var(--shadow-md);">
+      <p style="font-size:0.8rem; color:var(--muted); margin-top:0.75rem;">
+        Without CodeDNA: agent opens random files, stops early — 2/10 critical files found. &nbsp;|&nbsp;
+        With CodeDNA: follows <code>used_by:</code> chain — 6/10 critical files found. &nbsp;
+        <a href="../paper/codedna_viz.html" target="_blank" style="color:var(--accent); font-weight:600;">▶ Interactive version</a>
+      </p>
+    </div>
+
     <div class="scenario-cards">
       <div class="sc-card">
         <div class="sc-tag">Best Model</div>
@@ -569,7 +580,7 @@ data  = get_users()
     </div>
 
     <p style="margin-top:1.75rem; font-size:0.8rem; color:var(--muted); padding:1rem 1.25rem; background:var(--bg2); border:1px solid var(--border); border-radius:10px;" data-i18n-html="mmMethod">
-      🔬 <strong style="color:var(--text2)">Methodology:</strong> 5 SWE-bench Django tasks × 3 models (Gemini 2.5 Flash ✓, DeepSeek Chat ✓, Gemini 2.5 Pro ⏳). 5 runs/task at T=0.1. Identical system prompt, same 3 tools (read_file, list_files, grep), max 30 turns. Metric: File Localization F1 (ground-truth files from patch). Statistical test: Wilcoxon signed-rank (one-tailed). Script: <code>benchmark_agent/swebench/run_agent_multi.py</code>.
+      🔬 <strong style="color:var(--text2)">Methodology:</strong> 5 SWE-bench Django tasks × 3 models (Gemini 2.5 Flash ✓, DeepSeek Chat ✓, Gemini 2.5 Pro ✓). 5 runs/task at T=0.1. Identical system prompt, same 3 tools (read_file, list_files, grep), max 30 turns. Metric: File Localization F1 (ground-truth files from patch). Statistical test: Wilcoxon signed-rank (one-tailed). Script: <code>benchmark_agent/swebench/run_agent_multi.py</code>.
     </p>
   </div>
 </div>
@@ -640,7 +651,7 @@ const IT = {
   heroCta1:'Vedi le prove \u2192', heroCta2:'Leggi la Spec',
   stat1Label:'Miglioramento F1', stat1Note:'Gemini 2.5 Flash, p=0.040 \u2705',
   stat2Label:'LLM testati', stat2Note:'\u0394 positivo su tutti e 3 i modelli',
-  stat3Label:'Token per file', stat3Note:"per mappare l'intera codebase",
+  stat3Label:'Riduzione rischio retry', stat3Note:'run ad alto rischio: 52% → 25%',
   stat4Label:'Infrastruttura richiesta', stat4Note:'niente RAG, niente vector DB',
   probEyebrow:'Il Problema', probH2:'Gli AI sbagliano quando non hanno contesto.',
   probLead:"Immagina di affidare la ristrutturazione di un appartamento a un artigiano, senza mostrargli la planimetria. Stesso problema con gli AI che modificano il tuo codice. CodeDNA \u00e8 la planimetria.",
