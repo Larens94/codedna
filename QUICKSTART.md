@@ -35,7 +35,7 @@ Options: `claude` · `cursor` · `copilot` · `cline` · `windsurf` · `agents` 
 Add to your **system prompt** or your project's agent configuration:
 
 ```
-You follow the CodeDNA v0.7 Annotation Standard (github.com/Larens94/codedna).
+You follow the CodeDNA v0.8 Annotation Standard (github.com/Larens94/codedna).
 
 ON READ: parse the module docstring first (first 8–12 lines). Check `rules:` before
 writing. Check `used_by:` to understand who depends on this file. Read `Rules:` in
@@ -62,7 +62,7 @@ all `used_by` callers.
 Create `.cursorrules` at the root of your project:
 
 ```
-# CodeDNA v0.7 — cursor rules
+# CodeDNA v0.8 — cursor rules
 
 ON READ
 - Parse the module docstring (first 8–12 lines) before reading code.
@@ -92,7 +92,7 @@ Or copy the full version: [`integrations/.cursorrules`](./integrations/.cursorru
 Create `CLAUDE.md` at the root of your project:
 
 ```markdown
-# CodeDNA v0.7
+# CodeDNA v0.8
 
 This project follows the CodeDNA Annotation Standard (github.com/Larens94/codedna).
 
@@ -123,7 +123,7 @@ Or copy the full version: [`integrations/CLAUDE.md`](./integrations/CLAUDE.md)
 Create `.github/copilot-instructions.md`:
 
 ```markdown
-# CodeDNA v0.7 Instructions
+# CodeDNA v0.8 Instructions
 
 This repository uses the CodeDNA Annotation Standard.
 
@@ -146,7 +146,7 @@ Or copy the full version: [`integrations/copilot-instructions.md`](./integration
 Create `.windsurfrules` at the root of your project (same format as Cursor):
 
 ```
-# CodeDNA v0.7
+# CodeDNA v0.8
 
 ON READ: parse module docstring first. Respect `rules:`. Check `used_by:` for impact.
 ON WRITE: begin new files with module docstring. Add Rules: to critical functions. Use semantic naming.
@@ -160,7 +160,7 @@ ON EDIT: re-read `rules:` first. Check `used_by:` targets. Never rename `exports
 Paste this as system prompt or at the start of your conversation:
 
 ```
-You follow the CodeDNA v0.7 Annotation Standard.
+You follow the CodeDNA v0.8 Annotation Standard.
 
 Rules:
 1. READ: always parse the module docstring (first 8–12 lines). Respect `rules:` hard constraints.
@@ -181,13 +181,20 @@ Full spec: github.com/Larens94/codedna/blob/main/SPEC.md
 
 Ask your AI tool:
 
-> *"Annotate this file following the CodeDNA v0.7 standard (github.com/Larens94/codedna). Add the module docstring header with exports, used_by, and rules."*
+> *"Annotate this file following the CodeDNA v0.8 standard (github.com/Larens94/codedna). Add the module docstring header with exports, used_by, and rules."*
 
-Or use the auto-annotator for existing codebases:
+Or annotate an entire codebase automatically with the CLI:
 
 ```bash
-python tools/auto_annotate.py ./your_project/ --package your_package
+pip install git+https://github.com/Larens94/codedna.git
+export ANTHROPIC_API_KEY=sk-...
+
+codedna init ./          # annotates every .py file (L1 headers + L2 Rules:)
+codedna update ./        # incremental — only unannotated files
+codedna check ./         # coverage report, no changes
 ```
+
+Cost: ~$1–3 for a Django-sized project using the default Haiku model.
 
 ---
 

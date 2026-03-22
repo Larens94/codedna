@@ -370,7 +370,7 @@ img { max-width: 100%; height: auto; }
   <a class="nav-logo" href="#">
     <div class="nav-logo-mark"><img src="logo.png" alt="CodeDNA logo"></div>
     <span class="nav-logo-text">CodeDNA</span>
-    <span class="nav-version">v0.7</span>
+    <span class="nav-version">v0.8</span>
   </a>
   <div class="nav-links" id="nav-links">
     <a href="#problema" data-i18n="navProblem" onclick="closeNav()">The Problem</a>
@@ -391,7 +391,7 @@ img { max-width: 100%; height: auto; }
   <div class="hero-grid-bg"></div>
   <canvas id="hero-canvas"></canvas>
   <div class="hero-inner">
-    <div class="hero-eyebrow fade-up"><span class="eyebrow-dot"></span>CodeDNA Annotation Standard · v0.7 · MIT</div>
+    <div class="hero-eyebrow fade-up"><span class="eyebrow-dot"></span>CodeDNA Annotation Standard · v0.8 · MIT</div>
     <h1 class="fade-up" data-i18n-html="h1">The code that<br><em>explains itself.</em></h1>
     <p class="hero-sub fade-up" data-i18n-html="heroSub">
       AI tools editing your code make mistakes because they have <strong>no context</strong>. CodeDNA embeds it directly in the files — like DNA in every cell. Zero RAG. Minimal drift.
@@ -463,7 +463,13 @@ img { max-width: 100%; height: auto; }
     <p class="section-lead" data-i18n="setupLead">One command installs CodeDNA rules for any AI coding assistant. Or pick the file for your tool and paste it into your project.</p>
 
     <div style="background:#1e1e2e; border-radius:12px; padding:1.25rem 1.5rem; margin-bottom:2.5rem; box-shadow:var(--shadow-md);">
-      <div style="font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#6272a4; margin-bottom:0.5rem;" data-i18n="setupCmdLabel">One-line installer (installs all)</div>
+      <div style="font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#6272a4; margin-bottom:0.5rem;">Annotate your project (CLI)</div>
+      <pre style="font-size:0.85rem; color:#f8f8f2; line-height:1.9; margin:0; border:none; background:transparent; padding:0;"><span style="color:#50fa7b;">pip</span> install git+https://github.com/Larens94/codedna.git
+<span style="color:#6272a4;"># set ANTHROPIC_API_KEY first</span>
+<span style="color:#50fa7b;">codedna</span> init ./          <span style="color:#6272a4;"># first-time: annotates every .py file</span>
+<span style="color:#50fa7b;">codedna</span> update ./        <span style="color:#6272a4;"># incremental: only unannotated files</span>
+<span style="color:#50fa7b;">codedna</span> check ./         <span style="color:#6272a4;"># coverage report, no changes</span></pre>
+      <div style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #44475a; font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#6272a4; margin-bottom:0.5rem;" data-i18n="setupCmdLabel">One-line installer (AI tool rules)</div>
       <pre style="font-size:0.85rem; color:#f8f8f2; line-height:1.7; margin:0; border:none; background:transparent; padding:0;"><span style="color:#50fa7b;">bash</span> <span style="color:#bd93f9;">&lt;(</span><span style="color:#ff79c6;">curl</span> -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh<span style="color:#bd93f9;">)</span></pre>
     </div>
 
@@ -739,8 +745,8 @@ data  = get_users()
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm6Title">Multi-Model SWE-bench Benchmark — 5 tasks, 5 runs/task</div><div class="rm-sub" data-i18n="rm6Sub">Gemini 2.5 Flash: ctrl=60%, DNA=72%, Δ=+13pp, p=0.040 ✅ · DeepSeek Chat: ctrl=50%, DNA=60%, Δ=+9pp, p=0.11 · Gemini 2.5 Pro: ctrl=60%, DNA=69%, Δ=+9pp, p=0.11 ✅</div></div></div>
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm7Title">White Paper / arXiv preprint</div><div class="rm-sub" data-i18n="rm7Sub">Formal study with reproducible methodology, DNA analogy, and comparison against SWE-bench, LoCoBench-Agent, ETH Zurich (2026).</div></div></div>
 
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Redundancy Audit (v0.7) ✦ Current</div><div class="rm-sub">Header reduced to 3 fields: exports, used_by, rules. rules: promoted to required — the inter-agent communication channel. Python-only focus.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm8Title">M1 — Protocol Specification &amp; CLI</div><div class="rm-sub" data-i18n="rm8Sub">CodeDNA v1.0 spec · AST-based auto-extraction of exports/used_by · <code>codedna verify</code> &amp; <code>codedna update</code> · PyPI package.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Redundancy Audit (v0.8) ✦ Current</div><div class="rm-sub">Header reduced to 3 fields: exports, used_by, rules. rules: promoted to required — the inter-agent communication channel. Python-only focus.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">M1 — CLI &amp; Auto-Annotation</div><div class="rm-sub">AST skeleton extraction · <code>codedna init</code>, <code>codedna update</code>, <code>codedna check</code> · pip installable · Claude Code Challenge: 7/7 patch files in ~8 min vs 6/7 in ~10–11 min (control). <a href="https://github.com/Larens94/codedna/tree/main/benchmark_agent/claude_code_challenge" target="_blank" style="color:var(--accent);">Results →</a></div></div></div>
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm9Title">M2 — Benchmark Expansion</div><div class="rm-sub" data-i18n="rm9Sub">20+ SWE-bench tasks across multiple projects · 5+ LLMs · confidence intervals · Zenodo dataset · public dashboard.</div></div></div>
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm10Title">M3 — Editor &amp; Workflow Integrations</div><div class="rm-sub" data-i18n="rm10Sub">VS Code extension (used_by graph, stale annotation highlight) · pre-commit hook · GitHub Action CI/CD.</div></div></div>
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm11Title">M4 — Language Extension</div><div class="rm-sub" data-i18n="rm11Sub">JavaScript/TypeScript (JSDoc) · Go (godoc) · Rust (/// comments) · v1.0 extension points for community languages.</div></div></div>
@@ -756,7 +762,7 @@ data  = get_users()
   <div class="logo-row">
     <div class="logo-mark">🧬</div>
     <strong style="color:var(--text); font-size:1rem;">CodeDNA</strong>
-    <span style="font-size:0.7rem; color:var(--muted);">v0.7 · MIT</span>
+    <span style="font-size:0.7rem; color:var(--muted);">v0.8 · MIT</span>
   </div>
   <p style="margin-bottom:0.5rem;"><em>"Every file carries the complete genome of the project it belongs to."</em></p>
   <p><a href="https://github.com/Larens94/codedna">github.com/Larens94/codedna</a></p>
@@ -803,7 +809,7 @@ const IT = {
   rm5Title:'Benchmark Enterprise \u2014 105 file, 3 bug, 48 distractor', rm5Sub:'\u221229% tool call, 0 identificazioni errate (vs 1 Control). Replicabile su disco.',
   rm6Sub:'Studio formale con analogia DNA biologico e confronto contro SWE-bench, LoCoBench-Agent, ETH Zurich (2026).',
   rm7Sub:'Auto-generazione module docstring e function docstring, validazione real-time contro SPEC.md.',
-  rm8Title:'M1 \u2014 Specifica Protocollo &amp; CLI', rm8Sub:'Spec CodeDNA v1.0 \u00b7 estrazione AST-based di exports/used_by \u00b7 <code>codedna verify</code> &amp; <code>codedna update</code> \u00b7 pacchetto PyPI.',
+  rm8Title:'M1 \u2014 CLI &amp; Auto-Annotazione', rm8Sub:'Estrazione AST skeleton \u00b7 <code>codedna init</code>, <code>codedna update</code>, <code>codedna check</code> \u00b7 installabile via pip \u00b7 Claude Code Challenge: 7/7 file patch in ~8 min vs 6/7 in ~10\u201311 min (control).',
   rm9Title:'M2 \u2014 Espansione Benchmark', rm9Sub:'20+ task SWE-bench su pi\u00f9 progetti \u00b7 5+ LLM \u00b7 intervalli di confidenza \u00b7 dataset Zenodo \u00b7 dashboard pubblica.',
   rm10Title:'M3 \u2014 Integrazioni Editor &amp; Workflow', rm10Sub:'Estensione VS Code (grafo used_by, annotazioni stale) \u00b7 pre-commit hook \u00b7 GitHub Action CI/CD.',
   rm11Title:'M4 \u2014 Estensione Linguaggi', rm11Sub:'JavaScript/TypeScript (JSDoc) \u00b7 Go (godoc) \u00b7 Rust (/// comments) \u00b7 punti di estensione v1.0 per la community.',

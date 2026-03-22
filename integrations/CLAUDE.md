@@ -1,6 +1,19 @@
-# CodeDNA v0.7 — Protocol for Claude Code
+# CodeDNA v0.8 — Protocol for Claude Code
 
 This project uses the **CodeDNA** in-source communication protocol. Follow these rules on every file operation.
+
+## Annotate your project (CLI)
+
+```bash
+pip install git+https://github.com/Larens94/codedna.git
+export ANTHROPIC_API_KEY=sk-...
+
+codedna init ./          # first-time: annotates every .py file
+codedna update ./        # incremental: only unannotated files
+codedna check ./         # coverage report, no changes
+```
+
+Cost: ~$1–3 for a Django-sized project with the default Haiku model.
 
 ---
 

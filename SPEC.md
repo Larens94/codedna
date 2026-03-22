@@ -1,7 +1,7 @@
 # CodeDNA: An In-Source Communication Protocol for AI Coding Agents — Specification
 
-**Version:** 0.7  
-**Status:** Draft  
+**Version:** 0.8
+**Status:** Draft
 **Language:** Python (other languages planned)
 
 ---
@@ -327,9 +327,17 @@ agent_sessions:
 ### 3.3 Generation
 
 ```bash
-codedna init          # generates .codedna from project structure
-codedna init --update # updates .codedna preserving manual edits
+pip install git+https://github.com/Larens94/codedna.git
+export ANTHROPIC_API_KEY=sk-...
+
+codedna init PATH     # first-time: L1 module headers + L2 Rules: on every .py file
+codedna update PATH   # incremental: only unannotated files (safe to re-run)
+codedna check PATH    # coverage report, no file changes
 ```
+
+Options: `--model` (default: `claude-haiku-4-5-20251001`), `--dry-run`, `--no-llm`, `--repo-root`, `-v`
+
+Cost: ~$1–3 for a Django-sized project (~500 files) with the default Haiku model.
 
 ---
 
