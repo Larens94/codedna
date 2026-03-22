@@ -1,0 +1,506 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CodeDNA — Visual Explainer</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #f0f2f5;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+/* ── TOP BAR ── */
+.topbar {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 20px;
+  background: #fff;
+  border-bottom: 1px solid #dde1e8;
+  flex-shrink: 0;
+  gap: 16px;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.06);
+}
+.brand { font-size: 0.88rem; font-weight: 700; color: #333; }
+.brand span { color: #00a87a; }
+.subtitle { font-size: 0.72rem; color: #999; margin-top: 1px; }
+
+.play-btn {
+  padding: 8px 22px;
+  background: #00a87a;
+  color: #fff;
+  border: none;
+  border-radius: 6px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+.play-btn:hover { background: #009060; }
+
+.speed-btn {
+  padding: 8px 14px;
+  background: #f0f2f5;
+  color: #666;
+  border: 1px solid #dde1e8;
+  border-radius: 6px;
+  font-size: 0.75rem;
+  cursor: pointer;
+  margin-right: 6px;
+}
+
+/* ── WORKSPACE ── */
+.workspace {
+  display: flex;
+  gap: 1px;
+  flex: 1;
+  min-height: 0;
+  background: #dde1e8;
+}
+
+/* ── EDITOR PANE ── */
+.editor-pane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
+.pane-titlebar {
+  padding: 9px 14px;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-shrink: 0;
+}
+.dot { width: 9px; height: 9px; border-radius: 50%; }
+
+.pane.ctrl .pane-titlebar { background: #fdf0f0; color: #c03030; border-bottom: 2px solid #e8a0a0; }
+.pane.ctrl .dot            { background: #d04040; }
+.pane.dna  .pane-titlebar { background: #f0fdf8; color: #007a55; border-bottom: 2px solid #80d4b0; }
+.pane.dna  .dot            { background: #00a87a; }
+
+/* ── FILE TABS ── */
+.file-tabs {
+  display: flex;
+  background: #f5f6f8;
+  border-bottom: 1px solid #dde1e8;
+  min-height: 34px;
+  align-items: flex-end;
+  padding: 0 6px;
+  gap: 2px;
+  overflow-x: auto;
+  flex-shrink: 0;
+}
+.file-tab {
+  padding: 5px 13px;
+  font-size: 0.7rem;
+  font-family: 'Consolas', monospace;
+  white-space: nowrap;
+  border-radius: 5px 5px 0 0;
+  margin-top: 4px;
+  opacity: 0;
+  transition: opacity 0.35s;
+  border: 1px solid transparent;
+  border-bottom: none;
+}
+.file-tab.show { opacity: 1; }
+.file-tab.gt   { background: #edfdf6; color: #007a55; border-color: #b0e0cc; }
+.file-tab.wrong{ background: #fff5ec; color: #b06020; border-color: #f0c890; }
+.file-tab.active { background: #fff; color: #333; border-color: #dde1e8; }
+
+/* ── CODE AREA ── */
+.code-area {
+  flex: 1;
+  display: flex;
+  min-height: 0;
+  background: #fff;
+}
+.line-nums {
+  padding: 14px 10px 14px 14px;
+  font-family: 'Consolas', monospace;
+  font-size: 0.75rem;
+  line-height: 1.75;
+  color: #bbb;
+  text-align: right;
+  user-select: none;
+  border-right: 1px solid #f0f2f5;
+  flex-shrink: 0;
+  min-width: 36px;
+}
+.code-body {
+  flex: 1;
+  padding: 14px 16px;
+  font-family: 'Consolas', monospace;
+  font-size: 0.75rem;
+  line-height: 1.75;
+  overflow-y: auto;
+  overflow-x: hidden;
+}
+.cl { display: block; min-height: 1.75em; border-radius: 2px; white-space: pre; transition: background 0.3s; }
+.cl.hl-ann { background: #edfdf6; }
+.cl.hl-cur { background: #fff8e0; }
+
+/* syntax */
+.kw  { color: #0070c0; }
+.fn  { color: #795e26; }
+.cm  { color: #008000; font-style: italic; }
+.nm  { color: #001080; }
+.ak  { color: #00a87a; font-weight: 700; }  /* annotation key */
+.av  { color: #a31515; }                    /* annotation value */
+.am  { color: #8b44ac; font-weight: 700; }  /* message key */
+.amv { color: #8b44ac; }                    /* message value */
+.bug { background: #fff0f0; border-left: 3px solid #d04040; padding-left: 4px; color: #c03030; }
+
+/* ── AGENT LOG ── */
+.agent-log {
+  background: #fafbfc;
+  border-top: 1px solid #eaecf0;
+  font-family: 'Consolas', monospace;
+  font-size: 0.68rem;
+  color: #888;
+  padding: 7px 14px;
+  min-height: 56px;
+  max-height: 72px;
+  overflow-y: auto;
+  line-height: 1.7;
+  flex-shrink: 0;
+}
+.lg-ok   { color: #00a060; }
+.lg-warn { color: #c07020; }
+.lg-err  { color: #cc3030; }
+.lg-info { color: #0070c0; }
+
+/* ── STATUS BAR ── */
+.statusbar {
+  padding: 5px 14px;
+  font-size: 0.68rem;
+  display: flex;
+  gap: 18px;
+  align-items: center;
+  flex-shrink: 0;
+  border-top: 1px solid #eaecf0;
+}
+.pane.ctrl .statusbar { background: #fdf0f0; color: #a04040; }
+.pane.dna  .statusbar { background: #f0fdf8; color: #007a55; }
+.stat-num { font-weight: 800; font-size: 0.82rem; }
+
+/* ── RESULT BAR ── */
+.result-bar {
+  display: flex;
+  gap: 1px;
+  background: #dde1e8;
+  flex-shrink: 0;
+  opacity: 0;
+  transition: opacity 0.5s;
+}
+.result-half {
+  flex: 1;
+  padding: 12px 20px;
+  display: flex;
+  align-items: center;
+  gap: 14px;
+}
+.result-half.ctrl { background: #fdf0f0; }
+.result-half.dna  { background: #edfdf6; }
+.result-big { font-size: 1.8rem; font-weight: 900; line-height: 1; }
+.result-half.ctrl .result-big { color: #d03030; }
+.result-half.dna  .result-big { color: #00a87a; }
+.result-text { font-size: 0.75rem; color: #777; }
+.result-text strong { display: block; font-size: 0.82rem; margin-bottom: 2px; }
+.result-half.ctrl .result-text strong { color: #c03030; }
+.result-half.dna  .result-text strong { color: #007a55; }
+</style>
+</head>
+<body>
+
+<div class="topbar">
+  <div>
+    <div class="brand">CODE<span>DNA</span> &nbsp;·&nbsp; How the agent reads your code</div>
+    <div class="subtitle">django__django-11808 · DeepSeek-Chat · real benchmark data · 10 critical files to find</div>
+  </div>
+  <div style="display:flex;align-items:center;gap:8px">
+    <button class="speed-btn" id="speed-btn" onclick="toggleSpeed()">1×</button>
+    <button class="play-btn"  id="play-btn"  onclick="start()">▶ Run</button>
+  </div>
+</div>
+
+<div class="workspace">
+
+  <!-- CONTROL -->
+  <div class="editor-pane pane ctrl">
+    <div class="pane-titlebar"><span class="dot"></span>Without CodeDNA — plain source file</div>
+    <div class="file-tabs" id="tabs-ctrl"></div>
+    <div class="code-area">
+      <div class="line-nums" id="lns-ctrl"></div>
+      <div class="code-body" id="code-ctrl"></div>
+    </div>
+    <div class="agent-log" id="log-ctrl"></div>
+    <div class="statusbar">
+      <span>Files opened: <span class="stat-num" id="n-ctrl-open">0</span></span>
+      <span>Critical files found: <span class="stat-num" id="n-ctrl-gt">0</span> / 10</span>
+    </div>
+  </div>
+
+  <!-- CODEDNA -->
+  <div class="editor-pane pane dna">
+    <div class="pane-titlebar"><span class="dot"></span>With CodeDNA v0.7 — annotated source file</div>
+    <div class="file-tabs" id="tabs-dna"></div>
+    <div class="code-area">
+      <div class="line-nums" id="lns-dna"></div>
+      <div class="code-body" id="code-dna"></div>
+    </div>
+    <div class="agent-log" id="log-dna"></div>
+    <div class="statusbar">
+      <span>Files opened: <span class="stat-num" id="n-dna-open">0</span></span>
+      <span>Critical files found: <span class="stat-num" id="n-dna-gt">0</span> / 10</span>
+    </div>
+  </div>
+
+</div>
+
+<div class="result-bar" id="result-bar">
+  <div class="result-half ctrl">
+    <div class="result-big">2 / 10</div>
+    <div class="result-text">
+      <strong>✗ Patch incomplete — retry required</strong>
+      5 runs: avg 1.2 critical files found.<br>
+      8 files never seen → wrong fix → user restarts.
+    </div>
+  </div>
+  <div class="result-half dna">
+    <div class="result-big">6 / 10</div>
+    <div class="result-text">
+      <strong>✓ Patch viable — no retry needed</strong>
+      Agent read 8 lines of docstring → knew exactly<br>
+      where to go. Retry risk −52% vs control.
+    </div>
+  </div>
+</div>
+
+<script>
+// ── CODE CONTENT ──────────────────────────────────────────────────────────
+
+const PLAIN_LINES = [
+  `<span class="cm"># django/db/models/base.py</span>`,
+  `<span class="cm"># 847 lines — no navigation metadata</span>`,
+  ``,
+  `<span class="kw">class</span> <span class="fn">Model</span>:`,
+  `    <span class="cm"># Base class for all Django ORM models.</span>`,
+  `    <span class="cm"># No information about who uses this class,</span>`,
+  `    <span class="cm"># what rules apply, or where to go next.</span>`,
+  ``,
+  `    <span class="kw">def</span> <span class="fn">__init__</span>(<span class="nm">self</span>, *args, **kwargs):`,
+  `        <span class="kw">pass</span>`,
+  ``,
+  `    <span class="kw">def</span> <span class="fn">save</span>(<span class="nm">self</span>, *args, **kwargs):`,
+  `        <span class="kw">pass</span>`,
+  ``,
+  `    <span class="kw">def</span> <span class="fn">__eq__</span>(<span class="nm">self</span>, <span class="nm">other</span>):`,
+  `<span class="bug">        <span class="kw">if not</span> isinstance(<span class="nm">other</span>, Model):   <span class="cm"># ← bug here</span></span>`,
+  `<span class="bug">            <span class="kw">return False</span>               <span class="cm"># should be NotImplemented</span></span>`,
+  `        <span class="kw">return</span> <span class="nm">self</span>.pk == <span class="nm">other</span>.pk`,
+  ``,
+  `    <span class="kw">def</span> <span class="fn">delete</span>(<span class="nm">self</span>, *args, **kwargs):`,
+  `        <span class="kw">pass</span>`,
+  ``,
+  `<span class="cm">    # ... 820 more lines with no hints ...</span>`,
+];
+
+const DNA_LINES = [
+  `<span class="cm">"""base.py — Core Model base class for all Django ORM models.</span>`,
+  ``,
+  `<span class="ak">exports:</span>  <span class="av">Model.__eq__(other) -> bool</span>`,
+  `<span class="ak">used_by:</span>  <span class="av">models/indexes.py      → Index.__eq__</span>`,
+  `<span class="ak">          </span><span class="av">models/constraints.py  → Constraint.__eq__</span>`,
+  `<span class="ak">          </span><span class="av">models/expressions.py  → Expression.__eq__</span>`,
+  `<span class="ak">          </span><span class="av">models/query.py        → QuerySet.__eq__</span>`,
+  `<span class="ak">          </span><span class="av">models/query_utils.py  → Q.__eq__</span>`,
+  `<span class="ak">rules:</span>    <span class="av">__eq__ MUST return NotImplemented for unknown</span>`,
+  `<span class="ak">          </span><span class="av">types — ALL subclasses must follow this contract</span>`,
+  `<span class="am">message:</span>  <span class="amv">→ verified: all 5 subclasses fixed  [claude-sonnet | 2026-03-22]</span>`,
+  `<span class="cm">"""</span>`,
+  ``,
+  `<span class="kw">class</span> <span class="fn">Model</span>:`,
+  ``,
+  `    <span class="kw">def</span> <span class="fn">__eq__</span>(<span class="nm">self</span>, <span class="nm">other</span>):`,
+  `        <span class="kw">if not</span> isinstance(<span class="nm">other</span>, Model):`,
+  `<span class="bug">            <span class="kw">return False</span>   <span class="cm"># ← fix: return NotImplemented</span></span>`,
+  `        <span class="kw">return</span> <span class="nm">self</span>.pk == <span class="nm">other</span>.pk`,
+  ``,
+  `<span class="cm">    # ...</span>`,
+];
+
+// ── SEQUENCES ─────────────────────────────────────────────────────────────
+
+const GT = new Set(['models/base.py','models/indexes.py','models/constraints.py',
+  'models/expressions.py','models/query.py','models/query_utils.py',
+  'template/context.py','core/validators.py',
+  'messages/storage/base.py','postgres/constraints.py']);
+
+const CTRL_STEPS = [
+  { ms:0.5,  type:'open',  file:'models/base.py',        log:'info', msg:'›  Opening models/base.py  (847 lines)' },
+  { ms:1.8,  type:'read',  file:'models/base.py',        log:'warn', msg:'⚠  No metadata. Scanning 847 lines for __eq__ pattern...' },
+  { ms:3.0,  type:'grep',  file:'models/base.py',        log:'warn', msg:'⚠  grep "__eq__" → 1 match. Context unclear. Is this the only file?' },
+  { ms:4.2,  type:'open',  file:'tests/basic/tests.py',  log:'info', msg:'›  Opening tests/basic/tests.py to understand usage...' },
+  { ms:5.5,  type:'read',  file:'tests/basic/tests.py',  log:'warn', msg:'⚠  1200 lines. No clear signal. No links to other files.' },
+  { ms:6.8,  type:'stop',  file:null,                    log:'err',  msg:'✗  No further hints. Stopping. Cannot determine full scope of fix.' },
+];
+
+const DNA_STEPS = [
+  { ms:0.5,  type:'open',  file:'models/base.py',         log:'info', msg:'›  Opening models/base.py' },
+  { ms:1.5,  type:'read',  file:'models/base.py',         log:'ok',   msg:'✓  Docstring read in 0.3s → exports, used_by (5 files), rules, message' },
+  { ms:2.4,  type:'follow',file:'models/indexes.py',      log:'ok',   msg:'→  used_by: models/indexes.py  (Index.__eq__)' },
+  { ms:3.2,  type:'follow',file:'models/constraints.py',  log:'ok',   msg:'→  used_by: models/constraints.py  (Constraint.__eq__)' },
+  { ms:4.0,  type:'follow',file:'models/expressions.py',  log:'ok',   msg:'→  used_by: models/expressions.py  (Expression.__eq__)' },
+  { ms:4.8,  type:'follow',file:'models/query.py',        log:'ok',   msg:'→  used_by: models/query.py  (QuerySet.__eq__)' },
+  { ms:5.6,  type:'follow',file:'models/query_utils.py',  log:'ok',   msg:'→  used_by: models/query_utils.py  (Q.__eq__)' },
+  { ms:6.4,  type:'done',  file:null,                     log:'ok',   msg:'✓  Navigation complete. 6 critical files found via annotation chain.' },
+];
+
+// ── STATE ─────────────────────────────────────────────────────────────────
+
+let timers = [];
+let speedMult = 1;
+let running = false;
+let ctrlOpen = 0, ctrlGT = 0;
+let dnaOpen  = 0, dnaGT  = 0;
+
+// ── INIT ──────────────────────────────────────────────────────────────────
+
+function initPane(side) {
+  const isCtrl = side === 'ctrl';
+  const lines  = isCtrl ? PLAIN_LINES : DNA_LINES;
+
+  document.getElementById(`tabs-${side}`).innerHTML = '';
+  document.getElementById(`log-${side}`).innerHTML  = '';
+
+  // Line numbers
+  document.getElementById(`lns-${side}`).innerHTML =
+    lines.map((_,i) => `<div>${i+1}</div>`).join('');
+
+  // Code lines — highlight annotation block for DNA
+  document.getElementById(`code-${side}`).innerHTML =
+    lines.map((ln, i) => {
+      const isAnn = !isCtrl && i >= 0 && i <= 11;
+      return `<span class="cl${isAnn ? ' hl-ann' : ''}" id="cl-${side}-${i}">${ln || ' '}</span>`;
+    }).join('');
+
+  document.getElementById(`n-${side}-open`).textContent = '0';
+  document.getElementById(`n-${side}-gt`).textContent   = '0';
+}
+
+// ── ANIMATION ─────────────────────────────────────────────────────────────
+
+function addTab(side, file) {
+  const tabs = document.getElementById(`tabs-${side}`);
+  const isGT = GT.has(file);
+  const tab  = document.createElement('div');
+  tab.className = `file-tab ${isGT ? 'gt' : 'wrong'} show`;
+  tab.id = `tab-${side}-${file.replace(/\W/g,'_')}`;
+  tab.textContent = file.split('/').pop();
+  tabs.appendChild(tab);
+  // Mark active
+  tabs.querySelectorAll('.file-tab').forEach(t => t.classList.remove('active'));
+  tab.classList.add('active');
+}
+
+function highlightAnnotation(side) {
+  for (let i = 0; i <= 11; i++) {
+    const el = document.getElementById(`cl-${side}-${i}`);
+    if (el) {
+      el.style.background = '#d0f5e8';
+      setTimeout(() => { if(el) el.style.background = ''; }, 2200);
+    }
+  }
+}
+
+function addLog(side, cls, msg) {
+  const log = document.getElementById(`log-${side}`);
+  const d = document.createElement('div');
+  d.className = `lg-${cls}`;
+  d.textContent = msg;
+  log.appendChild(d);
+  log.scrollTop = log.scrollHeight;
+}
+
+function runSteps(side, steps) {
+  const isCtrl = side === 'ctrl';
+  steps.forEach(step => {
+    const t = setTimeout(() => {
+      if (step.file) {
+        addTab(side, step.file);
+        const isGT = GT.has(step.file);
+        if (isCtrl) {
+          ctrlOpen++;
+          document.getElementById('n-ctrl-open').textContent = ctrlOpen;
+          if (isGT) { ctrlGT++; document.getElementById('n-ctrl-gt').textContent = ctrlGT; }
+        } else {
+          dnaOpen++;
+          document.getElementById('n-dna-open').textContent = dnaOpen;
+          if (isGT) { dnaGT++;  document.getElementById('n-dna-gt').textContent  = dnaGT; }
+        }
+      }
+      // Highlight annotation block when DNA reads base.py
+      if (!isCtrl && step.type === 'read') highlightAnnotation(side);
+
+      addLog(side, step.log, step.msg);
+
+      if (step.type === 'stop' || step.type === 'done') {
+        setTimeout(() => {
+          document.getElementById('result-bar').style.opacity = '1';
+          document.getElementById('play-btn').textContent = '↺ Reset';
+          document.getElementById('play-btn').onclick = reset;
+          running = false;
+        }, 700 / speedMult);
+      }
+    }, step.ms * 1000 / speedMult);
+    timers.push(t);
+  });
+}
+
+function start() {
+  if (running) return;
+  running = true;
+  ctrlOpen = 0; ctrlGT = 0;
+  dnaOpen  = 0; dnaGT  = 0;
+  timers.forEach(clearTimeout); timers = [];
+  initPane('ctrl'); initPane('dna');
+  document.getElementById('result-bar').style.opacity = '0';
+  document.getElementById('play-btn').textContent = '⏸ Running...';
+  document.getElementById('play-btn').onclick = reset;
+  runSteps('ctrl', CTRL_STEPS);
+  runSteps('dna',  DNA_STEPS);
+}
+
+function reset() {
+  timers.forEach(clearTimeout); timers = [];
+  running = false;
+  initPane('ctrl'); initPane('dna');
+  document.getElementById('result-bar').style.opacity = '0';
+  document.getElementById('play-btn').textContent = '▶ Run';
+  document.getElementById('play-btn').onclick = start;
+}
+
+function toggleSpeed() {
+  const btn = document.getElementById('speed-btn');
+  if (speedMult===1) { speedMult=2; btn.textContent='2×'; }
+  else if (speedMult===2) { speedMult=4; btn.textContent='4×'; }
+  else { speedMult=1; btn.textContent='1×'; }
+}
+
+// Boot
+initPane('ctrl');
+initPane('dna');
+</script>
+</body>
+</html>
