@@ -61,6 +61,21 @@ canvas{display:block}
   padding:12px 14px;font-size:10px;color:#64748b;line-height:1.8;
   backdrop-filter:blur(12px)}
 #keys b{color:#1e293b}
+#terminal{position:fixed;bottom:20px;left:16px;z-index:100;
+  background:rgba(10,18,35,.90);border:1px solid #1e40af;border-radius:10px;
+  padding:10px 14px;width:370px;max-height:175px;overflow:hidden;
+  font-size:10px;line-height:1.75;backdrop-filter:blur(12px);
+  box-shadow:0 4px 20px rgba(0,0,60,.25);color:#94a3b8}
+#terminal div{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+#thought{position:fixed;z-index:150;pointer-events:none;display:none;
+  background:rgba(255,255,255,.95);border:1.5px solid #bfdbfe;border-radius:10px;
+  padding:7px 12px;font-size:10px;line-height:1.5;max-width:190px;
+  box-shadow:0 3px 14px rgba(0,0,60,.14);backdrop-filter:blur(10px);
+  transform:translateX(-50%);text-align:center;transition:opacity .2s}
+#thought::after{content:'';position:absolute;bottom:-8px;left:50%;
+  transform:translateX(-50%);border:8px solid transparent;
+  border-top:8px solid rgba(255,255,255,.95);border-bottom:0}
+.thought-tag{font-weight:800;font-size:9px;letter-spacing:1.5px;text-transform:uppercase}
 </style>
 </head>
 <body>
@@ -96,15 +111,18 @@ canvas{display:block}
   <div class="pf" style="margin-top:8px"><div class="pl">Last agent</div><div class="pv" id="p-ag">—</div></div>
 </div>
 <div id="keys">
-  <b>WASD</b> move · <b>mouse</b> look<br>
-  <b>Space</b> up · <b>Shift</b> down<br>
+  <b>WASD</b> move · <b>Shift</b> sprint<br>
+  <b>Space</b> up · <b>Ctrl</b> down<br>
   <b>Click</b> inspect building<br>
-  <b>Esc</b> exit / cursor
+  <b>Esc</b> exit
 </div>
 <div id="controls">
   <button class="btn" id="btn-fly" onclick="enterWorld()">▶ Explore</button>
   <button class="btn" onclick="resetView()">⌖ Overview</button>
+  <button class="btn" id="btn-cinema" onclick="toggleCinema()">🎬 Cinema</button>
 </div>
+<div id="terminal"></div>
+<div id="thought"></div>
 
 <script type="importmap">
 {"imports":{
@@ -382,20 +400,21 @@ document.addEventListener('keyup', e => { keys[e.code] = false; });
 
 const vel = new THREE.Vector3();
 const dir = new THREE.Vector3();
-const SPEED = 12;
+const SPEED = 28;
 
 function moveFPV(dt) {
   if (!pointerLocked) return;
-  vel.multiplyScalar(0.85);
+  vel.multiplyScalar(0.82);
   dir.set(0,0,0);
   if (keys['KeyW']||keys['ArrowUp'])    dir.z -= 1;
   if (keys['KeyS']||keys['ArrowDown'])  dir.z += 1;
   if (keys['KeyA']||keys['ArrowLeft'])  dir.x -= 1;
   if (keys['KeyD']||keys['ArrowRight']) dir.x += 1;
   if (keys['Space'])     dir.y += 1;
-  if (keys['ShiftLeft']||keys['ShiftRight']) dir.y -= 1;
+  if (keys['ControlLeft']||keys['ControlRight']) dir.y -= 1;
+  const sprint = (keys['ShiftLeft']||keys['ShiftRight']) ? 2.8 : 1;
   dir.normalize();
-  vel.add(dir.multiplyScalar(SPEED * dt));
+  vel.add(dir.multiplyScalar(SPEED * sprint * dt));
   plc.moveRight(vel.x * dt);
   plc.moveForward(-vel.z * dt);
   plc.getObject().position.y += vel.y * dt;
@@ -526,6 +545,311 @@ function moveDrones() {
   });
 }
 
+// ─ TERMINAL FEED ─────────────────────────────────────────────────────────────
+const termEl = document.getElementById('terminal');
+const termLines = [];
+function termLog(tag, msg, color='#94a3b8') {
+  const ts = new Date().toLocaleTimeString('en',{hour12:false,hour:'2-digit',minute:'2-digit',second:'2-digit'});
+  const line = `<span style="color:#475569">${ts}</span> <span style="color:${color};font-weight:800">[${tag}]</span> <span style="color:#cbd5e1">${msg}</span>`;
+  termLines.push(line);
+  if (termLines.length > 10) termLines.shift();
+  termEl.innerHTML = termLines.map(l=>`<div>${l}</div>`).join('');
+}
+
+// ─ VISUAL EFFECTS ────────────────────────────────────────────────────────────
+const activeEffects = [];
+
+function spawnScanBeam(b) {
+  const h = Math.max(1, b.h);
+  const geo = new THREE.CylinderGeometry(0.45, 0.45, h+1.5, 8, 1, true);
+  const mat = new THREE.MeshBasicMaterial({color:0x60A5FA, transparent:true, opacity:0.4, side:THREE.DoubleSide});
+  const beam = new THREE.Mesh(geo, mat);
+  beam.position.set(b.wx, h/2, b.wz);
+  scene.add(beam);
+  activeEffects.push({type:'scan', mesh:beam, t:0, dur:2.2});
+}
+
+function spawnPulseRing(b, color=0xFBBF24) {
+  const geo = new THREE.TorusGeometry(0.6, 0.09, 6, 24);
+  const mat = new THREE.MeshBasicMaterial({color, transparent:true, opacity:0.9});
+  const ring = new THREE.Mesh(geo, mat);
+  ring.rotation.x = Math.PI/2;
+  ring.position.set(b.wx, 0.6, b.wz);
+  scene.add(ring);
+  activeEffects.push({type:'ring', mesh:ring, t:0, dur:1.4, maxR:7});
+}
+
+function spawnDepLine(from, to, color=0xA78BFA) {
+  const pts = [
+    new THREE.Vector3(from.wx, from.h+0.5, from.wz),
+    new THREE.Vector3((from.wx+to.wx)/2, Math.max(from.h,to.h)+5, (from.wz+to.wz)/2),
+    new THREE.Vector3(to.wx, to.h+0.5, to.wz),
+  ];
+  const curve = new THREE.QuadraticBezierCurve3(pts[0], pts[1], pts[2]);
+  const geo = new THREE.TubeGeometry(curve, 24, 0.07, 5, false);
+  const mat = new THREE.MeshBasicMaterial({color, transparent:true, opacity:0.85});
+  const tube = new THREE.Mesh(geo, mat);
+  scene.add(tube);
+  activeEffects.push({type:'line', mesh:tube, t:0, dur:3.5});
+}
+
+function spawnEditEffect(b) {
+  spawnPulseRing(b, 0xF97316);
+  // smoke/code particles
+  for (let i=0;i<14;i++) {
+    const geo = new THREE.BoxGeometry(0.1,0.1,0.1);
+    const mat = new THREE.MeshBasicMaterial({
+      color:[0xF97316,0xFFFFFF,0xFBBF24,0xFED7AA][i%4], transparent:true, opacity:0.95});
+    const p = new THREE.Mesh(geo, mat);
+    p.position.set(b.wx+(Math.random()-.5)*1.5, b.h+0.3+Math.random()*1.5, b.wz+(Math.random()-.5)*1.5);
+    p.userData.vel = new THREE.Vector3((Math.random()-.5)*0.05, 0.05+Math.random()*0.07, (Math.random()-.5)*0.05);
+    scene.add(p);
+    activeEffects.push({type:'smoke', mesh:p, t:0, dur:1.6});
+  }
+}
+
+function spawnVerifyBeam(from, to) {
+  const geo = new THREE.SphereGeometry(0.2, 6, 6);
+  const mat = new THREE.MeshBasicMaterial({color:0x34D399, transparent:true, opacity:1});
+  const ball = new THREE.Mesh(geo, mat);
+  const pl = new THREE.PointLight(0x34D399, 1.8, 5);
+  ball.add(pl);
+  ball.position.set(from.wx, from.h+1, from.wz);
+  scene.add(ball);
+  activeEffects.push({type:'verify', mesh:ball, t:0, dur:1.3,
+    from: new THREE.Vector3(from.wx, from.h+1, from.wz),
+    to:   new THREE.Vector3(to.wx,   to.h+1,   to.wz)});
+  // also run a second ball slightly behind
+  setTimeout(()=>{
+    const b2 = ball.clone();
+    scene.add(b2);
+    activeEffects.push({type:'verify', mesh:b2, t:-0.15, dur:1.3,
+      from: new THREE.Vector3(from.wx, from.h+1, from.wz),
+      to:   new THREE.Vector3(to.wx,   to.h+1,   to.wz)});
+  }, 180);
+}
+
+function spawnFireworks(b) {
+  for (let i=0;i<24;i++) {
+    const geo = new THREE.BoxGeometry(0.14,0.14,0.14);
+    const mat = new THREE.MeshBasicMaterial({
+      color:[0xFBBF24,0x34D399,0x60A5FA,0xF97316,0xA78BFA,0xFC4C4C][i%6],
+      transparent:true, opacity:1});
+    const p = new THREE.Mesh(geo, mat);
+    const angle = (i/24)*Math.PI*2 + Math.random()*0.3;
+    const speed = 0.09+Math.random()*0.12;
+    p.position.set(b.wx, b.h+0.5, b.wz);
+    p.userData.vel = new THREE.Vector3(
+      Math.cos(angle)*speed, 0.12+Math.random()*0.16, Math.sin(angle)*speed);
+    scene.add(p);
+    activeEffects.push({type:'firework', mesh:p, t:0, dur:2.2});
+  }
+}
+
+function updateEffects(dt) {
+  for (let i=activeEffects.length-1; i>=0; i--) {
+    const e = activeEffects[i];
+    e.t += dt;
+    const pct = e.t / e.dur;
+    if (pct >= 1) {
+      scene.remove(e.mesh);
+      e.mesh.geometry?.dispose();
+      activeEffects.splice(i,1);
+      continue;
+    }
+    if (e.type === 'scan') {
+      e.mesh.material.opacity = 0.4 * (1-pct);
+      e.mesh.rotation.y += dt * 2;
+    } else if (e.type === 'ring') {
+      const s = 1 + pct * (e.maxR||6);
+      e.mesh.scale.setScalar(s);
+      e.mesh.material.opacity = 0.9 * (1-pct);
+    } else if (e.type === 'line') {
+      e.mesh.material.opacity = 0.85 * (1-pct*pct);
+    } else if (e.type === 'smoke') {
+      e.mesh.position.addScaledVector(e.mesh.userData.vel, 1);
+      e.mesh.material.opacity = 0.95 * (1-pct);
+      e.mesh.scale.setScalar(1+pct*2.5);
+    } else if (e.type === 'verify') {
+      const t = Math.max(0, Math.min(1, pct));
+      e.mesh.position.lerpVectors(e.from, e.to, t);
+      e.mesh.position.y += Math.sin(t*Math.PI)*3;
+      e.mesh.material.opacity = t < 0.1 ? t*10 : (t > 0.8 ? (1-t)*5 : 1);
+    } else if (e.type === 'firework') {
+      e.mesh.position.addScaledVector(e.mesh.userData.vel, 1);
+      e.mesh.userData.vel.y -= 0.005;
+      e.mesh.material.opacity = 1-pct;
+      e.mesh.rotation.x += 0.12; e.mesh.rotation.y += 0.09;
+    }
+  }
+}
+
+// ─ NPC AGENT ─────────────────────────────────────────────────────────────────
+const agentGroup = new THREE.Group();
+// Head
+const agHead = new THREE.Mesh(new THREE.BoxGeometry(0.6,0.6,0.6),
+  new THREE.MeshLambertMaterial({color:0xFFDD88}));
+agHead.position.y = 1.95; agentGroup.add(agHead);
+// Eyes
+const eyeMat = new THREE.MeshBasicMaterial({color:0x1e3a5f});
+const agEye1 = new THREE.Mesh(new THREE.BoxGeometry(0.13,0.13,0.04), eyeMat);
+agEye1.position.set(-0.14, 1.97, 0.31); agentGroup.add(agEye1);
+const agEye2 = agEye1.clone(); agEye2.position.set(0.14, 1.97, 0.31); agentGroup.add(agEye2);
+// Antenna
+const agAnt = new THREE.Mesh(new THREE.BoxGeometry(0.06,0.35,0.06),
+  new THREE.MeshLambertMaterial({color:0x3B82F6}));
+agAnt.position.set(0, 2.45, 0); agentGroup.add(agAnt);
+const agAntTip = new THREE.Mesh(new THREE.SphereGeometry(0.07,6,6),
+  new THREE.MeshBasicMaterial({color:0x60A5FA}));
+agAntTip.position.set(0, 2.64, 0); agentGroup.add(agAntTip);
+// Torso
+const agTorso = new THREE.Mesh(new THREE.BoxGeometry(0.55,0.72,0.38),
+  new THREE.MeshLambertMaterial({color:0x3B82F6}));
+agTorso.position.y = 1.25; agentGroup.add(agTorso);
+// Badge
+const agBadge = new THREE.Mesh(new THREE.BoxGeometry(0.22,0.14,0.04),
+  new THREE.MeshBasicMaterial({color:0xFBBF24}));
+agBadge.position.set(0, 1.35, 0.22); agentGroup.add(agBadge);
+// Legs
+const legMat2 = new THREE.MeshLambertMaterial({color:0x1E40AF});
+const agLegL = new THREE.Mesh(new THREE.BoxGeometry(0.22,0.5,0.3), legMat2.clone());
+agLegL.position.set(-0.15, 0.65, 0); agentGroup.add(agLegL);
+const agLegR = new THREE.Mesh(new THREE.BoxGeometry(0.22,0.5,0.3), legMat2.clone());
+agLegR.position.set(0.15, 0.65, 0); agentGroup.add(agLegR);
+// Arms
+const armMat2 = new THREE.MeshLambertMaterial({color:0x3B82F6});
+const agArmL = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.5,0.26), armMat2.clone());
+agArmL.position.set(-0.39, 1.2, 0); agentGroup.add(agArmL);
+const agArmR = new THREE.Mesh(new THREE.BoxGeometry(0.2,0.5,0.26), armMat2.clone());
+agArmR.position.set(0.39, 1.2, 0); agentGroup.add(agArmR);
+// Glow
+const agLight2 = new THREE.PointLight(0x3B82F6, 0.7, 6);
+agentGroup.add(agLight2);
+agentGroup.position.set(5, 0.3, 5);
+scene.add(agentGroup);
+
+// Trail
+const trailParts = [];
+let trailTimer = 0;
+function spawnTrail(pos) {
+  const geo = new THREE.BoxGeometry(0.09,0.09,0.09);
+  const mat = new THREE.MeshBasicMaterial({color:0x60A5FA, transparent:true, opacity:0.7});
+  const p = new THREE.Mesh(geo, mat);
+  p.position.copy(pos); p.position.y = 0.15;
+  scene.add(p);
+  trailParts.push({mesh:p, t:0, dur:0.9});
+}
+function updateTrail(dt) {
+  for(let i=trailParts.length-1;i>=0;i--) {
+    const tp = trailParts[i]; tp.t += dt;
+    const pct = tp.t/tp.dur;
+    if(pct>=1){scene.remove(tp.mesh);trailParts.splice(i,1);continue;}
+    tp.mesh.material.opacity = 0.7*(1-pct);
+    tp.mesh.scale.setScalar(1-pct*0.6);
+  }
+}
+
+// Workflow steps
+const WORKFLOW = [
+  {tag:'EXPLORE', msg:'Reading module docstring', color:'#60A5FA', dur:3.5, fn:'scan'},
+  {tag:'FOUND',   msg:'exports: found — annotating', color:'#FBBF24', dur:2.5, fn:'found'},
+  {tag:'DECISION',msg:'Following used_by chain', color:'#A78BFA', dur:3.2, fn:'decide'},
+  {tag:'ACTION',  msg:'Editing file · patching fix', color:'#F97316', dur:4.0, fn:'edit'},
+  {tag:'VERIFY',  msg:'Running dependency check', color:'#34D399', dur:3.5, fn:'verify'},
+  {tag:'COMMIT',  msg:'Fix committed ✓', color:'#10B981', dur:2.0, fn:'commit'},
+];
+const agSt = {
+  stepIdx: 0, timer: 0.15,
+  target: DATA.buildings[Math.floor(Math.random()*DATA.buildings.length)],
+  prev: null, walking: false,
+  wFrom: new THREE.Vector3(), wTo: new THREE.Vector3(),
+  wT: 0, wDur: 1,
+};
+let cinemaMode = true;
+window.toggleCinema = function() {
+  cinemaMode = !cinemaMode;
+  document.getElementById('btn-cinema').textContent = cinemaMode ? '🎬 Cinema' : '🕹 Manual';
+};
+const thoughtEl = document.getElementById('thought');
+function setThought(tag, msg, color) {
+  thoughtEl.innerHTML = `<span class="thought-tag" style="color:${color}">[${tag}]</span><br><span style="color:#334155">${msg}</span>`;
+  thoughtEl.style.display = 'block';
+}
+
+let agWalkTime = 0;
+function updateAgent(dt) {
+  agSt.timer += dt; agWalkTime += dt; trailTimer += dt;
+  const wf = agSt.walking ? 6 : 0;
+  agLegL.rotation.x = agSt.walking ? Math.sin(agWalkTime*wf)*0.45 : 0;
+  agLegR.rotation.x = agSt.walking ? -Math.sin(agWalkTime*wf)*0.45 : 0;
+  agArmL.rotation.x = agSt.walking ? -Math.sin(agWalkTime*wf)*0.35 : 0;
+  agArmR.rotation.x = agSt.walking ? Math.sin(agWalkTime*wf)*0.35 : 0;
+  agentGroup.position.y = 0.3 + Math.abs(Math.sin(agWalkTime*(agSt.walking?wf:1)))*0.06;
+  // Antenna tip pulse
+  agAntTip.material.color.setHSL((agWalkTime*0.5)%1, 1, 0.65);
+
+  if (agSt.walking) {
+    agSt.wT += dt / agSt.wDur;
+    if (agSt.wT >= 1) { agSt.wT=1; agSt.walking=false; agSt.timer=0.15; }
+    agentGroup.position.lerpVectors(agSt.wFrom, agSt.wTo, agSt.wT);
+    const d2 = new THREE.Vector3().subVectors(agSt.wTo, agSt.wFrom);
+    if (d2.length()>0.1) agentGroup.rotation.y = Math.atan2(d2.x, d2.z);
+    if (trailTimer > 0.07) { spawnTrail(agentGroup.position); trailTimer=0; }
+    return;
+  }
+
+  const step = WORKFLOW[agSt.stepIdx];
+  if (agSt.timer >= 0.1 && agSt.timer < 0.22) {
+    const b = agSt.target;
+    setThought(step.tag, step.msg + ' · ' + b.n, step.color);
+    termLog(step.tag, step.msg + ' · ' + b.id, step.color);
+    if (step.fn==='scan')   spawnScanBeam(b);
+    if (step.fn==='found')  spawnPulseRing(b, 0xFBBF24);
+    if (step.fn==='decide' && agSt.prev) spawnDepLine(agSt.prev, b, 0xA78BFA);
+    if (step.fn==='edit')   spawnEditEffect(b);
+    if (step.fn==='verify' && agSt.prev) spawnVerifyBeam(agSt.prev, b);
+    if (step.fn==='commit') { spawnFireworks(b); spawnPulseRing(b, 0x10B981); }
+  }
+
+  if (agSt.timer > step.dur) {
+    agSt.prev = agSt.target;
+    agSt.stepIdx = (agSt.stepIdx+1) % WORKFLOW.length;
+    agSt.timer = 0;
+    // next building: 60% same district
+    const cur = agSt.target;
+    const same = DATA.buildings.filter(b => b.d===cur.d && b!==cur);
+    const pool = same.length>0 && Math.random()<0.6 ? same : DATA.buildings;
+    agSt.target = pool[Math.floor(Math.random()*pool.length)];
+    const nb = agSt.target;
+    agSt.wFrom.copy(agentGroup.position);
+    agSt.wTo.set(nb.wx, 0.3, nb.wz);
+    const dist = agSt.wFrom.distanceTo(agSt.wTo);
+    agSt.wDur = Math.max(0.5, dist/16);
+    agSt.wT=0; agSt.walking=true;
+  }
+
+  // Cinema: camera follows agent smoothly
+  if (cinemaMode && !pointerLocked) {
+    const ap = agentGroup.position;
+    const behind = new THREE.Vector3(ap.x+5, ap.y+7, ap.z+10);
+    camera.position.lerp(behind, dt*0.6);
+    orbit.target.lerp(new THREE.Vector3(ap.x, ap.y+1.5, ap.z), dt*1.2);
+  }
+}
+
+function updateThoughtBubble() {
+  if (!thoughtEl || !agentGroup) return;
+  const wp = agentGroup.position.clone(); wp.y += 3.5;
+  const proj = wp.project(camera);
+  if (proj.z < 1) {
+    thoughtEl.style.left = ((proj.x*0.5+0.5)*innerWidth)+'px';
+    thoughtEl.style.top  = ((-proj.y*0.5+0.5)*innerHeight)+'px';
+    thoughtEl.style.opacity = '1';
+  } else {
+    thoughtEl.style.opacity = '0';
+  }
+}
+
 // ─ GLOBAL CONTROLS ───────────────────────────────────────────────────────────
 window.enterWorld = function() {
   document.getElementById('blocker').classList.add('hide');
@@ -563,6 +887,10 @@ let last = performance.now();
   const dt = Math.min((now-last)/1000, 0.05); last=now;
   animateBuildings(dt);
   moveDrones();
+  updateAgent(dt);
+  updateEffects(dt);
+  updateTrail(dt);
+  updateThoughtBubble();
   if (pointerLocked) moveFPV(dt);
   else { orbit.update(); drawMinimap(); }
   clouds.forEach((c,i)=>{ c.position.x += 0.02*(i%2?1:-1); if(c.position.x>200)c.position.x=-200; });
