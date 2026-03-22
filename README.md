@@ -33,7 +33,7 @@
 > Three visual metaphors, same real data (django__django-11808 · DeepSeek-Chat · 5 runs).
 > **Without CodeDNA**: agent opens 2 random files and stops — 8/10 critical files missed.
 > **With CodeDNA**: follows the `used_by:` chain — finds 6/10 critical files. Retry risk −52%.
-> [▶ Interactive version](./docs/codedna_viz.html)
+> [▶ Interactive version — 3 metaphors](./docs/codedna_viz_3metaphors.html)
 
 > **🔄 The Network Effect:** When an AI agent writes CodeDNA annotations, it leaves a navigable trail for every other agent that reads the code after it — regardless of vendor or model. The more agents that participate, the more useful the protocol becomes.
 
@@ -54,7 +54,28 @@
 
 ## ⚡ 2-Minute Setup
 
-### One-Line Install (CLI)
+### `codedna` — Annotation CLI
+
+Annotate an entire Python project automatically (AST structure + LLM semantic rules):
+
+```bash
+pip install codedna
+codedna init /path/to/your/project
+```
+
+Three commands:
+
+| Command | What it does |
+|---|---|
+| `codedna init PATH` | First-time annotation — adds L1 module headers + L2 function `Rules:` to every `.py` file |
+| `codedna update PATH` | Incremental — only annotates files missing headers (safe to re-run) |
+| `codedna check PATH` | Reports annotation coverage without modifying files |
+
+Options: `--model` (default: `claude-haiku-4-5-20251001`), `--dry-run`, `--no-llm`, `--repo-root`, `-v`
+
+Requires `ANTHROPIC_API_KEY`. Cost: ~$1–3 for a typical Django-sized project with Haiku.
+
+### One-Line Install (AI tool integration)
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh)
