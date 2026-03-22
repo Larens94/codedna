@@ -3,7 +3,7 @@
 > *An in-source communication protocol where the writing agent encodes architectural context and the reading agent decodes it. The file is the channel. Every fragment carries the whole.*
 
 [![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](./LICENSE)
-[![Version](https://img.shields.io/badge/CodeDNA-v0.7-6366f1)](./SPEC.md)
+[![Version](https://img.shields.io/badge/CodeDNA-v0.8-6366f1)](./SPEC.md)
 [![DOI](https://img.shields.io/badge/DOI-10.5281%2Fzenodo.19158336-blue)](https://doi.org/10.5281/zenodo.19158336)
 [![Website](https://img.shields.io/badge/website-codedna.silicoreautomation.space-6366f1)](https://codedna.silicoreautomation.space)
 [![CI](https://github.com/Larens94/codedna/actions/workflows/ci.yml/badge.svg)](https://github.com/Larens94/codedna/actions/workflows/ci.yml)
@@ -240,11 +240,11 @@ Reproduce: [`HOW_TO_RERUN.md`](./benchmark_agent/claude_code_challenge/django__d
 
 ## 🗺️ Roadmap
 
-CodeDNA v0.7 is the research prototype. The planned development path:
+CodeDNA v0.8 is the current release. The planned development path:
 
 | Milestone | Goal | Status |
 |---|---|---|
-| **M1 — Protocol & CLI** | v1.0 spec · `codedna verify` · `codedna update` · AST-based auto-extraction · PyPI | 🔜 |
+| **M1 — Protocol & CLI** | v0.8 spec · `codedna init/update/check` · AST-based auto-extraction · `message:` agent chat layer | ✅ Done |
 | **M2 — Benchmark Expansion** | 20+ SWE-bench tasks · 5+ LLMs · Zenodo dataset · public dashboard | 🔜 |
 | **M3 — Editor & Workflow** | VS Code extension (used_by graph · agent timeline · model heatmap) · pre-commit hook · GitHub Action CI | 🔜 |
 | **M4 — Language Extension** | JavaScript/TypeScript · Go · Rust · full docs rewrite | 🔜 |
@@ -254,13 +254,11 @@ CodeDNA v0.7 is the research prototype. The planned development path:
 
 ---
 
-## 🔬 In Development — v0.8 Features *(not yet tested)*
-
-The following features are being designed for v0.8. They are **not part of the current spec**, have not been validated in benchmark conditions, and the format may change before release.
+## 🔬 v0.8 Features
 
 ### `message:` — Persistent Agent Chat in Code
 
-The `agent:` field records what an agent did. The proposed `message:` sub-field adds a **conversational layer** — soft observations, open questions, and forward-looking notes left directly for the next agent.
+The `agent:` field records what an agent did. The `message:` sub-field (new in v0.8) adds a **conversational layer** — soft observations, open questions, and forward-looking notes left directly for the next agent.
 
 ```python
 """analytics/revenue.py — Monthly/annual revenue aggregation.
@@ -281,7 +279,7 @@ The lifecycle: an observation left in `message:` either gets promoted to `rules:
 
 ### Agent Telemetry via Git Trailers
 
-Git is already immutable, append-only, and diff-complete. The proposed approach uses **git trailers** — the same standard as `Co-Authored-By:`, natively recognised by GitHub — to embed AI session metadata directly in commit messages:
+Git is already immutable, append-only, and diff-complete. v0.8 uses **git trailers** — the same standard as `Co-Authored-By:`, natively recognised by GitHub — to embed AI session metadata directly in commit messages:
 
 ```
 implement monthly revenue aggregation
@@ -313,7 +311,7 @@ Built on top of `git log` with AI trailers:
 - **Agent Timeline** — chronological session log with git diff per session
 - **Stats panel** — model distribution chart, navigation efficiency per model
 
-> Full spec: [SPEC.md §4.7–4.8](./SPEC.md)
+> Full spec: [SPEC.md §4.7–4.8](./SPEC.md) · VSCode extension is planned for M3.
 
 ---
 
@@ -511,7 +509,7 @@ Because agents can hallucinate, `Rules:` annotations may contain incorrect infor
 
 ## 🌐 Language Support
 
-CodeDNA v0.7 is validated on **Python** using the native module docstring format. Support for other languages is planned for future versions.
+CodeDNA v0.8 is validated on **Python** using the native module docstring format. Support for other languages is planned for M4.
 
 ---
 
@@ -521,23 +519,28 @@ CodeDNA v0.7 is validated on **Python** using the native module docstring format
 codedna/
 ├── README.md               ← you are here
 ├── QUICKSTART.md           ← 2-minute setup for every AI tool
-├── SPEC.md                 ← full technical specification v0.7
+├── SPEC.md                 ← full technical specification v0.8
 ├── integrations/
 │   ├── CLAUDE.md               ← Claude Code system prompt
 │   ├── .cursorrules             ← Cursor rules file
 │   ├── copilot-instructions.md ← GitHub Copilot instructions
 │   └── install.sh              ← one-line installer for all tools
+├── codedna_tool/           ← installable CLI package (codedna init/update/check)
+│   ├── cli.py
+│   └── __init__.py
 ├── benchmark_agent/
 │   ├── swebench/
-│   │   ├── run_agent_multi.py      ← multi-model benchmark (5 providers)
-│   │   └── analyze_multi.py        ← multi-model comparison
-│   └── runs/                       ← results by model
+│   │   ├── run_agent_multi.py          ← multi-model benchmark (5 providers)
+│   │   └── analyze_multi.py            ← multi-model comparison
+│   ├── claude_code_challenge/          ← fix-quality benchmark (control vs CodeDNA)
+│   │   └── django__django-13495/
+│   └── runs/                           ← results by model
 ├── examples/
 │   └── python/
 ├── paper/                  ← scientific paper (arXiv preprint)
 │   └── codedna_paper.pdf
 └── tools/
-    └── auto_annotate.py    ← auto-generate exports/used_by for existing codebases
+    └── codedna_annotate.py ← legacy annotator (use codedna_tool/ CLI instead)
 ```
 
 ---
