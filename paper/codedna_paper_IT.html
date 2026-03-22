@@ -558,6 +558,24 @@ int_cents_price_from_req = request.json["price"]</pre>
         DeepSeek-Chat e Gemini 2.5 Pro mostrano Δ positivi ma non significativi (p=0,11). È necessario uno studio
         multi-modello più ampio per confermare o confutare questa ipotesi.</p>
 
+      <p><strong>Analisi qualitativa per task.</strong> I cinque task coprono uno spettro di difficoltà strutturale.
+        <strong>Task 12508</strong> (dbshell): il punto di ingresso è ovvio dal nome del file; la difficoltà è
+        scoprire i quattro client backend — <code>used_by:</code> lo gestisce in modo affidabile (+9pp).
+        <strong>Task 11991</strong> (INCLUDE): <code>schema.py</code> è trovabile via grep; <code>used_by:</code>
+        enumera esplicitamente tutti e quattro i backend schema editor (+17pp).
+        <strong>Task 14480</strong> (Q() XOR): richiede di seguire una catena multi-livello ORM→SQL→backend su
+        7 file — esattamente la navigazione che <code>used_by:</code> abilita (+17–18pp).
+        <strong>Task 13495</strong> (Trunc tzinfo): il task con la maggiore divergenza tra modelli. Flash guadagna
+        +22pp; DeepSeek e Pro regrediscono di 8–9pp. Seguire le catene <code>used_by:</code> verso i file backend
+        sembra introdurre una trappola di precisione per i modelli meno capaci — un'anomalia strutturale in fase
+        di indagine.
+        <strong>Task 11808</strong> (<code>__eq__</code>): il limite strutturale di CodeDNA v0.7. Il punto di
+        ingresso <code>models/base.py</code> (847 righe) è un file generico senza catena navigabile verso le
+        cinque sottoclassi interessate. Flash control raggiunge già F1=0,58 (Δ≈0%). DeepSeek control raggiunge
+        solo F1=0,20 — il modello non riesce a trovare il punto di ingresso senza il suggerimento nel campo
+        <code>rules:</code> del docstring, il che spiega il risultato più forte di DeepSeek (Δ=+34pp) proprio
+        sul task dove Flash non guadagna nulla.</p>
+
       <!-- 5.2 COSTO DEL RETRY -->
       <h3 class="subsection">5.2 Analisi del Costo di Retry</h3>
       <p class="ni">L'F1 di file-localization è tipicamente presentato come metrica di efficienza. Proponiamo di

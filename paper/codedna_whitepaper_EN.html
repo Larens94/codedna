@@ -723,6 +723,22 @@
       task (11808) was included deliberately to test the protocol's limits — Δ≈0% is reported as a known limitation,
       not hidden.</p>
 
+    <p><strong>Per-task qualitative analysis.</strong>
+      <strong>Task 12508</strong> (dbshell): the entry point is obvious by name; the challenge is discovering
+      four backend client files — <code>used_by:</code> handles this reliably (+9pp).
+      <strong>Task 11991</strong> (INCLUDE): <code>schema.py</code> is findable by grep; <code>used_by:</code>
+      enumerates all four backend schema editors (+17pp).
+      <strong>Task 14480</strong> (Q() XOR): a multi-layer ORM→SQL→backends chain requires touching 7 files —
+      exactly what <code>used_by:</code> enables (+17–18pp).
+      <strong>Task 13495</strong> (Trunc tzinfo): the most model-divergent task. Flash gains +22pp; DeepSeek and
+      Pro regress by 8–9pp. Following <code>used_by:</code> chains to backend files appears to introduce a
+      precision trap for less capable models — a structural anomaly under investigation.
+      <strong>Task 11808</strong> (<code>__eq__</code>): the structural limit of v0.7. The entry point
+      <code>models/base.py</code> (847 lines) is a generic file with no navigable chain to the five affected
+      subclasses. Flash control already reaches F1=0.58 (Δ≈0%). DeepSeek control reaches only F1=0.20 — the
+      model cannot find the entry point without the <code>rules:</code> hint in the module docstring, explaining
+      DeepSeek's strongest individual result (Δ=+34pp) on the task where Flash gains nothing.</p>
+
     <h3 style="font-size: 12pt; font-weight: 600; margin: 16pt 0 6pt 0;">5.2 The Cheaper-Model Hypothesis</h3>
 
     <p>The empirical data supports a working hypothesis:</p>

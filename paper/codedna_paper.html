@@ -686,6 +686,25 @@ int_cents_price_from_req = request.json["price"]</pre>
         reported as a known limitation, not hidden. See §5.3 for the annotator integrity audit and §6.6 for the
         proposed v0.8 extension (<code>cross_cutting_patterns:</code>).</p>
 
+      <p><strong>Per-task qualitative analysis.</strong> The five tasks span a spectrum of structural difficulty.
+        <strong>Task 12508</strong> (dbshell) is the easiest to enter: the management command file is named after
+        the feature; the challenge is discovering the four backend client files, which <code>used_by:</code> handles
+        reliably (+9pp). <strong>Task 11991</strong> (INCLUDE) follows a similar pattern — <code>schema.py</code>
+        is findable by grep, and <code>used_by:</code> enumerates all four backend schema editors explicitly (+17pp).
+        <strong>Task 14480</strong> (Q() XOR) requires following a multi-layer chain — from
+        <code>query_utils.py</code> through <code>where.py</code>, <code>sql/__init__.py</code>, and per-backend
+        <code>features.py</code> — exactly the cascade that <code>used_by:</code> enables (+17–18pp).
+        <strong>Task 13495</strong> (Trunc tzinfo) is the most model-divergent: Flash gains +22pp while DeepSeek
+        and Pro each regress by 8–9pp. The entry file (<code>db/models/functions/datetime.py</code>) is reachable
+        for all models, but following <code>used_by:</code> chains to backend files appears to introduce a precision
+        trap for DeepSeek and Pro — a structural anomaly under investigation.
+        <strong>Task 11808</strong> (<code>__eq__</code>) is the structural limit of v0.7: the entry point
+        <code>models/base.py</code> is a 847-line generic file, and the five affected subclasses are independent
+        with no shared caller. Flash control already reaches F1=0.58 — CodeDNA adds nothing (Δ=−1.5%).
+        The same task is DeepSeek's strongest result (Δ=+34pp) because DeepSeek control achieves only F1=0.20:
+        the model cannot locate the entry point without the structural hint in the module docstring's
+        <code>rules:</code> field.</p>
+
       <p>One observation from the multi-model data is that cheaper or less capable models appear to benefit more from
         CodeDNA than frontier models — a working hypothesis, not a confirmed finding. This observation constitutes a
         working hypothesis, not a confirmed finding: DeepSeek and Pro show positive but non-significant Δ (p=0.11),

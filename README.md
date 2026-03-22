@@ -113,6 +113,18 @@ Empirical analysis across 5 tasks (Gemini 2.5 Flash, ≥5 runs each) reveals a c
 | **XOR feature with multi-layer propagation** | `Q() XOR support` (14480) | **+18%** |
 | **Cross-cutting fix** — same pattern in N unrelated files, no shared ancestor | `__eq__ NotImplemented` (11808) | **~0%** |
 
+#### Per-task breakdown
+
+| Task | What it is | Why hard without CodeDNA | Δ F1 (Flash / DeepSeek) |
+|---|---|---|---|
+| **12508** dbshell | Add `-c SQL` flag to `dbshell` management command | Entry point is obvious by name; 4 backend `runshell_db()` clients are hidden | +9% / +1% |
+| **11991** INCLUDE | Add `INCLUDE` clause support to `Index` | `schema.py` is findable; 4 backend schema editors are not | +17% / +6% |
+| **14480** Q() XOR | Add XOR operator to `Q()` and `QuerySet()` | ORM→SQL→backends cascade requires touching 7 files | +18% / +14% |
+| **13495** Trunc tzinfo | Fix timezone handling in `TruncDay()` for non-DateTimeField | Per-backend `date_trunc_sql()` override not reachable by grep alone | **+22%** / −8% ⚠ |
+| **11808** `__eq__` | Fix `__eq__` to return `NotImplemented` for unknown types | Entry is `models/base.py` (847 lines, generic name); 5 subclasses are unconnected | ≈0% / **+34%** |
+
+> ⚠ Task 13495 shows a model-dependent anomaly: Flash benefits strongly (+22pp) while DeepSeek and Pro regress (−8/−9pp). Under investigation.
+
 > **Transparency note on 11808:** the cross-cutting task was included deliberately to test the limits of the protocol. The benchmark annotations do **not** pre-populate a list of affected files — the agent must discover them independently. CodeDNA v0.7 shows Δ ≈ 0% on this task type. This is reported as a known limitation, not hidden. See [SPEC.md §2.4](./SPEC.md) for the proposed v0.8 extension (`cross_cutting_patterns:`) and why it would not constitute cheating.
 
 **CodeDNA is most effective when there is a navigable call chain.** The `used_by:` graph guides the agent from entry point to all affected files. For cross-cutting concerns (same fix in many independent files with no shared ancestor), the benefit is smaller because there is no natural navigation path to follow.
