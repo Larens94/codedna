@@ -231,6 +231,11 @@ Full report: [`benchmark_agent/claude_code_challenge/django__django-13495/BENCHM
 Session logs: [control](./benchmark_agent/claude_code_challenge/django__django-13495/session_log_control.md) · [codedna](./benchmark_agent/claude_code_challenge/django__django-13495/session_log_codedna.md)
 Reproduce: [`HOW_TO_RERUN.md`](./benchmark_agent/claude_code_challenge/django__django-13495/HOW_TO_RERUN.md)
 
+**Run it yourself:**
+- Clone the control: `git clone https://github.com/Larens94/codedna-challenge-control`
+- Clone the CodeDNA version: `git clone https://github.com/Larens94/codedna-challenge-codedna`
+- Paste the same prompt into your agent and score how many of the 7 patch files it touches.
+
 ---
 
 ## 🗺️ Roadmap

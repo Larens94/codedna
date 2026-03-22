@@ -1,38 +1,45 @@
-# Come rieseguire il benchmark django__django-13495
+# How to rerun the benchmark django__django-13495
 
-## Struttura
+## Quickest way: public repos
+
+```bash
+# Control (vanilla Django, no annotations)
+git clone https://github.com/Larens94/codedna-challenge-control
+cd codedna-challenge-control
+claude   # paste the prompt below
+
+# CodeDNA version (same Django + full annotations)
+git clone https://github.com/Larens94/codedna-challenge-codedna
+cd codedna-challenge-codedna
+claude   # paste the same prompt
+```
+
+---
+
+## Local setup (from this repo)
 
 ```
 django__django-13495/
-├── control/          ← Django vanilla, nessuna annotazione
-├── codedna/          ← Django con annotazioni CodeDNA
-├── _backup_control/  ← backup originale control
-├── _backup_codedna/  ← backup originale codedna
+├── control/          ← Django vanilla, no annotations
+├── codedna/          ← Django with CodeDNA annotations
+├── _backup_control/  ← pristine backup of control
+├── _backup_codedna/  ← pristine backup of codedna
 ├── problem_statement.txt
 └── HOW_TO_RERUN.md
 ```
 
----
-
-## Prima di ogni sessione: ripristino
-
-Eseguire dal terminale:
+Restore before each run:
 
 ```bash
 BASE=~/Desktop/automation-lab/dynamic-bi-factory/codedna/benchmark_agent/projects_swebench/django__django-13495
 
-# ripristina control
-rm -rf "$BASE/control"
-cp -r "$BASE/_backup_control" "$BASE/control"
-
-# ripristina codedna
-rm -rf "$BASE/codedna"
-cp -r "$BASE/_backup_codedna" "$BASE/codedna"
+rm -rf "$BASE/control" && cp -r "$BASE/_backup_control" "$BASE/control"
+rm -rf "$BASE/codedna"  && cp -r "$BASE/_backup_codedna"  "$BASE/codedna"
 ```
 
 ---
 
-## Apertura delle due istanze di Claude Code
+## Opening the two Claude Code instances
 
 **Istanza A — control:**
 ```bash
