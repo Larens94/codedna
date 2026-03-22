@@ -28,12 +28,12 @@
 
 ## How it works — live benchmark data
 
-![CodeDNA Navigation Demo](./paper/codedna_viz.gif)
+![CodeDNA Navigation Demo](./docs/codedna_viz.gif)
 
 > Three visual metaphors, same real data (django__django-11808 · DeepSeek-Chat · 5 runs).
 > **Without CodeDNA**: agent opens 2 random files and stops — 8/10 critical files missed.
 > **With CodeDNA**: follows the `used_by:` chain — finds 6/10 critical files. Retry risk −52%.
-> [▶ Interactive version](./paper/codedna_viz.html)
+> [▶ Interactive version](./docs/codedna_viz.html)
 
 > **🔄 The Network Effect:** When an AI agent writes CodeDNA annotations, it leaves a navigable trail for every other agent that reads the code after it — regardless of vendor or model. The more agents that participate, the more useful the protocol becomes.
 
