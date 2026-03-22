@@ -1,0 +1,787 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CodeDNA — Visual Explainer</title>
+<style>
+* { box-sizing: border-box; margin: 0; padding: 0; }
+body {
+  background: #f4f6fa;
+  font-family: 'Segoe UI', system-ui, sans-serif;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 28px 16px 40px;
+  gap: 20px;
+}
+
+header {
+  text-align: center;
+}
+header h1 {
+  font-size: 1.5rem;
+  font-weight: 800;
+  color: #1a1a2e;
+  letter-spacing: -0.5px;
+}
+header p {
+  margin-top: 6px;
+  font-size: 0.82rem;
+  color: #889;
+}
+
+.panels {
+  display: flex;
+  gap: 16px;
+  width: 100%;
+  max-width: 1200px;
+  justify-content: center;
+  flex-wrap: wrap;
+}
+
+.panel {
+  background: #ffffff;
+  border: 1px solid #dde3ee;
+  border-radius: 14px;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-width: 300px;
+  max-width: 380px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.06);
+}
+
+.panel-label {
+  text-align: center;
+  padding: 12px 16px 4px;
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 1.5px;
+  text-transform: uppercase;
+  color: #aab;
+}
+
+.panel-title {
+  text-align: center;
+  font-size: 1.1rem;
+  font-weight: 800;
+  padding: 2px 16px 10px;
+  color: #1a1a2e;
+}
+
+canvas {
+  width: 100%;
+  display: block;
+}
+
+.score-row {
+  display: flex;
+  border-top: 1px solid #eef1f7;
+}
+.score-half {
+  flex: 1;
+  padding: 12px 16px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 3px;
+}
+.score-half:first-child { border-right: 1px solid #eef1f7; background: #fff8f8; }
+.score-half:last-child  { background: #f4fdf9; }
+.score-num {
+  font-size: 2rem;
+  font-weight: 900;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.score-half:first-child .score-num { color: #d63c3c; }
+.score-half:last-child  .score-num { color: #00a87a; }
+.score-label {
+  font-size: 0.62rem;
+  color: #99a;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  text-align: center;
+}
+</style>
+</head>
+<body>
+
+<header>
+  <h1>How an AI Agent Navigates Code</h1>
+  <p>Real data · django__django-11808 · 10 critical files must be found to fix the bug</p>
+</header>
+
+<div class="panels">
+
+  <!-- PANEL 1: CONSTELLATION -->
+  <div class="panel">
+    <div class="panel-label">Metaphor 1 — Night Sky</div>
+    <div class="panel-title">Stars vs. Constellation</div>
+    <canvas id="c1" height="340"></canvas>
+    <div class="score-row">
+      <div class="score-half">
+        <div class="score-num" id="s1a">2</div>
+        <div class="score-label">Without CodeDNA<br>files found</div>
+      </div>
+      <div class="score-half">
+        <div class="score-num" id="s1b">6</div>
+        <div class="score-label">With CodeDNA<br>files found</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 2: FLASHLIGHT -->
+  <div class="panel">
+    <div class="panel-label">Metaphor 2 — Dark Room</div>
+    <div class="panel-title">Torch vs. Lights On</div>
+    <canvas id="c2" height="340"></canvas>
+    <div class="score-row">
+      <div class="score-half">
+        <div class="score-num">52%</div>
+        <div class="score-label">Sessions end<br>with wrong fix</div>
+      </div>
+      <div class="score-half">
+        <div class="score-num">25%</div>
+        <div class="score-label">Sessions end<br>with wrong fix</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PANEL 3: GPS -->
+  <div class="panel">
+    <div class="panel-label">Metaphor 3 — Navigation</div>
+    <div class="panel-title">Lost vs. GPS Route</div>
+    <canvas id="c3" height="340"></canvas>
+    <div class="score-row">
+      <div class="score-half">
+        <div class="score-num">11</div>
+        <div class="score-label">Files opened<br>to find 2</div>
+      </div>
+      <div class="score-half">
+        <div class="score-num">6</div>
+        <div class="score-label">Files opened<br>to find 6</div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<script>
+// ── UTILS ─────────────────────────────────────────────────────────────────
+
+function dpr(canvas) {
+  const r = window.devicePixelRatio || 1;
+  const w = canvas.clientWidth;
+  const h = canvas.clientHeight || parseInt(canvas.getAttribute('height'));
+  canvas.width  = w * r;
+  canvas.height = h * r;
+  const ctx = canvas.getContext('2d');
+  ctx.scale(r, r);
+  return { ctx, w, h };
+}
+
+function lerp(a, b, t) { return a + (b-a)*t; }
+function easeInOut(t) { return t<.5 ? 2*t*t : -1+(4-2*t)*t; }
+function rand(a,b) { return a + Math.random()*(b-a); }
+
+// ══════════════════════════════════════════════════════════════════════════
+// PANEL 1: CONSTELLATION
+// Left = random stars, no lines, agent lost
+// Right = constellation lines, agent follows the path
+// ══════════════════════════════════════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('c1');
+  const { ctx, w, h } = dpr(canvas);
+
+  const cx = w/2; // divider x
+  const STARS_COUNT = 22;
+  const GT_COUNT = 10;
+
+  // Fixed star positions (seeded visual layout)
+  const rawStars = [
+    // GT stars (first 10)
+    {rx:0.18,ry:0.25}, {rx:0.35,ry:0.15}, {rx:0.55,ry:0.12},
+    {rx:0.72,ry:0.22}, {rx:0.82,ry:0.42}, {rx:0.65,ry:0.58},
+    {rx:0.42,ry:0.72}, {rx:0.22,ry:0.65}, {rx:0.12,ry:0.48},
+    {rx:0.48,ry:0.42},
+    // Non-GT stars (12)
+    {rx:0.28,ry:0.38}, {rx:0.62,ry:0.32}, {rx:0.78,ry:0.65},
+    {rx:0.32,ry:0.85}, {rx:0.68,ry:0.82}, {rx:0.85,ry:0.18},
+    {rx:0.08,ry:0.78}, {rx:0.55,ry:0.88}, {rx:0.15,ry:0.12},
+    {rx:0.92,ry:0.55}, {rx:0.45,ry:0.30}, {rx:0.75,ry:0.48},
+  ];
+
+  // Star objects for each half (left and right)
+  function makeStars(offsetX, width) {
+    return rawStars.map((s,i) => ({
+      x: offsetX + s.rx * width,
+      y: s.ry * h,
+      isGT: i < GT_COUNT,
+      r: i < GT_COUNT ? 4.5 : 2.5,
+      brightness: 0,
+      targetBrightness: 1,
+      i
+    }));
+  }
+
+  const starsL = makeStars(0,       cx - 2); // left half
+  const starsR = makeStars(cx + 2,  cx - 2); // right half
+
+  // Constellation edges (between GT stars by index)
+  const EDGES = [[0,9],[9,1],[1,2],[2,3],[3,4],[4,5],[5,9],[9,6],[6,7],[7,8],[8,0]];
+
+  // Control sequence: visits 3 wrong + 2 GT then stops
+  const CTRL_VISIT = [10, 0, 11, 9, 12]; // indices, 0 and 9 are GT
+  // DNA sequence: follows constellation
+  const DNA_VISIT  = [9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 10]; // 9 GT + 1 wrong
+
+  let phase = 0; // 0=init, 1=animating
+  let t = 0;
+  const STEP = 80;  // frames per step
+  let ctrlStep = 0, dnaStep = 0;
+  let edgesDrawn = new Set();
+
+  // Twinkle
+  const twinkle = rawStars.map(() => rand(0, Math.PI*2));
+
+  function draw(now) {
+    ctx.clearRect(0, 0, w, h);
+    t++;
+
+    // Backgrounds
+    // Left gradient (light pinkish)
+    const bgL = ctx.createLinearGradient(0,0,0,h);
+    bgL.addColorStop(0,'#fff6f6'); bgL.addColorStop(1,'#fdeaea');
+    ctx.fillStyle = bgL;
+    ctx.fillRect(0, 0, cx-1, h);
+
+    // Right gradient (light teal)
+    const bgR = ctx.createLinearGradient(0,0,0,h);
+    bgR.addColorStop(0,'#f4fdfb'); bgR.addColorStop(1,'#e8faf4');
+    ctx.fillStyle = bgR;
+    ctx.fillRect(cx+1, 0, cx-1, h);
+
+    // Divider
+    ctx.strokeStyle = '#dde3ee';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([6,4]);
+    ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,h); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Labels
+    ctx.font = '700 9px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#d6363660';
+    ctx.fillText('WITHOUT  CodeDNA', cx/2, 14);
+    ctx.fillStyle = '#00a87a80';
+    ctx.fillText('WITH  CodeDNA', cx + cx/2, 14);
+
+    // Draw constellation edges (right side only)
+    const edgeProgress = Math.min((t - STEP*2) / (STEP*EDGES.length), 1);
+    if (edgeProgress > 0) {
+      EDGES.forEach((e, ei) => {
+        const ep = Math.max(0, Math.min(1, edgeProgress * EDGES.length - ei));
+        if (ep <= 0) return;
+        const a = starsR[e[0]], b = starsR[e[1]];
+        ctx.save();
+        ctx.globalAlpha = ep * 0.6;
+        ctx.strokeStyle = '#00aaff';
+        ctx.lineWidth = 1.2;
+        ctx.shadowColor = '#00aaff';
+        ctx.shadowBlur = 8;
+        // Partial draw
+        const dx = b.x - a.x, dy = b.y - a.y;
+        ctx.beginPath();
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(a.x + dx*ep, a.y + dy*ep);
+        ctx.stroke();
+        ctx.restore();
+      });
+    }
+
+    // Animate agent visits
+    const stepT = Math.floor(t / STEP);
+    const ctrlVisitsDone = Math.min(stepT, CTRL_VISIT.length);
+    const dnaVisitsDone  = Math.min(Math.max(0, stepT - 1), DNA_VISIT.length);
+
+    // Draw stars
+    [starsL, starsR].forEach((stars, side) => {
+      const visits = side === 0 ? CTRL_VISIT.slice(0, ctrlVisitsDone) : DNA_VISIT.slice(0, dnaVisitsDone);
+      const visitSet = new Set(visits);
+
+      stars.forEach((star, si) => {
+        const tw = Math.sin(t * 0.03 + twinkle[si]) * 0.15 + 0.85;
+        const visited = visitSet.has(si);
+        const isGT = si < GT_COUNT;
+
+        ctx.save();
+        if (visited && isGT) {
+          const col = side === 0 ? '#e05555' : '#00a87a';
+          ctx.shadowColor = col; ctx.shadowBlur = 12;
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.r * 1.5 * tw, 0, Math.PI*2);
+          ctx.fillStyle = col; ctx.fill();
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.r * 3, 0, Math.PI*2);
+          ctx.strokeStyle = col + '44'; ctx.lineWidth = 1.5; ctx.stroke();
+        } else if (visited && !isGT) {
+          ctx.shadowColor = '#f08030'; ctx.shadowBlur = 8;
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.r * tw, 0, Math.PI*2);
+          ctx.fillStyle = '#e07030'; ctx.fill();
+        } else if (isGT) {
+          const alpha = side === 1 ? 0.55 : 0.18;
+          ctx.globalAlpha = alpha;
+          ctx.shadowColor = side === 1 ? '#00a87a' : '#aaa';
+          ctx.shadowBlur = side === 1 ? 6 : 1;
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.r * tw, 0, Math.PI*2);
+          ctx.fillStyle = side === 1 ? '#00a87a' : '#999bbb';
+          ctx.fill();
+        } else {
+          ctx.globalAlpha = 0.2 * tw;
+          ctx.beginPath();
+          ctx.arc(star.x, star.y, star.r * tw, 0, Math.PI*2);
+          ctx.fillStyle = '#99aabb'; ctx.fill();
+        }
+        ctx.restore();
+      });
+    });
+
+    // Draw agent cursor (left side - wandering)
+    if (ctrlVisitsDone > 0 && ctrlVisitsDone < CTRL_VISIT.length + 1) {
+      const cur = starsL[CTRL_VISIT[Math.min(ctrlVisitsDone-1, CTRL_VISIT.length-1)]];
+      const pulse = 0.5 + 0.5 * Math.sin(t * 0.15);
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cur.x, cur.y, 8 + pulse*3, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(255,200,100,${0.5 + pulse*0.3})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Draw agent cursor (right side - following constellation)
+    if (dnaVisitsDone > 0 && dnaVisitsDone < DNA_VISIT.length + 1) {
+      const cur = starsR[DNA_VISIT[Math.min(dnaVisitsDone-1, DNA_VISIT.length-1)]];
+      const pulse = 0.5 + 0.5 * Math.sin(t * 0.15);
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(cur.x, cur.y, 8 + pulse*3, 0, Math.PI*2);
+      ctx.strokeStyle = `rgba(0,212,170,${0.5 + pulse*0.3})`;
+      ctx.lineWidth = 1.5;
+      ctx.stroke();
+      ctx.restore();
+    }
+
+    // Reset loop
+    const totalFrames = STEP * (Math.max(CTRL_VISIT.length, DNA_VISIT.length) + 4);
+    if (t > totalFrames + 60) t = 0;
+
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+})();
+
+
+// ══════════════════════════════════════════════════════════════════════════
+// PANEL 2: FLASHLIGHT
+// Left = tiny torch moving randomly in dark room with file icons
+// Right = room fully illuminated, arrows connect GT files
+// ══════════════════════════════════════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('c2');
+  const { ctx, w, h } = dpr(canvas);
+  const cx = w/2;
+
+  // File positions (same layout both sides)
+  const files = [
+    // GT files (index 0-9)
+    {rx:0.15,ry:0.20}, {rx:0.42,ry:0.14}, {rx:0.72,ry:0.18},
+    {rx:0.85,ry:0.42}, {rx:0.70,ry:0.68}, {rx:0.45,ry:0.78},
+    {rx:0.18,ry:0.72}, {rx:0.08,ry:0.48}, {rx:0.55,ry:0.45},
+    {rx:0.32,ry:0.50},
+    // non-GT
+    {rx:0.28,ry:0.32}, {rx:0.62,ry:0.34}, {rx:0.80,ry:0.22},
+    {rx:0.22,ry:0.88}, {rx:0.68,ry:0.88}, {rx:0.48,ry:0.92},
+    {rx:0.90,ry:0.72}, {rx:0.08,ry:0.92}, {rx:0.52,ry:0.28},
+    {rx:0.38,ry:0.68},
+  ];
+
+  // DNA path between GT files
+  const DNA_PATH = [8, 9, 0, 1, 2, 3, 4, 5, 6, 7]; // GT indices in order
+
+  let t = 0;
+  const SPEED = 0.007;
+  // Torch wander path (left side) — visits some non-GT then a few GT
+  const torchPath = [
+    {rx:0.50,ry:0.50}, {rx:0.28,ry:0.32}, {rx:0.45,ry:0.14},
+    {rx:0.62,ry:0.34}, {rx:0.55,ry:0.45}, {rx:0.32,ry:0.50},
+    {rx:0.80,ry:0.22}, {rx:0.50,ry:0.50},
+  ];
+  // GT indices visited by torch: 8,9
+  const CTRL_GT_VISITED = new Set([8, 9]);
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    t += SPEED;
+    if (t > 1) t = 0;
+
+    // Both halves: light background
+    ctx.fillStyle = '#fdf8f8';
+    ctx.fillRect(0, 0, cx-1, h);
+    ctx.fillStyle = '#f5fdf9';
+    ctx.fillRect(cx+1, 0, cx-1, h);
+
+    // Divider
+    ctx.strokeStyle = '#dde3ee';
+    ctx.lineWidth = 1;
+    ctx.setLineDash([6,4]);
+    ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,h); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Labels
+    ctx.font = '700 9px Segoe UI';
+    ctx.textAlign = 'center';
+    ctx.fillStyle = '#d6363660';
+    ctx.fillText('WITHOUT  CodeDNA', cx/2, 14);
+    ctx.fillStyle = '#00a87a80';
+    ctx.fillText('WITH  CodeDNA', cx + cx/2, 14);
+
+    // ── LEFT: torch in dark room ──
+    // Compute torch position along wander path
+    const torchSegCount = torchPath.length - 1;
+    const torchTotal = t * torchSegCount;
+    const torchSeg = Math.min(Math.floor(torchTotal), torchSegCount - 1);
+    const torchFrac = easeInOut(torchTotal - torchSeg);
+    const ta = torchPath[torchSeg], tb = torchPath[torchSeg + 1] || torchPath[torchSeg];
+    const tx = lerp(ta.rx, tb.rx, torchFrac) * cx;
+    const ty = lerp(ta.ry, tb.ry, torchFrac) * h;
+
+    // Torch radial gradient (light mode: soft shadow around torch)
+    const torchR = w * 0.1;
+    // Darken everything outside torch
+    ctx.save();
+    ctx.fillStyle = 'rgba(200,170,160,0.45)';
+    ctx.fillRect(0, 0, cx-1, h);
+    // Erase torch circle
+    ctx.globalCompositeOperation = 'destination-out';
+    const grad = ctx.createRadialGradient(tx, ty, 0, tx, ty, torchR);
+    grad.addColorStop(0, 'rgba(0,0,0,0.55)');
+    grad.addColorStop(0.6, 'rgba(0,0,0,0.3)');
+    grad.addColorStop(1, 'rgba(0,0,0,0)');
+    ctx.fillStyle = grad;
+    ctx.beginPath(); ctx.arc(tx, ty, torchR, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+
+    // Draw files (left half)
+    files.forEach((f, i) => {
+      const fx = f.rx * cx, fy = f.ry * h;
+      const isGT = i < 10;
+      const dist = Math.hypot(fx - tx, fy - ty);
+      const lit  = dist < torchR * 1.1;
+      const visited = CTRL_GT_VISITED.has(i) && isGT;
+
+      ctx.save();
+      if (visited) {
+        ctx.shadowColor = '#e05555'; ctx.shadowBlur = 10;
+        drawFileIcon(ctx, fx, fy, 13, '#fff0f0', '#e05555');
+      } else if (lit) {
+        drawFileIcon(ctx, fx, fy, 11, '#fff', isGT ? '#c07030' : '#8899aa');
+      } else {
+        ctx.globalAlpha = 0.18;
+        drawFileIcon(ctx, fx, fy, 11, '#eee', '#bbb');
+        ctx.globalAlpha = 1;
+      }
+      ctx.restore();
+    });
+
+    // Torch cursor
+    ctx.save();
+    ctx.beginPath();
+    ctx.arc(tx, ty, 5, 0, Math.PI*2);
+    ctx.fillStyle = 'rgba(220,100,60,0.9)';
+    ctx.shadowColor = '#e05555'; ctx.shadowBlur = 10;
+    ctx.fill();
+    ctx.restore();
+
+    // ── RIGHT: fully lit room with arrows ──
+    // Already light background — no overlay needed
+
+    // Draw DNA path arrows
+    const pathProgress = Math.min(t * DNA_PATH.length * 1.2, DNA_PATH.length);
+    DNA_PATH.forEach((fi, pi) => {
+      if (pi >= pathProgress) return;
+      if (pi < DNA_PATH.length - 1) {
+        const segProgress = Math.min(pathProgress - pi, 1);
+        const a = files[fi], b = files[DNA_PATH[pi+1]];
+        const ax = cx+1 + a.rx * cx, ay = a.ry * h;
+        const bx = cx+1 + b.rx * cx, by = b.ry * h;
+        const ex = lerp(ax, bx, easeInOut(segProgress));
+        const ey = lerp(ay, by, easeInOut(segProgress));
+        ctx.save();
+        ctx.strokeStyle = '#00d4aa';
+        ctx.lineWidth = 1.8;
+        ctx.shadowColor = '#00d4aa'; ctx.shadowBlur = 8;
+        ctx.globalAlpha = 0.7;
+        ctx.beginPath(); ctx.moveTo(ax, ay); ctx.lineTo(ex, ey); ctx.stroke();
+        ctx.restore();
+      }
+    });
+
+    // Draw files (right half)
+    files.forEach((f, i) => {
+      const fx = cx+1 + f.rx * cx, fy = f.ry * h;
+      const isGT = i < 10;
+      const onPath = DNA_PATH.includes(i);
+      const visitedIdx = DNA_PATH.indexOf(i);
+      const isVisited = onPath && visitedIdx < pathProgress;
+
+      ctx.save();
+      if (isVisited) {
+        ctx.shadowColor = '#00a87a'; ctx.shadowBlur = 12;
+        drawFileIcon(ctx, fx, fy, 13, '#edfdf6', '#00a87a');
+      } else if (isGT) {
+        drawFileIcon(ctx, fx, fy, 11, '#f0faf6', '#66c9a8');
+      } else {
+        ctx.globalAlpha = 0.25;
+        drawFileIcon(ctx, fx, fy, 10, '#f0f4f0', '#aac4b8');
+      }
+      ctx.restore();
+    });
+
+    // Agent on right side (following path)
+    if (pathProgress > 0) {
+      const curIdx = Math.min(Math.floor(pathProgress), DNA_PATH.length-1);
+      const nxtIdx = Math.min(curIdx+1, DNA_PATH.length-1);
+      const frac = easeInOut(pathProgress - curIdx);
+      const cf = files[DNA_PATH[curIdx]], nf = files[DNA_PATH[nxtIdx]];
+      const ax = cx+1 + lerp(cf.rx, nf.rx, frac) * cx;
+      const ay = lerp(cf.ry, nf.ry, frac) * h;
+      ctx.save();
+      ctx.beginPath(); ctx.arc(ax, ay, 5, 0, Math.PI*2);
+      ctx.fillStyle = '#00ff88'; ctx.shadowColor='#00ff88'; ctx.shadowBlur=16;
+      ctx.fill();
+      ctx.restore();
+    }
+
+    requestAnimationFrame(draw);
+  }
+
+  function drawFileIcon(ctx, x, y, s, fill, stroke) {
+    const fold = s * 0.35;
+    ctx.beginPath();
+    ctx.moveTo(x-s, y-s);
+    ctx.lineTo(x+s-fold, y-s);
+    ctx.lineTo(x+s, y-s+fold);
+    ctx.lineTo(x+s, y+s);
+    ctx.lineTo(x-s, y+s);
+    ctx.closePath();
+    ctx.fillStyle = fill; ctx.fill();
+    ctx.strokeStyle = stroke; ctx.lineWidth = 1.5; ctx.stroke();
+    // fold triangle
+    ctx.beginPath();
+    ctx.moveTo(x+s-fold, y-s);
+    ctx.lineTo(x+s-fold, y-s+fold);
+    ctx.lineTo(x+s, y-s+fold);
+    ctx.strokeStyle = stroke; ctx.lineWidth = 1; ctx.stroke();
+    // lines inside
+    ctx.strokeStyle = stroke + '55'; ctx.lineWidth = 0.8;
+    [-0.15, 0.15, 0.45].forEach(fy => {
+      ctx.beginPath();
+      ctx.moveTo(x-s*0.6, y+s*fy);
+      ctx.lineTo(x+s*0.6, y+s*fy);
+      ctx.stroke();
+    });
+  }
+
+  requestAnimationFrame(draw);
+})();
+
+
+// ══════════════════════════════════════════════════════════════════════════
+// PANEL 3: GPS / ROUTE
+// Left = car wandering city streets, dead ends, confusion
+// Right = GPS route highlighted, car drives direct
+// ══════════════════════════════════════════════════════════════════════════
+(function() {
+  const canvas = document.getElementById('c3');
+  const { ctx, w, h } = dpr(canvas);
+  const cx = w/2;
+
+  // Grid of nodes (intersections = files)
+  const COLS = 5, ROWS = 5;
+  const PAD = 36;
+  const GW = (cx - PAD*2) / (COLS-1);
+  const GH = (h - PAD*2) / (ROWS-1);
+
+  function nodePos(side, col, row) {
+    const ox = side === 0 ? PAD : cx + PAD;
+    return { x: ox + col * GW, y: PAD + row * GH };
+  }
+
+  // Mark GT nodes (must visit)
+  const GT_NODES = new Set(['0,0','1,0','2,0','3,0','4,0','4,1','4,2','3,3','2,4','1,4']);
+  // Control wander path (many wrong turns)
+  const CTRL_PATH = [
+    [2,2],[1,2],[1,1],[0,1],[0,2],[1,2],[2,2],[3,2],[3,1],[2,1],
+    [2,0],[3,0],[4,0],[4,1],[3,1],[3,2],[4,2],[4,3],[3,3],[3,4],
+    [2,4],[2,3],[1,3],[1,4]
+  ];
+  // DNA path (optimal, follows annotations)
+  const DNA_PATH = [
+    [0,0],[1,0],[2,0],[3,0],[4,0],[4,1],[4,2],[3,3],[2,4],[1,4]
+  ];
+
+  // Which nodes are GT in control path
+  const ctrlGTVisited = new Set();
+  CTRL_PATH.forEach(([c,r]) => { if(GT_NODES.has(`${c},${r}`)) ctrlGTVisited.add(`${c},${r}`); });
+
+  let t = 0;
+  const SPEED = 0.004;
+
+  function draw() {
+    ctx.clearRect(0, 0, w, h);
+    t += SPEED;
+    if (t > 1) t = 0;
+
+    // Background
+    ctx.fillStyle = '#faf8f8'; ctx.fillRect(0, 0, cx-1, h);
+    ctx.fillStyle = '#f5fdf9'; ctx.fillRect(cx+1, 0, cx-1, h);
+
+    // Divider
+    ctx.strokeStyle = '#dde3ee'; ctx.lineWidth = 1;
+    ctx.setLineDash([6,4]);
+    ctx.beginPath(); ctx.moveTo(cx,0); ctx.lineTo(cx,h); ctx.stroke();
+    ctx.setLineDash([]);
+
+    // Labels
+    ctx.font = '700 9px Segoe UI'; ctx.textAlign='center';
+    ctx.fillStyle = '#d6363660';
+    ctx.fillText('WITHOUT  CodeDNA', cx/2, 14);
+    ctx.fillStyle = '#00a87a80';
+    ctx.fillText('WITH  CodeDNA', cx + cx/2, 14);
+
+    [0,1].forEach(side => {
+      const path  = side === 0 ? CTRL_PATH : DNA_PATH;
+      const color = side === 0 ? '#d63c3c' : '#00a87a';
+      const pathProgress = Math.min(t * path.length * 1.1, path.length);
+      const visitedNodes = new Set();
+      for(let i=0;i<Math.floor(pathProgress);i++) visitedNodes.add(`${path[i][0]},${path[i][1]}`);
+
+      // Draw grid streets
+      for(let row=0;row<ROWS;row++) for(let col=0;col<COLS;col++) {
+        const pos = nodePos(side, col, row);
+        if(col<COLS-1) {
+          const pos2 = nodePos(side, col+1, row);
+          ctx.strokeStyle='#dde4ee'; ctx.lineWidth=8;
+          ctx.beginPath(); ctx.moveTo(pos.x,pos.y); ctx.lineTo(pos2.x,pos2.y); ctx.stroke();
+        }
+        if(row<ROWS-1) {
+          const pos2 = nodePos(side, col, row+1);
+          ctx.strokeStyle='#dde4ee'; ctx.lineWidth=8;
+          ctx.beginPath(); ctx.moveTo(pos.x,pos.y); ctx.lineTo(pos2.x,pos2.y); ctx.stroke();
+        }
+      }
+
+      // Draw path traveled so far
+      ctx.save();
+      ctx.strokeStyle = color; ctx.lineWidth = 3;
+      ctx.shadowColor = color; ctx.shadowBlur = 10;
+      ctx.globalAlpha = 0.7;
+      ctx.lineJoin = 'round'; ctx.lineCap = 'round';
+      ctx.beginPath();
+      path.forEach(([col,row], i) => {
+        const pos = nodePos(side, col, row);
+        const segProgress = Math.min(pathProgress - i, 1);
+        if(segProgress <= 0) return;
+        if(i === 0) { ctx.moveTo(pos.x, pos.y); return; }
+        const prev = nodePos(side, path[i-1][0], path[i-1][1]);
+        const ex = lerp(prev.x, pos.x, easeInOut(segProgress));
+        const ey = lerp(prev.y, pos.y, easeInOut(segProgress));
+        if(i===1) ctx.moveTo(prev.x, prev.y);
+        ctx.lineTo(ex, ey);
+      });
+      ctx.stroke();
+      ctx.restore();
+
+      // Draw nodes
+      for(let row=0;row<ROWS;row++) for(let col=0;col<COLS;col++) {
+        const pos = nodePos(side, col, row);
+        const key = `${col},${row}`;
+        const isGT = GT_NODES.has(key);
+        const visited = visitedNodes.has(key);
+        ctx.save();
+        if(visited && isGT) {
+          ctx.shadowColor = color; ctx.shadowBlur = 14;
+          ctx.beginPath(); ctx.arc(pos.x, pos.y, 9, 0, Math.PI*2);
+          ctx.fillStyle = side===0 ? '#fff0f0' : '#edfdf6'; ctx.fill();
+          ctx.strokeStyle = color; ctx.lineWidth = 2.5; ctx.stroke();
+          ctx.fillStyle = color; ctx.font = 'bold 10px sans-serif'; ctx.textAlign='center'; ctx.textBaseline='middle';
+          ctx.fillText('●', pos.x, pos.y);
+        } else if(visited && !isGT) {
+          ctx.beginPath(); ctx.arc(pos.x, pos.y, 6, 0, Math.PI*2);
+          ctx.fillStyle = '#fff8f0'; ctx.fill();
+          ctx.strokeStyle = '#e08030'; ctx.lineWidth = 1.5; ctx.stroke();
+        } else if(isGT) {
+          ctx.globalAlpha = side===1 ? 0.7 : 0.3;
+          ctx.beginPath(); ctx.arc(pos.x, pos.y, 7, 0, Math.PI*2);
+          ctx.fillStyle = '#fff'; ctx.fill();
+          ctx.strokeStyle = color; ctx.lineWidth = 1.5; ctx.stroke();
+        } else {
+          ctx.globalAlpha = 0.35;
+          ctx.beginPath(); ctx.arc(pos.x, pos.y, 4, 0, Math.PI*2);
+          ctx.fillStyle = '#e8eef4'; ctx.fill();
+          ctx.strokeStyle = '#b0bdd0'; ctx.lineWidth = 1; ctx.stroke();
+        }
+        ctx.restore();
+      }
+
+      // Car (agent) position
+      const carIdx = Math.min(Math.floor(pathProgress), path.length-1);
+      const carNext = Math.min(carIdx+1, path.length-1);
+      const carFrac = easeInOut(pathProgress - carIdx);
+      const ca = nodePos(side, path[carIdx][0], path[carIdx][1]);
+      const cb = nodePos(side, path[carNext][0], path[carNext][1]);
+      const carX = lerp(ca.x, cb.x, carFrac);
+      const carY = lerp(ca.y, cb.y, carFrac);
+
+      ctx.save();
+      // Car body
+      ctx.shadowColor = color; ctx.shadowBlur = 14;
+      ctx.fillStyle = color;
+      ctx.beginPath();
+      ctx.roundRect(carX-7, carY-5, 14, 10, 3);
+      ctx.fill();
+      // Windows
+      ctx.fillStyle = side===0 ? '#fff0f0' : '#edfdf6';
+      ctx.beginPath();
+      ctx.roundRect(carX-4, carY-3, 8, 6, 2);
+      ctx.fill();
+      ctx.restore();
+    });
+
+    requestAnimationFrame(draw);
+  }
+  requestAnimationFrame(draw);
+})();
+
+// Polyfill for roundRect if needed
+if (!CanvasRenderingContext2D.prototype.roundRect) {
+  CanvasRenderingContext2D.prototype.roundRect = function(x,y,w,h,r) {
+    this.beginPath();
+    this.moveTo(x+r,y);
+    this.lineTo(x+w-r,y); this.arcTo(x+w,y,x+w,y+r,r);
+    this.lineTo(x+w,y+h-r); this.arcTo(x+w,y+h,x+w-r,y+h,r);
+    this.lineTo(x+r,y+h); this.arcTo(x,y+h,x,y+h-r,r);
+    this.lineTo(x,y+r); this.arcTo(x,y,x+r,y,r);
+    this.closePath();
+    return this;
+  };
+}
+</script>
+</body>
+</html>
