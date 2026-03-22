@@ -1,10 +1,12 @@
 #!/usr/bin/env python3
 """codedna_setup.py — CLI setup tool for CodeDNA Communication Protocol v0.7.
 
-exports: main() -> int, cmd_install(args, target_dir), cmd_validate(args, target_dir) -> int, cmd_annotate(args, _), cmd_check(_, target_dir)
+exports: main() -> int, cmd_install(args, target_dir),
+         cmd_validate(args, target_dir) -> int, cmd_annotate(args, _), cmd_check(_, target_dir)
 used_by: users via CLI, integrations/install.sh
-rules:   UNIVERSAL_PROMPT must always reflect current CodeDNA version syntax; cmd_validate required fields must match current module docstring fields (exports/used_by/rules/agent)
-agent:   claude-sonnet-4-6 | 2026-03-21 | updated from v0.4 syntax to v0.7; aligned UNIVERSAL_PROMPT, cmd_validate required fields, and cmd_annotate prompt
+rules:   UNIVERSAL_PROMPT must always reflect current CodeDNA version syntax;
+         cmd_validate required fields must match current module docstring fields
+agent:   claude-sonnet-4-6 | 2026-03-21 | updated from v0.4 syntax to v0.7
 
 Usage:
     python tools/codedna_setup.py install          # interactive setup

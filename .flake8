@@ -1,0 +1,12 @@
+[flake8]
+max-line-length = 120
+# E203: Black formats slices as `x[1 :]` — conflicts with flake8, Black wins
+extend-ignore = E203
+exclude =
+    .git,
+    __pycache__,
+    venv,
+    .venv,
+    benchmark,
+    benchmark_agent,
+    docs,

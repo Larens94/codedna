@@ -28,7 +28,6 @@ import sys
 from collections import defaultdict
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
 RUNS_DIR = Path(__file__).parent.parent / "benchmark_agent" / "runs"
 PROJECTS_DIR = Path(__file__).parent.parent / "benchmark_agent" / "projects_swebench"
@@ -466,14 +465,14 @@ def print_stats(list_run: list[RunRecord], list_sft: list, list_dpo: list, list_
     print(f"  PRM examples:     {len(list_prm)}")
 
     if list_dpo:
-        print(f"\n  DPO pair types:")
+        print("\n  DPO pair types:")
         from collections import Counter
 
         counter = Counter(p["metadata"]["pair_type"] for p in list_dpo)
         for str_ptype, int_n in counter.items():
             print(f"    {str_ptype}: {int_n}")
 
-    print(f"\n  F1 distribution:")
+    print("\n  F1 distribution:")
     for run in sorted(list_run, key=lambda r: r.f1, reverse=True):
         str_bar = "█" * int(run.f1 * 20)
         print(f"    {str_bar:<20} {run.f1:.2f}  {run.model} / {run.task.split('-')[-1]} / {run.condition}")

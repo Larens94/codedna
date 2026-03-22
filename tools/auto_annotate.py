@@ -198,7 +198,7 @@ def generate_header(rel_path: str, info: dict, used_by_entries: dict) -> str:
     header = f'"""{rel_path} — {purpose}.\n\n'
     header += f"exports: {exports_str}\n"
     header += f"used_by: {used_by_str}\n"
-    header += f"rules:   none\n"
+    header += "rules:   none\n"
     header += '"""\n'
 
     return header
@@ -226,7 +226,6 @@ def generate_codedna_manifest(repo_root: Path, file_infos: dict, package: str | 
             continue
 
         # Get package path: use directory containing the file (2 levels deep for subpackages)
-        parent = str(Path(rel_path).parent)
         if package:
             # Within the --package scope, group at 2nd level (e.g. django/apps, django/contrib/admin)
             if len(parts) >= 4:
@@ -389,7 +388,7 @@ def main():
         py_files = py_files[: args.limit]
 
     total = len(py_files)
-    print(f"🧬 CodeDNA Auto-Annotator v0.7")
+    print("🧬 CodeDNA Auto-Annotator v0.7")
     print(f"   Repo: {repo_root}")
     print(f"   Scan: {scan_dir.relative_to(repo_root)}")
     print(f"   Files: {total}")
@@ -453,12 +452,12 @@ def main():
     if args.init:
         print(f"   .codedna manifest: {'previewed' if args.dry_run else 'written'}")
     if args.dry_run:
-        print(f"   Run without --dry-run to write changes.")
+        print("   Run without --dry-run to write changes.")
 
     # Stats
     total_exports = sum(len(i["exports"]) for i in file_infos.values())
     avg_exports = total_exports / len(file_infos) if file_infos else 0
-    print(f"\n   Stats:")
+    print("\n   Stats:")
     print(f"   Avg exports/file: {avg_exports:.1f}")
     print(f"   Total graph edges: {edges}")
 

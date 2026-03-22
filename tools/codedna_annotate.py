@@ -280,14 +280,14 @@ class LLM:
         """1 call → rules: content for the module."""
         skeleton = build_ast_skeleton(source, rel)
         resp = self._call(
-            f"You are generating the `rules:` field for a CodeDNA v0.8 module docstring.\n\n"
-            f"Below is a structural skeleton of the file (every class and method signature "
-            f"with its first body line). Use this to understand the full architecture.\n\n"
+            "You are generating the `rules:` field for a CodeDNA v0.8 module docstring.\n\n"
+            "Below is a structural skeleton of the file (every class and method signature "
+            "with its first body line). Use this to understand the full architecture.\n\n"
             f"File: {rel}\n```\n{skeleton}\n```\n\n"
-            f"Write 1-3 lines of hard architectural constraints a future agent MUST know before editing.\n"
-            f"Focus on constraints that apply to the whole module, not individual functions.\n"
-            f"Do NOT hint at specific bugs. Return only the constraint text.\n"
-            f"If no meaningful constraints exist, return exactly: none",
+            "Write 1-3 lines of hard architectural constraints a future agent MUST know before editing.\n"
+            "Focus on constraints that apply to the whole module, not individual functions.\n"
+            "Do NOT hint at specific bugs. Return only the constraint text.\n"
+            "If no meaningful constraints exist, return exactly: none",
             max_tokens=150,
         )
         return resp if resp else "none"
@@ -299,8 +299,8 @@ class LLM:
         blocks = "\n\n".join(f"### {f.name}\n```python\n{f.source}\n```" for f in funcs)
         resp = self._call(
             f"File: {rel}\n\n"
-            f"For each function, does it have NON-OBVIOUS domain constraints a future developer MUST know?\n"
-            f"YES → brief constraint (1-2 lines). NO → SKIP.\n\n"
+            "For each function, does it have NON-OBVIOUS domain constraints a future developer MUST know?\n"
+            "YES → brief constraint (1-2 lines). NO → SKIP.\n\n"
             f"{blocks}\n\n"
             f'Return ONLY valid JSON: {{"func_name": "constraint or SKIP", ...}}',
             max_tokens=500,
@@ -418,7 +418,7 @@ def inject_function_rules(source: str, func: FuncInfo, rules_text: str) -> str:
             inner = raw[3:-3].strip()
             new = [
                 f"{indent}{q}{inner}",
-                f"",
+                "",
                 f"{indent}Rules:   {rules_text}",
                 f"{indent}{q}",
             ]
@@ -426,7 +426,7 @@ def inject_function_rules(source: str, func: FuncInfo, rules_text: str) -> str:
         else:
             # Multi-line: insert before closing quotes
             end_idx = ds_end - 1  # 0-based
-            lines = lines[:end_idx] + [f"", f"{indent}Rules:   {rules_text}"] + lines[end_idx:]
+            lines = lines[:end_idx] + ["", f"{indent}Rules:   {rules_text}"] + lines[end_idx:]
     else:
         # No docstring → insert one before first body statement
         idx = func.body_lineno - 1  # 0-based
@@ -475,7 +475,7 @@ def run(
         repo_root = effective_root
     py_files = collect_files(target, exclude)
 
-    print(f"CodeDNA Annotator v0.8")
+    print("CodeDNA Annotator v0.8")
     print(f"Target  {target}")
     print(f"Levels  {levels}")
     print(f"Mode    {'DRY RUN' if dry_run else 'WRITE'}")
@@ -579,7 +579,7 @@ def run(
         if 1 in levels:
             if info.has_codedna and not force:
                 if verbose:
-                    print(f"    L1  skip (already annotated)")
+                    print("    L1  skip (already annotated)")
             else:
                 rules = "none"
                 if llm:
@@ -625,7 +625,7 @@ def cmd_check(target: Path, repo_root: Optional[Path], exclude: list[str], verbo
         repo_root = effective_root
 
     py_files = collect_files(target, exclude)
-    print(f"CodeDNA Check")
+    print("CodeDNA Check")
     print(f"Target  {target}")
     print(f"Files   {len(py_files)}")
     print()

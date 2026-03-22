@@ -20,8 +20,6 @@ Usage:
 """
 
 import subprocess
-import sys
-import re
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import Optional
