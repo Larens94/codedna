@@ -225,9 +225,11 @@ def get_tzname(self):
 
 This described an architectural principle, not the bug. The control saw the same `time_trunc_sql` call on the line immediately below the reported bug — and didn't touch it. CodeDNA read the constraint and applied the fix to the full pattern.
 
-> **Validity note**: this is a single run, not a statistically powered study. The result is presented as an illustrative case, not a population estimate. The causal mechanism is traceable: one annotation changed the frame from "fix DateField" to "fix the timezone pattern across all output fields." Reproduce it: [`benchmark_agent/projects_swebench/django__django-13495/HOW_TO_RERUN.md`](./benchmark_agent/projects_swebench/django__django-13495/HOW_TO_RERUN.md)
+> **Validity note**: this is a single run, not a statistically powered study. The result is presented as an illustrative case, not a population estimate. The causal mechanism is traceable: one annotation changed the frame from "fix DateField" to "fix the timezone pattern across all output fields."
 
-Full report: [`benchmark_agent/projects_swebench/django__django-13495/BENCHMARK_RESULTS.md`](./benchmark_agent/projects_swebench/django__django-13495/BENCHMARK_RESULTS.md)
+Full report: [`benchmark_agent/claude_code_challenge/django__django-13495/BENCHMARK_RESULTS.md`](./benchmark_agent/claude_code_challenge/django__django-13495/BENCHMARK_RESULTS.md)
+Session logs: [control](./benchmark_agent/claude_code_challenge/django__django-13495/session_log_control.md) · [codedna](./benchmark_agent/claude_code_challenge/django__django-13495/session_log_codedna.md)
+Reproduce: [`HOW_TO_RERUN.md`](./benchmark_agent/claude_code_challenge/django__django-13495/HOW_TO_RERUN.md)
 
 ---
 
