@@ -59,9 +59,11 @@
 Annotate an entire Python project automatically (AST structure + LLM semantic rules):
 
 ```bash
-pip install codedna
+pip install git+https://github.com/Larens94/codedna.git
 codedna init /path/to/your/project
 ```
+
+> PyPI release coming soon. Until then, install directly from GitHub.
 
 Three commands:
 
@@ -183,6 +185,49 @@ The working hypothesis — now supported by two data points:
 This makes CodeDNA economically attractive: annotate once, run cheaper models with comparable accuracy.
 
 Full data: [`benchmark_agent/runs/`](./benchmark_agent/runs/) · Script: [`benchmark_agent/swebench/run_agent_multi.py`](./benchmark_agent/swebench/run_agent_multi.py)
+
+---
+
+### Fix Quality — Claude Code Manual Session
+
+The SWE-bench benchmark measures **file navigation** (did the agent open the right files?). This second benchmark measures **fix completeness** (did the agent produce the correct patch?).
+
+**Setup**: two Claude Code sessions on `django__django-13495`, same model (claude-sonnet-4-6), same prompt, same bug. Ground truth: the official Django patch (7 files).
+
+```
+Bug: TruncDay('created_at', output_field=DateField(), tzinfo=tz_kyiv)
+     generates SQL without AT TIME ZONE — timezone param silently ignored.
+```
+
+**Results:**
+
+| Metric | Control | CodeDNA |
+|---|---|---|
+| Session time | ~10–11 min | ~8 min |
+| Total interactions (estimated) | ~33 | ~30 |
+| Failed edits | 5 | 0 |
+| Files matching official patch | **6 / 7** | **7 / 7** |
+| `date_trunc_sql` fixed (DateField) | ✅ all backends | ✅ all backends |
+| `time_trunc_sql` fixed (TimeField) | ❌ not touched | ✅ all backends |
+| `sqlite3/base.py` updated | ❌ | ✅ |
+| SQLite approach matches official patch | ❌ | ✅ |
+| Knowledge left for next agent | ❌ | ✅ `rules:` + `agent:` updated |
+
+**What made the difference:** a single `rules:` annotation on `TimezoneMixin.get_tzname()`:
+
+```python
+def get_tzname(self):
+    """
+    Rules: Timezone conversion must occur BEFORE applying datetime functions;
+           database stores UTC but results must reflect input datetime's timezone.
+    """
+```
+
+This described an architectural principle, not the bug. The control saw the same `time_trunc_sql` call on the line immediately below the reported bug — and didn't touch it. CodeDNA read the constraint and applied the fix to the full pattern.
+
+> **Validity note**: this is a single run, not a statistically powered study. The result is presented as an illustrative case, not a population estimate. The causal mechanism is traceable: one annotation changed the frame from "fix DateField" to "fix the timezone pattern across all output fields." Reproduce it: [`benchmark_agent/projects_swebench/django__django-13495/HOW_TO_RERUN.md`](./benchmark_agent/projects_swebench/django__django-13495/HOW_TO_RERUN.md)
+
+Full report: [`benchmark_agent/projects_swebench/django__django-13495/BENCHMARK_RESULTS.md`](./benchmark_agent/projects_swebench/django__django-13495/BENCHMARK_RESULTS.md)
 
 ---
 
