@@ -46,11 +46,11 @@ jobs:
         run: |
           test -f SPEC.md && echo "✓ SPEC.md present" || (echo "✗ SPEC.md missing" && exit 1)
 
-      - name: Run benchmark agent smoke test (no API key)
+      - name: Syntax check tools
         run: |
-          python -c "import ast, sys; ast.parse(open('benchmark_agent/agent.py').read()); print('✓ agent.py syntax OK')"
-          python -c "import ast, sys; ast.parse(open('benchmark_agent/generate_codebase.py').read()); print('✓ generate_codebase.py syntax OK')"
-          python -c "import ast, sys; ast.parse(open('tools/codedna_setup.py').read()); print('✓ codedna_setup.py syntax OK')"
+          for f in tools/*.py codedna_tool/*.py; do
+            python -c "import ast; ast.parse(open('$f').read())" && echo "✓ $f" || exit 1
+          done
 
   benchmark-data:
     name: Verify Benchmark Data
