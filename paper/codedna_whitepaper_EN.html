@@ -678,7 +678,7 @@
 
     <h3 style="font-size: 12pt; font-weight: 600; margin: 16pt 0 6pt 0;">5.1 When CodeDNA Helps Most</h3>
 
-    <p>Analysis across 5 tasks (Gemini 2.5 Flash, ≥5 runs each) reveals a clear pattern correlated with task type:</p>
+    <p>Analysis across 5 tasks (Gemini 2.5 Flash, ≥5 runs each) suggests a pattern correlated with task type:</p>
 
     <table style="width:100%; border-collapse:collapse; margin:8pt 0 12pt; font-size:9pt;">
       <thead>
@@ -808,7 +808,7 @@
 
     <p><strong>Verdict: the benchmark annotations are architecturally accurate and do not encode task-specific
       solutions.</strong> Where GT files appear in <code>used_by:</code> targets, it is because those files are genuine
-      callers or subclasses. The empirical results confirm this: tasks with navigable chains show Δ&gt;0%, the
+      callers or subclasses. The empirical results are consistent with this: tasks with navigable chains show Δ&gt;0%, the
       cross-cutting task (11808) shows Δ≈0% regardless of the <code>rules:</code> text.</p>
 
     <p><em>Annotation correction made during audit:</em> <code>django/db/backends/base/schema.py</code> in task 11991

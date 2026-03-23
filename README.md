@@ -26,6 +26,42 @@
 
 ![CodeDNA Site — Animated DNA Hero](./docs/hero.png)
 
+---
+
+## The Problem
+
+AI coding agents waste a significant fraction of their context window exploring irrelevant files, re-reading code, and missing cross-file constraints or reverse dependencies. The result: incomplete patches, higher token costs, and models that repeat the same mistakes across sessions.
+
+The root cause is structural. Information like reverse dependencies and domain constraints cannot be inferred from a single file — they require reading the whole codebase. Without a way to persist that knowledge, every agent starts from scratch.
+
+CodeDNA embeds this context directly in source files: `used_by:` maps reverse dependencies, `rules:` encodes domain constraints, and `agent:` / `message:` accumulate knowledge across sessions. It is not intended to replace retrieval systems, vector databases, or external memory — it provides a persistent architectural context layer inside the repository that any of those systems can build on.
+
+This also enables **agent-to-agent communication**: a constraint discovered by Agent A is available to Agent B in a different session or a different model. Knowledge compounds in a versioned, inspectable form.
+
+**Preliminary results are encouraging.** +13pp F1 on Gemini 2.5 Flash and +9pp on DeepSeek Chat on Django tasks — zero-shot, no fine-tuning, just annotations. Results are preliminary and require larger-scale validation.
+
+---
+
+## Where CodeDNA sits in the AI memory stack
+
+Every AI coding agent relies on multiple memory layers to navigate a codebase. Most of them are external to the code — chat history, vector databases, markdown rules files. CodeDNA is different: it is the only layer that lives *inside* the source files themselves.
+
+![CodeDNA Memory Layer Stack](./docs/memory_layers.svg)
+
+| Layer | Examples | Where it lives |
+|---|---|---|
+| LLM / Agent | Claude, GPT-4, Cursor, Copilot | Cloud |
+| External memory | Chat history, Projects, Memory API | Cloud / external DB |
+| RAG / Vector DB | Embeddings, Pinecone, pgvector | External infrastructure |
+| Markdown / Config | README, CLAUDE.md, `.cursorrules` | Repo (outside source files) |
+| **CodeDNA** | `exports`, `rules`, `agent`, `message` | **Inside every source file** |
+
+Every other layer is external to the code. CodeDNA is the only memory that travels with the source file itself — through clones, forks, and CI pipelines — without any infrastructure dependency.
+
+> **This is what makes CodeDNA composable.** RAG systems, vector databases, and external memory layers can all be built *on top* of CodeDNA annotations. The in-source layer is the foundation the others can read from.
+
+---
+
 ## How it works — live benchmark data
 
 ![CodeDNA Navigation Demo](./docs/codedna_viz.gif)
@@ -43,10 +79,10 @@
 
 | You are… | Without CodeDNA | With CodeDNA |
 |---|---|---|
-| **Non-technical user** | Must learn prompt engineering to guide the AI agent through the codebase | Just describe the problem — annotations guide the agent automatically |
-| **Junior developer** | AI finds the obvious file, misses the 5 related ones | `used_by:` graph helps find related files that may need changes |
-| **Senior developer** | Spends time writing detailed prompts every session | Writes annotations once, benefits persist across sessions |
-| **Team lead** | Each developer's AI makes different mistakes | Annotations encode team knowledge — more consistent results |
+| **Non-technical user** | Must learn prompt engineering to guide the AI agent through the codebase | Just describe the problem — annotations give the agent structural context to follow |
+| **Junior developer** | AI finds the obvious file, misses the 5 related ones | `used_by:` graph helps surface related files that may need changes |
+| **Senior developer** | Spends time writing detailed prompts every session | Writes annotations once — that context persists across sessions |
+| **Team lead** | Each developer's AI makes different mistakes | Annotations encode team knowledge — potentially more consistent results |
 
 **The core idea:** today, the quality of AI-assisted coding often depends on the *user's* ability to prompt. CodeDNA moves some of that knowledge from ephemeral prompts into persistent, version-controlled source code.
 
@@ -126,7 +162,7 @@ Then annotate your first file → see [QUICKSTART.md](./QUICKSTART.md)
 
 ### When CodeDNA Helps Most
 
-Empirical analysis across 5 tasks (Gemini 2.5 Flash, ≥5 runs each) reveals a clear pattern:
+Empirical analysis across 5 tasks (Gemini 2.5 Flash, ≥5 runs each) suggests a pattern:
 
 | Task type | Example | Δ F1 |
 |---|---|---|
@@ -160,7 +196,7 @@ One correction was made during the audit: `base/schema.py` in task 11991 initial
 
 Full audit: [`benchmark_agent/claude_code_challenge/django__django-13495/BENCHMARK_RESULTS.md`](./benchmark_agent/claude_code_challenge/django__django-13495/BENCHMARK_RESULTS.md)
 
-**Pattern:** cheaper models benefit most. Flash (cheapest of the three) shows the strongest gain (p=0.040). Annotate once, run cheaper models with comparable accuracy.
+**Pattern:** cheaper models appear to benefit most. Flash (cheapest of the three) shows the strongest gain (p=0.040). This suggests annotating once may allow cheaper models to perform closer to more expensive ones — though the sample is small.
 
 Full data: [`benchmark_agent/runs/`](./benchmark_agent/runs/) · Script: [`benchmark_agent/swebench/run_agent_multi.py`](./benchmark_agent/swebench/run_agent_multi.py)
 
@@ -372,7 +408,7 @@ rules:   Trunc.as_sql() delegates to connection.ops.date_trunc_sql() and
          time_trunc_sql(). Each backend implements these independently.
 ```
 
-`used_by:` is a **navigation map**, not a to-do list. The agent reasons about which targets are relevant to the current task and opens only those — this is why CodeDNA runs achieve P=100% (zero wasted reads) in the benchmark while control runs scatter across irrelevant files.
+`used_by:` is a **navigation map**, not a to-do list. The agent reasons about which targets are relevant to the current task and opens only those. In the benchmark, CodeDNA runs showed P=100% (zero wasted reads) on the tasks measured, while control runs scattered across irrelevant files.
 
 ---
 
@@ -388,7 +424,7 @@ Agent C discovers an edge case → extends the Rules:
 
 Unlike docs (which go stale), `Rules:` annotations are co-located with the code — read every time the function is edited.
 
-Current benchmark results are **zero-shot** — no fine-tuning on the protocol. Models follow `used_by:` and `rules:` by general language understanding alone. A fine-tuned model would treat these as native structured signals, reducing variance further.
+Current benchmark results are **zero-shot** — no fine-tuning on the protocol. Models follow `used_by:` and `rules:` by general language understanding alone. A fine-tuned model could potentially treat these as native structured signals, which might reduce variance further — this remains to be tested.
 
 > **See [SPEC.md](./SPEC.md) for the full inter-agent model, verification protocol, fine-tuning potential, and training corpus design.**
 

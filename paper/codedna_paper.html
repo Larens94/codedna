@@ -638,8 +638,8 @@ int_cents_price_from_req = request.json["price"]</pre>
         runtime behaviour.</p>
 
       <h3 class="subsection">5.2 When CodeDNA Helps Most</h3>
-      <p class="no-indent">Analysis across 5 SWE-bench tasks (Gemini 2.5 Flash, ≥5 runs each at T=0.1) reveals a
-        clear pattern correlated with the structural type of the task:</p>
+      <p class="no-indent">Analysis across 5 SWE-bench tasks (Gemini 2.5 Flash, ≥5 runs each at T=0.1) suggests a
+        pattern correlated with the structural type of the task:</p>
 
       <p class="table-caption"><span class="table-num">Table 3a.</span> Δ F1 by task type (Gemini 2.5 Flash).</p>
       <table>
@@ -767,8 +767,8 @@ int_cents_price_from_req = request.json["price"]</pre>
 
       <p><strong>Verdict.</strong> The benchmark annotations are architecturally accurate and do not encode
         task-specific solutions. Where GT files appear in <code>used_by:</code> targets, it is because those files
-        are genuine callers or subclasses — not because the annotator cherry-picked them. The empirical results
-        confirm: tasks with navigable chains show Δ&gt;0%; task 11808 shows Δ≈0% regardless of
+        are genuine callers or subclasses — not because the annotator cherry-picked them. The empirical results are
+        consistent with this: tasks with navigable chains show Δ&gt;0%; task 11808 shows Δ≈0% regardless of
         <code>rules:</code> content.</p>
 
       <!-- ─── 5.5 RETRY COST ─── -->

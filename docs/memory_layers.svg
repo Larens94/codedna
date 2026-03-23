@@ -1,0 +1,92 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 800 560" width="800" height="560" font-family="'Segoe UI', system-ui, sans-serif">
+
+  <!-- Background -->
+  <rect width="800" height="560" fill="#0d1117" rx="16"/>
+
+  <!-- Title -->
+  <text x="400" y="42" text-anchor="middle" fill="#e6edf3" font-size="18" font-weight="700" letter-spacing="0.5">AI Agent Memory Stack</text>
+  <text x="400" y="64" text-anchor="middle" fill="#7d8590" font-size="13">Where does memory live in an AI coding agent?</text>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- Layer 5 — LLM / Agent (top) -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <rect x="80" y="88" width="640" height="62" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+  <text x="160" y="115" fill="#79c0ff" font-size="13" font-weight="600">LLM / Agent</text>
+  <text x="160" y="135" fill="#7d8590" font-size="11">Claude · GPT-4 · Gemini · Cursor · Copilot</text>
+  <!-- icon -->
+  <circle cx="118" cy="119" r="18" fill="#1f2937" stroke="#30363d" stroke-width="1"/>
+  <text x="118" y="125" text-anchor="middle" fill="#79c0ff" font-size="18">🤖</text>
+
+  <!-- connector arrow -->
+  <line x1="400" y1="150" x2="400" y2="170" stroke="#30363d" stroke-width="2" stroke-dasharray="4,3"/>
+  <polygon points="396,168 404,168 400,176" fill="#30363d"/>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- Layer 4 — External / Session Memory -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <rect x="80" y="178" width="640" height="62" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+  <text x="160" y="205" fill="#d2a8ff" font-size="13" font-weight="600">External Memory</text>
+  <text x="160" y="225" fill="#7d8590" font-size="11">Chat history · Session context · Projects · Memory API</text>
+  <circle cx="118" cy="209" r="18" fill="#1f2937" stroke="#30363d" stroke-width="1"/>
+  <text x="118" y="215" text-anchor="middle" fill="#d2a8ff" font-size="18">🧠</text>
+
+  <!-- connector arrow -->
+  <line x1="400" y1="240" x2="400" y2="260" stroke="#30363d" stroke-width="2" stroke-dasharray="4,3"/>
+  <polygon points="396,258 404,258 400,266" fill="#30363d"/>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- Layer 3 — RAG / Vector DB -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <rect x="80" y="268" width="640" height="62" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+  <text x="160" y="295" fill="#ffa657" font-size="13" font-weight="600">RAG · Vector DB · Semantic Search</text>
+  <text x="160" y="315" fill="#7d8590" font-size="11">Embeddings · Pinecone · Weaviate · pgvector · LlamaIndex</text>
+  <circle cx="118" cy="299" r="18" fill="#1f2937" stroke="#30363d" stroke-width="1"/>
+  <text x="118" y="305" text-anchor="middle" fill="#ffa657" font-size="18">🗄️</text>
+
+  <!-- connector arrow -->
+  <line x1="400" y1="330" x2="400" y2="350" stroke="#30363d" stroke-width="2" stroke-dasharray="4,3"/>
+  <polygon points="396,348 404,348 400,356" fill="#30363d"/>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- Layer 2 — Markdown / Docs / Config -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <rect x="80" y="358" width="640" height="62" rx="10" fill="#161b22" stroke="#30363d" stroke-width="1.5"/>
+  <text x="160" y="385" fill="#56d364" font-size="13" font-weight="600">Markdown · Docs · Config</text>
+  <text x="160" y="405" fill="#7d8590" font-size="11">README · CLAUDE.md · .cursorrules · .windsurfrules · docs/</text>
+  <circle cx="118" cy="389" r="18" fill="#1f2937" stroke="#30363d" stroke-width="1"/>
+  <text x="118" y="395" text-anchor="middle" fill="#56d364" font-size="18">📄</text>
+
+  <!-- connector arrow — thicker, highlighted -->
+  <line x1="400" y1="420" x2="400" y2="440" stroke="#f78166" stroke-width="2.5" stroke-dasharray="4,3"/>
+  <polygon points="396,438 404,438 400,446" fill="#f78166"/>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- Layer 1 — CodeDNA (foundation, highlighted) -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <defs>
+    <linearGradient id="dnaGrad" x1="0" y1="0" x2="1" y2="0">
+      <stop offset="0%" stop-color="#1a2a1a"/>
+      <stop offset="100%" stop-color="#1a1a2a"/>
+    </linearGradient>
+  </defs>
+  <rect x="60" y="448" width="680" height="76" rx="12" fill="url(#dnaGrad)" stroke="#f78166" stroke-width="2"/>
+  <!-- glow effect -->
+  <rect x="60" y="448" width="680" height="76" rx="12" fill="none" stroke="#f78166" stroke-width="6" opacity="0.12"/>
+
+  <!-- Badge -->
+  <rect x="72" y="458" width="84" height="22" rx="6" fill="#f78166" opacity="0.15"/>
+  <text x="114" y="474" text-anchor="middle" fill="#f78166" font-size="10" font-weight="700" letter-spacing="1">LAYER 0</text>
+
+  <circle cx="118" cy="493" r="20" fill="#1f2937" stroke="#f78166" stroke-width="1.5"/>
+  <text x="118" y="499" text-anchor="middle" fill="#f78166" font-size="20">🧬</text>
+
+  <text x="152" y="483" fill="#f78166" font-size="15" font-weight="700">CodeDNA — In-Source Annotation Layer</text>
+  <text x="152" y="503" fill="#adbac7" font-size="11">Lives directly inside source files · exports · used_by · rules · agent · message</text>
+  <text x="152" y="519" fill="#7d8590" font-size="10.5">Zero external dependencies · readable by any agent · survives repo clones · always in sync with code</text>
+
+  <!-- ═══════════════════════════════════════════════════ -->
+  <!-- Bottom label -->
+  <!-- ═══════════════════════════════════════════════════ -->
+  <text x="400" y="546" text-anchor="middle" fill="#3d444d" font-size="11">CodeDNA is the only memory layer that travels with the source code itself</text>
+
+</svg>
