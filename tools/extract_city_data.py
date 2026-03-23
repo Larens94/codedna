@@ -37,8 +37,10 @@ def parse_codedna(source: str) -> dict | None:
         elif s.startswith("agent:"):
             current = "agent"
             fields[current] = s[6:].strip()
-        elif current and s and not any(
-            s.startswith(k + ":") for k in ("exports", "used_by", "rules", "agent", "message")
+        elif (
+            current
+            and s
+            and not any(s.startswith(k + ":") for k in ("exports", "used_by", "rules", "agent", "message"))
         ):
             sep = "\n" if current == "used_by" else " "
             fields[current] += sep + s
@@ -92,10 +94,10 @@ def extract() -> dict:
         buildings.append(
             {
                 "id": rel,
-                "d": district(rel),         # district
-                "n": f.name,                # name
-                "ub": ub_count,             # used_by count
-                "ac": len(agent_lines),     # agent count
+                "d": district(rel),  # district
+                "n": f.name,  # name
+                "ub": ub_count,  # used_by count
+                "ac": len(agent_lines),  # agent count
                 "ex": fields["exports"][:120],
                 "ru": fields["rules"][:200],
                 "ag": fields["agent"].split("\n")[0][:100],  # first agent line only
