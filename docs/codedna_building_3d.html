@@ -1,0 +1,555 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeDNA — Building</title>
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@500;600;700&display=swap');
+* { margin:0; padding:0; box-sizing:border-box; }
+body { background:#f0eeea; overflow:hidden; font-family:'Inter',sans-serif; }
+canvas { display:block; }
+
+/* UI OVERLAY */
+.ui {
+  position:fixed; inset:0; pointer-events:none;
+  display:flex; flex-direction:column;
+}
+
+/* Header */
+.top-bar {
+  padding: 24px 28px 0;
+  display: flex; justify-content: space-between; align-items: flex-start;
+  opacity:0; transition: opacity 0.6s ease;
+}
+.top-bar.show { opacity:1; }
+.top-title {
+  font-size: 13px; font-weight: 800; color: #111827;
+  letter-spacing: -0.3px; line-height: 1.3;
+}
+.top-title em { color: #6366f1; font-style:normal; }
+.top-sub {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: #9ca3af; margin-top:3px; letter-spacing:0.5px;
+}
+.top-badge {
+  background: #eef2ff; border: 1px solid #c7d2fe;
+  color: #6366f1; border-radius: 20px;
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; font-weight: 700;
+  padding: 4px 10px; letter-spacing:1px;
+}
+
+/* Floor labels — right side */
+.floors-panel {
+  position: fixed; right: 20px; top: 50%;
+  transform: translateY(-50%);
+  display: flex; flex-direction: column; gap: 6px;
+  pointer-events: none;
+}
+.floor-label {
+  display: flex; align-items: center; gap: 8px;
+  justify-content: flex-end;
+  opacity: 0; transform: translateX(12px);
+  transition: opacity 0.5s ease, transform 0.5s ease;
+}
+.floor-label.show { opacity:1; transform:translateX(0); }
+.floor-label-text {
+  text-align: right;
+}
+.floor-name {
+  font-size: 11px; font-weight: 700; color: #111827;
+  letter-spacing: -0.2px; white-space: nowrap;
+}
+.floor-desc {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; color: #9ca3af; white-space: nowrap;
+}
+.floor-dot {
+  width: 8px; height: 8px; border-radius: 50%;
+  border: 1.5px solid #d1d5db; background: white;
+  flex-shrink: 0; transition: all 0.4s ease;
+}
+.floor-dot.active { background: #6366f1; border-color: #6366f1; box-shadow: 0 0 6px rgba(99,102,241,0.4); }
+.floor-dot.dna-dot { background: #6366f1; border-color: #4f46e5; box-shadow: 0 0 10px rgba(99,102,241,0.6); }
+
+/* Bottom info */
+.bottom-bar {
+  position: fixed; bottom: 28px; left: 0; right: 0;
+  display: flex; justify-content: center;
+  opacity:0; transition: opacity 0.5s ease;
+  pointer-events:none;
+}
+.bottom-bar.show { opacity:1; }
+.bottom-card {
+  background: white; border: 1px solid #e5e7eb;
+  border-radius: 14px; padding: 12px 20px;
+  display: flex; align-items: center; gap: 16px;
+  box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+}
+.bottom-stat {
+  text-align: center;
+}
+.bottom-stat-num {
+  font-size: 18px; font-weight: 900; color: #6366f1;
+  letter-spacing: -0.8px; line-height: 1;
+}
+.bottom-stat-label {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 8px; color: #9ca3af; margin-top:2px; letter-spacing:0.3px;
+}
+.bottom-divider { width:1px; height:32px; background:#f3f4f6; }
+.bottom-link {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 9px; color: #6366f1; font-weight:700;
+}
+
+/* Progress */
+.build-progress {
+  position: fixed; bottom: 90px; left: 50%;
+  transform: translateX(-50%);
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px; color: #9ca3af; letter-spacing:1px;
+  opacity:0; transition: opacity 0.3s;
+  pointer-events:none;
+}
+.build-progress.show { opacity:1; }
+</style>
+</head>
+<body>
+
+<canvas id="c"></canvas>
+
+<!-- UI -->
+<div class="ui">
+  <div class="top-bar" id="topbar">
+    <div>
+      <div class="top-title">The <em>AI Agent</em> Building<br>Layer 0 is the Foundation</div>
+      <div class="top-sub">Agent Memory Stack · 2026</div>
+    </div>
+    <div class="top-badge">v0.8</div>
+  </div>
+</div>
+
+<!-- Floor labels -->
+<div class="floors-panel" id="floorsPanel">
+  <div class="floor-label" id="fl6">
+    <div class="floor-label-text">
+      <div class="floor-name">Dynamic Context</div>
+      <div class="floor-desc">200K–1M tokens</div>
+    </div>
+    <div class="floor-dot" id="fd6"></div>
+  </div>
+  <div class="floor-label" id="fl5">
+    <div class="floor-label-text">
+      <div class="floor-name">Compact Memory</div>
+      <div class="floor-desc">claude-mem · Mastra</div>
+    </div>
+    <div class="floor-dot" id="fd5"></div>
+  </div>
+  <div class="floor-label" id="fl4">
+    <div class="floor-label-text">
+      <div class="floor-name">Episodic Memory</div>
+      <div class="floor-desc">Mem0 · Letta · LangMem</div>
+    </div>
+    <div class="floor-dot" id="fd4"></div>
+  </div>
+  <div class="floor-label" id="fl3">
+    <div class="floor-label-text">
+      <div class="floor-name">RAG / Vector DB</div>
+      <div class="floor-desc">Pinecone · Weaviate</div>
+    </div>
+    <div class="floor-dot" id="fd3"></div>
+  </div>
+  <div class="floor-label" id="fl2">
+    <div class="floor-label-text">
+      <div class="floor-name">CLAUDE.md / AGENTS.md</div>
+      <div class="floor-desc">72% adoption · project rules</div>
+    </div>
+    <div class="floor-dot" id="fd2"></div>
+  </div>
+  <div class="floor-label" id="fl1">
+    <div class="floor-label-text">
+      <div class="floor-name">Prompt / System Context</div>
+      <div class="floor-desc">all agents · session setup</div>
+    </div>
+    <div class="floor-dot" id="fd1"></div>
+  </div>
+  <div class="floor-label" id="fl0">
+    <div class="floor-label-text">
+      <div class="floor-name" style="color:#6366f1;font-size:13px">🧬 CodeDNA — L0</div>
+      <div class="floor-desc" style="color:#6366f1">THE FOUNDATION · in-source</div>
+    </div>
+    <div class="floor-dot dna-dot" id="fd0"></div>
+  </div>
+</div>
+
+<div class="build-progress" id="buildProgress">BUILDING...</div>
+
+<div class="bottom-bar" id="bottomBar">
+  <div class="bottom-card">
+    <div class="bottom-stat">
+      <div class="bottom-stat-num">−52%</div>
+      <div class="bottom-stat-label">retry risk</div>
+    </div>
+    <div class="bottom-divider"></div>
+    <div class="bottom-stat">
+      <div class="bottom-stat-num">7/7</div>
+      <div class="bottom-stat-label">patch files</div>
+    </div>
+    <div class="bottom-divider"></div>
+    <div class="bottom-stat">
+      <div class="bottom-stat-num">+13pp</div>
+      <div class="bottom-stat-label">F1 score</div>
+    </div>
+    <div class="bottom-divider"></div>
+    <div class="bottom-link">github.com/<br>Larens94/codedna</div>
+  </div>
+</div>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+<script>
+// ── SCENE SETUP ──
+const canvas = document.getElementById('c');
+const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true });
+renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+renderer.shadowMap.enabled = true;
+renderer.shadowMap.type = THREE.PCFSoftShadowMap;
+renderer.setClearColor(0xf0eeea, 1);
+
+const scene = new THREE.Scene();
+scene.fog = new THREE.Fog(0xf0eeea, 30, 60);
+
+const camera = new THREE.PerspectiveCamera(42, 1, 0.1, 100);
+camera.position.set(10, 8, 14);
+camera.lookAt(0, 3, 0);
+
+function resize() {
+  const w = window.innerWidth, h = window.innerHeight;
+  renderer.setSize(w, h);
+  camera.aspect = w / h;
+  camera.updateProjectionMatrix();
+}
+resize();
+window.addEventListener('resize', resize);
+
+// ── LIGHTS ──
+scene.add(new THREE.AmbientLight(0xffffff, 0.7));
+
+const sun = new THREE.DirectionalLight(0xfff8f0, 1.2);
+sun.position.set(8, 16, 10);
+sun.castShadow = true;
+sun.shadow.mapSize.set(2048, 2048);
+sun.shadow.camera.near = 0.1;
+sun.shadow.camera.far = 60;
+sun.shadow.camera.left = -12;
+sun.shadow.camera.right = 12;
+sun.shadow.camera.top = 20;
+sun.shadow.camera.bottom = -4;
+scene.add(sun);
+
+const fill = new THREE.DirectionalLight(0xe8f0ff, 0.4);
+fill.position.set(-6, 4, -8);
+scene.add(fill);
+
+// DNA glow light (from below)
+const dnaLight = new THREE.PointLight(0x6366f1, 0, 6);
+dnaLight.position.set(0, 0.5, 0);
+scene.add(dnaLight);
+
+// ── GROUND ──
+const groundGeo = new THREE.PlaneGeometry(40, 40);
+const groundMat = new THREE.MeshLambertMaterial({ color: 0xe8e6e0 });
+const ground = new THREE.Mesh(groundGeo, groundMat);
+ground.rotation.x = -Math.PI / 2;
+ground.receiveShadow = true;
+scene.add(ground);
+
+// Grid lines on ground
+const gridHelper = new THREE.GridHelper(20, 20, 0xd1cdc7, 0xd1cdc7);
+gridHelper.position.y = 0.01;
+scene.add(gridHelper);
+
+// ── BUILDING DATA ──
+// From top (L6) to bottom (L0)
+// Colors: light theme - each floor has unique pastel
+const floorData = [
+  // index 0 = L6 (top), index 6 = L0 (foundation)
+  { name: 'Dynamic Context', color: 0xdbeafe, edgeColor: 0x93c5fd, height: 0.7, w: 4.0, d: 3.2 },  // blue
+  { name: 'Compact Memory',  color: 0xfce7f3, edgeColor: 0xf9a8d4, height: 0.7, w: 4.4, d: 3.5 },  // pink
+  { name: 'Episodic Memory', color: 0xd1fae5, edgeColor: 0x6ee7b7, height: 0.8, w: 4.8, d: 3.8 },  // green
+  { name: 'RAG / Vector DB', color: 0xfef9c3, edgeColor: 0xfde047, height: 0.8, w: 5.2, d: 4.1 },  // yellow
+  { name: 'CLAUDE.md',       color: 0xede9fe, edgeColor: 0xc4b5fd, height: 0.9, w: 5.6, d: 4.4 },  // violet
+  { name: 'System Context',  color: 0xffedd5, edgeColor: 0xfdba74, height: 0.9, w: 6.0, d: 4.7 },  // orange
+  { name: 'CodeDNA L0',      color: 0xeef2ff, edgeColor: 0x6366f1, height: 1.1, w: 6.6, d: 5.2 },  // indigo foundation
+];
+
+// Building starts from ground up → L0 first (foundation), then L1..L6
+// We build bottom to top: index 6 (L0/foundation) first, then 5,4,3,2,1,0
+const buildOrder = [6, 5, 4, 3, 2, 1, 0];
+const floorMeshes = [];
+let currentY = 0;
+const yPositions = [];
+
+// Pre-calculate y positions
+let yAccum = 0;
+for (let i = 6; i >= 0; i--) {
+  yPositions[i] = yAccum + floorData[i].height / 2;
+  yAccum += floorData[i].height;
+}
+
+// Create floor meshes (hidden initially)
+for (let i = 0; i < 7; i++) {
+  const fd = floorData[i];
+  const group = new THREE.Group();
+  group.visible = false;
+
+  // Main box
+  const geo = new THREE.BoxGeometry(fd.w, fd.height, fd.d);
+  const mat = new THREE.MeshLambertMaterial({ color: fd.color });
+  const mesh = new THREE.Mesh(geo, mat);
+  mesh.castShadow = true;
+  mesh.receiveShadow = true;
+  group.add(mesh);
+
+  // Edge outline (slightly bigger, wireframe look via EdgesGeometry)
+  const edges = new THREE.EdgesGeometry(geo);
+  const edgeMat = new THREE.LineBasicMaterial({ color: fd.edgeColor, linewidth: 1 });
+  const edgeMesh = new THREE.LineSegments(edges, edgeMat);
+  group.add(edgeMesh);
+
+  // Windows (small boxes on front face)
+  if (i < 6) { // not foundation
+    const winCols = Math.floor(fd.w / 1.2);
+    const winRows = i === 0 ? 1 : 1;
+    for (let wc = 0; wc < winCols; wc++) {
+      for (let wr = 0; wr < winRows; wr++) {
+        const wGeo = new THREE.BoxGeometry(0.25, 0.22, 0.05);
+        const wMat = new THREE.MeshLambertMaterial({
+          color: Math.random() > 0.5 ? 0xfefce8 : 0xeff6ff,
+          emissive: 0xffffff, emissiveIntensity: 0.1
+        });
+        const win = new THREE.Mesh(wGeo, wMat);
+        win.position.set(
+          -fd.w/2 + 0.5 + wc * (fd.w - 0.4) / Math.max(winCols - 1, 1),
+          -fd.height/2 + 0.3 + wr * (fd.height - 0.3),
+          fd.d/2 + 0.01
+        );
+        group.add(win);
+      }
+    }
+  }
+
+  // Foundation floor: add DNA pattern (cross lines)
+  if (i === 6) {
+    const lineGeo1 = new THREE.BoxGeometry(fd.w - 0.2, 0.04, 0.04);
+    const lineMat = new THREE.MeshLambertMaterial({ color: 0x6366f1 });
+    [-0.3, 0, 0.3].forEach(z => {
+      const l = new THREE.Mesh(lineGeo1, lineMat);
+      l.position.set(0, fd.height/2 + 0.02, z);
+      group.add(l);
+    });
+    const lineGeo2 = new THREE.BoxGeometry(0.04, 0.04, fd.d - 0.2);
+    [-1.5, -0.5, 0.5, 1.5].forEach(x => {
+      const l = new THREE.Mesh(lineGeo2, lineMat);
+      l.position.set(x, fd.height/2 + 0.02, 0);
+      group.add(l);
+    });
+  }
+
+  group.position.y = yPositions[i];
+  scene.add(group);
+  floorMeshes[i] = group;
+}
+
+// ── CRANE (decorative) ──
+const craneMat = new THREE.MeshLambertMaterial({ color: 0xfbbf24 });
+// Vertical mast
+const mast = new THREE.Mesh(new THREE.CylinderGeometry(0.06, 0.06, 10, 6), craneMat);
+mast.position.set(5.5, 5, -3);
+mast.castShadow = true;
+scene.add(mast);
+// Horizontal arm
+const arm = new THREE.Mesh(new THREE.BoxGeometry(6, 0.1, 0.1), craneMat);
+arm.position.set(2.5, 10, -3);
+arm.castShadow = true;
+scene.add(arm);
+// Cable
+const cableMat = new THREE.LineBasicMaterial({ color: 0x6b7280 });
+let cableTarget = 8;
+
+// ── ANIMATION STATE ──
+let phase = 'idle'; // idle → building → glow → pause → reset
+let buildIndex = 0; // which floor we're building next (in buildOrder)
+let floorProgress = 0; // 0→1 for current floor drop
+let glowIntensity = 0;
+let cameraAngle = 0;
+let cameraY = 8;
+let resetTimer = 0;
+
+const FLOOR_DURATION = 800; // ms per floor
+const GLOW_DURATION = 1500;
+let lastTime = 0;
+let started = false;
+
+function delay(ms) { return new Promise(r => setTimeout(r, ms)); }
+
+async function startSequence() {
+  await delay(600);
+  document.getElementById('topbar').classList.add('show');
+  document.getElementById('buildProgress').classList.add('show');
+  await delay(400);
+  phase = 'building';
+}
+
+startSequence();
+
+// Show floor label
+function showFloorLabel(floorIndex) {
+  // floorIndex: 0=L6(top), 6=L0(foundation)
+  // UI labels: fl6=L6, fl5=L5... fl0=L0
+  const labelMap = { 0:'fl6', 1:'fl5', 2:'fl4', 3:'fl3', 4:'fl2', 5:'fl1', 6:'fl0' };
+  const dotMap   = { 0:'fd6', 1:'fd5', 2:'fd4', 3:'fd3', 4:'fd2', 5:'fd1', 6:'fd0' };
+  // buildOrder[buildIndex] gives the floorData index
+  // floorData index: 0=L6, 1=L5, ..., 5=L1, 6=L0
+  // labelMap key = floorData index
+  const lbl = document.getElementById(labelMap[floorIndex]);
+  const dot = document.getElementById(dotMap[floorIndex]);
+  if (lbl) { lbl.classList.add('show'); }
+  if (dot) { dot.classList.add('active'); }
+}
+
+// ── RENDER LOOP ──
+function animate(time) {
+  requestAnimationFrame(animate);
+  const dt = Math.min(time - lastTime, 100);
+  lastTime = time;
+
+  // Gentle camera orbit
+  cameraAngle += dt * 0.00012;
+  const r = 16;
+  camera.position.x = Math.sin(cameraAngle) * r;
+  camera.position.z = Math.cos(cameraAngle) * r;
+  camera.position.y = cameraY;
+  camera.lookAt(0, 3.5, 0);
+
+  if (phase === 'building') {
+    const fd_i = buildOrder[buildIndex]; // floorData index
+    const mesh = floorMeshes[fd_i];
+    const targetY = yPositions[fd_i];
+    const startY = targetY + 5;
+
+    floorProgress += dt / FLOOR_DURATION;
+    if (floorProgress >= 1) floorProgress = 1;
+
+    // Ease out cubic
+    const t = 1 - Math.pow(1 - floorProgress, 3);
+    mesh.visible = true;
+    mesh.position.y = startY + (targetY - startY) * t;
+
+    // Scale in from above
+    const s = 0.6 + 0.4 * t;
+    mesh.scale.set(1, s, 1);
+
+    if (floorProgress >= 1) {
+      mesh.position.y = targetY;
+      mesh.scale.set(1, 1, 1);
+
+      // Show UI label
+      showFloorLabel(fd_i);
+
+      buildIndex++;
+      floorProgress = 0;
+
+      // Move crane up
+      cableTarget = yPositions[buildOrder[Math.min(buildIndex, 6)]] + 2;
+
+      if (buildIndex >= buildOrder.length) {
+        phase = 'glow';
+        document.getElementById('buildProgress').classList.remove('show');
+        // Raise camera slightly
+        setTimeout(() => { cameraY = 10; }, 200);
+      }
+    }
+  }
+
+  if (phase === 'glow') {
+    glowIntensity += dt / GLOW_DURATION;
+    if (glowIntensity >= 1) {
+      glowIntensity = 1;
+      phase = 'pause';
+      resetTimer = 0;
+      setTimeout(() => {
+        document.getElementById('bottomBar').classList.add('show');
+      }, 300);
+    }
+    dnaLight.intensity = glowIntensity * 2.5;
+
+    // Tint foundation floor
+    if (floorMeshes[6]) {
+      const mat = floorMeshes[6].children[0].material;
+      const t = glowIntensity;
+      mat.color.setRGB(
+        0.93 - t * 0.1,
+        0.95 - t * 0.12,
+        1.0
+      );
+    }
+  }
+
+  if (phase === 'pause') {
+    resetTimer += dt;
+    // Pulse dna light
+    dnaLight.intensity = 2.0 + Math.sin(Date.now() * 0.003) * 0.8;
+
+    if (resetTimer > 6000) {
+      phase = 'resetting';
+      doReset();
+    }
+  }
+
+  renderer.render(scene, camera);
+}
+
+animate(0);
+
+async function doReset() {
+  // Fade out bottom bar
+  document.getElementById('bottomBar').classList.remove('show');
+  document.getElementById('buildProgress').classList.add('show');
+
+  await delay(400);
+
+  // Hide floors top to bottom (L6 first)
+  for (let i = 0; i <= 6; i++) {
+    floorMeshes[i].visible = false;
+  }
+  // Reset floor labels
+  for (let i = 0; i <= 6; i++) {
+    const labelMap = { 0:'fl6', 1:'fl5', 2:'fl4', 3:'fl3', 4:'fl2', 5:'fl1', 6:'fl0' };
+    const dotMap   = { 0:'fd6', 1:'fd5', 2:'fd4', 3:'fd3', 4:'fd2', 5:'fd1', 6:'fd0' };
+    const lbl = document.getElementById(labelMap[i]);
+    const dot = document.getElementById(dotMap[i]);
+    if (lbl) lbl.classList.remove('show');
+    if (dot) { dot.classList.remove('active'); }
+  }
+
+  // Reset state
+  buildIndex = 0;
+  floorProgress = 0;
+  glowIntensity = 0;
+  dnaLight.intensity = 0;
+  cableTarget = 8;
+  cameraY = 8;
+
+  // Reset foundation color
+  if (floorMeshes[6]) {
+    floorMeshes[6].children[0].material.color.setHex(0xeef2ff);
+  }
+
+  await delay(600);
+  phase = 'building';
+}
+</script>
+</body>
+</html>
