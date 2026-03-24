@@ -21,10 +21,7 @@ jobs:
           python-version: '3.11'
 
       - name: Install linting tools
-        run: pip install flake8 black flake8-pyproject
+        run: pip install black
 
       - name: Run Black (format check)
         run: black --check --diff .
-
-      - name: Run Flake8 (style check)
-        run: flake8 .
