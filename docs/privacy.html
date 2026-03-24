@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Privacy Policy — CodeDNA</title>
+<meta name="description" content="Privacy Policy for the CodeDNA Claude Code plugin.">
+<link rel="icon" href="logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --bg: #fafafa;
+  --surface: #ffffff;
+  --border: #e5e5ea;
+  --text: #1a1a2e;
+  --text2: #3d3d5c;
+  --muted: #8787a0;
+  --accent: #4338ca;
+  --accent-lt: #eef2ff;
+}
+
+body {
+  font-family: 'DM Sans', sans-serif;
+  background: var(--bg);
+  color: var(--text);
+  line-height: 1.7;
+  font-size: 16px;
+}
+
+header {
+  border-bottom: 1px solid var(--border);
+  padding: 20px 0;
+  background: var(--surface);
+}
+
+header .inner {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 0 24px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+header img { height: 32px; width: 32px; }
+
+header a {
+  font-weight: 600;
+  font-size: 17px;
+  color: var(--text);
+  text-decoration: none;
+}
+
+header a:hover { color: var(--accent); }
+
+main {
+  max-width: 760px;
+  margin: 48px auto 80px;
+  padding: 0 24px;
+}
+
+h1 {
+  font-size: 32px;
+  font-weight: 700;
+  margin-bottom: 8px;
+}
+
+.meta {
+  color: var(--muted);
+  font-size: 14px;
+  margin-bottom: 40px;
+}
+
+h2 {
+  font-size: 18px;
+  font-weight: 700;
+  margin: 36px 0 10px;
+  color: var(--text);
+}
+
+p { margin-bottom: 14px; color: var(--text2); }
+
+ul {
+  margin: 0 0 14px 20px;
+  color: var(--text2);
+}
+
+ul li { margin-bottom: 6px; }
+
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
+
+.callout {
+  background: var(--accent-lt);
+  border-left: 3px solid var(--accent);
+  border-radius: 6px;
+  padding: 14px 18px;
+  margin: 24px 0;
+  color: var(--text);
+  font-size: 15px;
+}
+
+footer {
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  padding: 32px 24px;
+  border-top: 1px solid var(--border);
+}
+</style>
+</head>
+<body>
+
+<header>
+  <div class="inner">
+    <img src="logo.png" alt="CodeDNA logo">
+    <a href="index.html">CodeDNA</a>
+  </div>
+</header>
+
+<main>
+  <h1>Privacy Policy</h1>
+  <p class="meta">Last updated: March 2026 &nbsp;·&nbsp; CodeDNA Claude Code Plugin</p>
+
+  <div class="callout">
+    CodeDNA does not collect, transmit, or store any personal data or code. All processing happens locally on your machine.
+  </div>
+
+  <h2>1. Overview</h2>
+  <p>
+    CodeDNA is a Claude Code plugin that annotates source files with architectural metadata.
+    It operates entirely within your local development environment and does not communicate
+    with any external server owned or operated by the CodeDNA project.
+  </p>
+
+  <h2>2. Data we do not collect</h2>
+  <ul>
+    <li>Source code or file contents</li>
+    <li>Project structure or file paths</li>
+    <li>Personal information of any kind</li>
+    <li>Usage statistics, telemetry, or analytics</li>
+    <li>API keys or credentials</li>
+  </ul>
+
+  <h2>3. How the plugin works</h2>
+  <p>
+    When you run a CodeDNA slash command (e.g. <code>/codedna:init</code>), the plugin
+    instructs Claude Code to read your local files and write annotations back to those same
+    files. This interaction happens entirely within the Claude Code session on your machine.
+  </p>
+  <p>
+    CodeDNA does not introduce any additional network requests beyond those already made
+    by Claude Code as part of its normal operation with Anthropic's API.
+  </p>
+
+  <h2>4. Anthropic's privacy policy</h2>
+  <p>
+    Because CodeDNA runs inside Claude Code, your interactions with the AI model are
+    governed by <a href="https://www.anthropic.com/privacy" target="_blank" rel="noopener">Anthropic's Privacy Policy</a>.
+    Please review it to understand how your prompts and code are handled by the underlying model.
+  </p>
+
+  <h2>5. Third-party services</h2>
+  <p>
+    CodeDNA does not integrate with or send data to any third-party service.
+    No analytics, crash reporting, or tracking libraries are included.
+  </p>
+
+  <h2>6. Changes to this policy</h2>
+  <p>
+    If this policy is updated, the revised version will be published at this URL with an
+    updated date at the top. No material changes are anticipated given the local-only
+    nature of the plugin.
+  </p>
+
+  <h2>7. Contact</h2>
+  <p>
+    For any questions about this privacy policy, contact:
+    <a href="mailto:fabrizio.corpora@gmail.com">fabrizio.corpora@gmail.com</a>
+  </p>
+</main>
+
+<footer>
+  &copy; 2026 CodeDNA &nbsp;·&nbsp; <a href="index.html">Back to homepage</a>
+</footer>
+
+</body>
+</html>
