@@ -12,6 +12,7 @@
 
 [![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-Plugin_Available-D97757?logo=anthropic&logoColor=white)](https://claude.com/plugins)
 [![Languages](https://img.shields.io/badge/Languages-Python_·_TS_·_Go_·_Rust_·_Java_·_Ruby-6366f1)](#)
+[![Docs](https://img.shields.io/badge/Docs-Install_Guide-6366f1)](https://larens94.github.io/codedna/install.html)
 
 **Compatible with:**
 [![Claude Code](https://img.shields.io/badge/Claude_Code-D97757?logo=anthropic&logoColor=white)](./integrations/CLAUDE.md)
@@ -93,6 +94,8 @@ Every other layer is external to the code. CodeDNA is the only memory that trave
 ---
 
 ## ⚡ Install
+
+> **Full install guide with language selection and tool-specific instructions → [docs/install.html](https://larens94.github.io/codedna/install.html)**
 
 ### Option 1 — Claude Code Plugin (recommended)
 
