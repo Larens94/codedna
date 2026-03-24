@@ -365,7 +365,7 @@ agent:   <model-id> | <YYYY-MM-DD> | <what I did and what I noticed — one or t
 """
 ```
 
-The `agent:` field is **append-only and multi-entry** — each agent session that significantly touches this file adds a new `agent:` line. Lines are never removed or edited. The field grows over time and becomes the session history of the file.
+The `agent:` field is **multi-entry with a rolling window** — each agent session that significantly touches this file adds a new `agent:` line. Keep only the last 5 entries; drop the oldest when adding a 6th. Full history is preserved in git and `.codedna`. The field is the recent session history of the file, not a permanent log.
 
 
 
@@ -377,7 +377,7 @@ The `agent:` field is **append-only and multi-entry** — each agent session tha
 | `exports` | ✅ | Public API with signatures |
 | `used_by` | ✅ | Inverse of deps; who calls this file's exports. Optional `[cascade]` tag marks targets that **MUST** be updated when exports change. |
 | `rules` | ✅ | **Architectural truth channel.** Hard constraints, domain knowledge, what to do and what to avoid. Updated in-place — always reflects the current correct state. |
-| `agent` | ✅ | **Session narrative channel.** Append-only log of agent messages. Format: `model-id \| YYYY-MM-DD \| message`. One line per agent session. Never deleted. |
+| `agent` | ✅ | **Session narrative channel.** Rolling window of the last 5 agent entries. Format: `model-id \| YYYY-MM-DD \| message`. Drop the oldest when adding a 6th. Full history in git and `.codedna`. |
 
 ### 4.4 `rules:` Field — The Inter-Agent Communication Channel
 
@@ -458,7 +458,7 @@ The `agent:` field is a **narrative log** — what the agent did and what it not
 | Field | Nature | Update policy |
 |---|---|---|
 | `rules:` | Architectural truth — hard constraints | updated in-place, always current |
-| `agent:` | Session log — what happened and when | append-only, never edited |
+| `agent:` | Session log — what happened and when | rolling window (last 5); drop oldest when adding a 6th |
 | `message:` | Agent-to-agent chat — soft observations and open questions | append-only, resolved by reply |
 
 `rules:` is the **law**. `agent:` is the **diary**. `message:` is the **conversation that precedes the law**.
@@ -752,7 +752,7 @@ When an AI agent must plan edits across a multi-file codebase, it should:
 3. After editing, check `used_by:` targets (especially `[cascade]`-tagged ones).
 4. If renaming an `exports:` symbol: update all `used_by:` callers.
 5. **If you discover a constraint or fix a bug, update `rules:` for the next agent.** This is the architectural channel.
-6. **After editing, append an `agent:` line** to the module docstring: `model-id | YYYY-MM-DD | what you did and what you noticed`. This is the narrative channel. Never edit existing `agent:` lines.
+6. **After editing, append an `agent:` line** to the module docstring: `model-id | YYYY-MM-DD | what you did and what you noticed`. Keep only the last 5 entries — drop the oldest if adding a 6th. Full history is in git and `.codedna`.
 7. At session end: append an `agent_sessions:` entry to `.codedna`.
 
 ### 8.4 Migration

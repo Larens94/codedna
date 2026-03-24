@@ -40,7 +40,7 @@ agent:   <model-id> | <YYYY-MM-DD> | <what you implemented and what you noticed>
 | `exports:` | ✅ | Public API with return type |
 | `used_by:` | ✅ | Who calls this file's exports |
 | `rules:` | ✅ | Architectural truth — hard constraints, updated in-place |
-| `agent:` | ✅ | Session narrative — append-only, never delete existing lines |
+| `agent:` | ✅ | Session narrative — rolling window of last 5 entries; drop the oldest when adding a 6th |
 
 ## Editing a file
 
@@ -49,7 +49,7 @@ agent:   <model-id> | <YYYY-MM-DD> | <what you implemented and what you noticed>
 3. Check `used_by:` targets after changes — update callers if signatures change
 4. Never remove `exports:` symbols — they are contracts
 5. If you discover a constraint or fix a bug, **update `rules:`** for the next agent
-6. **Append a new `agent:` line** after editing: `model-id | YYYY-MM-DD | what you did and noticed`. Never edit existing lines.
+6. **Append a new `agent:` line** after editing: `model-id | YYYY-MM-DD | what you did and noticed`. Keep only the last 5 entries — drop the oldest if adding a 6th. Full history is in git and `.codedna`.
 
 ## Critical functions
 

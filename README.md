@@ -67,6 +67,18 @@ Every other layer is external to the code. CodeDNA is the only memory that trave
 
 ---
 
+### Semantic vs structural reasoning
+
+AI coding agents usually begin from a semantic prompt and must infer structure by exploring the repository.  
+Without persistent architectural context, each session starts from scratch.
+
+CodeDNA turns semantic reasoning into structured reasoning.
+
+Annotations allow the agent to follow explicit dependency and constraint signals instead of relying only on token similarity or retrieval.
+
+This suggests that source code alone may not be the optimal reasoning layer for AI agents.
+While binary is the lowest layer for execution, structured source + annotations may be closer to the lowest layer for understanding.
+
 ## How it works — live benchmark data
 
 ![CodeDNA Navigation Demo](./docs/codedna_viz.gif)

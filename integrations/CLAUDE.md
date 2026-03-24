@@ -48,7 +48,7 @@ Field guide:
 | `exports:` | ✅ | Public API with return type |
 | `used_by:` | ✅ | Who calls this file's exports |
 | `rules:` | ✅ | Architectural truth — hard constraints, updated in-place |
-| `agent:` | ✅ | Session narrative — append-only chat log, never delete existing lines |
+| `agent:` | ✅ | Session narrative — rolling window of last 5 entries; drop the oldest when adding a 6th |
 
 ## Writing critical functions
 
@@ -69,7 +69,7 @@ def my_function(arg: type) -> return_type:
 3. After editing, check `used_by:` targets (especially `[cascade]`-tagged ones).
 4. Never remove `exports:` symbols — they are contracts used by other files.
 5. If you discover a constraint or fix a bug, **update `rules:` for the next agent** (architectural channel).
-6. **Append a new `agent:` line** to the module docstring after editing: `model-id | YYYY-MM-DD | what you did and what you noticed`. Never edit existing `agent:` lines.
+6. **Append a new `agent:` line** to the module docstring after editing: `model-id | YYYY-MM-DD | what you did and what you noticed`. Keep only the last 5 entries — drop the oldest if adding a 6th. Full history is in git and `.codedna`.
 
 ## Session end protocol
 

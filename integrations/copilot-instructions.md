@@ -38,7 +38,7 @@ Read `.codedna` at repo root — project structure and last 3-5 `agent_sessions:
 2. Check `used_by:` — these callers will be affected by your changes
 3. Read `Rules:` in any function docstring before writing logic
 4. If you discover a constraint, add it to `rules:` for the next agent
-5. Append a new `agent:` line to the module docstring after editing
+5. Append a new `agent:` line to the module docstring after editing. Keep only the last 5 entries — drop the oldest if adding a 6th. Full history is in git and `.codedna`.
 
 ## On generate: always do these
 
