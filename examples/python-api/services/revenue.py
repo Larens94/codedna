@@ -22,10 +22,14 @@ def get_invoices_for_period(year: int, month: int) -> list[Invoice]:
     # NOTE: returns ALL invoices including suspended users — callers must filter
     from db import session
 
-    return session.query(Invoice).filter(
-        Invoice.created_at >= datetime(year, month, 1),
-        Invoice.paid == True,
-    ).all()
+    return (
+        session.query(Invoice)
+        .filter(
+            Invoice.created_at >= datetime(year, month, 1),
+            Invoice.paid == True,
+        )
+        .all()
+    )
 
 
 def monthly_revenue(year: int, month: int, users: list[User]) -> dict:
@@ -53,7 +57,4 @@ def top_customers(year: int, month: int, users: list[User], limit: int = 10) -> 
         if inv.user_id in active_ids:
             totals[inv.user_id] = totals.get(inv.user_id, 0) + inv.amount_cents
     sorted_ids = sorted(totals, key=lambda uid: totals[uid], reverse=True)[:limit]
-    return [
-        {"user": active_ids[uid].display_name(), "total": format_currency(totals[uid])}
-        for uid in sorted_ids
-    ]
+    return [{"user": active_ids[uid].display_name(), "total": format_currency(totals[uid])} for uid in sorted_ids]

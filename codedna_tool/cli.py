@@ -294,19 +294,17 @@ class LLM:
                 provider = self._detect_provider(model)
                 env_map = {
                     "anthropic": "ANTHROPIC_API_KEY",
-                    "openai":    "OPENAI_API_KEY",
-                    "gemini":    "GEMINI_API_KEY",
-                    "mistral":   "MISTRAL_API_KEY",
-                    "cohere":    "COHERE_API_KEY",
+                    "openai": "OPENAI_API_KEY",
+                    "gemini": "GEMINI_API_KEY",
+                    "mistral": "MISTRAL_API_KEY",
+                    "cohere": "COHERE_API_KEY",
                 }
                 env_key = env_map.get(provider)
                 if env_key:
                     os.environ[env_key] = api_key
         elif HAS_ANTHROPIC:
             # Legacy fallback — only works for Claude models.
-            self._client = _anthropic.Anthropic(
-                api_key=api_key or os.environ.get("ANTHROPIC_API_KEY")
-            )
+            self._client = _anthropic.Anthropic(api_key=api_key or os.environ.get("ANTHROPIC_API_KEY"))
         else:
             raise ImportError(
                 "No LLM backend found.\n"
