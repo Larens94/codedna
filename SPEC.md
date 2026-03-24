@@ -2,7 +2,7 @@
 
 **Version:** 0.8
 **Status:** Draft
-**Language:** Python (other languages planned)
+**Language:** Python (canonical), TypeScript, JavaScript, Go, Rust, Java, Ruby, C/C++
 
 ---
 
@@ -1040,6 +1040,251 @@ The version of the standard is tracked in the repo tag (`v0.7`).
 
 ---
 
+## 11. Language Adaptations
+
+The CodeDNA field names (`exports:`, `used_by:`, `rules:`, `agent:`, `message:`) are identical across all languages. Only the comment syntax and placement rules differ.
+
+### Design rules for all languages
+
+1. The annotation must be the **first meaningful block** in the file (before imports, after mandatory declarations such as `package`).
+2. **Level 1** (module header) uses the language's native documentation comment syntax.
+3. **Level 2** (function-level `Rules:`) uses the same syntax on individual functions.
+4. Semantic naming adapts to the language's casing convention, but retains the `type_shape_domain_origin` structure.
+
+---
+
+### Python *(canonical)*
+
+```python
+"""filename.py — purpose ≤15 words.
+
+exports: public_fn(arg) -> ReturnType
+used_by: caller.py → caller_fn
+rules:   hard constraint agents must never violate
+agent:   claude-sonnet-4-6 | 2026-03-24 | what was done
+         message: "open hypothesis for the next agent"
+"""
+```
+
+**Level 2:**
+```python
+def my_function(arg: type) -> ReturnType:
+    """Short description.
+
+    Rules:   constraint
+    message: model-id | YYYY-MM-DD | observation
+    """
+```
+
+**Semantic naming:** `list_dict_users_from_db`, `str_html_report_rendered`
+
+---
+
+### TypeScript / JavaScript
+
+Annotation goes **before the first import**, as a JSDoc block.
+
+```typescript
+/**
+ * filename.ts — purpose ≤15 words.
+ *
+ * exports: publicFn(arg): ReturnType | AnotherFn(arg): ReturnType
+ * used_by: caller.ts → callerFn
+ * rules:   hard constraint agents must never violate
+ * agent:   claude-sonnet-4-6 | 2026-03-24 | what was done
+ *          message: "open hypothesis for the next agent"
+ */
+
+import { something } from './something';
+```
+
+**Level 2:**
+```typescript
+/**
+ * Short description.
+ *
+ * Rules:   constraint
+ * message: model-id | YYYY-MM-DD | observation
+ */
+function myFunction(arg: Type): ReturnType {
+```
+
+**Semantic naming (camelCase):** `arrUsersFromDb`, `mapPricesByIdFromApi`, `strHtmlReportRendered`
+
+**Note:** plain `.js` files use the same format. For `.jsx`/`.tsx` files, place the annotation before the first import, not inside the component.
+
+---
+
+### Go
+
+Go convention allows a comment block before the `package` declaration — this is the package documentation. CodeDNA uses this slot.
+
+```go
+// filename.go — purpose ≤15 words.
+//
+// exports: PublicFn(arg Type) ReturnType | AnotherFn(arg Type) ReturnType
+// used_by: caller.go → callerFn
+// rules:   hard constraint agents must never violate
+// agent:   claude-sonnet-4-6 | 2026-03-24 | what was done
+//          message: "open hypothesis for the next agent"
+package mypackage
+
+import "something"
+```
+
+**Level 2:**
+```go
+// MyFunction does X.
+//
+// Rules:   constraint
+// message: model-id | YYYY-MM-DD | observation
+func MyFunction(arg Type) ReturnType {
+```
+
+**Semantic naming (camelCase):** `usersSliceFromDB`, `priceMapByIDFromAPI`, `htmlReportStr`
+
+**Note:** Go's `godoc` tool reads the comment immediately before `package` as the package doc — CodeDNA is fully compatible with this convention.
+
+---
+
+### Rust
+
+Rust `//!` (inner doc comments) at the top of a file document the module itself. This is the canonical slot for the CodeDNA annotation.
+
+```rust
+//! filename.rs — purpose ≤15 words.
+//!
+//! exports: public_fn(arg: Type) -> ReturnType | another_fn(arg: Type) -> ReturnType
+//! used_by: caller.rs → caller_fn
+//! rules:   hard constraint agents must never violate
+//! agent:   claude-sonnet-4-6 | 2026-03-24 | what was done
+//!          message: "open hypothesis for the next agent"
+
+use std::collections::HashMap;
+```
+
+**Level 2:**
+```rust
+/// Short description.
+///
+/// # Rules
+/// constraint
+///
+/// # Message
+/// model-id | YYYY-MM-DD | observation
+pub fn my_function(arg: Type) -> ReturnType {
+```
+
+**Semantic naming (snake_case, same as Python):** `vec_users_from_db`, `map_prices_by_id_from_api`, `str_html_report_rendered`
+
+**Note:** `///` (outer doc comments) are for exported functions. `//!` (inner doc comments) are for modules and files. Both are rendered by `rustdoc`.
+
+---
+
+### Java
+
+Java's `package` declaration must be the first statement. The CodeDNA annotation goes as a Javadoc block **between the package declaration and the class**, which is standard Javadoc placement for class-level documentation.
+
+```java
+package com.example.mypackage;
+
+/**
+ * ClassName.java — purpose ≤15 words.
+ *
+ * exports: publicMethod(arg): ReturnType | anotherMethod(arg): ReturnType
+ * used_by: CallerClass.java → callerMethod
+ * rules:   hard constraint agents must never violate
+ * agent:   claude-sonnet-4-6 | 2026-03-24 | what was done
+ *          message: "open hypothesis for the next agent"
+ */
+public class ClassName {
+```
+
+**Level 2:**
+```java
+/**
+ * Short description.
+ *
+ * Rules:   constraint
+ * message: model-id | YYYY-MM-DD | observation
+ */
+public ReturnType myMethod(Type arg) {
+```
+
+**Semantic naming (camelCase):** `userListFromDb`, `priceMapByIdFromApi`, `htmlReportStr`
+
+---
+
+### Ruby
+
+```ruby
+# filename.rb — purpose ≤15 words.
+#
+# exports: public_method(arg) -> ReturnType | another_method(arg) -> ReturnType
+# used_by: caller.rb → caller_method
+# rules:   hard constraint agents must never violate
+# agent:   claude-sonnet-4-6 | 2026-03-24 | what was done
+#          message: "open hypothesis for the next agent"
+
+require 'something'
+```
+
+**Level 2:**
+```ruby
+# Short description.
+#
+# Rules:   constraint
+# message: model-id | YYYY-MM-DD | observation
+def my_method(arg)
+```
+
+**Semantic naming (snake_case):** `list_users_from_db`, `hash_prices_by_id_from_api`
+
+---
+
+### C / C++
+
+```cpp
+/**
+ * filename.cpp — purpose ≤15 words.
+ *
+ * exports: public_fn(Type arg) -> ReturnType | another_fn(Type arg) -> ReturnType
+ * used_by: caller.cpp → caller_fn
+ * rules:   hard constraint agents must never violate
+ * agent:   claude-sonnet-4-6 | 2026-03-24 | what was done
+ *          message: "open hypothesis for the next agent"
+ */
+
+#include <something>
+```
+
+**Level 2:**
+```cpp
+/**
+ * Short description.
+ *
+ * Rules:   constraint
+ * message: model-id | YYYY-MM-DD | observation
+ */
+ReturnType myFunction(Type arg) {
+```
+
+---
+
+### Language Support Matrix
+
+| Language | Level 1 syntax | Level 2 syntax | Naming convention | Status |
+|---|---|---|---|---|
+| Python | `"""..."""` module docstring | `"""Rules: ..."""` function docstring | `snake_case` prefixed | Canonical |
+| TypeScript/JS | `/** ... */` JSDoc before imports | `/** Rules: ... */` on function | `camelCase` prefixed | Supported |
+| Go | `// ...` block before `package` | `// Rules: ...` before `func` | `camelCase` prefixed | Supported |
+| Rust | `//! ...` inner doc at file top | `/// # Rules` on `pub fn` | `snake_case` prefixed | Supported |
+| Java | `/** ... */` Javadoc before class | `/** Rules: ... */` on method | `camelCase` prefixed | Supported |
+| Ruby | `# ...` block before requires | `# Rules: ...` before `def` | `snake_case` prefixed | Supported |
+| C/C++ | `/** ... */` before includes | `/** Rules: ... */` before function | `snake_case` prefixed | Supported |
+
+---
+
 ## Changelog
 
 | Version | Date | Notes |
@@ -1053,4 +1298,5 @@ The version of the standard is tracked in the repo tag (`v0.7`).
 | **0.7** | **2026-03-18** | **Header reduced to 3 fields: `exports:`, `used_by:`, `rules:`. `rules:` promoted to required — the inter-agent communication channel. `cascade:` absorbed into `used_by:` as `[cascade]` tag. Removed redundant fields: `tested_by:`, `tables:`, `raises:` (all inferrable from code). Python-only focus.** |
 | **0.7.1** | **2026-03-18** | **Added §2.5 codedna file format requirement (docstring + full source). Added §2.4 task-type analysis (dependency chains vs cross-cutting). Benchmark extended to 5 tasks, ≥5 runs/task, multi-model. Tool harness hardened with `list_files`/`read_file` directory guards.** |
 | **0.8 (proposed)** | — | **`cross_cutting_patterns:` section in `.codedna` manifest. Written by agents post-fix to capture patterns that span files with no dependency relationship. Enables navigation for cross-cutting tasks where `used_by:` graphs have no shared ancestor.** |
+| **0.9 (proposed)** | — | **Multi-language support: TypeScript/JS, Go, Rust, Java, Ruby, C/C++. Each language uses its native documentation comment syntax. Field names (`exports:`, `used_by:`, `rules:`, `agent:`, `message:`) are identical across all languages. See §11.** |
 

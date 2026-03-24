@@ -1,0 +1,709 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Install — CodeDNA</title>
+<meta name="description" content="Install CodeDNA for Claude Code, Cursor, Copilot, and 7 programming languages.">
+<link rel="icon" href="logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --bg: #fafafa; --surface: #fff; --border: #e5e5ea;
+  --text: #1a1a2e; --text2: #4b4b6a; --muted: #8787a0;
+  --accent: #4338ca; --accent-h: #3730a3; --accent-lt: #eef2ff;
+  --code-bg: #1e1e2e; --code-text: #cdd6f4;
+  --r: 10px;
+  --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+}
+html { scroll-behavior: smooth; }
+body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+code, pre { font-family: 'DM Mono', monospace; }
+a { color: inherit; }
+
+/* NAV */
+nav {
+  position: sticky; top: 0; z-index: 100;
+  background: rgba(255,255,255,0.94); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 2rem; height: 56px;
+}
+.nav-logo { display: flex; align-items: center; gap: 8px; text-decoration: none; color: var(--text); font-weight: 700; font-size: 15px; }
+.nav-logo img { width: 26px; height: 26px; }
+.nav-links { display: flex; }
+.nav-links a {
+  text-decoration: none; color: var(--text2); font-size: 14px; font-weight: 500;
+  padding: 0 14px; height: 56px; display: flex; align-items: center;
+  border-bottom: 2px solid transparent; transition: color .15s, border-color .15s;
+}
+.nav-links a:hover { color: var(--accent); }
+.nav-links a.active { color: var(--accent); border-bottom-color: var(--accent); }
+.nav-cta {
+  text-decoration: none; background: var(--accent); color: #fff !important;
+  padding: 7px 16px; border-radius: 7px; font-size: 13px; font-weight: 600;
+  border-bottom: none !important; transition: background .15s;
+}
+.nav-cta:hover { background: var(--accent-h) !important; }
+
+/* LAYOUT */
+.page { display: flex; min-height: calc(100vh - 56px); }
+
+/* SIDEBAR */
+aside {
+  width: 224px; flex-shrink: 0;
+  position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto;
+  border-right: 1px solid var(--border); padding: 1.5rem 0;
+}
+.sb-group { margin-bottom: 1.5rem; }
+.sb-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 0 1.25rem; margin-bottom: .35rem; }
+.sb-link {
+  display: flex; align-items: center; gap: 8px;
+  padding: 5px 1.25rem; font-size: 13.5px; color: var(--text2);
+  text-decoration: none; border-left: 2px solid transparent;
+  transition: color .15s, background .15s, border-color .15s; cursor: pointer;
+}
+.sb-link:hover { color: var(--accent); background: var(--accent-lt); }
+.sb-link.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-lt); font-weight: 600; }
+.sb-link svg, .sb-link img { width: 16px; height: 16px; flex-shrink: 0; }
+
+/* MAIN */
+main { flex: 1; max-width: 880px; padding: 3rem 3rem 6rem; min-width: 0; }
+section { scroll-margin-top: 72px; }
+h1 { font-size: 2rem; font-weight: 700; line-height: 1.2; margin-bottom: .5rem; }
+h2 { font-size: 1.2rem; font-weight: 700; margin: 2.5rem 0 .6rem; }
+h3 { font-size: .95rem; font-weight: 600; margin: 1.5rem 0 .4rem; }
+p { color: var(--text2); margin-bottom: .9rem; font-size: 15px; }
+hr { border: none; border-top: 1px solid var(--border); margin: 2.5rem 0; }
+.ic { display: inline-block; background: var(--accent-lt); color: var(--accent); padding: 1px 6px; border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 12.5px; }
+
+/* CODE */
+.cb {
+  background: var(--code-bg); color: var(--code-text);
+  border-radius: var(--r); padding: 1.1rem 1.25rem;
+  font-size: 12.5px; line-height: 1.75; overflow-x: auto;
+  margin: .6rem 0 1.25rem; position: relative;
+}
+.cb .c { color: #6c7086; }
+.cb .k { color: #89b4fa; }
+.cb .s { color: #a6e3a1; }
+.cp {
+  position: absolute; top: 10px; right: 10px;
+  background: rgba(255,255,255,0.1); border: 1px solid rgba(255,255,255,0.15);
+  color: #bac2de; border-radius: 5px; padding: 3px 9px; font-size: 11px;
+  cursor: pointer; font-family: 'DM Mono', monospace; transition: background .15s;
+}
+.cp:hover { background: rgba(255,255,255,0.2); }
+
+/* TABLE */
+table { width: 100%; border-collapse: collapse; font-size: 14px; margin: .5rem 0 1.5rem; }
+th { text-align: left; font-size: 11px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); padding: 8px 10px; }
+td { padding: 9px 10px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: top; }
+tr:last-child td { border-bottom: none; }
+
+/* NOTE */
+.note { background: var(--accent-lt); border-left: 3px solid var(--accent); border-radius: 0 var(--r) var(--r) 0; padding: .7rem 1rem; font-size: 13.5px; color: var(--text2); margin: .75rem 0 1rem; }
+
+/* INSTALL HERO BOX */
+.install-box {
+  background: var(--code-bg); border-radius: var(--r);
+  padding: 1.25rem 1.5rem; margin: .75rem 0 1.5rem;
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+}
+.install-box .label { color: #6c7086; font-size: 11px; font-family: 'DM Mono', monospace; margin-bottom: 4px; }
+.install-box code { color: #89b4fa; font-size: 15px; }
+
+/* LANG CARDS */
+.lang-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(128px, 1fr)); gap: 10px; margin: 1rem 0 1.5rem; }
+.lang-card {
+  border: 2px solid var(--border); border-radius: var(--r); padding: 1rem .75rem;
+  cursor: pointer; background: var(--surface); text-align: center;
+  transition: border-color .15s, box-shadow .15s, background .15s;
+  display: flex; flex-direction: column; align-items: center; gap: 8px;
+}
+.lang-card:hover { border-color: var(--accent); box-shadow: var(--shadow-md); }
+.lang-card.active { border-color: var(--accent); background: var(--accent-lt); }
+.lang-card svg, .lang-card img { width: 40px; height: 40px; }
+.lang-card-name { font-size: 13px; font-weight: 600; color: var(--text); }
+.lang-card-sub { font-size: 11px; color: var(--muted); }
+
+/* LANG CONTENT */
+.lang-pane { display: none; }
+.lang-pane.visible { display: block; }
+.lang-head {
+  display: flex; align-items: center; gap: 12px;
+  background: var(--surface); border: 1px solid var(--border);
+  border-radius: var(--r); padding: .9rem 1.1rem; margin-bottom: 1rem;
+}
+.lang-head svg { width: 32px; height: 32px; flex-shrink: 0; }
+.lang-head-text h3 { margin: 0 0 2px; font-size: 15px; }
+.lang-head-text p { margin: 0; font-size: 12.5px; color: var(--muted); }
+
+/* TOOL CARDS */
+.tool-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(160px, 1fr)); gap: 12px; margin: 1rem 0 1.5rem; }
+.tool-card {
+  border: 1px solid var(--border); border-radius: var(--r); padding: 1.1rem 1rem;
+  background: var(--surface); display: flex; flex-direction: column; gap: 8px;
+  text-decoration: none; transition: box-shadow .15s, border-color .15s;
+}
+.tool-card:hover { box-shadow: var(--shadow-md); border-color: #c7d2fe; }
+.tool-icon { width: 36px; height: 36px; border-radius: 8px; display: flex; align-items: center; justify-content: center; }
+.tool-name { font-size: 14px; font-weight: 600; color: var(--text); }
+.tool-desc { font-size: 12px; color: var(--muted); line-height: 1.4; }
+.tool-file { font-size: 11px; font-family: 'DM Mono', monospace; color: var(--accent); background: var(--accent-lt); padding: 2px 6px; border-radius: 4px; display: inline-block; margin-top: 2px; }
+
+/* BADGE */
+.badge { display: inline-flex; align-items: center; gap: 4px; background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; border-radius: 5px; padding: 2px 8px; font-size: 12px; font-weight: 500; }
+
+@media (max-width: 768px) {
+  aside { display: none; }
+  main { padding: 1.5rem 1.25rem 4rem; }
+  .install-box { flex-direction: column; align-items: flex-start; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a class="nav-logo" href="index.html">
+    <img src="logo.png" alt="CodeDNA">
+    CodeDNA
+  </a>
+  <div class="nav-links">
+    <a href="index.html">Overview</a>
+    <a href="install.html" class="active">Install</a>
+    <a href="https://github.com/Larens94/codedna/blob/main/SPEC.md" target="_blank">Spec</a>
+    <a href="https://github.com/Larens94/codedna" target="_blank">GitHub</a>
+    <a href="https://claude.com/plugins" target="_blank" class="nav-cta">Get Plugin</a>
+  </div>
+</nav>
+
+<div class="page">
+
+<!-- SIDEBAR -->
+<aside>
+  <div class="sb-group">
+    <div class="sb-label">Get started</div>
+    <a class="sb-link active" href="#plugin" onclick="setActive(this)">
+      <!-- Claude icon -->
+      <svg viewBox="0 0 24 24" fill="#D97757"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
+      Claude Code Plugin
+    </a>
+    <a class="sb-link" href="#languages" onclick="setActive(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#8787a0" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      Languages
+    </a>
+    <a class="sb-link" href="#other-tools" onclick="setActive(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#8787a0" stroke-width="2"><rect x="2" y="3" width="20" height="14" rx="2"/><line x1="8" y1="21" x2="16" y2="21"/><line x1="12" y1="17" x2="12" y2="21"/></svg>
+      Other AI Tools
+    </a>
+    <a class="sb-link" href="#cli" onclick="setActive(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#8787a0" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+      CLI Reference
+    </a>
+  </div>
+
+  <div class="sb-group">
+    <div class="sb-label">Languages</div>
+    <a class="sb-link" data-lang="python" onclick="navToLang('python', this)">
+      <svg viewBox="0 0 24 24"><path fill="#3776ab" d="M11.4 2C7.5 2 7.7 3.7 7.7 3.7L7.7 5.5H11.5V6H5.8C5.8 6 3 5.7 3 9.6s2.5 3.8 2.5 3.8H6.9V11.3s-.1-2.5 2.5-2.5h4.3s2.4.1 2.4-2.3V4.3S16.5 2 11.4 2zm-1.3 1.3c.4 0 .8.3.8.8s-.3.8-.8.8-.8-.3-.8-.8.4-.8.8-.8z"/><path fill="#ffd43b" d="M12.6 22c3.9 0 3.7-1.7 3.7-1.7l0-1.8H12.5V18H18.2c0 0 2.8.3 2.8-3.6s-2.5-3.8-2.5-3.8H17.1v2.1s.1 2.5-2.5 2.5H10.4S8 15.1 8 17.5v3.2S7.5 22 12.6 22zm1.3-1.3c-.4 0-.8-.3-.8-.8s.3-.8.8-.8.8.3.8.8-.4.8-.8.8z"/></svg>
+      Python
+    </a>
+    <a class="sb-link" data-lang="typescript" onclick="navToLang('typescript', this)">
+      <svg viewBox="0 0 24 24"><rect width="24" height="24" rx="3" fill="#3178c6"/><path fill="#fff" d="M14.5 12.5h-2V18h-1.5v-5.5H9V11h5.5v1.5zm1.3 4.4c.3.3.7.4 1.2.4.4 0 .7-.1.9-.2l.4 1.1c-.4.2-.9.3-1.5.3-.8 0-1.5-.2-2-.7s-.7-1.2-.7-2.1c0-.9.3-1.6.8-2.1s1.2-.8 2-.8c.5 0 1 .1 1.4.3l-.4 1.1c-.3-.1-.6-.2-.9-.2-.4 0-.8.1-1 .4-.3.3-.4.7-.4 1.2 0 .6.1 1 .2 1.3z"/></svg>
+      TypeScript / JS
+    </a>
+    <a class="sb-link" data-lang="go" onclick="navToLang('go', this)">
+      <svg viewBox="0 0 24 24"><path fill="#00acd7" d="M2 11.5c-.2 0-.2-.1-.1-.2l.5-.6c.1-.1.3-.2.5-.2h13c.2 0 .2.1.1.2l-.4.5c-.1.1-.3.2-.5.2H2zm-1 1.3c-.2 0-.2-.1-.1-.2l.5-.6c.1-.1.3-.2.5-.2h16.5c.2 0 .2.1.1.2l-.4.5c-.1.1-.3.2-.5.2H1zm-1 1.3c-.2 0-.1-.1 0-.2l.4-.4c.1-.1.4-.2.5-.2h7.3c.2 0 .2.1.1.2l-.3.4c-.1.1-.3.2-.5.2H0z"/></svg>
+      Go
+    </a>
+    <a class="sb-link" data-lang="rust" onclick="navToLang('rust', this)">
+      <svg viewBox="0 0 24 24"><path fill="#ce4a00" d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm0 1.5a8.5 8.5 0 1 1 0 17 8.5 8.5 0 0 1 0-17zm0 3a5.5 5.5 0 1 0 0 11 5.5 5.5 0 0 0 0-11zm2.8 2l.5.9H9l.5-.9h5.6zm-5.6 1.5h5.6l-.9 1.5H9.1l.1-1.5zm.9 2.5h3.8l-.6 1H10l.1-1zm.6 1.5h2.6l-.4.7h-1.8l-.4-.7z"/></svg>
+      Rust
+    </a>
+    <a class="sb-link" data-lang="java" onclick="navToLang('java', this)">
+      <svg viewBox="0 0 24 24"><path fill="#0074bd" d="M8.9 18.4s-.8.5.6.6c1.7.2 2.6.2 4.4-.2 0 0 .5.3 1.2.6-4.2 1.8-9.5-.1-6.2-1zm-.6-2.6s-.9.7.5.8c1.8.2 3.3.2 5.8-.3 0 0 .3.3.9.5-5.1 1.5-10.8.1-7.2-1z"/><path fill="#ea2d2e" d="M13 10.4c1 1.2-.3 2.3-.3 2.3s2.6-1.4 1.4-3.1c-1.1-1.6-2-2.4 2.7-5.1 0 0-7.4 1.9-3.8 5.9z"/><path fill="#0074bd" d="M18.1 19.9s.6.5-.7.9c-2.4.7-10 .9-12.1 0-.8-.3.7-.8 1.1-.9.5-.1.7-.1.7-.1-.8-.6-5.5 1.2-2.3 1.7 8.5 1.4 15.5-.6 13.3-1.6zM9.3 14s-4.1.9-1.5 1.3c1.1.2 3.3.1 5.4-.2 1.7-.3 3.4-.8 3.4-.8s-.6.3-1.1.5c-4.3 1.1-12.5.6-10.1-.5 2-1 3.9-.3 3.9-.3z"/></svg>
+      Java
+    </a>
+    <a class="sb-link" data-lang="ruby" onclick="navToLang('ruby', this)">
+      <svg viewBox="0 0 24 24"><path fill="#cc342d" d="M20.156 16.286L22 7.4l-5.488 3.428-4.154-4.942L10.8 11.6 5.4 8.4 7.8 20h12.356zM2 12l3.2 8h1.6L4.4 12H2zm18 8l2-8h-1.6L18.4 20H20z"/></svg>
+      Ruby
+    </a>
+  </div>
+
+  <div class="sb-group">
+    <div class="sb-label">Resources</div>
+    <a class="sb-link" href="https://github.com/Larens94/codedna/blob/main/SPEC.md" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#8787a0" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/></svg>
+      Protocol Spec
+    </a>
+    <a class="sb-link" href="https://github.com/Larens94/codedna/tree/main/examples" target="_blank">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#8787a0" stroke-width="2"><polyline points="22 12 18 12 15 21 9 3 6 12 2 12"/></svg>
+      Examples
+    </a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main>
+
+  <!-- PAGE HEADER -->
+  <div style="margin-bottom:2.5rem">
+    <p style="font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.07em;font-weight:700;margin-bottom:.35rem">Documentation</p>
+    <h1>Install CodeDNA</h1>
+    <p style="font-size:16px;max-width:540px">
+      Add persistent AI context to any codebase. Annotate every file with
+      <span class="ic">exports:</span>, <span class="ic">used_by:</span>, <span class="ic">rules:</span>
+      — once written, every future agent session benefits.
+    </p>
+  </div>
+
+  <!-- ── PLUGIN ── -->
+  <section id="plugin">
+    <h2>Claude Code Plugin <span class="badge" style="vertical-align:middle;margin-left:6px;">Recommended</span></h2>
+    <p>One-click install from the Claude directory. No API key required — uses your existing Claude subscription.</p>
+
+    <div class="install-box">
+      <div>
+        <div class="label">terminal</div>
+        <code>claude plugin install codedna</code>
+      </div>
+      <button class="cp" onclick="navigator.clipboard.writeText('claude plugin install codedna');this.textContent='copied';setTimeout(()=>this.textContent='copy',1500)">copy</button>
+    </div>
+
+    <a href="https://claude.com/plugins" target="_blank"
+      style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;text-decoration:none;padding:9px 18px;border-radius:8px;font-size:14px;font-weight:600;margin-bottom:1.5rem">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>
+      Browse claude.com/plugins
+    </a>
+
+    <h3>Commands</h3>
+    <table>
+      <tr><th>Command</th><th>What it does</th></tr>
+      <tr><td><span class="ic">/codedna:init [path]</span></td><td>Annotate all unannotated files. Claude reads and writes directly — zero extra cost.</td></tr>
+      <tr><td><span class="ic">/codedna:check [path]</span></td><td>Coverage report — unannotated files and stale <span class="ic">used_by:</span> references.</td></tr>
+      <tr><td><span class="ic">/codedna:manifest [path]</span></td><td>Full architectural map in one pass. Replaces 10–20 individual file reads.</td></tr>
+      <tr><td><span class="ic">/codedna:impact &lt;file&gt;</span></td><td>Cascade dependency chain before a refactor.</td></tr>
+    </table>
+
+    <div class="note">The plugin also installs a <strong>PostToolUse hook</strong> that notifies Claude whenever a saved file is missing a CodeDNA annotation.</div>
+  </section>
+
+  <hr>
+
+  <!-- ── LANGUAGES ── -->
+  <section id="languages">
+    <h2>Language Annotation Format</h2>
+    <p>Field names are identical across all languages. Only the comment syntax changes. Select your language:</p>
+
+    <div class="lang-grid" id="lang-cards">
+
+      <div class="lang-card active" data-lang="python" onclick="showLang('python',this)">
+        <svg viewBox="0 0 24 24" width="40" height="40"><path fill="#3776ab" d="M11.4 2C7.5 2 7.7 3.7 7.7 3.7L7.7 5.5H11.5V6H5.8C5.8 6 3 5.7 3 9.6s2.5 3.8 2.5 3.8H6.9V11.3s-.1-2.5 2.5-2.5h4.3s2.4.1 2.4-2.3V4.3S16.5 2 11.4 2zm-1.3 1.3c.4 0 .8.3.8.8s-.3.8-.8.8-.8-.3-.8-.8.4-.8.8-.8z"/><path fill="#ffd43b" d="M12.6 22c3.9 0 3.7-1.7 3.7-1.7l0-1.8H12.5V18H18.2c0 0 2.8.3 2.8-3.6s-2.5-3.8-2.5-3.8H17.1v2.1s.1 2.5-2.5 2.5H10.4S8 15.1 8 17.5v3.2S7.5 22 12.6 22zm1.3-1.3c-.4 0-.8-.3-.8-.8s.3-.8.8-.8.8.3.8.8-.4.8-.8.8z"/></svg>
+        <div class="lang-card-name">Python</div>
+        <div class="lang-card-sub">"""docstring"""</div>
+      </div>
+
+      <div class="lang-card" data-lang="typescript" onclick="showLang('typescript',this)">
+        <svg viewBox="0 0 24 24" width="40" height="40"><rect width="24" height="24" rx="3" fill="#3178c6"/><path fill="#fff" d="M14.5 12.5h-2V18h-1.5v-5.5H9V11h5.5v1.5zm1.3 4.4c.3.3.7.4 1.2.4.4 0 .7-.1.9-.2l.4 1.1c-.4.2-.9.3-1.5.3-.8 0-1.5-.2-2-.7s-.7-1.2-.7-2.1c0-.9.3-1.6.8-2.1s1.2-.8 2-.8c.5 0 1 .1 1.4.3l-.4 1.1c-.3-.1-.6-.2-.9-.2-.4 0-.8.1-1 .4-.3.3-.4.7-.4 1.2 0 .6.1 1 .2 1.3z"/></svg>
+        <div class="lang-card-name">TypeScript</div>
+        <div class="lang-card-sub">/** JSDoc */</div>
+      </div>
+
+      <div class="lang-card" data-lang="javascript" onclick="showLang('javascript',this)">
+        <svg viewBox="0 0 24 24" width="40" height="40"><rect width="24" height="24" rx="3" fill="#f7df1e"/><path d="M7 18.5c.4.7.9 1.2 1.9 1.2 1 0 1.6-.5 1.6-1.2 0-.9-.7-1.2-1.8-1.7l-.6-.3C6.7 15.9 6 15.1 6 13.7c0-1.5 1.1-2.6 2.9-2.6 1.3 0 2.2.5 2.8 1.6l-1.5.9c-.3-.5-.6-.8-1.3-.8-.6 0-1 .4-1 .8 0 .6.4.8 1.3 1.2l.6.3c1.6.7 2.4 1.5 2.4 3 0 1.7-1.3 2.8-3.2 2.8-1.8 0-2.9-.9-3.5-2l1.5-.9zm7.9.2c.5.8 1.1 1.4 2.2 1.4 1 0 1.5-.4 1.5-1.1 0-.8-.6-1.1-1.6-1.5l-.6-.2c-1.6-.7-2.6-1.5-2.6-3.2 0-1.6 1.2-2.8 3-2.8 1.3 0 2.2.5 2.9 1.7l-1.5 1c-.3-.6-.7-.9-1.3-.9-.6 0-1 .3-1 .9 0 .6.4.9 1.3 1.3l.6.2c1.8.8 2.8 1.6 2.8 3.3 0 1.9-1.4 2.9-3.4 2.9-1.9 0-3.1-1-3.7-2.2l1.4-.8z"/></svg>
+        <div class="lang-card-name">JavaScript</div>
+        <div class="lang-card-sub">/** JSDoc */</div>
+      </div>
+
+      <div class="lang-card" data-lang="go" onclick="showLang('go',this)">
+        <svg viewBox="0 0 24 24" width="40" height="40"><path fill="#00acd7" d="M2 11.8c-.2 0-.2-.1-.1-.2l.5-.7c.1-.1.3-.2.5-.2h13c.2 0 .2.1.1.2l-.4.5c-.1.1-.3.2-.5.2H2zm-1 1.4c-.2 0-.2-.1-.1-.2l.5-.7c.1-.1.3-.2.5-.2H18.5c.2 0 .2.1.1.2l-.4.5c-.1.1-.3.2-.5.2H1zm-1 1.4c-.2 0-.1-.1 0-.2l.4-.5c.1-.1.4-.2.5-.2h7.4c.2 0 .2.1.1.2l-.3.4c-.1.1-.3.2-.5.2H0z"/></svg>
+        <div class="lang-card-name">Go</div>
+        <div class="lang-card-sub">// before package</div>
+      </div>
+
+      <div class="lang-card" data-lang="rust" onclick="showLang('rust',this)">
+        <svg viewBox="0 0 24 24" width="40" height="40"><path fill="#ce4a00" d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm0 1.8a8.2 8.2 0 1 1 0 16.4A8.2 8.2 0 0 1 12 3.8zm0 2.8a5.4 5.4 0 1 0 0 10.8A5.4 5.4 0 0 0 12 6.6zm2.7 2l.5.9H8.8l.5-.9h5.4zm-5.4 1.6h5.4l-.9 1.4H10.2l.1-1.4zm.9 2.3h3.6l-.6 1h-2.4l-.6-1zm.6 1.5h2.4l-.4.7H11l-.2-.7z"/></svg>
+        <div class="lang-card-name">Rust</div>
+        <div class="lang-card-sub">//! inner doc</div>
+      </div>
+
+      <div class="lang-card" data-lang="java" onclick="showLang('java',this)">
+        <svg viewBox="0 0 24 24" width="40" height="40"><path fill="#0074bd" d="M8.9 18.4s-.8.5.6.6c1.7.2 2.6.2 4.4-.2 0 0 .5.3 1.2.6C10.9 21.2 5.6 19.3 8.9 18.4zm-.6-2.6s-.9.7.5.8c1.8.2 3.3.2 5.8-.3 0 0 .3.3.9.5C10.4 18.3 4.7 16.9 8.3 15.8z"/><path fill="#ea2d2e" d="M13 10.4c1 1.2-.3 2.3-.3 2.3s2.6-1.4 1.4-3.1c-1.1-1.6-2-2.4 2.7-5.1C16.8 4.5 9.4 6.4 13 10.4z"/><path fill="#0074bd" d="M18.1 19.9s.6.5-.7.9c-2.4.7-10 .9-12.1 0-.8-.3.7-.8 1.1-.9.5-.1.7-.1.7-.1-.8-.6-5.5 1.2-2.3 1.7 8.5 1.4 15.5-.6 13.3-1.6zM9.3 14s-4.1.9-1.5 1.3c1.1.2 3.3.1 5.4-.2 1.7-.3 3.4-.8 3.4-.8s-.6.3-1.1.5c-4.3 1.1-12.5.6-10.1-.5C8.4 14 9.3 14 9.3 14z"/></svg>
+        <div class="lang-card-name">Java</div>
+        <div class="lang-card-sub">/** Javadoc */</div>
+      </div>
+
+      <div class="lang-card" data-lang="ruby" onclick="showLang('ruby',this)">
+        <svg viewBox="0 0 24 24" width="40" height="40"><path fill="#cc342d" d="M20.2 16.3L22 7.4l-5.5 3.4-4.1-5-1.6 5.8-5.4-3.2L7.8 20h12.4zM2 12l3.2 8h1.6L4.4 12H2zm18 8l2-8h-1.6L18.4 20H20z"/></svg>
+        <div class="lang-card-name">Ruby</div>
+        <div class="lang-card-sub"># comment block</div>
+      </div>
+
+    </div>
+
+    <!-- PYTHON PANE -->
+    <div class="lang-pane visible" id="lang-python">
+      <div class="lang-head">
+        <svg viewBox="0 0 24 24" width="32" height="32"><path fill="#3776ab" d="M11.4 2C7.5 2 7.7 3.7 7.7 3.7L7.7 5.5H11.5V6H5.8C5.8 6 3 5.7 3 9.6s2.5 3.8 2.5 3.8H6.9V11.3s-.1-2.5 2.5-2.5h4.3s2.4.1 2.4-2.3V4.3S16.5 2 11.4 2zm-1.3 1.3c.4 0 .8.3.8.8s-.3.8-.8.8-.8-.3-.8-.8.4-.8.8-.8z"/><path fill="#ffd43b" d="M12.6 22c3.9 0 3.7-1.7 3.7-1.7l0-1.8H12.5V18H18.2c0 0 2.8.3 2.8-3.6s-2.5-3.8-2.5-3.8H17.1v2.1s.1 2.5-2.5 2.5H10.4S8 15.1 8 17.5v3.2S7.5 22 12.6 22zm1.3-1.3c-.4 0-.8-.3-.8-.8s.3-.8.8-.8.8.3.8.8-.4.8-.8.8z"/></svg>
+        <div class="lang-head-text"><h3>Python</h3><p>Module docstring — first thing in the file, before any imports</p></div>
+      </div>
+      <div class="cb"><button class="cp" onclick="copyPre(this)">copy</button><pre><span class="c">"""filename.py — purpose in 15 words or fewer.
+
+exports: public_fn(arg) -> ReturnType | AnotherClass
+used_by: caller.py → caller_fn | other.py → other_fn
+rules:   hard constraint agents must never violate
+agent:   claude-sonnet-4-6 | 2026-03-24 | what was done
+         message: "open hypothesis for the next agent"
+"""</span>
+
+import os
+from typing import Optional</pre></div>
+      <h3>Function-level (Level 2)</h3>
+      <div class="cb"><pre>def my_function(arg: Type) -> ReturnType:
+    <span class="s">"""Short description.
+
+    Rules:   constraint — what must or must not happen here
+    message: model-id | YYYY-MM-DD | observation for next agent
+    """</span>
+    ...</pre></div>
+      <h3>Semantic naming</h3>
+      <div class="cb"><pre><span class="c"># good  →  type_shape_domain_origin</span>
+list_dict_users_from_db = get_users()
+str_html_report_rendered = render(ctx)
+int_cents_price_from_request = req.json["price"]
+
+<span class="c"># avoid</span>
+data = get_users()
+result = render(ctx)</pre></div>
+    </div>
+
+    <!-- TYPESCRIPT PANE -->
+    <div class="lang-pane" id="lang-typescript">
+      <div class="lang-head">
+        <svg viewBox="0 0 24 24" width="32" height="32"><rect width="24" height="24" rx="3" fill="#3178c6"/><path fill="#fff" d="M14.5 12.5h-2V18h-1.5v-5.5H9V11h5.5v1.5zm1.3 4.4c.3.3.7.4 1.2.4.4 0 .7-.1.9-.2l.4 1.1c-.4.2-.9.3-1.5.3-.8 0-1.5-.2-2-.7s-.7-1.2-.7-2.1c0-.9.3-1.6.8-2.1s1.2-.8 2-.8c.5 0 1 .1 1.4.3l-.4 1.1c-.3-.1-.6-.2-.9-.2-.4 0-.8.1-1 .4-.3.3-.4.7-.4 1.2 0 .6.1 1 .2 1.3z"/></svg>
+        <div class="lang-head-text"><h3>TypeScript / JavaScript</h3><p>JSDoc block — before the first import</p></div>
+      </div>
+      <div class="cb"><button class="cp" onclick="copyPre(this)">copy</button><pre><span class="c">/**
+ * filename.ts — purpose in 15 words or fewer.
+ *
+ * exports: publicFn(arg): ReturnType | AnotherFn(arg): ReturnType
+ * used_by: caller.ts → callerFn | other.ts → otherFn
+ * rules:   hard constraint agents must never violate
+ * agent:   claude-sonnet-4-6 | 2026-03-24 | what was done
+ *          message: "open hypothesis for the next agent"
+ */</span>
+
+import { something } from './something';</pre></div>
+      <h3>Function-level (Level 2)</h3>
+      <div class="cb"><pre><span class="c">/**
+ * Short description.
+ *
+ * Rules:   constraint
+ * message: model-id | YYYY-MM-DD | observation
+ */</span>
+export function myFunction(arg: Type): ReturnType {
+  ...
+}</pre></div>
+    </div>
+
+    <!-- JAVASCRIPT PANE -->
+    <div class="lang-pane" id="lang-javascript">
+      <div class="lang-head">
+        <svg viewBox="0 0 24 24" width="32" height="32"><rect width="24" height="24" rx="3" fill="#f7df1e"/><path d="M7 18.5c.4.7.9 1.2 1.9 1.2 1 0 1.6-.5 1.6-1.2 0-.9-.7-1.2-1.8-1.7l-.6-.3C6.7 15.9 6 15.1 6 13.7c0-1.5 1.1-2.6 2.9-2.6 1.3 0 2.2.5 2.8 1.6l-1.5.9c-.3-.5-.6-.8-1.3-.8-.6 0-1 .4-1 .8 0 .6.4.8 1.3 1.2l.6.3c1.6.7 2.4 1.5 2.4 3 0 1.7-1.3 2.8-3.2 2.8-1.8 0-2.9-.9-3.5-2l1.5-.9zm7.9.2c.5.8 1.1 1.4 2.2 1.4 1 0 1.5-.4 1.5-1.1 0-.8-.6-1.1-1.6-1.5l-.6-.2c-1.6-.7-2.6-1.5-2.6-3.2 0-1.6 1.2-2.8 3-2.8 1.3 0 2.2.5 2.9 1.7l-1.5 1c-.3-.6-.7-.9-1.3-.9-.6 0-1 .3-1 .9 0 .6.4.9 1.3 1.3l.6.2c1.8.8 2.8 1.6 2.8 3.3 0 1.9-1.4 2.9-3.4 2.9-1.9 0-3.1-1-3.7-2.2l1.4-.8z"/></svg>
+        <div class="lang-head-text"><h3>JavaScript</h3><p>JSDoc block — before the first require/import</p></div>
+      </div>
+      <div class="cb"><button class="cp" onclick="copyPre(this)">copy</button><pre><span class="c">/**
+ * filename.js — purpose in 15 words or fewer.
+ *
+ * exports: publicFn(arg): ReturnType | anotherFn(arg): ReturnType
+ * used_by: caller.js → callerFn | other.js → otherFn
+ * rules:   hard constraint agents must never violate
+ * agent:   claude-sonnet-4-6 | 2026-03-24 | what was done
+ */</span>
+
+const something = require('./something');</pre></div>
+    </div>
+
+    <!-- GO PANE -->
+    <div class="lang-pane" id="lang-go">
+      <div class="lang-head">
+        <svg viewBox="0 0 24 24" width="32" height="32"><path fill="#00acd7" d="M2 11.8c-.2 0-.2-.1-.1-.2l.5-.7c.1-.1.3-.2.5-.2h13c.2 0 .2.1.1.2l-.4.5c-.1.1-.3.2-.5.2H2zm-1 1.4c-.2 0-.2-.1-.1-.2l.5-.7c.1-.1.3-.2.5-.2H18.5c.2 0 .2.1.1.2l-.4.5c-.1.1-.3.2-.5.2H1zm-1 1.4c-.2 0-.1-.1 0-.2l.4-.5c.1-.1.4-.2.5-.2h7.4c.2 0 .2.1.1.2l-.3.4c-.1.1-.3.2-.5.2H0z"/></svg>
+        <div class="lang-head-text"><h3>Go</h3><p>// comment block before the package declaration — compatible with godoc</p></div>
+      </div>
+      <div class="cb"><button class="cp" onclick="copyPre(this)">copy</button><pre><span class="c">// filename.go — purpose in 15 words or fewer.
+//
+// exports: PublicFn(arg Type) ReturnType | AnotherFn(arg Type) ReturnType
+// used_by: caller.go → callerFn | other.go → otherFn
+// rules:   hard constraint agents must never violate
+// agent:   claude-sonnet-4-6 | 2026-03-24 | what was done</span>
+package mypackage
+
+import "fmt"</pre></div>
+      <h3>Function-level (Level 2)</h3>
+      <div class="cb"><pre><span class="c">// MyFunction does X.
+//
+// Rules:   constraint
+// message: model-id | YYYY-MM-DD | observation</span>
+func MyFunction(arg Type) ReturnType {
+  ...
+}</pre></div>
+    </div>
+
+    <!-- RUST PANE -->
+    <div class="lang-pane" id="lang-rust">
+      <div class="lang-head">
+        <svg viewBox="0 0 24 24" width="32" height="32"><path fill="#ce4a00" d="M12 2a10 10 0 1 0 0 20A10 10 0 0 0 12 2zm0 1.8a8.2 8.2 0 1 1 0 16.4A8.2 8.2 0 0 1 12 3.8zm0 2.8a5.4 5.4 0 1 0 0 10.8A5.4 5.4 0 0 0 12 6.6zm2.7 2l.5.9H8.8l.5-.9h5.4zm-5.4 1.6h5.4l-.9 1.4H10.2l.1-1.4zm.9 2.3h3.6l-.6 1h-2.4l-.6-1zm.6 1.5h2.4l-.4.7H11l-.2-.7z"/></svg>
+        <div class="lang-head-text"><h3>Rust</h3><p>//! inner doc comments — compatible with rustdoc</p></div>
+      </div>
+      <div class="cb"><button class="cp" onclick="copyPre(this)">copy</button><pre><span class="c">//! filename.rs — purpose in 15 words or fewer.
+//!
+//! exports: pub_fn(arg: Type) -> ReturnType | another_fn(arg: Type) -> ReturnType
+//! used_by: caller.rs → caller_fn | other.rs → other_fn
+//! rules:   hard constraint agents must never violate
+//! agent:   claude-sonnet-4-6 | 2026-03-24 | what was done</span>
+
+use std::collections::HashMap;</pre></div>
+      <h3>Function-level (Level 2)</h3>
+      <div class="cb"><pre><span class="c">/// Short description.
+///
+/// # Rules
+/// constraint
+///
+/// # Message
+/// model-id | YYYY-MM-DD | observation</span>
+pub fn my_function(arg: Type) -> ReturnType {
+  ...
+}</pre></div>
+    </div>
+
+    <!-- JAVA PANE -->
+    <div class="lang-pane" id="lang-java">
+      <div class="lang-head">
+        <svg viewBox="0 0 24 24" width="32" height="32"><path fill="#0074bd" d="M8.9 18.4s-.8.5.6.6c1.7.2 2.6.2 4.4-.2 0 0 .5.3 1.2.6C10.9 21.2 5.6 19.3 8.9 18.4zm-.6-2.6s-.9.7.5.8c1.8.2 3.3.2 5.8-.3 0 0 .3.3.9.5C10.4 18.3 4.7 16.9 8.3 15.8z"/><path fill="#ea2d2e" d="M13 10.4c1 1.2-.3 2.3-.3 2.3s2.6-1.4 1.4-3.1c-1.1-1.6-2-2.4 2.7-5.1C16.8 4.5 9.4 6.4 13 10.4z"/><path fill="#0074bd" d="M18.1 19.9s.6.5-.7.9c-2.4.7-10 .9-12.1 0-.8-.3.7-.8 1.1-.9.5-.1.7-.1.7-.1-.8-.6-5.5 1.2-2.3 1.7 8.5 1.4 15.5-.6 13.3-1.6z"/></svg>
+        <div class="lang-head-text"><h3>Java</h3><p>Javadoc block — after package declaration, before the class</p></div>
+      </div>
+      <div class="cb"><button class="cp" onclick="copyPre(this)">copy</button><pre>package com.example.mypackage;
+
+<span class="c">/**
+ * ClassName.java — purpose in 15 words or fewer.
+ *
+ * exports: publicMethod(arg): ReturnType | anotherMethod(arg): ReturnType
+ * used_by: CallerClass.java → callerMethod | Other.java → otherMethod
+ * rules:   hard constraint agents must never violate
+ * agent:   claude-sonnet-4-6 | 2026-03-24 | what was done
+ */</span>
+public class ClassName {</pre></div>
+    </div>
+
+    <!-- RUBY PANE -->
+    <div class="lang-pane" id="lang-ruby">
+      <div class="lang-head">
+        <svg viewBox="0 0 24 24" width="32" height="32"><path fill="#cc342d" d="M20.2 16.3L22 7.4l-5.5 3.4-4.1-5-1.6 5.8-5.4-3.2L7.8 20h12.4z"/></svg>
+        <div class="lang-head-text"><h3>Ruby</h3><p># comment block — before any require statements</p></div>
+      </div>
+      <div class="cb"><button class="cp" onclick="copyPre(this)">copy</button><pre><span class="c"># filename.rb — purpose in 15 words or fewer.
+#
+# exports: public_method(arg) -> ReturnType | another_method(arg) -> ReturnType
+# used_by: caller.rb → caller_method | other.rb → other_method
+# rules:   hard constraint agents must never violate
+# agent:   claude-sonnet-4-6 | 2026-03-24 | what was done</span>
+
+require 'something'</pre></div>
+    </div>
+
+  </section>
+
+  <hr>
+
+  <!-- ── OTHER TOOLS ── -->
+  <section id="other-tools">
+    <h2>Other AI Tools</h2>
+    <p>One-line installer — copies the right integration file into your repo automatically.</p>
+
+    <div class="cb" style="margin-bottom:1.5rem">
+      <button class="cp" onclick="copyPre(this)">copy</button>
+      <pre><span class="c"># Install for all supported tools at once</span>
+<span class="k">bash</span> &lt;(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh)
+
+<span class="c"># Single tool</span>
+<span class="k">bash</span> &lt;(curl -fsSL .../install.sh) cursor
+<span class="c"># Options: claude | cursor | copilot | cline | windsurf | agents | all</span></pre>
+    </div>
+
+    <div class="tool-grid">
+
+      <!-- Claude Code -->
+      <a class="tool-card" href="https://claude.ai/settings/plugins/submit" target="_blank">
+        <div class="tool-icon" style="background:#fff5f0">
+          <svg width="22" height="22" viewBox="0 0 24 24"><path fill="#D97757" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
+        </div>
+        <div class="tool-name">Claude Code</div>
+        <div class="tool-desc">Plugin directory — one-click install</div>
+        <div class="tool-file">CLAUDE.md</div>
+      </a>
+
+      <!-- Cursor -->
+      <a class="tool-card" href="https://github.com/Larens94/codedna/blob/main/integrations/.cursorrules" target="_blank">
+        <div class="tool-icon" style="background:#f5f5f5">
+          <svg width="22" height="22" viewBox="0 0 24 24"><path fill="#000" d="M4 2l16 10-16 10V2z"/></svg>
+        </div>
+        <div class="tool-name">Cursor</div>
+        <div class="tool-desc">Applied to all AI completions</div>
+        <div class="tool-file">.cursorrules</div>
+      </a>
+
+      <!-- GitHub Copilot -->
+      <a class="tool-card" href="https://github.com/Larens94/codedna/blob/main/integrations/copilot-instructions.md" target="_blank">
+        <div class="tool-icon" style="background:#f0f6ff">
+          <svg width="22" height="22" viewBox="0 0 24 24"><path fill="#24292e" d="M12 2C6.477 2 2 6.477 2 12c0 4.42 2.865 8.166 6.839 9.489.5.092.682-.217.682-.482 0-.237-.008-.866-.013-1.7-2.782.604-3.369-1.34-3.369-1.34-.454-1.156-1.11-1.463-1.11-1.463-.908-.62.069-.608.069-.608 1.003.07 1.531 1.03 1.531 1.03.892 1.529 2.341 1.087 2.91.832.092-.647.35-1.088.636-1.338-2.22-.253-4.555-1.11-4.555-4.943 0-1.091.39-1.984 1.029-2.683-.103-.253-.446-1.27.098-2.647 0 0 .84-.269 2.75 1.025A9.578 9.578 0 0 1 12 6.836c.85.004 1.705.114 2.504.336 1.909-1.294 2.747-1.025 2.747-1.025.546 1.377.202 2.394.1 2.647.64.699 1.028 1.592 1.028 2.683 0 3.842-2.339 4.687-4.566 4.935.359.309.678.919.678 1.852 0 1.336-.012 2.415-.012 2.743 0 .267.18.578.688.48C19.138 20.163 22 16.418 22 12c0-5.523-4.477-10-10-10z"/></svg>
+        </div>
+        <div class="tool-name">GitHub Copilot</div>
+        <div class="tool-desc">Custom instructions for Copilot</div>
+        <div class="tool-file">.github/copilot-instructions.md</div>
+      </a>
+
+      <!-- Windsurf -->
+      <a class="tool-card" href="https://github.com/Larens94/codedna/blob/main/integrations/.windsurfrules" target="_blank">
+        <div class="tool-icon" style="background:#f0fdfb">
+          <svg width="22" height="22" viewBox="0 0 24 24"><path fill="#09B6A2" d="M3 18c3-6 6-9 12-9-3 6-6 9-12 9zm0 0c0-6 3-12 9-15 0 6-3 12-9 15z"/></svg>
+        </div>
+        <div class="tool-name">Windsurf</div>
+        <div class="tool-desc">Applied to Cascade AI sessions</div>
+        <div class="tool-file">.windsurfrules</div>
+      </a>
+
+      <!-- Cline -->
+      <a class="tool-card" href="https://github.com/Larens94/codedna/blob/main/integrations/.clinerules" target="_blank">
+        <div class="tool-icon" style="background:#f3f0ff">
+          <svg width="22" height="22" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="3" fill="#5C6BC0"/><path fill="#fff" d="M7 8h10M7 12h6M7 16h8" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="tool-name">Cline</div>
+        <div class="tool-desc">Applied to all Cline sessions</div>
+        <div class="tool-file">.clinerules</div>
+      </a>
+
+      <!-- Antigravity -->
+      <a class="tool-card" href="https://github.com/Larens94/codedna/tree/main/integrations/.agents" target="_blank">
+        <div class="tool-icon" style="background:#f5f3ff">
+          <svg width="22" height="22" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3" fill="#7c3aed"/><path fill="none" stroke="#7c3aed" stroke-width="1.5" d="M12 2v3M12 19v3M2 12h3M19 12h3M5.6 5.6l2.1 2.1M16.3 16.3l2.1 2.1M5.6 18.4l2.1-2.1M16.3 7.7l2.1-2.1"/></svg>
+        </div>
+        <div class="tool-name">Antigravity</div>
+        <div class="tool-desc">Agent workflow integration</div>
+        <div class="tool-file">.agents/workflows/codedna.md</div>
+      </a>
+
+    </div>
+  </section>
+
+  <hr>
+
+  <!-- ── CLI ── -->
+  <section id="cli">
+    <h2>CLI Reference</h2>
+    <p>Annotate any project from the terminal. Supports local models via Ollama at zero cost.</p>
+
+    <h3>Install</h3>
+    <div class="cb"><button class="cp" onclick="copyPre(this)">copy</button><pre><span class="c"># All providers — Anthropic, OpenAI, Gemini, Ollama</span>
+pip install <span class="s">'codedna[litellm]'</span>
+
+<span class="c"># Anthropic only (legacy)</span>
+pip install <span class="s">'codedna[anthropic]'</span>
+
+<span class="c"># No AI — structural annotations only, free</span>
+pip install codedna</pre></div>
+
+    <h3>Commands</h3>
+    <table>
+      <tr><th>Command</th><th>What it does</th></tr>
+      <tr><td><span class="ic">codedna init PATH</span></td><td>First-time annotation — L1 module headers + L2 function Rules:</td></tr>
+      <tr><td><span class="ic">codedna update PATH</span></td><td>Incremental — only unannotated files. Safe to re-run.</td></tr>
+      <tr><td><span class="ic">codedna check PATH</span></td><td>Coverage report. Exits 0 if fully annotated.</td></tr>
+    </table>
+
+    <h3>Model options</h3>
+    <table>
+      <tr><th>Provider</th><th>--model</th><th>Cost</th><th>Requires</th></tr>
+      <tr><td>Ollama (local)</td><td><span class="ic">ollama/llama3</span></td><td>Free</td><td>Ollama running locally</td></tr>
+      <tr><td>Ollama (local)</td><td><span class="ic">ollama/mistral</span></td><td>Free</td><td>Ollama running locally</td></tr>
+      <tr><td>None</td><td><span class="ic">--no-llm</span></td><td>Free</td><td>Nothing</td></tr>
+      <tr><td>Anthropic</td><td><span class="ic">claude-haiku-4-5-20251001</span></td><td>~$1–3/project</td><td>ANTHROPIC_API_KEY</td></tr>
+      <tr><td>OpenAI</td><td><span class="ic">openai/gpt-4o-mini</span></td><td>Low</td><td>OPENAI_API_KEY</td></tr>
+      <tr><td>Google</td><td><span class="ic">gemini/gemini-2.0-flash</span></td><td>Low</td><td>GEMINI_API_KEY</td></tr>
+    </table>
+
+    <h3>Examples</h3>
+    <div class="cb"><button class="cp" onclick="copyPre(this)">copy</button><pre><span class="c"># Free — local model via Ollama</span>
+codedna init ./ <span class="k">--model</span> ollama/llama3
+
+<span class="c"># Free — structural only, no AI</span>
+codedna init ./ <span class="k">--no-llm</span>
+
+<span class="c"># Preview without writing files</span>
+codedna init ./ <span class="k">--dry-run</span>
+
+<span class="c"># Anthropic Haiku</span>
+<span class="s">ANTHROPIC_API_KEY</span>=sk-... codedna init ./ <span class="k">--model</span> claude-haiku-4-5-20251001
+
+<span class="c"># Coverage check</span>
+codedna check ./ -v</pre></div>
+  </section>
+
+</main>
+</div>
+
+<script>
+function showLang(lang, cardEl) {
+  document.querySelectorAll('.lang-pane').forEach(el => el.classList.remove('visible'));
+  document.querySelectorAll('#lang-cards .lang-card').forEach(el => el.classList.remove('active'));
+  document.getElementById('lang-' + lang).classList.add('visible');
+  if (cardEl) cardEl.classList.add('active');
+  // sync sidebar
+  document.querySelectorAll('.sb-link[data-lang]').forEach(l => l.classList.remove('active'));
+  const sbl = document.querySelector('.sb-link[data-lang="' + lang + '"]');
+  if (sbl) sbl.classList.add('active');
+}
+
+function navToLang(lang, sbEl) {
+  showLang(lang, null);
+  // activate card
+  document.querySelectorAll('#lang-cards .lang-card').forEach(c => c.classList.remove('active'));
+  const card = document.querySelector('#lang-cards .lang-card[data-lang="' + lang + '"]');
+  if (card) card.classList.add('active');
+  // scroll to section
+  document.getElementById('languages').scrollIntoView({behavior:'smooth', block:'start'});
+  // update sidebar active
+  document.querySelectorAll('.sb-link[data-lang]').forEach(l => l.classList.remove('active'));
+  sbEl.classList.add('active');
+}
+
+function setActive(el) {
+  document.querySelectorAll('.sb-link:not([data-lang])').forEach(l => l.classList.remove('active'));
+  el.classList.add('active');
+}
+
+function copyPre(btn) {
+  const pre = btn.closest('.cb').querySelector('pre');
+  navigator.clipboard.writeText(pre.innerText).then(() => {
+    btn.textContent = 'copied';
+    setTimeout(() => btn.textContent = 'copy', 1500);
+  });
+}
+
+// scroll spy
+const anchors = ['plugin','languages','other-tools','cli'];
+window.addEventListener('scroll', () => {
+  let cur = '';
+  anchors.forEach(id => {
+    const el = document.getElementById(id);
+    if (el && window.scrollY >= el.offsetTop - 80) cur = id;
+  });
+  document.querySelectorAll('.sb-link:not([data-lang])').forEach(l => {
+    l.classList.toggle('active', l.getAttribute('href') === '#' + cur);
+  });
+});
+</script>
+</body>
+</html>

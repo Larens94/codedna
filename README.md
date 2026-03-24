@@ -10,12 +10,15 @@
 [![CodeQL](https://github.com/Larens94/codedna/actions/workflows/codeql.yml/badge.svg)](https://github.com/Larens94/codedna/actions/workflows/codeql.yml)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-support-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/codedna)
 
+[![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-Plugin_Available-D97757?logo=anthropic&logoColor=white)](https://claude.com/plugins)
+[![Languages](https://img.shields.io/badge/Languages-Python_·_TS_·_Go_·_Rust_·_Java_·_Ruby-6366f1)](#)
+
 **Compatible with:**
-[![Gemini](https://img.shields.io/badge/Gemini-4285F4?logo=google&logoColor=white)](./QUICKSTART.md)
 [![Claude Code](https://img.shields.io/badge/Claude_Code-D97757?logo=anthropic&logoColor=white)](./integrations/CLAUDE.md)
 [![Cursor](https://img.shields.io/badge/Cursor-000000?logo=cursor&logoColor=white)](./integrations/.cursorrules)
 [![GitHub Copilot](https://img.shields.io/badge/GitHub_Copilot-000000?logo=github&logoColor=white)](./integrations/copilot-instructions.md)
 [![Windsurf](https://img.shields.io/badge/Windsurf-0891b2?logoColor=white)](./integrations/.cursorrules)
+[![Gemini](https://img.shields.io/badge/Gemini-4285F4?logo=google&logoColor=white)](./QUICKSTART.md)
 [![ChatGPT](https://img.shields.io/badge/ChatGPT-74aa9c?logo=openai&logoColor=white)](./QUICKSTART.md)
 
 
@@ -89,54 +92,81 @@ Every other layer is external to the code. CodeDNA is the only memory that trave
 
 ---
 
-## ⚡ 2-Minute Setup
+## ⚡ Install
 
-### `codedna` — Annotation CLI
+### Option 1 — Claude Code Plugin (recommended)
 
-Annotate an entire Python project automatically (AST structure + LLM semantic rules):
+One-click install from the [Claude plugin directory](https://claude.com/plugins):
 
 ```bash
-pip install git+https://github.com/Larens94/codedna.git
-codedna init /path/to/your/project
+claude plugin install codedna
 ```
 
-> PyPI release coming soon. Until then, install directly from GitHub.
+No API key. No extra cost. Uses your existing Claude subscription.
 
-Three commands:
+Adds four commands to Claude Code:
 
 | Command | What it does |
 |---|---|
-| `codedna init PATH` | First-time annotation — adds L1 module headers + L2 function `Rules:` to every `.py` file |
-| `codedna update PATH` | Incremental — only annotates files missing headers (safe to re-run) |
-| `codedna check PATH` | Reports annotation coverage without modifying files |
+| `/codedna:init [path]` | Annotate all unannotated files — Claude reads and writes directly |
+| `/codedna:check [path]` | Coverage report — unannotated files and stale `used_by:` refs |
+| `/codedna:manifest [path]` | Full architectural map in one pass — replaces 10–20 file reads |
+| `/codedna:impact <file>` | Cascade dependency chain before a refactor |
 
-Options: `--model` (default: `claude-haiku-4-5-20251001`), `--dry-run`, `--no-llm`, `--repo-root`, `-v`
+Also installs a **PostToolUse hook** that notifies Claude when a saved file is missing a CodeDNA annotation.
 
-Requires `ANTHROPIC_API_KEY`. Cost: ~$1–3 for a typical Django-sized project with Haiku.
+Supports: Python, TypeScript, JavaScript, Go, Rust, Java, Ruby.
 
-### One-Line Install (AI tool integration)
+---
+
+### Option 2 — CLI (any AI tool, CI/CD, automation)
+
+Annotate an entire project from the terminal. Supports local models via Ollama at zero cost:
+
+```bash
+pip install 'codedna[litellm]'   # all providers including Ollama
+
+# Free — local model, no API key
+codedna init /path/to/project --model ollama/llama3
+
+# Free — structural only, no AI
+codedna init /path/to/project --no-llm
+
+# Paid — Anthropic Haiku (~$1-3 for a Django project)
+ANTHROPIC_API_KEY=sk-... codedna init /path/to/project
+```
+
+| Command | What it does |
+|---|---|
+| `codedna init PATH` | First-time annotation — L1 module headers + L2 function `Rules:` |
+| `codedna update PATH` | Incremental — only unannotated files (safe to re-run) |
+| `codedna check PATH` | Coverage report without modifying files |
+
+Supported models via `--model`:
+
+| Provider | Example | Cost |
+|---|---|---|
+| Ollama (local) | `ollama/llama3`, `ollama/mistral` | Free |
+| Anthropic | `claude-haiku-4-5-20251001` | ~$1–3 / project |
+| OpenAI | `openai/gpt-4o-mini` | Low |
+| Google | `gemini/gemini-2.0-flash` | Low |
+| None | `--no-llm` | Free |
+
+---
+
+### Option 3 — AI Tool Integration (Cursor, Copilot, Windsurf)
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh)
-```
-
-Install for a **single tool** only:
-
-```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) cursor
 # Options: claude | cursor | copilot | cline | windsurf | agents | all
 ```
 
-### Manual Setup
-
-**Pick your AI tool and paste:**
-
-| Tool | File to create | Source |
+| Tool | File | Source |
 |---|---|---|
-| Cursor | `.cursorrules` | [`integrations/.cursorrules`](./integrations/.cursorrules) |
 | Claude Code | `CLAUDE.md` | [`integrations/CLAUDE.md`](./integrations/CLAUDE.md) |
+| Cursor | `.cursorrules` | [`integrations/.cursorrules`](./integrations/.cursorrules) |
 | GitHub Copilot | `.github/copilot-instructions.md` | [`integrations/copilot-instructions.md`](./integrations/copilot-instructions.md) |
-| Antigravity / Custom | System prompt | See [QUICKSTART.md](./QUICKSTART.md) |
+| Windsurf | `.windsurfrules` | [`integrations/.windsurfrules`](./integrations/.windsurfrules) |
 | Any other LLM | Any of the above | See [QUICKSTART.md](./QUICKSTART.md) |
 
 Then annotate your first file → see [QUICKSTART.md](./QUICKSTART.md)

@@ -12,7 +12,10 @@ Commands:
 LLM calls: max 2 per file (1 module skeleton rules + 1 function batch).
            0 calls if file already annotated (skipped by init/update).
 
-Requires: ANTHROPIC_API_KEY env var (or --api-key) for LLM features.
+Requires: ANTHROPIC_API_KEY env var (or --api-key) for Anthropic models.
+          No API key needed for local models via Ollama (pip install 'codedna[litellm]').
+
+Provider priority: litellm (all providers) > anthropic (fallback, Claude only).
 """
 
 import argparse
@@ -26,7 +29,14 @@ from pathlib import Path
 from typing import Optional
 
 try:
-    import anthropic
+    import litellm as _litellm
+
+    HAS_LITELLM = True
+except ImportError:
+    HAS_LITELLM = False
+
+try:
+    import anthropic as _anthropic
 
     HAS_ANTHROPIC = True
 except ImportError:
@@ -259,14 +269,80 @@ def build_ast_skeleton(source: str, rel: str) -> str:
 
 
 class LLM:
+    """Unified LLM client.
+
+    Provider resolution order:
+    1. litellm  — supports any model string: ollama/llama3, gpt-4o-mini,
+                  gemini/gemini-2.0-flash, claude-haiku-4-5-20251001, etc.
+    2. anthropic — fallback if litellm is not installed and model is a Claude model.
+
+    Install options:
+      pip install 'codedna[litellm]'    # all providers + local models via Ollama
+      pip install 'codedna[anthropic]'  # Anthropic only (legacy)
+      pip install 'codedna[all]'        # both
+    """
+
     def __init__(self, model: str, api_key: Optional[str] = None):
-        if not HAS_ANTHROPIC:
-            raise ImportError("pip install anthropic")
-        self.client = anthropic.Anthropic(api_key=api_key or os.environ.get("ANTHROPIC_API_KEY"))
         self.model = model
+        self._use_litellm = HAS_LITELLM
+        self._client = None
+
+        if HAS_LITELLM:
+            # litellm reads API keys from env vars automatically.
+            # If the caller passes --api-key, inject it into the right env var.
+            if api_key:
+                provider = self._detect_provider(model)
+                env_map = {
+                    "anthropic": "ANTHROPIC_API_KEY",
+                    "openai":    "OPENAI_API_KEY",
+                    "gemini":    "GEMINI_API_KEY",
+                    "mistral":   "MISTRAL_API_KEY",
+                    "cohere":    "COHERE_API_KEY",
+                }
+                env_key = env_map.get(provider)
+                if env_key:
+                    os.environ[env_key] = api_key
+        elif HAS_ANTHROPIC:
+            # Legacy fallback — only works for Claude models.
+            self._client = _anthropic.Anthropic(
+                api_key=api_key or os.environ.get("ANTHROPIC_API_KEY")
+            )
+        else:
+            raise ImportError(
+                "No LLM backend found.\n"
+                "  All providers (including local Ollama): pip install 'codedna[litellm]'\n"
+                "  Anthropic only:                        pip install 'codedna[anthropic]'\n"
+                "  Skip AI entirely:                      codedna init ./ --no-llm"
+            )
+
+    @staticmethod
+    def _detect_provider(model: str) -> str:
+        """Detect provider from model string prefix or well-known name."""
+        m = model.lower()
+        if m.startswith("ollama/") or m.startswith("ollama_chat/"):
+            return "ollama"
+        if m.startswith("openai/") or m.startswith("gpt"):
+            return "openai"
+        if m.startswith("gemini/") or m.startswith("google/"):
+            return "gemini"
+        if m.startswith("mistral/"):
+            return "mistral"
+        if m.startswith("cohere/"):
+            return "cohere"
+        if m.startswith("anthropic/") or "claude" in m:
+            return "anthropic"
+        return "unknown"
 
     def _call(self, prompt: str, max_tokens: int = 200) -> str:
-        r = self.client.messages.create(
+        if self._use_litellm:
+            r = _litellm.completion(
+                model=self.model,
+                messages=[{"role": "user", "content": prompt}],
+                max_tokens=max_tokens,
+            )
+            return r.choices[0].message.content.strip()
+        # Anthropic fallback
+        r = self._client.messages.create(
             model=self.model, max_tokens=max_tokens, messages=[{"role": "user", "content": prompt}]
         )
         return r.content[0].text.strip()
@@ -684,7 +760,19 @@ def _add_common_args(sub):
     """Shared arguments for init and update."""
     sub.add_argument("path", type=Path, help="File or directory to annotate")
     sub.add_argument(
-        "--model", default="claude-haiku-4-5-20251001", help="Claude model (default: claude-haiku-4-5-20251001)"
+        "--model",
+        default="claude-haiku-4-5-20251001",
+        help=(
+            "Model to use for generating rules: annotations. "
+            "Requires litellm (pip install 'codedna[litellm]') for non-Anthropic models. "
+            "Examples: "
+            "claude-haiku-4-5-20251001 (default, Anthropic), "
+            "ollama/llama3 (local, free), "
+            "ollama/mistral (local, free), "
+            "openai/gpt-4o-mini (OpenAI), "
+            "gemini/gemini-2.0-flash (Google). "
+            "Use --no-llm to skip AI entirely (rules: none)."
+        ),
     )
     sub.add_argument("--dry-run", action="store_true", help="Preview changes without writing files")
     sub.add_argument("--no-llm", action="store_true", help="Structural annotations only — skip LLM (rules: none)")

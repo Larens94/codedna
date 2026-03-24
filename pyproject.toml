@@ -7,7 +7,12 @@ name = "codedna"
 version = "0.8.0"
 description = "CodeDNA v0.8 — in-source annotation protocol for AI agents"
 requires-python = ">=3.11"
-dependencies = ["anthropic>=0.20"]
+dependencies = []
+
+[project.optional-dependencies]
+anthropic = ["anthropic>=0.20"]
+litellm   = ["litellm>=1.0"]
+all       = ["anthropic>=0.20", "litellm>=1.0"]
 
 [project.scripts]
 codedna = "codedna_tool.cli:main"
