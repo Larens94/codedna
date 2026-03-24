@@ -10,6 +10,7 @@ agent:   claude-sonnet-4-6 | 2026-03-24 | initial CodeDNA annotation
          message: "get_invoices_for_period has no suspension filter at DB level —
                    if this moves to SQL, the WHERE clause must explicitly exclude suspended users"
 """
+
 from datetime import datetime
 from typing import Optional
 
@@ -20,6 +21,7 @@ from utils.format import format_currency
 def get_invoices_for_period(year: int, month: int) -> list[Invoice]:
     # NOTE: returns ALL invoices including suspended users — callers must filter
     from db import session
+
     return session.query(Invoice).filter(
         Invoice.created_at >= datetime(year, month, 1),
         Invoice.paid == True,

@@ -7,6 +7,7 @@ rules:   all routes call _get_active_users() which returns only is_active==True 
          limit on /top is capped at 100 to prevent abuse.
 agent:   claude-sonnet-4-6 | 2026-03-24 | initial CodeDNA annotation
 """
+
 from flask import Blueprint, jsonify, request
 
 from models.user import User
@@ -18,6 +19,7 @@ bp = Blueprint("revenue", __name__, url_prefix="/api/revenue")
 
 def _get_active_users() -> list[User]:
     from db import session
+
     return session.query(User).filter(User.is_active == True).all()
 
 

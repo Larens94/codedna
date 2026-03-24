@@ -7,6 +7,7 @@ rules:   format_currency expects amount in cents (int), not dollars —
          divide by 100 internally. Never pass float dollars directly.
 agent:   claude-sonnet-4-6 | 2026-03-24 | initial CodeDNA annotation
 """
+
 from datetime import datetime
 from typing import Optional
 

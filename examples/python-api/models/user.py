@@ -6,6 +6,7 @@ rules:   User.is_suspended() is the single source of truth for suspension state 
          never check suspendedAt directly; always call is_suspended().
 agent:   claude-sonnet-4-6 | 2026-03-24 | initial CodeDNA annotation
 """
+
 from dataclasses import dataclass
 from datetime import datetime
 from typing import Optional
