@@ -51,7 +51,7 @@ This also enables **agent-to-agent communication**: a constraint discovered by A
 
 Every AI coding agent relies on multiple memory layers to navigate a codebase. Most of them are external to the code — chat history, vector databases, markdown rules files. CodeDNA is different: it is the only layer that lives *inside* the source files themselves.
 
-![CodeDNA Memory Layer Stack](./docs/memory_layers.svg)
+![CodeDNA Memory Layer Stack](./docs/stack-codedna-0.gif)
 
 | Layer | Examples | Where it lives |
 |---|---|---|
