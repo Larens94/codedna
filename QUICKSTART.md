@@ -6,6 +6,24 @@ Get CodeDNA working in your project in under 2 minutes. Pick your AI tool below.
 
 ---
 
+## CodeDNA + your tool's native memory
+
+CodeDNA does **not** replace your tool's native memory — it is additive.
+
+| Layer | Lives in | Who sees it |
+|---|---|---|
+| **CodeDNA** (`.codedna` + annotations) | git repo | every agent, every tool, every machine |
+| **Native tool memory** | local / tool cloud | that tool only |
+
+Every agentic tool has its own persistent memory (Claude auto-memory, Cursor memory, Windsurf memories, Devin session memory, …). CodeDNA is the layer underneath that all of them share. The two are complementary:
+
+- **CodeDNA** → architectural truth that travels with the code across clones, tools, and team members
+- **Native memory** → user preferences, feedback, and tool-specific context that belongs outside the repo
+
+Use both. At session start, read `.codedna` first, then your tool's native memory.
+
+---
+
 ## Step 0 — Quick Install (CLI)
 
 Run this from the root of your project:

@@ -1,10 +1,17 @@
 ---
-description: CodeDNA v0.7 — how to read, write, and edit Python files in this project
+description: CodeDNA v0.8 — how to read, write, and edit Python files in this project
 ---
 
-# CodeDNA v0.7 — In-Source Communication Protocol
+# CodeDNA v0.8 — In-Source Communication Protocol
 
 This project uses **CodeDNA**. Every source file carries its own context in a Python-native module docstring. Agents communicate across sessions through structured annotations co-located with the code.
+
+## CodeDNA + native memory — additive, not replacing
+
+CodeDNA is the **shared** layer — git-tracked, visible to every agent and every tool. It does not replace any tool's native memory. Use both:
+
+- `.codedna` + file annotations → shared architectural truth, survives `git clone`, readable by any agent
+- Native agent memory → user preferences and tool-specific context — local to that agent
 
 ## Session start
 

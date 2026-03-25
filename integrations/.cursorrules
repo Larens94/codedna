@@ -42,6 +42,58 @@ def process(arg: type) -> return_type:
     """
 ```
 
+## `message:` — Agent Chat Layer (v0.8)
+
+Use `message:` for observations not yet certain enough to become `rules:`:
+
+```python
+agent:   <model-id> | <YYYY-MM-DD> | Implemented X.
+         message: "noticed Y behaviour — not yet sure if this should be a rule"
+```
+
+```python
+def my_function():
+    """Short description.
+
+    Rules:   hard constraint here
+    message: <model-id> | <date> | open observation for next agent
+    """
+```
+
+**Lifecycle:** promote to `rules:` with `@prev: promoted to rules:` or dismiss with `@prev: verified, not applicable because...`. Always append-only — never delete.
+
+## Session end protocol
+
+At session end, append to `.codedna` `agent_sessions:`:
+```yaml
+- agent: <model-id>
+  provider: <provider>
+  date: <YYYY-MM-DD>
+  session_id: <s_YYYYMMDD_NNN>
+  task: "<what you did ≤15 words>"
+  changed: [files, modified]
+  visited: [files, read]
+  message: > what you found and what the next agent should know
+```
+
+Commit with AI git trailers:
+```
+<imperative summary>
+
+AI-Agent:    <model-id>
+AI-Provider: <provider>
+AI-Session:  <session_id>
+AI-Visited:  <comma-separated files read>
+AI-Message:  <one-line summary>
+```
+
+## CodeDNA + native memory — additive, not replacing
+
+CodeDNA is the **shared** layer — git-tracked, visible to every agent and every tool. It does not replace Cursor's native memory. Use both:
+
+- `.codedna` + file annotations → shared architectural truth, readable by any tool on any machine
+- Cursor native memory → user preferences and tool-specific context — local to Cursor
+
 ## Planner read protocol
 
 Read `.codedna` first. Then read only the module docstring (first 8–12 lines) of each file. Build an `exports:` → `used_by:` graph. Open only relevant files in full.

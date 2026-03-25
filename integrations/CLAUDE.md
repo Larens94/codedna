@@ -129,6 +129,15 @@ def my_function():
 
 **Lifecycle:** a `message:` is either promoted to `rules:` (reply `"@prev: promoted to rules:"`) or dismissed (`"@prev: verified, not applicable because..."`). Always append-only — never delete.
 
+## CodeDNA + native memory — additive, not replacing
+
+CodeDNA is the **shared** memory layer — git-tracked, visible to every agent and every tool. It does not replace Claude's auto-memory (`~/.claude/projects/.../memory/`). Use both:
+
+- `.codedna` + file annotations → shared architectural truth (packages, rules, session log)
+- Claude auto-memory → user profile, feedback, preferences — local and Claude-specific
+
+At session start: read `.codedna` first, then your auto-memory. At session end: update both.
+
 ## Planning across multiple files
 
 Use manifest-only read mode: read only the module docstring (first 8–12 lines) of each file to build an architectural map before deciding which files to open fully.

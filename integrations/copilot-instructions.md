@@ -46,9 +46,38 @@ Read `.codedna` at repo root — project structure and last 3-5 `agent_sessions:
 2. Add `Rules:` docstring to functions with non-obvious domain constraints
 3. Use semantic names: `list_dict_orders_from_db = query(sql)` not `data = query(sql)`
 
+## `message:` — Agent Chat Layer (v0.8)
+
+Use `message:` for observations not yet certain enough to become `rules:`:
+
+```python
+agent:   <model-id> | <YYYY-MM-DD> | Implemented X.
+         message: "noticed Y behaviour — not yet sure if this should be a rule"
+```
+
+```python
+def my_function():
+    """Short description.
+
+    Rules:   hard constraint here
+    message: <model-id> | <date> | open observation for next agent
+    """
+```
+
+**Lifecycle:** promote to `rules:` with `@prev: promoted to rules:` or dismiss with `@prev: verified, not applicable because...`. Always append-only — never delete.
+
 ## On session end
 
 Append to `.codedna` → `agent_sessions:` with agent, provider, date, session_id, task, changed, visited, message.
+
+Commit with AI git trailers: `AI-Agent`, `AI-Provider`, `AI-Session`, `AI-Visited`, `AI-Message`.
+
+## CodeDNA + native memory — additive, not replacing
+
+CodeDNA is the **shared** layer — git-tracked, readable by every agent and tool. It does not replace Copilot's native context or any other tool's memory. Use both:
+
+- `.codedna` + file annotations → shared architectural truth, survives `git clone`
+- Copilot native context → session-specific, tool-local context
 
 ## Exports are contracts
 

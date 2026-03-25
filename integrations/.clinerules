@@ -1,9 +1,11 @@
-# CodeDNA v0.7 — In-Source Communication Protocol
+# CodeDNA v0.8 — In-Source Communication Protocol
+# Annotate your project: pip install git+https://github.com/Larens94/codedna.git && codedna init ./
 
 This project uses CodeDNA. Every Python file begins with a module docstring.
 
 On SESSION START:
 - Read `.codedna` at repo root — project map, last 3-5 agent_sessions entries
+- CodeDNA is additive — it complements Cline's native memory, not replaces it
 
 On EDIT:
 - Re-read `rules:` before writing any logic — never violate these constraints
@@ -17,8 +19,14 @@ On CREATE:
 - For critical functions: add a `Rules:` docstring
 - Use semantic naming: `list_dict_users_from_db = get_users()`
 
+`message:` field (v0.8) — use for open observations not yet certain enough to become `rules:`:
+- In module docstring: `message: "<hypothesis or note for the next agent>"`
+- In function docstring: `message: <model-id> | <date> | <open observation>`
+- Lifecycle: promote to `rules:` or dismiss. Always append-only — never delete.
+
 On SESSION END:
-- Append to `.codedna` → `agent_sessions:` with agent, date, session_id, changed, visited, message
+- Append to `.codedna` → `agent_sessions:` with agent, provider, date, session_id, task, changed, visited, message
+- Commit with AI git trailers: AI-Agent, AI-Provider, AI-Session, AI-Visited, AI-Message
 
 `exports:` are contracts — never rename without explicit instruction and updating all `used_by:` callers.
 
@@ -30,5 +38,6 @@ exports: fn(args) -> type
 used_by: consumer.py → fn
 rules:   <hard constraint>
 agent:   <model-id> | <YYYY-MM-DD> | <what you did and noticed>
+         message: "<open hypothesis>"
 """
 ```

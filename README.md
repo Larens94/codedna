@@ -10,6 +10,7 @@
 [![CodeQL](https://github.com/Larens94/codedna/actions/workflows/codeql.yml/badge.svg)](https://github.com/Larens94/codedna/actions/workflows/codeql.yml)
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-support-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/codedna)
 
+[![Discord](https://img.shields.io/badge/Discord-Join_Community-5865F2?logo=discord&logoColor=white)](https://discord.gg/7Fs5J2ua)
 [![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-Plugin_Available-D97757?logo=anthropic&logoColor=white)](https://claude.com/plugins)
 [![Languages](https://img.shields.io/badge/Languages-Python_·_TS_·_Go_·_Rust_·_Java_·_Ruby-6366f1)](#)
 [![Docs](https://img.shields.io/badge/Docs-Install_Guide-6366f1)](https://larens94.github.io/codedna/install.html)
@@ -53,17 +54,22 @@ Every AI coding agent relies on multiple memory layers to navigate a codebase. M
 
 ![CodeDNA Memory Layer Stack](./docs/stack-codedna-0.gif)
 
-| Layer | Examples | Where it lives |
-|---|---|---|
-| LLM / Agent | Claude, GPT-4, Cursor, Copilot | Cloud |
-| External memory | Chat history, Projects, Memory API | Cloud / external DB |
-| RAG / Vector DB | Embeddings, Pinecone, pgvector | External infrastructure |
-| Markdown / Config | README, CLAUDE.md, `.cursorrules` | Repo (outside source files) |
-| **CodeDNA** | `exports`, `rules`, `agent`, `message` | **Inside every source file** |
+| Layer | Examples | Where it lives | Shared across tools? |
+|---|---|---|---|
+| LLM / Agent | Claude, GPT-4, Cursor, Copilot | Cloud | — |
+| External memory | Chat history, Projects, Memory API | Cloud / external DB | ✗ tool-specific |
+| Native agent memory | Claude auto-memory, Cursor memory, Windsurf memories, Devin session memory, … | Local machine / tool cloud | ✗ tool-specific |
+| RAG / Vector DB | Embeddings, Pinecone, pgvector | External infrastructure | depends |
+| Markdown / Config | README, CLAUDE.md, `.cursorrules`, AGENTS.md | Repo (outside source files) | partial (tool-specific files) |
+| **CodeDNA** | `exports`, `rules`, `agent`, `message`, `.codedna` | **Inside every source file + repo root** | ✅ always |
 
-Every other layer is external to the code. CodeDNA is the only memory that travels with the source file itself — through clones, forks, and CI pipelines — without any infrastructure dependency.
+Every other layer is either external to the code or tool-specific. CodeDNA is the only memory that:
+1. **Travels with the source file** — through clones, forks, and CI pipelines, with no infrastructure dependency
+2. **Is readable by any agent on any tool** — Claude, Cursor, Windsurf, Copilot, or a custom script all see the same annotations
 
-> **This is what makes CodeDNA composable.** RAG systems, vector databases, and external memory layers can all be built *on top* of CodeDNA annotations. The in-source layer is the foundation the others can read from.
+**CodeDNA does not replace native agent memories** — it is additive. Every agentic tool (Claude Code, Cursor, Windsurf, Devin, and any future agent) has its own native memory for user preferences, feedback, and tool-specific context. That context belongs outside the repo. CodeDNA handles the architectural context that belongs *inside* it. Use both.
+
+> **This is what makes CodeDNA composable.** RAG systems, vector databases, native tool memories, and external memory layers can all be built *on top of* or *alongside* CodeDNA annotations. The in-source layer is the shared foundation any of those systems can read from — and the only one that survives a `git clone`.
 
 ---
 

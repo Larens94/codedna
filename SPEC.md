@@ -1,8 +1,11 @@
 # CodeDNA: An In-Source Communication Protocol for AI Coding Agents — Specification
 
-**Version:** 0.8
-**Status:** Draft
+**Protocol version:** 0.8
+**Tool release:** v1.0.0
+**Status:** Stable
 **Language:** Python (canonical), TypeScript, JavaScript, Go, Rust, Java, Ruby, C/C++
+
+> **Versioning note**: the *protocol* version (0.8) tracks the annotation format and field semantics. The *tool release* (v1.0.0) tracks the CLI, plugin, and integrations. They evolve independently — protocol v0.8 may ship as tool v1.x for multiple releases.
 
 ---
 
@@ -27,6 +30,34 @@ The design principle: **only annotate what the code doesn't already tell you.** 
 CodeDNA is an annotation standard by *form*, but an **inter-agent communication protocol** by *function*. The file is the channel. The writing agent encodes architectural context as structured metadata; the reading agent decodes it at any point in the file.
 
 This is different in nature from rule files (CLAUDE.md, .cursorrules, AGENTS.md), which are **human→agent** communication. CodeDNA is **agent→agent** communication, co-located with the code it describes.
+
+### 1.1a CodeDNA and Native Tool Memory — Additive, Not Replacing
+
+Every AI coding agent has its own native memory layer — persistent context that lives outside the repository. CodeDNA does **not** replace any of them. It is an additive foundation layer that sits below all tools and is readable by all of them.
+
+| Layer | Lives in | Visible to | Purpose |
+|---|---|---|---|
+| **CodeDNA Level 0** | `.codedna` (git) | every agent, every tool | shared architectural truth — packages, rules, session log |
+| **CodeDNA Level 1–3** | source files (git) | every agent, every tool | per-file context, function rules, semantic naming |
+| **Native agent memory** | tool-local store (machine) | that tool only | user preferences, feedback, conversation history, project state |
+| **Tool instruction files** | source root (git) | tool-specific | human→agent instructions per tool (CLAUDE.md, .cursorrules, AGENTS.md, …) |
+
+Examples of native agent memory (non-exhaustive):
+- **Claude Code** — `~/.claude/projects/.../memory/` (user profile, feedback, auto-saved context)
+- **Cursor** — internal memory store (rules, conversation history)
+- **Windsurf** — internal memories (per-project preferences)
+- **Devin** — session knowledge, long-term memory across runs
+- **Any agentic system** — whatever local or cloud persistence the tool provides
+
+**The pattern**: CodeDNA is the **shared foundation** every agent reads regardless of vendor, model, or machine. Each tool's native memory adds tool-specific or user-specific context on top. The two layers are complementary — removing either one loses information the other cannot provide.
+
+**Combined session startup** (generalised — applies to any agentic tool):
+1. Read `.codedna` → project architecture, session history *(CodeDNA Level 0)*
+2. Read native tool memory → user profile, feedback, past decisions *(tool-specific)*
+3. Read tool instruction file → repo-level instructions for this tool *(human→agent)*
+4. Read file headers as needed → per-file rules and reverse deps *(CodeDNA Level 1)*
+
+**What CodeDNA uniquely provides** across all tools: git-tracked, machine-independent, agent-to-agent communication. Native tool memories are local and tool-specific. When a developer switches from Cursor to Windsurf to Claude Code mid-project, CodeDNA context transfers automatically — native memories do not.
 
 Three examples illustrate the model:
 
