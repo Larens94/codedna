@@ -111,9 +111,43 @@ While binary is the lowest layer for execution, structured source + annotations 
 
 ---
 
-## ⚡ Install
+## ⚡ Quick Start
 
-> **Full install guide with language selection and tool-specific instructions → [docs/install.html](https://larens94.github.io/codedna/install.html)**
+Want to try CodeDNA right away? Here's the fastest path:
+
+1. **Install the CLI:**
+   ```bash
+   # Clone the repository
+   git clone https://github.com/Larens94/codedna
+   cd codedna
+   
+   # Install in development mode
+   pip install -e .
+   ```
+
+2. **Annotate a sample project:**
+   ```bash
+   # Run on the included examples (no LLM required)
+   codedna init ./examples --no-llm
+   
+   # Check the results
+   codedna check ./examples
+   ```
+
+3. **View the annotations:**
+   ```bash
+   # Look at an annotated file
+   head -20 ./examples/python-api/models/user.py
+   ```
+
+4. **Try with an LLM (optional):**
+   ```bash
+   # Set your API key and run with AI
+   export ANTHROPIC_API_KEY=your_key_here
+   codedna init ./examples --model claude-haiku-4-5-20251001
+   ```
+
+For detailed installation with language selection and tool-specific instructions, see the [full install guide](https://larens94.github.io/codedna/install.html).
 
 ### Option 1 — Claude Code Plugin (recommended)
 
@@ -144,17 +178,27 @@ Supports: Python, TypeScript, JavaScript, Go, Rust, Java, Ruby.
 
 Annotate an entire project from the terminal. Supports local models via Ollama at zero cost:
 
+First, install the package:
+
 ```bash
-pip install 'codedna[litellm]'   # all providers including Ollama
+# Install from the current directory (development)
+pip install -e .
 
-# Free — local model, no API key
-codedna init /path/to/project --model ollama/llama3
+# Or install with all LLM providers (when available on PyPI)
+# pip install 'codedna[all]'
+```
 
+Then run the annotation command:
+
+```bash
 # Free — structural only, no AI
 codedna init /path/to/project --no-llm
 
+# Free — local model via Ollama (requires Ollama installed)
+codedna init /path/to/project --model ollama/llama3
+
 # Paid — Anthropic Haiku (~$1-3 for a Django project)
-ANTHROPIC_API_KEY=sk-... codedna init /path/to/project
+ANTHROPIC_API_KEY=sk-... codedna init /path/to/project --model claude-haiku-4-5-20251001
 ```
 
 | Command | What it does |
@@ -165,13 +209,13 @@ ANTHROPIC_API_KEY=sk-... codedna init /path/to/project
 
 Supported models via `--model`:
 
-| Provider | Example | Cost |
-|---|---|---|
-| Ollama (local) | `ollama/llama3`, `ollama/mistral` | Free |
-| Anthropic | `claude-haiku-4-5-20251001` | ~$1–3 / project |
-| OpenAI | `openai/gpt-4o-mini` | Low |
-| Google | `gemini/gemini-2.0-flash` | Low |
-| None | `--no-llm` | Free |
+| Provider | Example | Cost | Notes |
+|---|---|---|---|
+| Ollama (local) | `ollama/llama3`, `ollama/mistral` | Free | Requires Ollama installed and model pulled |
+| Anthropic | `claude-haiku-4-5-20251001` | ~$1–3 / project | Requires ANTHROPIC_API_KEY |
+| OpenAI | `openai/gpt-4o-mini` | Low | Requires OPENAI_API_KEY |
+| Google | `gemini/gemini-2.0-flash` | Low | Requires GEMINI_API_KEY |
+| None | `--no-llm` | Free | Structural annotations only |
 
 ---
 
@@ -298,9 +342,25 @@ Session logs: [control](./benchmark_agent/claude_code_challenge/django__django-1
 Reproduce: [`HOW_TO_RERUN.md`](./benchmark_agent/claude_code_challenge/django__django-13495/HOW_TO_RERUN.md)
 
 **Run it yourself:**
-- Clone the control: `git clone https://github.com/Larens94/codedna-challenge-control`
-- Clone the CodeDNA version: `git clone https://github.com/Larens94/codedna-challenge-codedna`
-- Paste the same prompt into your agent and score how many of the 7 patch files it touches.
+1. Clone the control repository:
+   ```bash
+   git clone https://github.com/Larens94/codedna-challenge-control
+   ```
+2. Clone the CodeDNA-annotated version:
+   ```bash
+   git clone https://github.com/Larens94/codedna-challenge-codedna
+   ```
+3. Open either repository in your AI coding agent (Claude Code, Cursor, etc.)
+4. Paste the same prompt into your agent and score how many of the 7 patch files it touches.
+
+**Quick test with the CLI:**
+```bash
+# Check annotation coverage
+codedna check ./codedna-challenge-codedna
+
+# Run a dry-run annotation (no LLM)
+codedna init ./codedna-challenge-codedna --no-llm --dry-run
+```
 
 ---
 
