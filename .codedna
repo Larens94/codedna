@@ -4,15 +4,15 @@ description: "An In-Source Communication Protocol for AI Coding Agents — spec,
 
 packages:
   codedna_tool/:
-    purpose: "cli, base, csharp module"
+    purpose: "Analyzes source code across multiple languages to extract and map function, class, and dependency information"
     key_files: [cli.py, swift.py, php.py, rust.py, java.py]
 
   examples/:
-    purpose: "dashboard, routes, user module"
+    purpose: "Provides revenue analytics and reporting with user management for financial dashboards"
     key_files: [format.py, revenue.py, routes.py, user.py, dashboard.py]
 
   tools/:
-    purpose: "agent history, extract city data, traces to training module"
+    purpose: "Utilities for processing agent traces, validating manifests, and extracting city data from CodeDNA sources"
     key_files: [agent_history.py, traces_to_training.py, validate_manifests.py, extract_city_data.py]
 
 cross_cutting_patterns: {}
