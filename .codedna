@@ -236,3 +236,36 @@ agent_sessions:
       Code examples in §3 (analytics/revenue.py) retained — they illustrate the protocol,
       not B1/B2 benchmark results.
       Next agent: verify rendered HTML looks structurally correct after section removal.
+
+  - agent: claude-haiku-4-5-20251001
+    provider: anthropic
+    date: 2026-03-27
+    session_id: s_20260327_002
+    task: "multi-language annotation support; v0.8 pre-commit hook; CLI extension"
+    changed:
+      - codedna_tool/cli.py
+      - codedna_tool/languages/__init__.py
+      - codedna_tool/languages/base.py
+      - codedna_tool/languages/typescript.py
+      - codedna_tool/languages/go.py
+      - tools/pre-commit
+    visited:
+      - .codedna
+      - codedna_tool/cli.py
+      - codedna_tool/languages/__init__.py
+      - codedna_tool/languages/base.py
+      - codedna_tool/languages/typescript.py
+      - codedna_tool/languages/go.py
+      - tools/pre-commit
+      - tools/install-hooks.sh
+      - codedna-plugin/hooks/hooks.json
+      - codedna-plugin/scripts/check-annotation.sh
+    message: >
+      Added multi-language annotation support: TypeScript/JS + Go adapters via
+      codedna_tool/languages/ package. CLI now accepts --extensions ts go (or .ts .go)
+      for init/update/check subcommands. Non-Python files get L1 module header only
+      (no AST/L2 — regex-based export detection). pre-commit hook rewritten from v0.3
+      CODEDNA:0.3 block format to v0.8 — validates staged files via validate_manifests.py,
+      blocks commit on errors. Open: _build_header_lines emits 'unknown' for provider and
+      session_id — callers should pass real values (message: in base.py). Next: extend
+      inject_header signature to accept provider/session_id explicitly.
