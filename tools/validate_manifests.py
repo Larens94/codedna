@@ -137,7 +137,8 @@ def _validate_purpose(result: ValidationResult, first_line: str, filename: str) 
         return
 
     declared_name, purpose = first_line.split(" — ", 1)
-    if declared_name.strip() != filename:
+    # CLI writes the repo-relative path (e.g. "orders/models.py"); accept both forms
+    if Path(declared_name.strip()).name != filename:
         result.warn(f"Filename mismatch in docstring: declared '{declared_name.strip()}', actual '{filename}'")
 
     word_count = len(purpose.strip().split())
