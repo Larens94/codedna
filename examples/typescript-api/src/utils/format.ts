@@ -1,3 +1,10 @@
+// format.ts — format module.
+//
+// exports: formatCurrency | formatDate | truncate | formatUserLabel
+// used_by: none
+// rules:   none
+// agent:   claude-haiku-4-5-20251001 | unknown | 2026-03-27 | unknown | initial CodeDNA annotation pass
+
 /**
  * format.ts — Currency, date, and string formatting utilities.
  *

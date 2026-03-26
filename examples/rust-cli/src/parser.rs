@@ -1,3 +1,10 @@
+// parser.rs — parser module.
+//
+// exports: parse_csv | filter_records | Record
+// used_by: none
+// rules:   none
+// agent:   claude-haiku-4-5-20251001 | unknown | 2026-03-27 | unknown | initial CodeDNA annotation pass
+
 //! parser.rs — CSV parser: reads raw text into Vec<Record> with named fields.
 //!
 //! exports: parse_csv(source: &str) -> Vec<Record> | filter_records<'a>(records, key, value) -> Vec<&Record>

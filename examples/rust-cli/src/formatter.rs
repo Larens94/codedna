@@ -1,3 +1,10 @@
+// formatter.rs — formatter module.
+//
+// exports: format_report | format_summary
+// used_by: none
+// rules:   none
+// agent:   claude-haiku-4-5-20251001 | unknown | 2026-03-27 | unknown | initial CodeDNA annotation pass
+
 //! formatter.rs — Formats Vec<Record> as aligned table or summary string.
 //!
 //! exports: format_report(records: &[Record]) -> String | format_summary(records, count_field) -> String

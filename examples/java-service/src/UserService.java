@@ -1,5 +1,13 @@
 package com.example.service;
 
+// UserService.java — UserService module.
+//
+// exports: UserService | UserService::getActiveUsers | UserService::getUserById | UserService::createUser | UserService::suspendUser | UserService::formatDisplayName
+// used_by: none
+// rules:   none
+// agent:   claude-haiku-4-5-20251001 | unknown | 2026-03-27 | unknown | initial CodeDNA annotation pass
+
+
 /**
  * UserService.java — Business logic for user lifecycle and display formatting.
  *

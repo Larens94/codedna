@@ -1,5 +1,13 @@
 package com.example.service;
 
+// UserRepository.java — UserRepository module.
+//
+// exports: UserRepository | UserRepository::findAll | UserRepository::findById | UserRepository::findByEmail | UserRepository::save | UserRepository::deleteById
+// used_by: none
+// rules:   none
+// agent:   claude-haiku-4-5-20251001 | unknown | 2026-03-27 | unknown | initial CodeDNA annotation pass
+
+
 /**
  * UserRepository.java — In-memory user store with CRUD operations.
  *

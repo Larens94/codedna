@@ -1,11 +1,10 @@
-"""format.py — Currency, date, and string formatting utilities.
+"""python-api/utils/format.py — Currency, date, and string formatting utilities.
 
-exports: format_currency(amount_cents, currency) -> str | format_date(dt, fmt) -> str
-         format_user_label(name, email) -> str | truncate(text, max_len, suffix) -> Optional[str]
-used_by: services/revenue.py → monthly_revenue, top_customers | api/routes.py → revenue_route
-rules:   format_currency expects amount in cents (int), not dollars —
-         divide by 100 internally. Never pass float dollars directly.
-agent:   claude-sonnet-4-6 | 2026-03-24 | initial CodeDNA annotation
+exports: format_currency(amount_cents, currency) | format_date(dt, fmt) | format_user_label(name, email) | truncate(text, max_len, suffix)
+used_by: none
+rules:   - All formatting functions must handle None/empty inputs gracefully without raising exceptions
+- Currency formatting must support only the predefined symbol dictionary; new currencies require explicit addition to the symbols map
+agent:   claude-haiku-4-5-20251001 | 2026-03-27 | initial CodeDNA annotation pass
 """
 
 from datetime import datetime
@@ -13,6 +12,9 @@ from typing import Optional
 
 
 def format_currency(amount_cents: int, currency: str = "USD") -> str:
+    """
+    Rules:   amount_cents must be an integer; negative values are not validated and will produce unexpected output (e.g., '-$10.00')
+    """
     symbols = {"USD": "$", "EUR": "€", "GBP": "£"}
     symbol = symbols.get(currency, currency + " ")
     return f"{symbol}{amount_cents / 100:.2f}"
@@ -30,6 +32,9 @@ def format_user_label(name: str, email: str) -> str:
 
 
 def truncate(text: str, max_len: int = 80, suffix: str = "...") -> Optional[str]:
+    """
+    Rules:   max_len must be greater than len(suffix) to avoid negative slicing; no validation exists to prevent malformed output
+    """
     if not text:
         return None
     if len(text) <= max_len:

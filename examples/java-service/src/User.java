@@ -1,5 +1,13 @@
 package com.example.service;
 
+// User.java — User module.
+//
+// exports: User | User::getId | User::getEmail | User::getName | User::isActive | User::getSuspendedAt | User::isSuspended | User::suspend | User::reactivate
+// used_by: none
+// rules:   none
+// agent:   claude-haiku-4-5-20251001 | unknown | 2026-03-27 | unknown | initial CodeDNA annotation pass
+
+
 /**
  * User.java — Immutable user entity with suspension state management.
  *

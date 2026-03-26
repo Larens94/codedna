@@ -1,11 +1,9 @@
-"""routes.py — Flask Blueprint for revenue API endpoints.
+"""python-api/api/routes.py — Flask Blueprint for revenue API endpoints.
 
-exports: bp (Blueprint) — routes: GET /<year>/<month>, GET /<year>/summary, GET /<year>/<month>/top
+exports: revenue_route(year, month) | annual_route(year) | top_customers_route(year, month)
 used_by: none
-rules:   all routes call _get_active_users() which returns only is_active==True users —
-         suspended users are excluded upstream in services/revenue.py, not here.
-         limit on /top is capped at 100 to prevent abuse.
-agent:   claude-sonnet-4-6 | 2026-03-24 | initial CodeDNA annotation
+rules:   All route functions must validate input parameters (year/month ranges) before querying the database, and limit result sets to prevent performance degradation. The module depends on a `db.session` object from an external `db` module for all data access.
+agent:   claude-haiku-4-5-20251001 | 2026-03-27 | initial CodeDNA annotation pass
 """
 
 from flask import Blueprint, jsonify, request
@@ -41,6 +39,9 @@ def annual_route(year: int):
 
 @bp.route("/<int:year>/<int:month>/top")
 def top_customers_route(year: int, month: int):
+    """
+    Rules:   limit parameter is capped at 100 max; silently truncates higher values without warning
+    """
     limit = min(int(request.args.get("limit", 10)), 100)
     users = _get_active_users()
     data = top_customers(year, month, users, limit=limit)

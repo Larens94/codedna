@@ -1,14 +1,10 @@
-"""revenue.py — Monthly and annual revenue aggregation from paid invoices.
+"""python-api/services/revenue.py — Monthly and annual revenue aggregation from paid invoices.
 
-exports: monthly_revenue(year, month, users) -> dict | annual_summary(year, users) -> list[dict]
-         top_customers(year, month, users, limit) -> list[dict]
-used_by: api/routes.py → revenue_route, annual_route, top_customers_route
-rules:   get_invoices_for_period() returns ALL tenants including suspended —
-         callers MUST pass a filtered users list. monthly_revenue and top_customers
-         both filter by active_ids internally, but the users list must come from outside.
-agent:   claude-sonnet-4-6 | 2026-03-24 | initial CodeDNA annotation
-         message: "get_invoices_for_period has no suspension filter at DB level —
-                   if this moves to SQL, the WHERE clause must explicitly exclude suspended users"
+exports: get_invoices_for_period(year, month) | monthly_revenue(year, month, users) | annual_summary(year, users) | top_customers(year, month, users, limit)
+used_by: none
+rules:   - All functions must filter users through `is_suspended()` before processing revenue data; never operate on raw user lists
+- Database session access is restricted to `get_invoices_for_period()`; other functions must receive pre-queried data as parameters
+agent:   claude-haiku-4-5-20251001 | 2026-03-27 | initial CodeDNA annotation pass
 """
 
 from datetime import datetime
@@ -20,6 +16,9 @@ from utils.format import format_currency
 
 def get_invoices_for_period(year: int, month: int) -> list[Invoice]:
     # NOTE: returns ALL invoices including suspended users — callers must filter
+    """
+    Rules:   Returns ALL invoices including suspended users; caller must filter by user status. Only filters for paid=True invoices; unpaid invoices excluded.
+    """
     from db import session
 
     return (
@@ -50,6 +49,9 @@ def annual_summary(year: int, users: list[User]) -> list[dict]:
 
 
 def top_customers(year: int, month: int, users: list[User], limit: int = 10) -> list[dict]:
+    """
+    Rules:   Requires users list passed in; if user is deleted after invoice creation, KeyError will occur on active_ids[uid] lookup.
+    """
     active_ids = {u.id: u for u in users if not u.is_suspended()}
     invoices = get_invoices_for_period(year, month)
     totals: dict[int, int] = {}

@@ -1,11 +1,11 @@
-"""dashboard.py — Render monthly revenue KPI dashboard as HTML.
+"""python/dashboard.py — Render monthly revenue KPI dashboard as HTML.
 
-exports: render(execute_query_func) -> str
+exports: render(execute_query_func)
 used_by: none
-rules:   execute_query_func must return list[dict] with keys: month, revenue, cost.
-         revenue and cost are int (not Decimal) — see schema.sql.
-         calculate_kpi() handles normalization, margins, and formatting — do not inline.
-agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | migrated docstring from v0.7 to v0.8 format
+rules:   rules: |
+  - The `render()` function must accept `execute_query_func` as a callable parameter and use it exclusively for all database operations; no direct database connections are permitted.
+  - All output must be generated from the result of `execute_query_func()` calls; hardcoded data or external API calls are not allowed.
+agent:   claude-haiku-4-5-20251001 | 2026-03-27 | initial CodeDNA annotation pass
 """
 
 from .utils import calculate_kpi, format_currency
@@ -26,6 +26,8 @@ def render(execute_query_func: callable) -> str:
 
     Modifies:
         Nothing (read-only rendering).
+
+    Rules:   execute_query_func must return list[dict] with keys 'month', 'revenue', 'cost'; all numeric columns must be non-null integers
     """
     rows = execute_query_func(
         "SELECT month, revenue, cost FROM orders ORDER BY month"

@@ -1,10 +1,9 @@
-"""user.py — User and Invoice dataclasses for the revenue domain.
+"""python-api/models/user.py — User and Invoice dataclasses for the revenue domain.
 
 exports: class User | class Invoice
-used_by: services/revenue.py → monthly_revenue, top_customers | api/routes.py → revenue_route
-rules:   User.is_suspended() is the single source of truth for suspension state —
-         never check suspendedAt directly; always call is_suspended().
-agent:   claude-sonnet-4-6 | 2026-03-24 | initial CodeDNA annotation
+used_by: none
+rules:   User.display_name() depends on self.name and self.email existing as non-null attributes. Invoice.amount_formatted() assumes self.amount_cents is always a numeric type. Both classes must maintain these attributes or their respective methods will raise exceptions.
+agent:   claude-haiku-4-5-20251001 | 2026-03-27 | initial CodeDNA annotation pass
 """
 
 from dataclasses import dataclass
@@ -24,6 +23,9 @@ class User:
         return self.suspended_at is not None
 
     def display_name(self) -> str:
+        """
+        Rules:   Assumes email is valid format with '@' present; will raise IndexError if email lacks domain.
+        """
         return self.name.strip() or self.email.split("@")[0]
 
 
@@ -36,4 +38,7 @@ class Invoice:
     created_at: datetime
 
     def amount_formatted(self) -> str:
+        """
+        Rules:   amount_cents must be an integer; decimal values will produce incorrect formatting.
+        """
         return f"${self.amount_cents / 100:.2f}"
