@@ -29,6 +29,7 @@ rules:   L2 (function Rules:) applies Python AST only; language adapters are L1-
          _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
 agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_001 | initial CodeDNA annotation pass; fixed cross-package used_by graph
          claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_002 | added --extensions flag, run_lang_files(), multi-language pipeline; updated collect_files, cmd_check
+         claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_004 | added cmd_manifest (Level 0 auto-generation); fixed --exclude glob (fnmatch), graceful LLM fallback, __init__ skip in purpose heuristic
 """
 
 import argparse

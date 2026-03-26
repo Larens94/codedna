@@ -255,3 +255,21 @@ agent_sessions:
       blocks commit on errors. Open: _build_header_lines emits 'unknown' for provider and
       session_id — callers should pass real values (message: in base.py). Next: extend
       inject_header signature to accept provider/session_id explicitly.
+  - agent: claude-sonnet-4-6
+    provider: anthropic
+    date: 2026-03-27
+    session_id: s_20260327_004
+    task: "add codedna manifest command for Level 0 auto-generation"
+    changed:
+      - codedna_tool/cli.py
+      - .codedna
+    visited:
+      - codedna_tool/cli.py
+      - codedna_tool/languages/__init__.py
+      - CHANGELOG.md
+    message: >
+      Implemented cmd_manifest(): detects packages from file tree, infers depends_on
+      from import graph, generates purpose: via LLM (with graceful fallback). Fixed
+      --exclude glob matching (pathlib.match() does not support ** in Python 3.11,
+      switched to fnmatch on relative path). Fixed LLM call error handling to degrade
+      gracefully. __init__ stems excluded from purpose heuristic.
