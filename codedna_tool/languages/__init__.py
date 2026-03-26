@@ -7,14 +7,17 @@ rules:   adapters are stateless; get_adapter returns None for unsupported extens
          Never import language-specific deps here — keep this registry lightweight.
 agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_001 | initial multi-language adapter registry
          claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_002 | CodeDNA v0.8 compliance pass: added session_id to agent: field; no logic changes
-         claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | added PHP/Laravel adapter (.php)
+         claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | added PHP/Laravel adapter (.php); added Rust, Java, Kotlin, Ruby adapters
 """
 
 from typing import Optional
 
 from .base import LanguageAdapter
 from .go import GoAdapter
+from .java import JavaAdapter, KotlinAdapter
 from .php import PhpAdapter
+from .ruby import RubyAdapter
+from .rust import RustAdapter
 from .typescript import TypeScriptAdapter
 
 _REGISTRY: dict[str, LanguageAdapter] = {
@@ -25,6 +28,11 @@ _REGISTRY: dict[str, LanguageAdapter] = {
     ".mjs": TypeScriptAdapter(),
     ".go": GoAdapter(),
     ".php": PhpAdapter(),
+    ".rs": RustAdapter(),
+    ".java": JavaAdapter(),
+    ".kt": KotlinAdapter(),
+    ".kts": KotlinAdapter(),
+    ".rb": RubyAdapter(),
 }
 
 SUPPORTED_EXTENSIONS = list(_REGISTRY.keys())
