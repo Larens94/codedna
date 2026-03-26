@@ -16,8 +16,12 @@ packages:
     purpose: "AI tool integration files — CLAUDE.md, .cursorrules, copilot-instructions.md"
 
   tools/:
-    purpose: "AST-based auto-annotator for existing codebases"
-    key_files: [auto_annotate.py]
+    purpose: "CLI support tools: pre-commit hook, validators, session viewers, training data exporters"
+    key_files: [pre-commit, install-hooks.sh, validate_manifests.py, agent_history.py, traces_to_training.py]
+
+  codedna_tool/languages/:
+    purpose: "Multi-language annotation adapters — TypeScript, JavaScript, Go, PHP, Rust, Java, Kotlin, C#, Swift, Ruby"
+    key_files: [base.py, typescript.py, go.py, php.py, rust.py, java.py, ruby.py, csharp.py, swift.py]
 
   paper/:
     purpose: "Scientific paper — EN and IT HTML versions + whitepaper"

@@ -19,8 +19,8 @@ Requires: ANTHROPIC_API_KEY env var (or --api-key) for Anthropic models.
 
 Provider priority: litellm (all providers) > anthropic (fallback, Claude only).
 
-Multi-language: pass --extensions ts go (or .ts .go) to annotate non-Python files.
-Supported: .ts .tsx .js .jsx .mjs (TypeScript/JS) | .go (Go)
+Multi-language: pass --extensions ts go php rs java kt rb cs swift (or with dots).
+Supported: .ts .tsx .js .jsx .mjs | .go | .php | .rs | .java | .kt .kts | .rb | .cs | .swift
 
 exports: main() -> int | run(...) | cmd_check(...) -> int | collect_files(...) -> list[Path]
 used_by: none — CLI entrypoint, called via `codedna` console script

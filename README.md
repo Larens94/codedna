@@ -177,7 +177,7 @@ Adds four commands to Claude Code:
 
 Also installs a **PostToolUse hook** that notifies Claude when a saved file is missing a CodeDNA annotation.
 
-Supports: Python, TypeScript, JavaScript, Go, Rust, Java, Ruby.
+Supports: Python, TypeScript, JavaScript, Go, PHP, Rust, Java, Kotlin, C#, Swift, Ruby.
 
 ---
 
@@ -213,6 +213,7 @@ ANTHROPIC_API_KEY=sk-... codedna init /path/to/project --model claude-haiku-4-5-
 | `codedna init PATH` | First-time annotation — L1 module headers + L2 function `Rules:` |
 | `codedna update PATH` | Incremental — only unannotated files (safe to re-run) |
 | `codedna check PATH` | Coverage report without modifying files |
+| `codedna init PATH --extensions ts go` | Annotate TypeScript + Go files too (L1 only) |
 
 Supported models via `--model`:
 
@@ -551,7 +552,29 @@ Current benchmark results are **zero-shot** — no fine-tuning on the protocol. 
 
 ## 🌐 Language Support
 
-CodeDNA v0.8 is validated on **Python** using the native module docstring format. Support for other languages is planned for M4.
+CodeDNA v0.8 supports **11 languages**. Python is the reference implementation with full AST-based extraction (L1 module headers + L2 function `Rules:`). All other languages get L1-only annotation via regex adapters — no external toolchain required.
+
+| Language | Extensions | L1 | L2 |
+|---|---|---|---|
+| Python | `.py` | ✅ AST | ✅ AST |
+| TypeScript / JavaScript | `.ts .tsx .js .jsx .mjs` | ✅ | — |
+| Go | `.go` | ✅ | — |
+| PHP (Laravel-aware) | `.php` | ✅ | — |
+| Rust | `.rs` | ✅ | — |
+| Java | `.java` | ✅ | — |
+| Kotlin | `.kt .kts` | ✅ | — |
+| C# | `.cs` | ✅ | — |
+| Swift | `.swift` | ✅ | — |
+| Ruby | `.rb` | ✅ | — |
+
+Pass `--extensions` to annotate non-Python files:
+
+```bash
+codedna init ./src --extensions ts go          # TypeScript + Go
+codedna init ./app --extensions php            # PHP/Laravel
+codedna init . --extensions ts go php rs java  # mixed project
+codedna check . --extensions ts go -v          # coverage report
+```
 
 ---
 
@@ -587,17 +610,21 @@ codedna/
 │   ├── typescript-api/     ← annotated TypeScript example
 │   ├── go-api/             ← annotated Go example
 │   ├── java-service/       ← annotated Java example
-│   └── rust-cli/           ← annotated Rust example
+│   ├── rust-cli/           ← annotated Rust example
+│   ├── php-laravel/        ← annotated Laravel example
+│   └── ruby-sinatra/       ← annotated Ruby/Sinatra example
 ├── paper/                  ← scientific paper (arXiv preprint)
 │   ├── codedna_paper.pdf
 │   ├── codedna_paper.html
 │   ├── codedna_whitepaper_EN.html
 │   └── codedna_paper_IT.html
 └── tools/
+    ├── pre-commit              ← CodeDNA v0.8 pre-commit hook (validates staged files)
+    ├── install-hooks.sh        ← installer: copies pre-commit into .git/hooks/
+    ├── validate_manifests.py   ← deep annotation validator (format, agent dates, purpose length)
     ├── agent_history.py        ← session history viewer (reads AI git trailers)
     ├── traces_to_training.py   ← SFT/DPO/PRM dataset converter from benchmark runs
-    ├── extract_city_data.py    ← extract annotations to JSON for city visualization
-    └── validate_manifests.py   ← deep annotation validator (format, agent dates, purpose length)
+    └── extract_city_data.py    ← extract annotations to JSON for city visualization
 ```
 
 ---

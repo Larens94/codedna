@@ -2,6 +2,20 @@
 
 All notable changes to CodeDNA will be documented in this file.
 
+## [0.8.1] — 2026-03-27
+
+### Added
+- **Multi-language adapters** — 10 new language adapters in `codedna_tool/languages/`: TypeScript/JavaScript, Go, PHP (Laravel-aware), Rust, Java, Kotlin, C#, Swift, Ruby. Python remains the reference implementation with full L1+L2 AST extraction; all other languages get L1-only annotation via regex (no external toolchain required).
+- **`--extensions` CLI flag** — `codedna init`, `codedna update`, `codedna check` now accept `--extensions ts go php` etc. to annotate non-Python files.
+- **`tools/pre-commit`** — rewritten from v0.3 `CODEDNA:0.3` block format to v0.8. Validates staged source files using `validate_manifests.py`; blocks commit on annotation errors. Install with `bash tools/install-hooks.sh`.
+- **Examples** — `examples/php-laravel/` (OrderController, Order model, routes) and `examples/ruby-sinatra/` (order.rb, Sinatra app) added and annotated.
+
+### Fixed
+- `codedna_tool/cli.py` `_resolve_dep()` no longer filters by `top_pkg` — cross-package `used_by` graph now works correctly across package boundaries.
+- `tools/validate_manifests.py` filename mismatch false positive — now accepts repo-relative paths in the docstring first line (e.g. `analytics/revenue.py — ...`).
+
+---
+
 ## [0.8.0] — 2026-03-20
 
 ### Added
@@ -14,7 +28,7 @@ All notable changes to CodeDNA will be documented in this file.
 - `tools/traces_to_training.py` — converts benchmark results to SFT/DPO/PRM JSONL training datasets. Produces 3 formats: SFT (F1 ≥ 0.6), DPO (codedna vs control + cross-model pairs), PRM (per-step reward).
 - `tools/agent_history.py` — reads AI git trailers and renders a session timeline. Supports filtering by model, file, or message presence.
 - Claude Code plugin (`codedna-plugin/`) — adds `/codedna:init` and `/codedna:check` slash commands plus a PostToolUse hook for annotation enforcement. `/codedna:manifest` and `/codedna:impact` are planned.
-- Multi-language annotation adapters (`codedna_tool/languages/`) — Python, TypeScript, JavaScript, Go, Rust, Java, Ruby, C#, Kotlin, Swift, PHP. Python is the validated reference implementation; other languages are in development.
+- Multi-language annotation adapters (`codedna_tool/languages/`) — planned; TypeScript and Go adapters included as preview. Full 11-language coverage delivered in v0.8.1.
 - SVG diagrams in `docs/diagrams/`: architecture (4 levels), agent workflow, three-tier audit, `message:` lifecycle state machine.
 - Fix-quality benchmark: Claude Code manual session on `django__django-13495` — CodeDNA achieves 7/7 files vs 6/7 control, 0 failed edits vs 5.
 - Protocol renamed from "CodeDNA Annotation Standard" to "CodeDNA: An In-Source Communication Protocol for AI Coding Agents".

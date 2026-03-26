@@ -11,7 +11,7 @@ Every source file in this project must have a CodeDNA module docstring as the ve
 exports: public_function(arg) -> return_type
 used_by: consumer_file.py → consumer_function
 rules:   <hard constraint agents must never violate>
-agent:   <model-id> | <YYYY-MM-DD> | <what you did and what you noticed>
+agent:   <model-id> | <provider> | <YYYY-MM-DD> | <session_id> | <what you did and what you noticed>
 """
 ```
 
@@ -47,7 +47,7 @@ def process(arg: type) -> return_type:
 Use `message:` for observations not yet certain enough to become `rules:`:
 
 ```python
-agent:   <model-id> | <YYYY-MM-DD> | Implemented X.
+agent:   <model-id> | <provider> | <YYYY-MM-DD> | <session_id> | Implemented X.
          message: "noticed Y behaviour — not yet sure if this should be a rule"
 ```
 
@@ -66,7 +66,7 @@ def my_function():
 
 At session end, append to `.codedna` `agent_sessions:`:
 ```yaml
-- agent: <model-id>
+- agent: <model-id> | <provider> | <YYYY-MM-DD> | <session_id>
   provider: <provider>
   date: <YYYY-MM-DD>
   session_id: <s_YYYYMMDD_NNN>
