@@ -1,24 +1,15 @@
 #!/usr/bin/env bash
-# === CODEDNA:0.3 ================================================
-# FILE: pre-commit
-# PURPOSE: Git pre-commit hook — validates CodeDNA manifest headers
-# CONTEXT_BUDGET: minimal
-# DEPENDS_ON: tools/validate_manifests.py
-# LAST_MODIFIED: initial implementation v0.3
-# ================================================================
+# CodeDNA v0.8 pre-commit hook — blocks commits on missing annotations.
 #
-# INSTALLATION:
-#   cp tools/pre-commit .git/hooks/pre-commit
-#   chmod +x .git/hooks/pre-commit
-#
-# Or use the install script:
+# Installation:
 #   bash tools/install-hooks.sh
+# Or manually:
+#   cp tools/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 
 set -euo pipefail
 
-echo "🧬 CodeDNA manifest validation..."
+echo "CodeDNA v0.8 — validating staged files..."
 
-# Find Python interpreter
 PYTHON=""
 for cmd in python3 python; do
     if command -v "$cmd" &>/dev/null; then
@@ -28,55 +19,61 @@ for cmd in python3 python; do
 done
 
 if [[ -z "$PYTHON" ]]; then
-    echo "⚠️  Python not found — skipping CodeDNA validation"
+    echo "WARNING: Python not found — skipping CodeDNA validation"
     exit 0
 fi
 
-# Check if validator exists
-VALIDATOR="$(git rev-parse --show-toplevel)/tools/validate_manifests.py"
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+VALIDATOR="$REPO_ROOT/tools/validate_manifests.py"
+
 if [[ ! -f "$VALIDATOR" ]]; then
-    echo "⚠️  Validator not found at tools/validate_manifests.py — skipping"
+    echo "WARNING: tools/validate_manifests.py not found — skipping"
     exit 0
 fi
 
-# Get list of staged source files
-STAGED=$(git diff --cached --name-only --diff-filter=ACM | grep -E '\.(py|js|ts|jsx|tsx|go|rs)$' || true)
+# Staged source files only (new, modified, copied)
+STAGED=$(git diff --cached --name-only --diff-filter=ACM \
+    | grep -E '\.(py|ts|tsx|js|jsx|go|rs|java|kt|swift|rb)$' \
+    || true)
 
 if [[ -z "$STAGED" ]]; then
-    echo "✅ No source files staged."
     exit 0
 fi
 
-# Validate only staged files
 ERRORS=0
+WARNED=0
+
 for FILE in $STAGED; do
-    if [[ -f "$FILE" ]]; then
-        RESULT=$("$PYTHON" "$VALIDATOR" "$FILE" 2>&1) || true
-        if echo "$RESULT" | grep -q "ERROR:"; then
-            echo ""
-            echo "❌  $FILE"
-            echo "$RESULT" | grep "ERROR:" | sed 's/^/    /'
-            ERRORS=$((ERRORS + 1))
-        fi
+    FULL="$REPO_ROOT/$FILE"
+    [[ -f "$FULL" ]] || continue
+
+    OUTPUT=$("$PYTHON" "$VALIDATOR" "$FULL" 2>&1) || true
+
+    if echo "$OUTPUT" | grep -q "^FAIL "; then
+        ERRORS=$((ERRORS + 1))
+        echo ""
+        echo "FAIL  $FILE"
+        echo "$OUTPUT" | grep -E "error:|warning:" | sed 's/^/      /'
     fi
 done
 
+echo ""
 if [[ $ERRORS -gt 0 ]]; then
+    echo "Commit blocked: $ERRORS file(s) have CodeDNA v0.8 annotation errors."
     echo ""
-    echo "❌ Commit blocked: $ERRORS file(s) missing valid CodeDNA manifests."
-    echo "   Add a manifest header to each file or run: python tools/validate_manifests.py ."
+    echo "Minimum v0.8 header (Python):"
+    echo '  """filename.py — what this file does.'
     echo ""
-    echo "   Minimal header template:"
-    echo "   # === CODEDNA:0.3 ============================================="
-    echo "   # FILE: your_file.py"
-    echo "   # PURPOSE: what this file does (max 15 words)"
-    echo "   # CONTEXT_BUDGET: normal"
-    echo "   # DEPENDS_ON: none"
-    echo "   # EXPORTS: function_name(args) → return_type"
-    echo "   # LAST_MODIFIED: initial commit"
-    echo "   # =============================================================="
+    echo "  exports: public_function(arg) -> return_type"
+    echo "  used_by: caller.py -> caller_function"
+    echo "  rules:   hard constraints an agent must never violate"
+    echo '  agent:   model-id | provider | YYYY-MM-DD | session_id | what was done'
+    echo '  """'
+    echo ""
+    echo "Run:  codedna init <path>   to auto-annotate missing files"
+    echo "Run:  python tools/validate_manifests.py <path>   to check coverage"
     exit 1
 fi
 
-echo "✅ All staged files have valid CodeDNA manifests."
+echo "All staged files pass CodeDNA v0.8 validation."
 exit 0

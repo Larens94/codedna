@@ -1,21 +1,34 @@
 #!/usr/bin/env python3
 """cli.py — CodeDNA v0.8 annotation tool: init, update, check.
 
-AST for structure (exports, used_by, candidates).
+AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
+Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
 
 Commands:
-  init   PATH   First-time annotation of every .py file under PATH
+  init   PATH   First-time annotation of every source file under PATH
   update PATH   Annotate only files missing CodeDNA headers (incremental)
   check  PATH   Report annotation coverage without modifying files
 
-LLM calls: max 2 per file (1 module skeleton rules + 1 function batch).
+LLM calls: max 2 per Python file (1 module skeleton rules + 1 function batch).
            0 calls if file already annotated (skipped by init/update).
+           Non-Python files: 1 LLM call per file for rules: (or none with --no-llm).
 
 Requires: ANTHROPIC_API_KEY env var (or --api-key) for Anthropic models.
           No API key needed for local models via Ollama (pip install 'codedna[litellm]').
 
 Provider priority: litellm (all providers) > anthropic (fallback, Claude only).
+
+Multi-language: pass --extensions ts go (or .ts .go) to annotate non-Python files.
+Supported: .ts .tsx .js .jsx .mjs (TypeScript/JS) | .go (Go)
+
+exports: main() -> int | run(...) | cmd_check(...) -> int | collect_files(...) -> list[Path]
+used_by: none — CLI entrypoint, called via `codedna` console script
+rules:   L2 (function Rules:) applies Python AST only; language adapters are L1-only.
+         LLM calls are capped at 2 per Python file; --no-llm skips all LLM calls.
+         _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
+agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_001 | initial CodeDNA annotation pass; fixed cross-package used_by graph
+         claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_002 | added --extensions flag, run_lang_files(), multi-language pipeline; updated collect_files, cmd_check
 """
 
 import argparse
@@ -27,6 +40,8 @@ from dataclasses import dataclass
 from datetime import date
 from pathlib import Path
 from typing import Optional
+
+from .languages import SUPPORTED_EXTENSIONS, get_adapter
 
 try:
     import litellm as _litellm
@@ -515,18 +530,117 @@ def inject_function_rules(source: str, func: FuncInfo, rules_text: str) -> str:
 # ── Pipeline ──────────────────────────────────────────────────────────────────
 
 
-def collect_files(target: Path, exclude: list[str]) -> list[Path]:
+def collect_files(target: Path, exclude: list[str], extensions: Optional[list[str]] = None) -> list[Path]:
+    """Collect source files under target matching the given extensions.
+
+    Rules:   Default extensions = ['.py'] (Python only).
+             extensions values must include leading dot (e.g. ['.ts', '.go']).
+    """
+    if extensions is None:
+        extensions = [".py"]
     if target.is_file():
-        return [target]
+        return [target] if target.suffix.lower() in extensions else []
     skip = {"__pycache__", ".git", "venv", ".venv", "node_modules", "migrations"}
     files = []
-    for f in sorted(target.rglob("*.py")):
+    for f in sorted(target.rglob("*")):
+        if not f.is_file():
+            continue
         if any(p in f.parts for p in skip):
+            continue
+        if f.suffix.lower() not in extensions:
             continue
         if any(f.match(p) for p in exclude):
             continue
         files.append(f)
     return files
+
+
+def _normalize_extensions(raw: Optional[list[str]]) -> list[str]:
+    """Normalize extension list: ensure leading dot, lowercase."""
+    if not raw:
+        return [".py"]
+    return [e if e.startswith(".") else f".{e}" for e in raw]
+
+
+def run_lang_files(
+    target: Path,
+    extensions: list[str],
+    repo_root: Path,
+    exclude: list[str],
+    model: str,
+    dry_run: bool,
+    force: bool,
+    no_llm: bool,
+    verbose: bool,
+    api_key: Optional[str],
+) -> int:
+    """Annotate non-Python source files using language adapters (L1 module header only).
+
+    Rules:   Only runs for extensions that have a registered adapter.
+             L2 (function Rules:) is Python-only; language adapters do L1 only.
+             Returns count of files annotated.
+    """
+    lang_exts = [e for e in extensions if e != ".py" and get_adapter(e) is not None]
+    if not lang_exts:
+        return 0
+
+    lang_files = collect_files(target, exclude, extensions=lang_exts)
+    if not lang_files:
+        return 0
+
+    print(f"\nMulti-language pass ({', '.join(lang_exts)})  {len(lang_files)} files")
+
+    llm: Optional[LLM] = None
+    if not no_llm:
+        try:
+            llm = LLM(model=model, api_key=api_key)
+        except Exception as e:
+            print(f"  Warning: LLM unavailable ({e}). rules: will be 'none'")
+
+    today = date.today().isoformat()
+    annotated = 0
+
+    for path in lang_files:
+        adapter = get_adapter(path.suffix.lower())
+        if adapter is None:
+            continue
+
+        info = adapter.extract_info(path, repo_root)
+        if not info.parseable:
+            if verbose:
+                print(f"  SKIP (unreadable)  {info.rel}")
+            continue
+
+        if info.has_codedna and not force:
+            if verbose:
+                print(f"  skip (annotated)   {info.rel}")
+            continue
+
+        source = path.read_text(encoding="utf-8", errors="replace")
+        exports_str = " | ".join(info.exports) if info.exports else "none"
+        used_by_str = "none"  # cross-file graph not available for non-Python files yet
+
+        rules_str = "none"
+        if llm and info.exports:
+            try:
+                snippet = source[:2000]
+                rules_str = llm.module_rules(info.rel, snippet)
+            except Exception:
+                rules_str = "none"
+
+        new_source = adapter.inject_header(
+            source, info.rel, exports_str, used_by_str, rules_str, model, today
+        )
+
+        if new_source != source:
+            if not dry_run:
+                path.write_text(new_source, encoding="utf-8")
+            annotated += 1
+            if verbose:
+                print(f"  L1  {info.rel}  exports: {exports_str[:60]}")
+
+    print(f"  Annotated {annotated} non-Python files")
+    return annotated
 
 
 def run(
@@ -541,18 +655,21 @@ def run(
     verbose: bool,
     api_key: Optional[str],
     repo_root: Optional[Path] = None,
+    extensions: Optional[list[str]] = None,
 ):
     effective_root = target if target.is_dir() else target.parent
     if repo_root is None:
         repo_root = effective_root
-    py_files = collect_files(target, exclude)
+    all_exts = _normalize_extensions(extensions)
+    py_files = collect_files(target, exclude, extensions=[".py"])
 
     print("CodeDNA Annotator v0.8")
-    print(f"Target  {target}")
-    print(f"Levels  {levels}")
-    print(f"Mode    {'DRY RUN' if dry_run else 'WRITE'}")
-    print(f"LLM     {'disabled (--no-llm)' if no_llm else model}")
-    print(f"Files   {len(py_files)}")
+    print(f"Target      {target}")
+    print(f"Extensions  {', '.join(all_exts)}")
+    print(f"Levels      {levels}")
+    print(f"Mode        {'DRY RUN' if dry_run else 'WRITE'}")
+    print(f"LLM         {'disabled (--no-llm)' if no_llm else model}")
+    print(f"Python      {len(py_files)} files")
     print()
 
     # Pass 1 — scan target files (these are the ones we will annotate)
@@ -672,6 +789,21 @@ def run(
             if not dry_run:
                 info.path.write_text(modified, encoding="utf-8")
 
+    # Non-Python languages
+    if any(e != ".py" for e in all_exts):
+        run_lang_files(
+            target=target,
+            extensions=all_exts,
+            repo_root=repo_root,
+            exclude=exclude,
+            model=model,
+            dry_run=dry_run,
+            force=force,
+            no_llm=no_llm,
+            verbose=verbose,
+            api_key=api_key,
+        )
+
     # Summary
     print()
     print("=" * 50)
@@ -690,16 +822,22 @@ def run(
 # ── Check command ─────────────────────────────────────────────────────────────
 
 
-def cmd_check(target: Path, repo_root: Optional[Path], exclude: list[str], verbose: bool):
+def cmd_check(target: Path, repo_root: Optional[Path], exclude: list[str], verbose: bool,
+              extensions: Optional[list[str]] = None):
     """Report annotation coverage without modifying any files."""
     effective_root = target if target.is_dir() else target.parent
     if repo_root is None:
         repo_root = effective_root
+    all_exts = _normalize_extensions(extensions)
 
-    py_files = collect_files(target, exclude)
+    py_files = collect_files(target, exclude, extensions=[".py"])
+    lang_files = [f for e in all_exts if e != ".py" for f in collect_files(target, exclude, extensions=[e])]
     print("CodeDNA Check")
-    print(f"Target  {target}")
-    print(f"Files   {len(py_files)}")
+    print(f"Target      {target}")
+    print(f"Extensions  {', '.join(all_exts)}")
+    print(f"Python      {len(py_files)} files")
+    if lang_files:
+        print(f"Other       {len(lang_files)} files")
     print()
 
     total = annotated_l1 = annotated_l2 = unparseable = 0
@@ -749,8 +887,38 @@ def cmd_check(target: Path, repo_root: Optional[Path], exclude: list[str], verbo
             print(f"  {rel}: {', '.join(fns)}")
         print()
 
-    ok = (annotated_l1 == total - unparseable) and (annotated_l2 == total - unparseable)
+    # Non-Python coverage
+    lang_missing = []
+    for path in lang_files:
+        adapter = get_adapter(path.suffix.lower())
+        if adapter is None:
+            continue
+        try:
+            source = path.read_text(encoding="utf-8", errors="replace")
+        except OSError:
+            continue
+        rel = str(path.relative_to(effective_root))
+        if not adapter.has_codedna_header(source):
+            lang_missing.append(rel)
+
+    if lang_files:
+        lang_annotated = len(lang_files) - len(lang_missing)
+        lang_pct = 100 * lang_annotated // len(lang_files) if lang_files else 100
+        print(f"L1 non-Python headers  {lang_annotated}/{len(lang_files)}  ({lang_pct}%)")
+        if verbose and lang_missing:
+            print("Missing non-Python L1:")
+            for r in lang_missing:
+                print(f"  {r}")
+        print()
+
+    ok = (
+        (annotated_l1 == total - unparseable)
+        and (annotated_l2 == total - unparseable)
+        and not lang_missing
+    )
     print("OK — fully annotated" if ok else "INCOMPLETE — run `codedna init` to annotate missing files")
+    if lang_missing and not py_files:
+        return 0 if not lang_missing else 1
     return 0 if ok else 1
 
 
@@ -783,6 +951,14 @@ def _add_common_args(sub):
     sub.add_argument("--exclude", nargs="*", default=[], help="Glob patterns to exclude")
     sub.add_argument("--api-key", default=None, help="Anthropic API key (default: ANTHROPIC_API_KEY env var)")
     sub.add_argument("--repo-root", type=Path, default=None, help="Project root for used_by graph (default: path)")
+    sub.add_argument(
+        "--extensions", nargs="*", default=None, metavar="EXT",
+        help=(
+            f"Extra file extensions to annotate (Python always included). "
+            f"Examples: ts go  or  .ts .tsx .go. "
+            f"Supported non-Python: {', '.join(SUPPORTED_EXTENSIONS)}"
+        ),
+    )
     sub.add_argument("-v", "--verbose", action="store_true", help="Per-file progress")
 
 
@@ -833,6 +1009,10 @@ def main():
     check_p.add_argument("path", type=Path, help="File or directory to check")
     check_p.add_argument("--repo-root", type=Path, default=None)
     check_p.add_argument("--exclude", nargs="*", default=[])
+    check_p.add_argument(
+        "--extensions", nargs="*", default=None, metavar="EXT",
+        help=f"Extra extensions to check. Supported: {', '.join(SUPPORTED_EXTENSIONS)}",
+    )
     check_p.add_argument("-v", "--verbose", action="store_true", help="List specific files missing annotations")
 
     args = p.parse_args()
@@ -844,7 +1024,8 @@ def main():
             print(f"Error: {target} does not exist", file=sys.stderr)
             return 1
         repo_root = args.repo_root.resolve() if args.repo_root else None
-        return cmd_check(target, repo_root, list(args.exclude), args.verbose)
+        exts = _normalize_extensions(getattr(args, "extensions", None))
+        return cmd_check(target, repo_root, list(args.exclude), args.verbose, extensions=exts)
 
     # init / update share the same run() — only difference is force flag
     target = args.path.resolve()
@@ -854,6 +1035,7 @@ def main():
 
     force = getattr(args, "force", False)  # update never forces
     repo_root = args.repo_root.resolve() if args.repo_root else None
+    exts = _normalize_extensions(getattr(args, "extensions", None))
 
     run(
         target=target,
@@ -867,6 +1049,7 @@ def main():
         verbose=args.verbose,
         api_key=args.api_key,
         repo_root=repo_root,
+        extensions=exts,
     )
     return 0
 
