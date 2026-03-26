@@ -75,9 +75,12 @@ class FileInfo:
 
 
 def _resolve_dep(module: str, repo_root: Path, top_pkg: str) -> Optional[str]:
-    """Resolve a dotted module name to a repo-relative path string."""
-    if not module.startswith(top_pkg + ".") and module != top_pkg:
-        return None
+    """Resolve a dotted module name to a repo-relative path string.
+
+    Rules:   Do NOT filter by top_pkg — cross-package imports (e.g. analytics → orders)
+             must be resolved. Existence check on the filesystem is the correct guard
+             against external libraries (os, requests, etc. won't exist under repo_root).
+    """
     parts = module.replace(".", "/")
     for suffix in [".py", "/__init__.py"]:
         p = repo_root / f"{parts}{suffix}"
