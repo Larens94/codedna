@@ -11,7 +11,7 @@
 [![Ko-fi](https://img.shields.io/badge/Ko--fi-support-FF5E5B?logo=ko-fi&logoColor=white)](https://ko-fi.com/codedna)
 
 [![Discord](https://img.shields.io/badge/Discord-Join_Community-5865F2?logo=discord&logoColor=white)](https://discord.gg/7Fs5J2ua)
-[![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-Plugin_Available-D97757?logo=anthropic&logoColor=white)](https://claude.com/plugins)
+[![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-Plugin_Under_Review-orange?logo=anthropic&logoColor=white)](https://claude.com/plugins)
 [![Languages](https://img.shields.io/badge/Languages-Python_·_TS_·_Go_·_Rust_·_Java_·_Ruby-6366f1)](#)
 [![Docs](https://img.shields.io/badge/Docs-Install_Guide-6366f1)](https://larens94.github.io/codedna/install.html)
 
@@ -149,9 +149,16 @@ Want to try CodeDNA right away? Here's the fastest path:
 
 For detailed installation with language selection and tool-specific instructions, see the [full install guide](https://larens94.github.io/codedna/install.html).
 
-### Option 1 — Claude Code Plugin (recommended)
+### Option 1 — Claude Code Plugin (in revisione)
 
-One-click install from the [Claude plugin directory](https://claude.com/plugins):
+> **Stato:** il plugin è stato accettato da Anthropic ed è attualmente **in revisione** — non ancora disponibile nel directory pubblico. Nel frattempo usa l'opzione 2 (CLI) o installalo localmente:
+
+```bash
+# Test locale
+claude --plugin-dir ./codedna-plugin
+```
+
+Una volta disponibile, sarà installabile con:
 
 ```bash
 claude plugin install codedna
