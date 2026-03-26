@@ -2,6 +2,59 @@
 
 All notable changes to CodeDNA will be documented in this file.
 
+## [0.8.0] — 2026-03-20
+
+### Added
+- **`message:` — Agent Chat Layer**: new optional sub-field under `agent:` for open hypotheses and inter-agent observations not yet certain enough to become `rules:`. Works at Level 1 (module docstring) and Level 2 (function docstring). Lifecycle: promote to `rules:` or dismiss with `@prev:` reply. Append-only — never delete.
+- **Git Trailers for AI audit**: every AI session commit must include `AI-Agent:`, `AI-Provider:`, `AI-Session:`, `AI-Visited:`, `AI-Message:` trailers. Git is the authoritative audit log; `.codedna` and file `agent:` fields are lightweight navigation caches.
+- **`session_id`** field added to `agent:` entries and `.codedna` `agent_sessions:` — links git trailers, `.codedna` entries, and file-level annotations to the same session.
+- **`visited:` field** in `.codedna` `agent_sessions:` — lists files read (not just changed) during a session.
+- **`provider:` field** in `agent:` and `.codedna` `agent_sessions:`.
+- **Session trace logging** (`session_traces/<session_id>.json`) — ordered tool call sequence with relative timestamps per benchmark run.
+- `tools/traces_to_training.py` — converts benchmark results to SFT/DPO/PRM JSONL training datasets. Produces 3 formats: SFT (F1 ≥ 0.6), DPO (codedna vs control + cross-model pairs), PRM (per-step reward).
+- `tools/agent_history.py` — reads AI git trailers and renders a session timeline. Supports filtering by model, file, or message presence.
+- Claude Code plugin (`codedna-plugin/`) — adds `/codedna:init` and `/codedna:check` slash commands plus a PostToolUse hook for annotation enforcement. `/codedna:manifest` and `/codedna:impact` are planned.
+- Multi-language annotation adapters (`codedna_tool/languages/`) — Python, TypeScript, JavaScript, Go, Rust, Java, Ruby, C#, Kotlin, Swift, PHP. Python is the validated reference implementation; other languages are in development.
+- SVG diagrams in `docs/diagrams/`: architecture (4 levels), agent workflow, three-tier audit, `message:` lifecycle state machine.
+- Fix-quality benchmark: Claude Code manual session on `django__django-13495` — CodeDNA achieves 7/7 files vs 6/7 control, 0 failed edits vs 5.
+- Protocol renamed from "CodeDNA Annotation Standard" to "CodeDNA: An In-Source Communication Protocol for AI Coding Agents".
+- Zenodo dataset published (DOI: 10.5281/zenodo.19158336).
+
+### Changed
+- `agent:` format extended: `model | provider | YYYY-MM-DD | session_id | description`
+- `.codedna` `agent_sessions:` format extended with `provider`, `session_id`, `visited` fields
+- Benchmark results updated: final multi-model results with Wilcoxon signed-rank tests. Gemini 2.5 Flash: +13pp F1, p=0.040 ✅. DeepSeek Chat: +9pp, p=0.11. Gemini 2.5 Pro: +9pp, p=0.11.
+- B1/B2 custom benchmarks removed from all papers — only SWE-bench results remain.
+- All integration files (`.cursorrules`, `.windsurfrules`, `.clinerules`, `copilot-instructions.md`, `.agents/workflows/codedna.md`) aligned to v0.8.
+
+---
+
+## [0.7.0] — 2026-03-19
+
+### Added
+- **Formal session management**: `agent:` field becomes append-only rolling log (last 5 entries). Full history in git.
+- **`.codedna` project manifest**: YAML file at repo root with `packages:`, `agent_sessions:`, `cross_cutting_patterns:` fields. Read first at session start.
+- `tools/agent_history.py` initial version — reads and displays agent session data.
+- `tools/traces_to_training.py` initial version — SFT/DPO/PRM converter.
+- New integration file for Antigravity/Agents (`integrations/.agents/workflows/codedna.md`).
+
+### Changed
+- **Protocol simplified**: removed `tables:`, `cascade:`, `tested_by:`, `raises:`, `deps:`, `Modifies:` fields. Only `exports:`, `used_by:`, `rules:`, `agent:` remain.
+- `rules:` promoted as the primary architectural constraint channel — replaces all removed fields.
+- `codedna_tool/cli.py` rewritten: AST-based extraction + LLM only for semantic `rules:` content. Max 2 LLM calls per file.
+- All docs and integration files aligned to new title "In-Source Communication Protocol".
+
+---
+
+## [0.6.0] — 2026-03-18
+
+### Changed
+- **Removed `deps:` and `Depends:` fields** — dependency information now encoded in `used_by:` (reverse deps) and import statements (forward deps). No duplication.
+- **Removed Level 2a Google-style docstrings** and Level 2b inline call-site comments — simplified to `Rules:` docstrings on critical functions only.
+- `auto_annotate.py` updated to v0.6 format: no longer extracts `deps:`, generates only `exports:` and `used_by:`.
+
+---
+
 ## [0.5.1] — 2026-03-17
 
 ### Added

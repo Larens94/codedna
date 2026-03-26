@@ -1,253 +1,322 @@
 #!/usr/bin/env python3
-"""
-# === CODEDNA:0.3 ==============================================
-# FILE: validate_manifests.py
-# PURPOSE: Validate CodeDNA manifest headers across a codebase
-# CONTEXT_BUDGET: minimal
-# DEPENDS_ON: none
-# EXPORTS: validate_file(path) → ValidationResult
-#          validate_directory(root, extensions) → list[ValidationResult]
-# STYLE: none (CLI tool, stdlib only)
-# DB_TABLES: none
-# LAST_MODIFIED: initial implementation v0.3
-# ==============================================================
+"""validate_manifests.py — Validate CodeDNA v0.8 annotations across a codebase.
 
-CodeDNA Manifest Validator
-==========================
-Checks that every source file in a directory has a valid CodeDNA manifest
-header with all required fields present and correctly formatted.
+exports: validate_file(path) -> ValidationResult
+         validate_directory(root, extensions) -> list[ValidationResult]
+used_by: none — standalone CLI tool
+rules:   validates v0.8 format only (exports:/used_by:/rules:/agent: in module docstring).
+         Python uses AST; other languages use regex on first 40 lines.
+         read-only — never modifies files.
+agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | rewritten from v0.3 to v0.8
 
 Usage:
-    python validate_manifests.py [directory] [--extensions py js ts go rs]
-    python validate_manifests.py .                    # validate current dir
-    python validate_manifests.py src --extensions py  # only Python files
+    python tools/validate_manifests.py [path] [-v] [--extensions py ts go]
+    python tools/validate_manifests.py .             # validate current dir (Python only)
+    python tools/validate_manifests.py src/myapp -v  # verbose: show valid files too
+    python tools/validate_manifests.py myfile.py     # single file
 
 Exit codes:
     0 — all files valid
     1 — one or more validation errors
 """
 
-import os
+import argparse
+import ast
 import re
 import sys
-import argparse
 from dataclasses import dataclass, field
+from pathlib import Path
 from typing import Optional
 
-# Required fields in every manifest (order-insensitive)
-REQUIRED_FIELDS = {"FILE", "PURPOSE", "CONTEXT_BUDGET", "DEPENDS_ON", "EXPORTS", "LAST_MODIFIED"}
+REQUIRED_FIELDS = {"exports", "used_by", "rules", "agent"}
 
-# Valid CONTEXT_BUDGET values
-VALID_BUDGETS = {"always", "normal", "minimal"}
+SKIP_DIRS = {"__pycache__", ".git", "venv", ".venv", "node_modules", "dist", "build", "migrations"}
 
-# Comment prefixes by file extension
-COMMENT_PREFIXES = {
-    ".py": "#",
-    ".rb": "#",
-    ".sh": "#",
-    ".bash": "#",
-    ".zsh": "#",
-    ".js": "//",
-    ".ts": "//",
-    ".jsx": "//",
-    ".tsx": "//",
-    ".go": "//",
-    ".rs": "//",
-    ".c": "//",
-    ".cpp": "//",
-    ".java": "//",
-    ".sql": "--",
-    ".lua": "--",
+# Comment style by extension (for non-Python languages)
+COMMENT_PREFIX = {
+    ".js": "//", ".ts": "//", ".jsx": "//", ".tsx": "//",
+    ".go": "//", ".rs": "//", ".java": "//", ".kt": "//", ".swift": "//",
+    ".rb": "#", ".sh": "#",
 }
+
+# agent: line format: "model | provider | YYYY-MM-DD | ..."  or  "model | YYYY-MM-DD | ..."
+_DATE_RE = re.compile(r"\d{4}-\d{2}-\d{2}")
+_PURPOSE_MAX_WORDS = 15
+_AGENT_MAX_ENTRIES = 5
 
 
 @dataclass
 class ValidationResult:
     path: str
-    valid: bool
+    valid: bool = True
     errors: list[str] = field(default_factory=list)
     warnings: list[str] = field(default_factory=list)
-    fields_found: dict = field(default_factory=dict)
+    fields_found: set[str] = field(default_factory=set)
+
+    def err(self, msg: str) -> None:
+        self.valid = False
+        self.errors.append(msg)
+
+    def warn(self, msg: str) -> None:
+        self.warnings.append(msg)
 
 
-def detect_prefix(filepath: str) -> Optional[str]:
-    ext = os.path.splitext(filepath)[1].lower()
-    return COMMENT_PREFIXES.get(ext)
+# ── Field extraction ──────────────────────────────────────────────────────────
 
 
-def extract_manifest(lines: list[str], prefix: str) -> dict:
-    """Extract key-value pairs from the CodeDNA manifest header."""
-    in_manifest = False
-    fields = {}
-    # Match: "# ====" OR "# === CODEDNA:0.3 ===" OR "# === CODEDNA:0.3 ="
-    delimiter_re = re.compile(rf"^{re.escape(prefix)}\s*(={{4,}}|===\s*CODEDNA:[^\s]+\s*=+)")
-
-    for line in lines[:30]:  # manifest must start within first 30 lines
-        stripped = line.strip()
-        if delimiter_re.match(stripped):
-            if not in_manifest:
-                in_manifest = True
-                continue
-            else:
-                break  # closing delimiter
-
-        if in_manifest:
-            # Match "# KEY: value" or "// KEY: value" or "-- KEY: value"
-            m = re.match(rf"^{re.escape(prefix)}\s+([A-Z_]+):\s*(.+)$", stripped)
-            if m:
-                fields[m.group(1)] = m.group(2).strip()
-
-    return fields
+def _parse_fields(text: str) -> dict[str, str]:
+    """Parse CodeDNA fields from a docstring or comment block."""
+    result: dict[str, str] = {}
+    current: Optional[str] = None
+    for line in text.split("\n"):
+        s = line.strip()
+        matched = False
+        for key in REQUIRED_FIELDS:
+            if s.startswith(f"{key}:"):
+                current = key
+                result[key] = s[len(key) + 1:].strip()
+                matched = True
+                break
+        if not matched and current and s and not any(s.startswith(k + ":") for k in REQUIRED_FIELDS):
+            result[current] = result[current] + " " + s
+    return result
 
 
-def validate_file(filepath: str) -> ValidationResult:
-    result = ValidationResult(path=filepath, valid=True)
-
-    prefix = detect_prefix(filepath)
-    if not prefix:
-        result.warnings.append("Unknown extension — skipping")
-        return result
-
+def _extract_python(path: Path) -> tuple[Optional[str], Optional[dict[str, str]]]:
+    """Return (first_line_of_docstring, fields) using AST. Returns (None, None) on failure."""
     try:
-        with open(filepath, encoding="utf-8", errors="replace") as f:
-            lines = f.readlines()
-    except OSError as e:
-        result.valid = False
-        result.errors.append(f"Cannot read file: {e}")
+        source = path.read_text(encoding="utf-8", errors="replace")
+        tree = ast.parse(source)
+    except (SyntaxError, UnicodeDecodeError):
+        return None, None
+
+    docstring = ast.get_docstring(tree)
+    if not docstring:
+        return None, None
+
+    first_line = docstring.strip().split("\n")[0].strip()
+    fields = _parse_fields(docstring)
+    return first_line, fields
+
+
+def _extract_other(path: Path, prefix: str) -> tuple[Optional[str], Optional[dict[str, str]]]:
+    """Extract CodeDNA fields from a non-Python file using comment block regex."""
+    try:
+        lines = path.read_text(encoding="utf-8", errors="replace").splitlines()[:40]
+    except OSError:
+        return None, None
+
+    # Look for a block like:  // exports: ...
+    block_lines = []
+    in_block = False
+    for line in lines:
+        s = line.strip()
+        if s.startswith(prefix) and any(s[len(prefix):].strip().startswith(k + ":") for k in REQUIRED_FIELDS):
+            in_block = True
+        if in_block:
+            if s.startswith(prefix):
+                block_lines.append(s[len(prefix):].strip())
+            elif block_lines:
+                break
+
+    if not block_lines:
+        return None, None
+
+    text = "\n".join(block_lines)
+    fields = _parse_fields(text)
+    return None, fields  # no purpose line for non-Python
+
+
+# ── Validation rules ──────────────────────────────────────────────────────────
+
+
+def _validate_purpose(result: ValidationResult, first_line: str, filename: str) -> None:
+    """Rules: first line must be 'filename.py — <purpose ≤15 words>'."""
+    if " — " not in first_line:
+        result.err(f"First docstring line missing ' — ' separator: {first_line!r}")
+        return
+
+    declared_name, purpose = first_line.split(" — ", 1)
+    if declared_name.strip() != filename:
+        result.warn(f"Filename mismatch in docstring: declared '{declared_name.strip()}', actual '{filename}'")
+
+    word_count = len(purpose.strip().split())
+    if word_count > _PURPOSE_MAX_WORDS:
+        result.warn(f"Purpose is {word_count} words (max {_PURPOSE_MAX_WORDS} recommended)")
+
+
+def _validate_agent(result: ValidationResult, agent_text: str) -> None:
+    """Rules: each agent: line must have model | date | description (≥3 pipe parts, date in YYYY-MM-DD)."""
+    entries = [l.strip() for l in agent_text.split("\n") if l.strip() and not l.strip().startswith("message:")]
+    if not entries:
+        result.err("agent: field is empty — must have at least one entry")
+        return
+
+    if len(entries) > _AGENT_MAX_ENTRIES:
+        result.warn(f"agent: has {len(entries)} entries (rolling window is {_AGENT_MAX_ENTRIES} — oldest should be dropped)")
+
+    for entry in entries:
+        parts = [p.strip() for p in entry.split("|")]
+        if len(parts) < 3:
+            result.err(f"agent: entry has fewer than 3 pipe-separated parts: {entry!r}")
+            continue
+        # Date is either parts[1] (model|date|desc) or parts[2] (model|provider|date|desc)
+        date_candidate = parts[2] if len(parts) >= 4 and _DATE_RE.match(parts[2].strip()) else parts[1]
+        if not _DATE_RE.match(date_candidate.strip()):
+            result.err(f"agent: entry missing YYYY-MM-DD date: {entry!r}")
+
+
+def _validate_fields(result: ValidationResult, fields: dict[str, str]) -> None:
+    """Check all required fields are present and non-empty."""
+    for key in REQUIRED_FIELDS:
+        if key not in fields:
+            result.err(f"Missing required field: {key}:")
+        else:
+            val = fields[key].strip()
+            if not val:
+                result.err(f"Field '{key}:' is present but empty")
+
+    if "exports" in fields and fields["exports"].strip() == "none":
+        result.warn("exports: is 'none' — expected if file has no public API, but verify")
+
+    if "used_by" in fields and fields["used_by"].strip() == "none":
+        result.warn("used_by: is 'none' — verify no other file imports from this one")
+
+    if "rules" in fields and fields["rules"].strip() == "none":
+        result.warn("rules: is 'none' — consider adding architectural constraints")
+
+    if "agent" in fields:
+        _validate_agent(result, fields["agent"])
+
+
+# ── Public API ────────────────────────────────────────────────────────────────
+
+
+def validate_file(path: Path) -> ValidationResult:
+    result = ValidationResult(path=str(path))
+    ext = path.suffix.lower()
+
+    if ext == ".py":
+        first_line, fields = _extract_python(path)
+        if fields is None:
+            result.err("Cannot parse file (SyntaxError or unreadable)")
+            return result
+        if not fields and first_line is None:
+            result.err("No module docstring found — add a CodeDNA v0.8 header")
+            return result
+        if first_line:
+            _validate_purpose(result, first_line, path.name)
+        else:
+            result.err("Module docstring is empty")
+            return result
+
+    elif ext in COMMENT_PREFIX:
+        _, fields = _extract_other(path, COMMENT_PREFIX[ext])
+        if fields is None:
+            result.warn(f"No CodeDNA comment block found in {ext} file — skipping")
+            return result
+    else:
+        result.warn(f"Extension {ext!r} not supported — skipping")
         return result
 
-    if not lines:
-        result.warnings.append("Empty file")
-        return result
-
-    # Check if manifest is present at all (first 20 lines)
-    delimiter_re = re.compile(rf"^{re.escape(prefix)}\s*(={{4,}}|===\s*CODEDNA:[^\s]+\s*=+)")
-    has_manifest = any(delimiter_re.match(line.strip()) for line in lines[:20])
-
-    if not has_manifest:
-        result.valid = False
-        result.errors.append("No CodeDNA manifest header found (missing delimiter ====)")
-        return result
-
-    fields = extract_manifest(lines, prefix)
-    result.fields_found = fields
-
-    # Check required fields
-    for req in REQUIRED_FIELDS:
-        if req not in fields:
-            result.valid = False
-            result.errors.append(f"Missing required field: {req}")
-        elif not fields[req] or fields[req].lower() in ("", "none") and req in ("PURPOSE", "LAST_MODIFIED"):
-            result.valid = False
-            result.errors.append(f"Field {req} is empty or placeholder")
-
-    # Check FILE matches actual filename
-    if "FILE" in fields:
-        actual = os.path.basename(filepath)
-        declared = fields["FILE"]
-        if declared != actual:
-            result.valid = False
-            result.errors.append(f"FILE mismatch: declared '{declared}', actual '{actual}'")
-
-    # Check CONTEXT_BUDGET value
-    if "CONTEXT_BUDGET" in fields:
-        budget = fields["CONTEXT_BUDGET"].lower()
-        if budget not in VALID_BUDGETS:
-            result.valid = False
-            result.errors.append(f"CONTEXT_BUDGET must be one of {VALID_BUDGETS}, got: '{budget}'")
-
-    # Check PURPOSE length (soft warning)
-    if "PURPOSE" in fields:
-        words = len(fields["PURPOSE"].split())
-        if words > 15:
-            result.warnings.append(f"PURPOSE is {words} words (max 15 recommended)")
-
-    # Check LAST_MODIFIED length
-    if "LAST_MODIFIED" in fields:
-        words = len(fields["LAST_MODIFIED"].split())
-        if words > 8:
-            result.warnings.append(f"LAST_MODIFIED is {words} words (max 8 recommended)")
-
+    result.fields_found = set(fields.keys())
+    _validate_fields(result, fields)
     return result
 
 
 def validate_directory(
-    root: str,
+    root: Path,
     extensions: Optional[list[str]] = None,
-    exclude_dirs: Optional[set[str]] = None,
 ) -> list[ValidationResult]:
     if extensions is None:
-        extensions = list(COMMENT_PREFIXES.keys())
-    if exclude_dirs is None:
-        exclude_dirs = {".git", "__pycache__", "node_modules", ".venv", "venv", "dist", "build"}
+        extensions = [".py"]
 
     results = []
-    for dirpath, dirnames, filenames in os.walk(root):
-        # Prune excluded dirs in-place
-        dirnames[:] = [d for d in dirnames if d not in exclude_dirs]
-        for fname in filenames:
-            ext = os.path.splitext(fname)[1].lower()
-            if ext in extensions:
-                results.append(validate_file(os.path.join(dirpath, fname)))
+    for f in sorted(root.rglob("*")):
+        if not f.is_file():
+            continue
+        if any(part in SKIP_DIRS for part in f.parts):
+            continue
+        if f.suffix.lower() in extensions:
+            results.append(validate_file(f))
     return results
 
 
-def print_results(results: list[ValidationResult], verbose: bool = False) -> int:
-    errors_total = 0
-    warnings_total = 0
+# ── Output ────────────────────────────────────────────────────────────────────
 
-    valid_files = [r for r in results if r.valid and not r.errors]
-    invalid_files = [r for r in results if r.errors]
-    warned_files = [r for r in results if r.warnings]
 
-    for r in invalid_files:
-        print(f"\n❌  {r.path}")
+def print_results(results: list[ValidationResult], verbose: bool) -> int:
+    invalid = [r for r in results if r.errors]
+    warned  = [r for r in results if r.warnings and not r.errors]
+    valid   = [r for r in results if not r.errors and not r.warnings]
+
+    for r in invalid:
+        print(f"\nFAIL  {r.path}")
         for e in r.errors:
-            print(f"    ERROR: {e}")
-        errors_total += len(r.errors)
+            print(f"      error:   {e}")
+        for w in r.warnings:
+            print(f"      warning: {w}")
 
-    for r in warned_files:
+    for r in warned:
         if verbose:
-            print(f"\n⚠️   {r.path}")
+            print(f"\nWARN  {r.path}")
             for w in r.warnings:
-                print(f"    WARN: {w}")
-        warnings_total += len(r.warnings)
+                print(f"      warning: {w}")
 
     if verbose:
-        for r in valid_files:
-            print(f"✅  {r.path}")
+        for r in valid:
+            print(f"OK    {r.path}")
 
-    print(f"\n{'=' * 50}")
-    print(f"Files checked:  {len(results)}")
-    print(f"Valid:          {len(valid_files)}")
-    print(f"With errors:    {len(invalid_files)}")
-    print(f"With warnings:  {len(warned_files)}")
-    print(f"{'=' * 50}")
+    print()
+    print("=" * 50)
+    print(f"Files checked : {len(results)}")
+    print(f"Valid         : {len(valid)}")
+    print(f"Warnings only : {len(warned)}")
+    print(f"Errors        : {len(invalid)}")
+    print("=" * 50)
 
-    if errors_total == 0:
-        print("✅ All CodeDNA manifests valid.")
+    if not invalid:
+        print("All CodeDNA v0.8 annotations valid.")
     else:
-        print(f"❌ {errors_total} error(s) found. Fix manifest headers before committing.")
+        print(f"{len(invalid)} file(s) failed. Run `codedna init` to annotate missing files.")
 
-    return 1 if errors_total > 0 else 0
+    return 1 if invalid else 0
 
 
-def main():
-    parser = argparse.ArgumentParser(description="CodeDNA Manifest Validator v0.3")
-    parser.add_argument("directory", nargs="?", default=".", help="Root directory to validate (default: .)")
-    parser.add_argument("--extensions", nargs="+", metavar="EXT", help="File extensions to check (e.g. .py .js .ts)")
-    parser.add_argument("--verbose", "-v", action="store_true", help="Show valid files too")
-    args = parser.parse_args()
+# ── CLI ───────────────────────────────────────────────────────────────────────
 
-    exts = [e if e.startswith(".") else f".{e}" for e in args.extensions] if args.extensions else None
-    results = validate_directory(args.directory, extensions=exts)
+
+def main() -> int:
+    p = argparse.ArgumentParser(
+        prog="validate_manifests",
+        description="Validate CodeDNA v0.8 annotations",
+    )
+    p.add_argument("path", nargs="?", default=".", type=Path, help="File or directory to validate (default: .)")
+    p.add_argument("--extensions", nargs="+", metavar="EXT",
+                   help="Extensions to check, e.g. .py .ts .go (default: .py)")
+    p.add_argument("-v", "--verbose", action="store_true", help="Show valid and warned files")
+    args = p.parse_args()
+
+    target = args.path.resolve()
+    if not target.exists():
+        print(f"Error: {target} does not exist", file=sys.stderr)
+        return 1
+
+    exts = None
+    if args.extensions:
+        exts = [e if e.startswith(".") else f".{e}" for e in args.extensions]
+
+    if target.is_file():
+        results = [validate_file(target)]
+    else:
+        results = validate_directory(target, extensions=exts)
 
     if not results:
         print("No matching files found.")
-        sys.exit(0)
+        return 0
 
-    sys.exit(print_results(results, verbose=args.verbose))
+    return print_results(results, verbose=args.verbose)
 
 
 if __name__ == "__main__":
-    main()
+    sys.exit(main())

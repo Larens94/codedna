@@ -1,14 +1,11 @@
-"""Monthly revenue KPI dashboard with chart and table.
+"""dashboard.py — Render monthly revenue KPI dashboard as HTML.
 
-Module (CodeDNA v0.7):
-    file: dashboard.py
-    purpose: Render monthly revenue KPI dashboard as HTML
-    deps: utils.py (calculate_kpi, format_currency)
-    exports: render(execute_query_func) → HTML string
-    rules:
-        - execute_query_func returns list[dict] with keys: month, revenue, cost
-        - revenue and cost are int (not decimal) — see schema.sql
-        - calculate_kpi() handles normalization, margins, and formatting
+exports: render(execute_query_func) -> str
+used_by: none
+rules:   execute_query_func must return list[dict] with keys: month, revenue, cost.
+         revenue and cost are int (not Decimal) — see schema.sql.
+         calculate_kpi() handles normalization, margins, and formatting — do not inline.
+agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | migrated docstring from v0.7 to v0.8 format
 """
 
 from .utils import calculate_kpi, format_currency

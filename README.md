@@ -168,12 +168,12 @@ No API key. No extra cost. Uses your existing Claude subscription.
 
 Adds four commands to Claude Code:
 
-| Command | What it does |
-|---|---|
-| `/codedna:init [path]` | Annotate all unannotated files — Claude reads and writes directly |
-| `/codedna:check [path]` | Coverage report — unannotated files and stale `used_by:` refs |
-| `/codedna:manifest [path]` | Full architectural map in one pass — replaces 10–20 file reads |
-| `/codedna:impact <file>` | Cascade dependency chain before a refactor |
+| Command | What it does | Status |
+|---|---|---|
+| `/codedna:init [path]` | Annotate all unannotated files — Claude reads and writes directly | ✅ |
+| `/codedna:check [path]` | Coverage report — unannotated files and stale `used_by:` refs | ✅ |
+| `/codedna:manifest [path]` | Full architectural map in one pass — replaces 10–20 file reads | 🔜 planned |
+| `/codedna:impact <file>` | Cascade dependency chain before a refactor | 🔜 planned |
 
 Also installs a **PostToolUse hook** that notifies Claude when a saved file is missing a CodeDNA annotation.
 
@@ -564,12 +564,16 @@ codedna/
 ├── SPEC.md                 ← full technical specification v0.8
 ├── integrations/
 │   ├── CLAUDE.md               ← Claude Code system prompt
-│   ├── .cursorrules             ← Cursor rules file
+│   ├── .cursorrules             ← Cursor / Windsurf rules file
+│   ├── .windsurfrules           ← Windsurf rules file
+│   ├── .clinerules              ← Cline rules file
 │   ├── copilot-instructions.md ← GitHub Copilot instructions
 │   └── install.sh              ← one-line installer for all tools
 ├── codedna_tool/           ← installable CLI package (codedna init/update/check)
 │   ├── cli.py
-│   └── __init__.py
+│   ├── __init__.py
+│   └── languages/          ← per-language annotation adapters
+├── codedna-plugin/         ← Claude Code plugin (pending review)
 ├── benchmark_agent/
 │   ├── swebench/
 │   │   ├── run_agent_multi.py          ← multi-model benchmark (5 providers)
@@ -578,11 +582,22 @@ codedna/
 │   │   └── django__django-13495/
 │   └── runs/                           ← results by model
 ├── examples/
-│   └── python/
+│   ├── python/             ← annotated Python example
+│   ├── python-api/         ← annotated Flask/FastAPI example
+│   ├── typescript-api/     ← annotated TypeScript example
+│   ├── go-api/             ← annotated Go example
+│   ├── java-service/       ← annotated Java example
+│   └── rust-cli/           ← annotated Rust example
 ├── paper/                  ← scientific paper (arXiv preprint)
-│   └── codedna_paper.pdf
+│   ├── codedna_paper.pdf
+│   ├── codedna_paper.html
+│   ├── codedna_whitepaper_EN.html
+│   └── codedna_paper_IT.html
 └── tools/
-    └── codedna_annotate.py ← legacy annotator (use codedna_tool/ CLI instead)
+    ├── agent_history.py        ← session history viewer (reads AI git trailers)
+    ├── traces_to_training.py   ← SFT/DPO/PRM dataset converter from benchmark runs
+    ├── extract_city_data.py    ← extract annotations to JSON for city visualization
+    └── validate_manifests.py   ← deep annotation validator (format, agent dates, purpose length)
 ```
 
 ---

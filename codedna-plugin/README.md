@@ -4,11 +4,12 @@ Extends Claude Code with the [CodeDNA](https://github.com/Larens94/codedna) in-s
 
 ## What it does
 
-- **/codedna:check** — coverage report: which files lack annotation, which `used_by:` references are stale
-- **/codedna:manifest** — full architectural map of the project in one pass (replaces 10-20 file reads)
-- **/codedna:impact `<file>`** — cascade dependency chain before a refactor
-- **Automatic hook** — warns after every Write/Edit if the saved file lacks a CodeDNA annotation
-- **codedna-reviewer agent** — on-demand compliance reviewer, invokable via `/agents`
+- **/codedna:init** — annotate all unannotated files in the project ✅
+- **/codedna:check** — coverage report: which files lack annotation, which `used_by:` references are stale ✅
+- **/codedna:manifest** — full architectural map in one pass (replaces 10-20 file reads) 🔜 planned
+- **/codedna:impact `<file>`** — cascade dependency chain before a refactor 🔜 planned
+- **Automatic hook** — warns after every Write/Edit if the saved file lacks a CodeDNA annotation ✅
+- **codedna-reviewer agent** — on-demand compliance reviewer, invokable via `/agents` ✅
 
 ## Install
 
@@ -25,10 +26,11 @@ claude --plugin-dir ./codedna-plugin
 ## Usage
 
 ```
-/codedna:check              # find unannotated files
-/codedna:manifest           # architectural map — run at session start
-/codedna:impact src/api.py  # who depends on this file?
+/codedna:init               # annotate all unannotated files
+/codedna:check              # find unannotated files and stale used_by: refs
 ```
+
+> `/codedna:manifest` and `/codedna:impact` are planned for a future release.
 
 ## What is CodeDNA?
 

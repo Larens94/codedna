@@ -1,7 +1,7 @@
 {
   "name": "codedna",
   "version": "1.0.0",
-  "description": "CodeDNA protocol — in-source AI context and inter-agent communication for any codebase. Adds /codedna:init, /codedna:check, /codedna:manifest, /codedna:impact and automatic annotation enforcement.",
+  "description": "CodeDNA protocol — in-source AI context and inter-agent communication for any codebase. Adds /codedna:init and /codedna:check (implemented) plus automatic annotation enforcement. /codedna:manifest and /codedna:impact are planned.",
   "author": {
     "name": "Fabrizio Corpora",
     "url": "https://github.com/Larens94/codedna"

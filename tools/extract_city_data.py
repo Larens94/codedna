@@ -1,15 +1,26 @@
 #!/usr/bin/env python3
-"""extract_city_data.py — Extract CodeDNA annotations into JSON for city visualization."""
+"""extract_city_data.py — Extract CodeDNA annotations into JSON for city visualization.
 
+Usage:
+    python tools/extract_city_data.py PATH [--root ROOT]
+
+    PATH   Directory to scan for annotated .py files
+    ROOT   Base path for relative IDs (default: PATH/..)
+           Use ROOT when PATH is a package dir and you want IDs like pkg/sub/file.py
+
+Examples:
+    # Django benchmark project
+    python tools/extract_city_data.py benchmark_agent/projects_swebench/django__django-13495/codedna/django
+
+    # Any annotated Python project
+    python tools/extract_city_data.py /path/to/myapp/src --root /path/to/myapp
+"""
+
+import argparse
 import ast
 import json
 import sys
 from pathlib import Path
-
-DJANGO_DIR = Path(
-    "/Users/fabriziocorpora/Desktop/automation-lab/dynamic-bi-factory/codedna"
-    "/benchmark_agent/projects_swebench/django__django-13495/codedna/django"
-)
 
 
 def parse_codedna(source: str) -> dict | None:
@@ -76,9 +87,9 @@ def last_model(agent_text: str) -> str:
     return last.split("|")[0].strip() or "unknown"
 
 
-def extract() -> dict:
+def extract(target_dir: Path, root: Path) -> dict:
     buildings = []
-    for f in sorted(DJANGO_DIR.rglob("*.py")):
+    for f in sorted(target_dir.rglob("*.py")):
         try:
             src = f.read_text(encoding="utf-8", errors="replace")
         except Exception:
@@ -87,7 +98,7 @@ def extract() -> dict:
         if not fields:
             continue
 
-        rel = str(f.relative_to(DJANGO_DIR.parent))  # django/db/...
+        rel = str(f.relative_to(root))
         ub_count = count_used_by(fields["used_by"])
         agent_lines = [l for l in fields["agent"].split("\n") if l.strip()]
 
@@ -125,7 +136,26 @@ def extract() -> dict:
 
 
 if __name__ == "__main__":
-    data = extract()
+    p = argparse.ArgumentParser(
+        description="Extract CodeDNA annotations into JSON for city visualization"
+    )
+    p.add_argument("path", type=Path, help="Directory to scan for annotated .py files")
+    p.add_argument(
+        "--root",
+        type=Path,
+        default=None,
+        help="Base path for relative IDs (default: PATH/..)",
+    )
+    args = p.parse_args()
+
+    target = args.path.resolve()
+    root = args.root.resolve() if args.root else target.parent
+
+    if not target.exists():
+        print(f"Error: {target} does not exist", file=sys.stderr)
+        sys.exit(1)
+
+    data = extract(target, root)
     print(
         f"[extract_city_data] {data['stats']['total_files']} buildings · "
         f"{data['stats']['districts']} districts · "

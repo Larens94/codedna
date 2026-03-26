@@ -36,7 +36,8 @@ Every new Python source file **must begin** with a CodeDNA module docstring:
 exports: public_function(arg) -> return_type
 used_by: consumer_file.py → consumer_function
 rules:   <hard constraint agents must never violate>
-agent:   <your-model-id> | <YYYY-MM-DD> | <what you implemented and what you noticed>
+agent:   <your-model-id> | <provider> | <YYYY-MM-DD> | <session_id> | <what you implemented and what you noticed>
+         message: "<open hypothesis or observation for the next agent>"
 """
 ```
 
@@ -49,6 +50,7 @@ Field guide:
 | `used_by:` | ✅ | Who calls this file's exports |
 | `rules:` | ✅ | Architectural truth — hard constraints, updated in-place |
 | `agent:` | ✅ | Session narrative — rolling window of last 5 entries; drop the oldest when adding a 6th |
+| `message:` | ⬜ | Inter-agent channel — open hypotheses, unverified observations (v0.8) |
 
 ## Writing critical functions
 

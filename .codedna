@@ -1,7 +1,7 @@
 # .codedna — CodeDNA project manifest
 project: codedna
 description: "An In-Source Communication Protocol for AI Coding Agents — spec, benchmark, tools"
-version: "0.7"
+version: "0.8"
 
 packages:
   benchmark_agent/swebench/:

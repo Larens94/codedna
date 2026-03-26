@@ -37,12 +37,12 @@ codedna, annotations, ai-agents, multi-file, context, protocol, architecture
 
 ## Commands included
 
-| Command | Description |
-|---|---|
-| `/codedna:init [path]` | Annotate all unannotated source files using the current Claude session |
-| `/codedna:check [path]` | Coverage report — find unannotated files and stale used_by references |
-| `/codedna:manifest [path]` | Full architectural map in one pass |
-| `/codedna:impact <file>` | Cascade dependency chain before refactoring |
+| Command | Description | Status |
+|---|---|---|
+| `/codedna:init [path]` | Annotate all unannotated source files using the current Claude session | ✅ |
+| `/codedna:check [path]` | Coverage report — find unannotated files and stale used_by references | ✅ |
+| `/codedna:manifest [path]` | Full architectural map in one pass | 🔜 planned |
+| `/codedna:impact <file>` | Cascade dependency chain before refactoring | 🔜 planned |
 
 ## Hook included
 

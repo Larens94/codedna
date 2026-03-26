@@ -97,17 +97,3 @@ CodeDNA is the **shared** layer — git-tracked, visible to every agent and ever
 ## Planner read protocol
 
 Read `.codedna` first. Then read only the module docstring (first 8–12 lines) of each file. Build an `exports:` → `used_by:` graph. Open only relevant files in full.
-
-## Session end protocol
-
-At session end, append to `.codedna` `agent_sessions:`:
-```yaml
-- agent: <model-id>
-  provider: <provider>
-  date: <YYYY-MM-DD>
-  session_id: <s_YYYYMMDD_NNN>
-  task: "<what you did ≤15 words>"
-  changed: [files, modified]
-  visited: [files, read]
-  message: > what you found and what the next agent should know
-```
