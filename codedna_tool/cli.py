@@ -33,6 +33,7 @@ agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_001 | i
 
 import argparse
 import ast
+import fnmatch
 import json
 import os
 import sys
@@ -379,6 +380,20 @@ class LLM:
         )
         return resp if resp else "none"
 
+    def package_purpose(self, pkg_name: str, key_files: list[str], exports_sample: str) -> str:
+        """1 call → purpose: description for a package (≤15 words)."""
+        resp = self._call(
+            "You are writing the `purpose:` field for a CodeDNA `.codedna` manifest entry.\n\n"
+            f"Package: {pkg_name}/\n"
+            f"Key files: {', '.join(key_files)}\n"
+            f"Exports sample: {exports_sample[:400]}\n\n"
+            "Write ONE sentence (≤15 words) describing what this package does.\n"
+            "Be specific and concrete. Focus on domain responsibility, not implementation.\n"
+            "Return only the sentence, no quotes, no punctuation at end.",
+            max_tokens=60,
+        )
+        return resp.strip().rstrip(".") if resp else f"{pkg_name} package"
+
     def function_rules_batch(self, rel: str, funcs: list[FuncInfo]) -> dict[str, str]:
         """1 call per file → {func_name: 'constraint' or 'SKIP'}"""
         if not funcs:
@@ -549,7 +564,8 @@ def collect_files(target: Path, exclude: list[str], extensions: Optional[list[st
             continue
         if f.suffix.lower() not in extensions:
             continue
-        if any(f.match(p) for p in exclude):
+        rel_str = str(f.relative_to(target))
+        if any(fnmatch.fnmatch(rel_str, p) or f.match(p) for p in exclude):
             continue
         files.append(f)
     return files
@@ -962,6 +978,313 @@ def _add_common_args(sub):
     sub.add_argument("-v", "--verbose", action="store_true", help="Per-file progress")
 
 
+# ── Manifest command (Level 0) ────────────────────────────────────────────────
+
+_MANIFEST_SKIP = {"__pycache__", ".git", "venv", ".venv", "node_modules",
+                  "migrations", "dist", "build", ".tox", "coverage",
+                  "_repo_cache", ".mypy_cache", ".pytest_cache", "htmlcov"}
+
+
+def _detect_packages(files: list[Path], root: Path) -> dict[str, list[str]]:
+    """Group source files by top-level package directory.
+
+    Rules:   A 'package' is the first path segment under root.
+             Files directly in root are grouped under '' (root package).
+             Directories in _MANIFEST_SKIP are excluded.
+    """
+    pkgs: dict[str, list[str]] = {}
+    for f in files:
+        rel = str(f.relative_to(root))
+        parts = Path(rel).parts
+        pkg = parts[0] if len(parts) > 1 else ""
+        if pkg in _MANIFEST_SKIP:
+            continue
+        pkgs.setdefault(pkg, []).append(rel)
+    return pkgs
+
+
+def _package_depends_on(pkg: str, pkg_files: list[str],
+                         infos: dict[str, "FileInfo"]) -> list[str]:
+    """Derive inter-package dependencies from import graph.
+
+    Rules:   pkg A depends_on pkg B when any file in A imports from any file in B.
+             Self-dependencies are excluded.
+    """
+    deps: set[str] = set()
+    for rel in pkg_files:
+        info = infos.get(rel)
+        if not info:
+            continue
+        for dep_rel in info.deps:
+            dep_pkg = Path(dep_rel).parts[0] if len(Path(dep_rel).parts) > 1 else ""
+            if dep_pkg != pkg and dep_pkg not in _MANIFEST_SKIP:
+                deps.add(dep_pkg + "/" if dep_pkg else ".")
+    return sorted(deps)
+
+
+def _key_files(pkg_files: list[str], ub_graph: dict[str, dict],
+               infos: dict[str, "FileInfo"], n: int = 5) -> list[str]:
+    """Return up to n most-imported (most-referenced) files in a package.
+
+    Rules:   Rank by number of importers in ub_graph; fall back to export count.
+             Only return the filename (not full relative path) for readability.
+             Deduplicate by filename — skip if same name already included.
+    """
+    scored: list[tuple[int, str]] = []
+    for rel in pkg_files:
+        importers = len(ub_graph.get(rel, {}))
+        exports = len(infos[rel].exports) if rel in infos else 0
+        scored.append((importers * 10 + exports, rel))
+    scored.sort(reverse=True)
+    seen_names: set[str] = set()
+    result: list[str] = []
+    for _, rel in scored:
+        name = Path(rel).name
+        if name not in seen_names:
+            seen_names.add(name)
+            result.append(name)
+        if len(result) >= n:
+            break
+    return result
+
+
+def _exports_sample(pkg_files: list[str], infos: dict[str, "FileInfo"]) -> str:
+    """Build a compact exports summary for LLM context."""
+    parts = []
+    for rel in sorted(pkg_files)[:6]:
+        info = infos.get(rel)
+        if info and info.exports:
+            parts.append(f"{Path(rel).name}: {', '.join(info.exports[:4])}")
+    return " | ".join(parts)
+
+
+def _read_existing_codedna(codedna_path: Path) -> dict:
+    """Read existing .codedna and extract fields we want to preserve.
+
+    Rules:   Preserves project:, description:, agent_sessions:, cross_cutting_patterns:.
+             Uses simple line-based parsing — no PyYAML dependency.
+             Returns defaults if file does not exist.
+    """
+    defaults = {
+        "project": codedna_path.parent.name,
+        "description": "",
+        "agent_sessions_block": "",
+        "cross_cutting_block": "cross_cutting_patterns: {}\n",
+    }
+    if not codedna_path.exists():
+        return defaults
+
+    content = codedna_path.read_text(encoding="utf-8")
+
+    # Extract project:
+    import re as _re
+    m = _re.search(r"^project:\s*(.+)$", content, _re.MULTILINE)
+    if m:
+        defaults["project"] = m.group(1).strip().strip('"')
+
+    m = _re.search(r'^description:\s*"?(.+?)"?\s*$', content, _re.MULTILINE)
+    if m:
+        defaults["description"] = m.group(1).strip()
+
+    # Extract agent_sessions block (everything from 'agent_sessions:' to end or next top-level key)
+    m = _re.search(r"(^agent_sessions:.*)", content, _re.MULTILINE | _re.DOTALL)
+    if m:
+        defaults["agent_sessions_block"] = m.group(1)
+
+    # Extract cross_cutting_patterns block
+    m = _re.search(r"(^cross_cutting_patterns:.*?)(?=^agent_sessions:|$)",
+                   content, _re.MULTILINE | _re.DOTALL)
+    if m:
+        defaults["cross_cutting_block"] = m.group(1).rstrip() + "\n"
+
+    return defaults
+
+
+def _write_codedna(
+    codedna_path: Path,
+    project: str,
+    description: str,
+    packages: dict[str, dict],  # {pkg_name: {purpose, key_files, depends_on}}
+    cross_cutting_block: str,
+    agent_sessions_block: str,
+    dry_run: bool,
+) -> str:
+    """Serialise .codedna to YAML-like string and optionally write it.
+
+    Rules:   agent_sessions: block is always appended last and never modified.
+             cross_cutting_patterns: is preserved from existing file.
+             packages: section is fully regenerated on every manifest run.
+             Returns the generated content string regardless of dry_run.
+    """
+    lines = [
+        "# .codedna — CodeDNA project manifest (auto-generated by codedna manifest)",
+        f"project: {project}",
+        f'description: "{description}"' if description else f"project: {project}",
+        "",
+        "packages:",
+    ]
+    # Fix duplicate if no description
+    if not description:
+        lines = [
+            "# .codedna — CodeDNA project manifest (auto-generated by codedna manifest)",
+            f"project: {project}",
+            "",
+            "packages:",
+        ]
+
+    for pkg_name, data in sorted(packages.items()):
+        display = (pkg_name + "/") if pkg_name else "(root)"
+        lines.append(f"  {display}:")
+        lines.append(f'    purpose: "{data["purpose"]}"')
+        if data.get("key_files"):
+            kf = ", ".join(data["key_files"])
+            lines.append(f"    key_files: [{kf}]")
+        if data.get("depends_on"):
+            do = ", ".join(data["depends_on"])
+            lines.append(f"    depends_on: [{do}]")
+        lines.append("")
+
+    lines.append(cross_cutting_block.rstrip())
+    lines.append("")
+
+    if agent_sessions_block:
+        lines.append(agent_sessions_block.rstrip())
+    else:
+        lines.append("agent_sessions: []")
+    lines.append("")
+
+    content = "\n".join(lines)
+    if not dry_run:
+        codedna_path.write_text(content, encoding="utf-8")
+    return content
+
+
+def cmd_manifest(
+    target: Path,
+    repo_root: Optional[Path],
+    model: str,
+    no_llm: bool,
+    dry_run: bool,
+    api_key: Optional[str],
+    verbose: bool,
+    extensions: Optional[list[str]],
+    exclude: Optional[list[str]] = None,
+):
+    """Generate or update .codedna (Level 0 manifest) from codebase structure.
+
+    Rules:   agent_sessions: block is never modified — append-only by design.
+             packages: section is regenerated on every run (authoritative from code).
+             cross_cutting_patterns: is preserved from existing file unchanged.
+             LLM is used only for package purpose: descriptions.
+    """
+    effective_root = repo_root or target
+    all_exts = _normalize_extensions(extensions)
+    codedna_path = effective_root / ".codedna"
+    excl = exclude or []
+
+    print("CodeDNA Manifest  (Level 0)")
+    print(f"Root    {effective_root}")
+    print(f"Mode    {'DRY RUN' if dry_run else 'WRITE'}")
+    print(f"LLM     {'disabled' if no_llm else model}")
+    print()
+
+    # Scan Python files for AST-based import graph
+    py_files = collect_files(target, excl, extensions=[".py"])
+    infos: dict[str, FileInfo] = {}
+    for f in py_files:
+        info = scan_file(f, effective_root)
+        if info.parseable:
+            infos[info.rel] = info
+    ub_graph = build_used_by(infos)
+
+    # Also collect non-Python files for package detection
+    lang_exts = [e for e in all_exts if e != ".py"]
+    all_files = list(py_files)
+    for e in lang_exts:
+        all_files.extend(collect_files(target, excl, extensions=[e]))
+
+    pkg_map = _detect_packages(all_files, effective_root)
+    if not pkg_map:
+        print("No source files found.")
+        return 1
+
+    print(f"Packages detected: {len(pkg_map)}")
+    for pkg, files in sorted(pkg_map.items()):
+        print(f"  {pkg or '(root)':20s}  {len(files)} files")
+    print()
+
+    # LLM for package purposes
+    llm: Optional[LLM] = None
+    if not no_llm:
+        try:
+            llm = LLM(model=model, api_key=api_key)
+        except Exception as e:
+            print(f"  Warning: LLM unavailable ({e}). purpose: will be generated from file names.")
+
+    # Build package data
+    existing = _read_existing_codedna(codedna_path)
+    packages: dict[str, dict] = {}
+    llm_calls = 0
+
+    for pkg, files in sorted(pkg_map.items()):
+        kf = _key_files(files, ub_graph, infos)
+        deps = _package_depends_on(pkg, files, infos)
+        exports_sample = _exports_sample(files, infos)
+
+        # Purpose: LLM or fallback
+        if llm:
+            try:
+                purpose = llm.package_purpose(pkg or "root", kf, exports_sample)
+                llm_calls += 1
+            except Exception as e:
+                print(f"  Warning: LLM call failed ({e}). Falling back to file-name heuristic.")
+                llm = None  # disable for remaining packages
+                names = [Path(f).stem.replace("_", " ") for f in files[:3]]
+                purpose = f"{', '.join(names)} module" if names else f"{pkg} package"
+        else:
+            # Fallback: derive from key file names
+            names = [Path(f).stem.replace("_", " ") for f in files
+                     if Path(f).stem not in ("__init__", "__main__")][:3]
+            purpose = f"{', '.join(names)} module" if names else f"{pkg} package"
+
+        packages[pkg] = {
+            "purpose": purpose,
+            "key_files": kf,
+            "depends_on": deps,
+        }
+
+        if verbose:
+            print(f"  {pkg or '(root)'}/")
+            print(f"    purpose:    {purpose}")
+            print(f"    key_files:  {kf}")
+            if deps:
+                print(f"    depends_on: {deps}")
+
+    # Write
+    content = _write_codedna(
+        codedna_path=codedna_path,
+        project=existing["project"],
+        description=existing["description"],
+        packages=packages,
+        cross_cutting_block=existing["cross_cutting_block"],
+        agent_sessions_block=existing["agent_sessions_block"],
+        dry_run=dry_run,
+    )
+
+    print()
+    print("=" * 50)
+    print(f"Packages   {len(packages)}")
+    print(f"LLM calls  {llm_calls}")
+    if dry_run:
+        print()
+        print("Dry run — .codedna not written. Preview:")
+        print()
+        print(content[:1200])
+    else:
+        print(f"Written    {codedna_path}")
+    return 0
+
+
 def main():
     p = argparse.ArgumentParser(
         prog="codedna",
@@ -1015,9 +1338,59 @@ def main():
     )
     check_p.add_argument("-v", "--verbose", action="store_true", help="List specific files missing annotations")
 
+    # ── manifest ──────────────────────────────────────────────────────────────
+    manifest_p = subs.add_parser(
+        "manifest",
+        help="Generate or update .codedna Level 0 manifest from codebase structure",
+        description=(
+            "Scans the project, detects packages, infers depends_on from imports,\n"
+            "and writes (or updates) the .codedna manifest at the project root.\n\n"
+            "Preserves: agent_sessions: (append-only) and cross_cutting_patterns:\n"
+            "Regenerates: packages: section on every run.\n\n"
+            "Run once after `codedna init` to complete the Level 0 setup."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    manifest_p.add_argument("path", type=Path, help="Project root directory")
+    manifest_p.add_argument(
+        "--model", default="claude-haiku-4-5-20251001",
+        help="Model for generating package purpose: descriptions",
+    )
+    manifest_p.add_argument("--no-llm", action="store_true",
+                            help="Skip LLM — derive purpose from file names only")
+    manifest_p.add_argument("--dry-run", action="store_true",
+                            help="Preview .codedna without writing")
+    manifest_p.add_argument("--api-key", default=None)
+    manifest_p.add_argument(
+        "--extensions", nargs="*", default=None, metavar="EXT",
+        help="Include non-Python files in package detection (e.g. ts go php)",
+    )
+    manifest_p.add_argument("--exclude", nargs="*", default=[],
+                            help="Glob patterns to exclude from package detection")
+    manifest_p.add_argument("-v", "--verbose", action="store_true",
+                            help="Show per-package details")
+
     args = p.parse_args()
 
     # ── dispatch ──────────────────────────────────────────────────────────────
+    if args.command == "manifest":
+        target = args.path.resolve()
+        if not target.exists():
+            print(f"Error: {target} does not exist", file=sys.stderr)
+            return 1
+        exts = _normalize_extensions(getattr(args, "extensions", None))
+        return cmd_manifest(
+            target=target,
+            repo_root=target,
+            model=args.model,
+            no_llm=args.no_llm,
+            dry_run=args.dry_run,
+            api_key=args.api_key,
+            verbose=args.verbose,
+            extensions=exts,
+            exclude=list(args.exclude),
+        )
+
     if args.command == "check":
         target = args.path.resolve()
         if not target.exists():
