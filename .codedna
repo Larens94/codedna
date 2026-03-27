@@ -273,3 +273,58 @@ agent_sessions:
       --exclude glob matching (pathlib.match() does not support ** in Python 3.11,
       switched to fnmatch on relative path). Fixed LLM call error handling to degrade
       gracefully. __init__ stems excluded from purpose heuristic.
+
+  - agent: claude-sonnet-4-6
+    provider: anthropic
+    date: 2026-03-27
+    session_id: s_20260327_005
+    task: "create OpenCode AGENTS.md integration plugin"
+    changed:
+      - integrations/AGENTS.md
+      - integrations/README.md
+      - integrations/install.sh
+      - .codedna
+    visited:
+      - integrations/CLAUDE.md
+      - integrations/README.md
+      - integrations/install.sh
+      - .codedna
+    message: >
+      Created integrations/AGENTS.md — OpenCode equivalent of CLAUDE.md.
+      OpenCode reads AGENTS.md from repo root; also supports instructions[] in opencode.json.
+      Added opencode section to README.md and do_opencode() to install.sh.
+      install.sh now accepts 'opencode' as a target and includes it in 'all'.
+      Key difference from CLAUDE.md: removed Claude-specific auto-memory section
+      (not applicable to OpenCode). All v0.8 fields (message:, git trailers,
+      session end protocol) preserved unchanged.
+
+  - agent: claude-sonnet-4-6
+    provider: anthropic
+    date: 2026-03-27
+    session_id: s_20260327_006
+    task: "create OpenCode JS plugin for multi-language CodeDNA enforcement"
+    changed:
+      - integrations/opencode-plugin/codedna.js
+      - integrations/README.md
+      - integrations/install.sh
+      - .codedna
+    visited:
+      - integrations/CLAUDE.md
+      - integrations/README.md
+      - integrations/install.sh
+      - codedna_tool/languages/__init__.py
+      - codedna_tool/languages/base.py
+      - codedna_tool/languages/typescript.py
+      - codedna_tool/languages/ruby.py
+      - .codedna
+    message: >
+      Created integrations/opencode-plugin/codedna.js — OpenCode JS plugin using
+      tool.execute.after and event (session.idle) hooks. Supports 11 languages:
+      Python, TS, JS, Go, PHP, Rust, Java, Kotlin, Ruby, C#, Swift.
+      Detection mirrors base.py has_codedna_header(): scan first 30 lines,
+      strip comment prefix (//, #, """), check for exports:/used_by:.
+      For write tool: checks full content. For edit tool: checks new_string patch
+      only if it introduces a new top-level definition (heuristic via regex).
+      install.sh now installs both AGENTS.md and codedna.js when target is opencode.
+      Open: tool.execute.after hook signature (input vs output for args) is inferred
+      from docs — needs verification against live OpenCode instance.

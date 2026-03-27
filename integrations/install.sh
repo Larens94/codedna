@@ -5,7 +5,7 @@
 #   bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh)
 #   bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) cursor
 #
-# Installs CodeDNA rules for: claude cursor copilot cline windsurf agents (default: all)
+# Installs CodeDNA rules for: claude cursor copilot cline windsurf agents opencode (default: all)
 
 set -euo pipefail
 
@@ -23,6 +23,13 @@ do_copilot()  { mkdir -p "$REPO_ROOT/.github"; curl -fsSL "$RAW/copilot-instruct
 do_cline()    { curl -fsSL "$RAW/.clinerules"              > "$REPO_ROOT/.clinerules";                        echo "✅ Cline          → .clinerules"; }
 do_windsurf() { curl -fsSL "$RAW/.windsurfrules"           > "$REPO_ROOT/.windsurfrules";                     echo "✅ Windsurf       → .windsurfrules"; }
 do_agents()   { mkdir -p "$REPO_ROOT/.agents/workflows"; curl -fsSL "$RAW/.agents/workflows/codedna.md" > "$REPO_ROOT/.agents/workflows/codedna.md"; echo "✅ Antigravity    → .agents/workflows/codedna.md"; }
+do_opencode() {
+    curl -fsSL "$RAW/AGENTS.md" > "$REPO_ROOT/AGENTS.md"
+    echo "✅ OpenCode       → AGENTS.md"
+    mkdir -p "$REPO_ROOT/.opencode/plugins"
+    curl -fsSL "$RAW/opencode-plugin/codedna.js" > "$REPO_ROOT/.opencode/plugins/codedna.js"
+    echo "✅ OpenCode Plugin → .opencode/plugins/codedna.js"
+}
 
 case "$TOOL" in
     claude)   do_claude ;;
@@ -31,8 +38,9 @@ case "$TOOL" in
     cline)    do_cline ;;
     windsurf) do_windsurf ;;
     agents)   do_agents ;;
-    all)      do_claude; do_cursor; do_copilot; do_cline; do_windsurf; do_agents ;;
-    *) echo "Usage: install.sh [claude|cursor|copilot|cline|windsurf|agents|all]"; exit 1 ;;
+    opencode) do_opencode ;;
+    all)      do_claude; do_cursor; do_copilot; do_cline; do_windsurf; do_agents; do_opencode ;;
+    *) echo "Usage: install.sh [claude|cursor|copilot|cline|windsurf|agents|opencode|all]"; exit 1 ;;
 esac
 
 echo ""

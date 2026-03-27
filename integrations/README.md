@@ -76,6 +76,42 @@ cp integrations/copilot-instructions.md .github/copilot-instructions.md
 
 ---
 
+## OpenCode
+
+**File location:** `/AGENTS.md` (repo root)
+
+OpenCode reads `AGENTS.md` automatically before every session. Multiple instruction files can be referenced via `opencode.json`.
+
+→ Copy [`integrations/AGENTS.md`](./AGENTS.md) to your repo root.
+
+Optional — add to `opencode.json` to load it explicitly:
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "instructions": ["AGENTS.md"]
+}
+```
+
+> **Fallback:** if no `AGENTS.md` is found, OpenCode automatically falls back to `CLAUDE.md` — so projects using the Claude Code integration already work out of the box.
+
+### OpenCode Plugin (active enforcement)
+
+For stronger enforcement, install the CodeDNA plugin. It hooks into OpenCode's event system to:
+
+- **Warn after every file write** if `exports:` / `used_by:` header is missing
+- **Remind at session end** to update `.codedna` and commit with AI git trailers
+
+Supported languages: Python, TypeScript, JavaScript, Go, PHP, Rust, Java, Kotlin, Ruby, C#, Swift
+
+```bash
+mkdir -p .opencode/plugins
+cp integrations/opencode-plugin/codedna.js .opencode/plugins/codedna.js
+```
+
+The plugin loads automatically at next `opencode` startup — no configuration required.
+
+---
+
 ## Aider
 
 ```bash
