@@ -223,7 +223,8 @@ tr:last-child td { border-bottom: none; }
 <div class="mobile-drawer" id="mobile-drawer">
   <div class="sb-group">
     <span class="sb-label">Get started</span>
-    <a href="#plugin" onclick="closeDrawer()">Claude Code Plugin</a>
+    <a href="#claude-ai-plugin" onclick="closeDrawer()">Claude.ai Plugin</a>
+    <a href="#claude-code-cli" onclick="closeDrawer()">Claude Code CLI</a>
     <a href="#languages" onclick="closeDrawer()">Languages</a>
     <a href="#other-tools" onclick="closeDrawer()">Other AI Tools</a>
     <a href="#cli" onclick="closeDrawer()">CLI Reference</a>
@@ -242,10 +243,13 @@ tr:last-child td { border-bottom: none; }
 <aside>
   <div class="sb-group">
     <div class="sb-label">Get started</div>
-    <a class="sb-link active" href="#plugin" onclick="setActive(this)">
-      <!-- Claude icon -->
+    <a class="sb-link active" href="#claude-ai-plugin" onclick="setActive(this)">
       <svg viewBox="0 0 24 24" fill="#D97757"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm0 3c1.66 0 3 1.34 3 3s-1.34 3-3 3-3-1.34-3-3 1.34-3 3-3zm0 14.2c-2.5 0-4.71-1.28-6-3.22.03-1.99 4-3.08 6-3.08 1.99 0 5.97 1.09 6 3.08-1.29 1.94-3.5 3.22-6 3.22z"/></svg>
-      Claude Code Plugin
+      Claude.ai Plugin
+    </a>
+    <a class="sb-link" href="#claude-code-cli" onclick="setActive(this)">
+      <svg viewBox="0 0 24 24" fill="none" stroke="#8787a0" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+      Claude Code CLI
     </a>
     <a class="sb-link" href="#languages" onclick="setActive(this)">
       <svg viewBox="0 0 24 24" fill="none" stroke="#8787a0" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
@@ -316,35 +320,48 @@ tr:last-child td { border-bottom: none; }
     </p>
   </div>
 
-  <!-- ── PLUGIN ── -->
-  <section id="plugin">
-    <h2>Claude Code Plugin <span class="badge" style="vertical-align:middle;margin-left:6px;background:#fef9c3;color:#854d0e;border-color:#fde68a;">Coming soon</span></h2>
-    <p>The CodeDNA plugin for the Claude plugin directory is currently <strong>under review</strong>. In the meantime, use the <code>CLAUDE.md</code> integration — it covers the same protocol and loads automatically on every Claude Code session.</p>
+  <!-- ── CLAUDE.AI PLUGIN ── -->
+  <section id="claude-ai-plugin">
+    <h2>Claude.ai Plugin <span class="badge" style="vertical-align:middle;margin-left:6px;background:#fef9c3;color:#854d0e;border-color:#fde68a;">Under review</span></h2>
+    <p>The CodeDNA plugin for <strong>claude.com/plugins</strong> is currently under review by Anthropic. Once approved it will be available directly inside the Claude.ai web interface.</p>
 
-    <div class="note" style="background:#fef9c3;border-color:#f59e0b;color:#78350f;">
-      ⏳ <strong>Plugin not yet published.</strong> Use the CLAUDE.md integration below while the plugin review is in progress.
-    </div>
+    <a href="https://claude.com/plugins" target="_blank"
+      style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;text-decoration:none;padding:9px 18px;border-radius:8px;font-size:14px;font-weight:600;margin-bottom:1.5rem">
+      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>
+      Browse claude.com/plugins
+    </a>
 
-    <h3>Install now (CLAUDE.md integration)</h3>
+    <div class="note">This is a <strong>Claude.ai web plugin</strong> (browser interface) — separate from Claude Code CLI. If you use Claude Code in the terminal, see the section below.</div>
+  </section>
+
+  <hr>
+
+  <!-- ── CLAUDE CODE CLI ── -->
+  <section id="claude-code-cli">
+    <h2>Claude Code CLI <span class="badge" style="vertical-align:middle;margin-left:6px;">Works now</span></h2>
+    <p>Claude Code (the terminal CLI) reads <code>CLAUDE.md</code> automatically from your project root on every session. One command installs it:</p>
+
     <div class="install-box">
       <div>
-        <div class="label">terminal — copy CLAUDE.md to your repo root</div>
+        <div class="label">terminal</div>
         <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) claude</code>
       </div>
       <button class="cp" onclick="navigator.clipboard.writeText('bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) claude');this.textContent='copied';setTimeout(()=>this.textContent='copy',1500)">copy</button>
     </div>
 
-    <h3>Planned plugin commands</h3>
-    <p style="font-size:13px;color:var(--muted);">Once published, the plugin will add these slash commands directly inside Claude Code:</p>
+    <p>This copies <code>CLAUDE.md</code> to your repo root. Claude Code loads it automatically — no further configuration needed.</p>
+
+    <h3>What the CLAUDE.md protocol enables</h3>
     <div class="table-wrap"><table>
-      <tr><th>Command</th><th>What it does</th></tr>
-      <tr><td><span class="ic">/codedna:init [path]</span></td><td>Annotate all unannotated files. Claude reads and writes directly — zero extra cost.</td></tr>
-      <tr><td><span class="ic">/codedna:check [path]</span></td><td>Coverage report — unannotated files and stale <span class="ic">used_by:</span> references.</td></tr>
-      <tr><td><span class="ic">/codedna:manifest [path]</span></td><td>Full architectural map in one pass. Replaces 10–20 individual file reads.</td></tr>
-      <tr><td><span class="ic">/codedna:impact &lt;file&gt;</span></td><td>Cascade dependency chain before a refactor.</td></tr>
+      <tr><th>What you get</th><th>How</th></tr>
+      <tr><td>Annotate all files in a project</td><td><span class="ic">codedna init ./</span> via CLI</td></tr>
+      <tr><td>Coverage report</td><td><span class="ic">codedna check ./</span> — unannotated files and stale <span class="ic">used_by:</span></td></tr>
+      <tr><td>Architectural map</td><td><span class="ic">codedna manifest ./</span> — full package map in one pass</td></tr>
+      <tr><td>Cross-session agent memory</td><td><span class="ic">agent:</span> + <span class="ic">message:</span> fields in every file</td></tr>
+      <tr><td>Cascade dependency awareness</td><td><span class="ic">used_by:</span> graph + <span class="ic">[cascade]</span> tags</td></tr>
     </table></div>
 
-    <div class="note">The plugin will also install a <strong>PostToolUse hook</strong> that notifies Claude whenever a saved file is missing a CodeDNA annotation.</div>
+    <div class="note">Claude Code has no plugin marketplace — <code>CLAUDE.md</code> is the standard integration method, used by all major AI coding tools (Cursor, Windsurf, Cline use equivalent rule files).</div>
   </section>
 
   <hr>
@@ -759,7 +776,7 @@ function copyPre(btn) {
 }
 
 // scroll spy
-const anchors = ['plugin','languages','other-tools','cli'];
+const anchors = ['claude-ai-plugin','claude-code-cli','languages','other-tools','cli'];
 window.addEventListener('scroll', () => {
   let cur = '';
   anchors.forEach(id => {
