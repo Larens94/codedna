@@ -157,10 +157,46 @@ tr:last-child td { border-bottom: none; }
 /* BADGE */
 .badge { display: inline-flex; align-items: center; gap: 4px; background: #f0fdf4; color: #15803d; border: 1px solid #bbf7d0; border-radius: 5px; padding: 2px 8px; font-size: 12px; font-weight: 500; }
 
+/* MOBILE NAV TOGGLE */
+.nav-hamburger {
+  display: none; flex-direction: column; gap: 5px;
+  background: none; border: none; cursor: pointer; padding: 4px;
+}
+.nav-hamburger span { display: block; width: 22px; height: 2px; background: var(--text2); border-radius: 2px; transition: .2s; }
+
+/* MOBILE DRAWER (sidebar replacement) */
+.mobile-drawer {
+  display: none; position: fixed; inset: 56px 0 0 0; z-index: 90;
+  background: var(--surface); border-top: 1px solid var(--border);
+  padding: 1.5rem 1.25rem; overflow-y: auto;
+}
+.mobile-drawer.open { display: block; }
+.mobile-drawer .sb-group { margin-bottom: 1.25rem; }
+.mobile-drawer .sb-label { font-size: 11px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: .35rem; display: block; }
+.mobile-drawer a {
+  display: flex; align-items: center; gap: 8px;
+  padding: 10px 0; font-size: 14px; color: var(--text2);
+  text-decoration: none; border-bottom: 1px solid var(--border);
+}
+.mobile-drawer a:last-child { border-bottom: none; }
+
+/* TABLE RESPONSIVE */
+.table-wrap { overflow-x: auto; -webkit-overflow-scrolling: touch; margin: .5rem 0 1.5rem; }
+.table-wrap table { margin: 0; min-width: 480px; }
+
 @media (max-width: 768px) {
   aside { display: none; }
   main { padding: 1.5rem 1.25rem 4rem; }
   .install-box { flex-direction: column; align-items: flex-start; }
+  .nav-links { display: none; }
+  .nav-hamburger { display: flex; }
+}
+
+@media (max-width: 480px) {
+  h1 { font-size: 1.5rem; }
+  .lang-grid { grid-template-columns: repeat(auto-fill, minmax(100px, 1fr)); }
+  .tool-grid { grid-template-columns: 1fr 1fr; }
+  nav { padding: 0 1rem; }
 }
 </style>
 </head>
@@ -176,9 +212,29 @@ tr:last-child td { border-bottom: none; }
     <a href="install.html" class="active">Install</a>
     <a href="https://github.com/Larens94/codedna/blob/main/SPEC.md" target="_blank">Spec</a>
     <a href="https://github.com/Larens94/codedna" target="_blank">GitHub</a>
-    <a href="https://claude.com/plugins" target="_blank" class="nav-cta">Get Plugin</a>
+    <a href="https://github.com/Larens94/codedna" target="_blank" class="nav-cta">Star on GitHub</a>
   </div>
+  <button class="nav-hamburger" aria-label="Open menu" onclick="toggleDrawer()">
+    <span></span><span></span><span></span>
+  </button>
 </nav>
+
+<!-- MOBILE DRAWER -->
+<div class="mobile-drawer" id="mobile-drawer">
+  <div class="sb-group">
+    <span class="sb-label">Get started</span>
+    <a href="#plugin" onclick="closeDrawer()">Claude Code Plugin</a>
+    <a href="#languages" onclick="closeDrawer()">Languages</a>
+    <a href="#other-tools" onclick="closeDrawer()">Other AI Tools</a>
+    <a href="#cli" onclick="closeDrawer()">CLI Reference</a>
+  </div>
+  <div class="sb-group">
+    <span class="sb-label">Links</span>
+    <a href="index.html">Overview</a>
+    <a href="https://github.com/Larens94/codedna/blob/main/SPEC.md" target="_blank">Spec</a>
+    <a href="https://github.com/Larens94/codedna" target="_blank">GitHub</a>
+  </div>
+</div>
 
 <div class="page">
 
@@ -262,33 +318,33 @@ tr:last-child td { border-bottom: none; }
 
   <!-- ── PLUGIN ── -->
   <section id="plugin">
-    <h2>Claude Code Plugin <span class="badge" style="vertical-align:middle;margin-left:6px;">Recommended</span></h2>
-    <p>One-click install from the Claude directory. No API key required — uses your existing Claude subscription.</p>
+    <h2>Claude Code Plugin <span class="badge" style="vertical-align:middle;margin-left:6px;background:#fef9c3;color:#854d0e;border-color:#fde68a;">Coming soon</span></h2>
+    <p>The CodeDNA plugin for the Claude plugin directory is currently <strong>under review</strong>. In the meantime, use the <code>CLAUDE.md</code> integration — it covers the same protocol and loads automatically on every Claude Code session.</p>
 
-    <div class="install-box">
-      <div>
-        <div class="label">terminal</div>
-        <code>claude plugin install codedna</code>
-      </div>
-      <button class="cp" onclick="navigator.clipboard.writeText('claude plugin install codedna');this.textContent='copied';setTimeout(()=>this.textContent='copy',1500)">copy</button>
+    <div class="note" style="background:#fef9c3;border-color:#f59e0b;color:#78350f;">
+      ⏳ <strong>Plugin not yet published.</strong> Use the CLAUDE.md integration below while the plugin review is in progress.
     </div>
 
-    <a href="https://claude.com/plugins" target="_blank"
-      style="display:inline-flex;align-items:center;gap:8px;background:var(--accent);color:#fff;text-decoration:none;padding:9px 18px;border-radius:8px;font-size:14px;font-weight:600;margin-bottom:1.5rem">
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="currentColor"><path d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2z"/></svg>
-      Browse claude.com/plugins
-    </a>
+    <h3>Install now (CLAUDE.md integration)</h3>
+    <div class="install-box">
+      <div>
+        <div class="label">terminal — copy CLAUDE.md to your repo root</div>
+        <code>bash &lt;(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) claude</code>
+      </div>
+      <button class="cp" onclick="navigator.clipboard.writeText('bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) claude');this.textContent='copied';setTimeout(()=>this.textContent='copy',1500)">copy</button>
+    </div>
 
-    <h3>Commands</h3>
-    <table>
+    <h3>Planned plugin commands</h3>
+    <p style="font-size:13px;color:var(--muted);">Once published, the plugin will add these slash commands directly inside Claude Code:</p>
+    <div class="table-wrap"><table>
       <tr><th>Command</th><th>What it does</th></tr>
       <tr><td><span class="ic">/codedna:init [path]</span></td><td>Annotate all unannotated files. Claude reads and writes directly — zero extra cost.</td></tr>
       <tr><td><span class="ic">/codedna:check [path]</span></td><td>Coverage report — unannotated files and stale <span class="ic">used_by:</span> references.</td></tr>
       <tr><td><span class="ic">/codedna:manifest [path]</span></td><td>Full architectural map in one pass. Replaces 10–20 individual file reads.</td></tr>
       <tr><td><span class="ic">/codedna:impact &lt;file&gt;</span></td><td>Cascade dependency chain before a refactor.</td></tr>
-    </table>
+    </table></div>
 
-    <div class="note">The plugin also installs a <strong>PostToolUse hook</strong> that notifies Claude whenever a saved file is missing a CodeDNA annotation.</div>
+    <div class="note">The plugin will also install a <strong>PostToolUse hook</strong> that notifies Claude whenever a saved file is missing a CodeDNA annotation.</div>
   </section>
 
   <hr>
@@ -530,18 +586,18 @@ require 'something'</pre></div>
 
 <span class="c"># Single tool</span>
 <span class="k">bash</span> &lt;(curl -fsSL .../install.sh) cursor
-<span class="c"># Options: claude | cursor | copilot | cline | windsurf | agents | all</span></pre>
+<span class="c"># Options: claude | cursor | copilot | cline | windsurf | agents | opencode | all</span></pre>
     </div>
 
     <div class="tool-grid">
 
       <!-- Claude Code -->
-      <a class="tool-card" href="https://claude.ai/settings/plugins/submit" target="_blank">
+      <a class="tool-card" href="https://github.com/Larens94/codedna/blob/main/integrations/CLAUDE.md" target="_blank">
         <div class="tool-icon" style="background:#fff5f0">
           <svg width="22" height="22" viewBox="0 0 24 24"><path fill="#D97757" d="M12 2C6.48 2 2 6.48 2 12s4.48 10 10 10 10-4.48 10-10S17.52 2 12 2zm-1 14H9V8h2v8zm4 0h-2V8h2v8z"/></svg>
         </div>
         <div class="tool-name">Claude Code</div>
-        <div class="tool-desc">Plugin directory — one-click install</div>
+        <div class="tool-desc">CLAUDE.md — loaded automatically every session</div>
         <div class="tool-file">CLAUDE.md</div>
       </a>
 
@@ -593,6 +649,16 @@ require 'something'</pre></div>
         <div class="tool-name">Antigravity</div>
         <div class="tool-desc">Agent workflow integration</div>
         <div class="tool-file">.agents/workflows/codedna.md</div>
+      </a>
+
+      <!-- OpenCode -->
+      <a class="tool-card" href="https://github.com/Larens94/codedna/blob/main/integrations/AGENTS.md" target="_blank">
+        <div class="tool-icon" style="background:#eef2ff">
+          <svg width="22" height="22" viewBox="0 0 24 24"><rect x="3" y="3" width="18" height="18" rx="4" fill="#4338ca"/><path fill="#fff" d="M7 8h10M7 12h7M7 16h9" stroke="#fff" stroke-width="1.5" stroke-linecap="round"/></svg>
+        </div>
+        <div class="tool-name">OpenCode</div>
+        <div class="tool-desc">AGENTS.md + JS enforcement plugin (11 languages)</div>
+        <div class="tool-file">AGENTS.md</div>
       </a>
 
     </div>
@@ -703,6 +769,24 @@ window.addEventListener('scroll', () => {
   document.querySelectorAll('.sb-link:not([data-lang])').forEach(l => {
     l.classList.toggle('active', l.getAttribute('href') === '#' + cur);
   });
+});
+
+// Mobile hamburger
+function toggleDrawer() {
+  document.getElementById('mobile-drawer').classList.toggle('open');
+}
+function closeDrawer() {
+  document.getElementById('mobile-drawer').classList.remove('open');
+}
+
+// Wrap bare tables (not already wrapped) for mobile scroll
+document.querySelectorAll('table').forEach(t => {
+  if (!t.closest('.table-wrap')) {
+    const w = document.createElement('div');
+    w.className = 'table-wrap';
+    t.parentNode.insertBefore(w, t);
+    w.appendChild(t);
+  }
 });
 </script>
 </body>
