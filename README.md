@@ -19,7 +19,8 @@
 [![Claude Code](https://img.shields.io/badge/Claude_Code-D97757?logo=anthropic&logoColor=white)](./integrations/CLAUDE.md)
 [![Cursor](https://img.shields.io/badge/Cursor-000000?logo=cursor&logoColor=white)](./integrations/.cursorrules)
 [![GitHub Copilot](https://img.shields.io/badge/GitHub_Copilot-000000?logo=github&logoColor=white)](./integrations/copilot-instructions.md)
-[![Windsurf](https://img.shields.io/badge/Windsurf-0891b2?logoColor=white)](./integrations/.cursorrules)
+[![Windsurf](https://img.shields.io/badge/Windsurf-0891b2?logoColor=white)](./integrations/.windsurfrules)
+[![OpenCode](https://img.shields.io/badge/OpenCode-6366f1?logoColor=white)](./integrations/AGENTS.md)
 [![Gemini](https://img.shields.io/badge/Gemini-4285F4?logo=google&logoColor=white)](./QUICKSTART.md)
 [![ChatGPT](https://img.shields.io/badge/ChatGPT-74aa9c?logo=openai&logoColor=white)](./QUICKSTART.md)
 
@@ -65,7 +66,7 @@ Every AI coding agent relies on multiple memory layers to navigate a codebase. M
 
 Every other layer is either external to the code or tool-specific. CodeDNA is the only memory that:
 1. **Travels with the source file** — through clones, forks, and CI pipelines, with no infrastructure dependency
-2. **Is readable by any agent on any tool** — Claude, Cursor, Windsurf, Copilot, or a custom script all see the same annotations
+2. **Is readable by any agent on any tool** — Claude, Cursor, Windsurf, Copilot, OpenCode, or a custom script all see the same annotations
 
 **CodeDNA does not replace native agent memories** — it is additive. Every agentic tool (Claude Code, Cursor, Windsurf, Devin, and any future agent) has its own native memory for user preferences, feedback, and tool-specific context. That context belongs outside the repo. CodeDNA handles the architectural context that belongs *inside* it. Use both.
 
@@ -227,11 +228,11 @@ Supported models via `--model`:
 
 ---
 
-### Option 3 — AI Tool Integration (Cursor, Copilot, Windsurf)
+### Option 3 — AI Tool Integration (Cursor, Copilot, Windsurf, OpenCode)
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh)
-# Options: claude | cursor | copilot | cline | windsurf | agents | all
+# Options: claude | cursor | copilot | cline | windsurf | agents | opencode | all
 ```
 
 | Tool | File | Source |
@@ -240,6 +241,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integr
 | Cursor | `.cursorrules` | [`integrations/.cursorrules`](./integrations/.cursorrules) |
 | GitHub Copilot | `.github/copilot-instructions.md` | [`integrations/copilot-instructions.md`](./integrations/copilot-instructions.md) |
 | Windsurf | `.windsurfrules` | [`integrations/.windsurfrules`](./integrations/.windsurfrules) |
+| OpenCode | `AGENTS.md` + `.opencode/plugins/codedna.js` | [`integrations/AGENTS.md`](./integrations/AGENTS.md) |
 | Any other LLM | Any of the above | See [QUICKSTART.md](./QUICKSTART.md) |
 
 Then annotate your first file → see [QUICKSTART.md](./QUICKSTART.md)
