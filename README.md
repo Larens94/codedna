@@ -31,7 +31,7 @@
 
 > **🎯 Less Prompt Engineering Needed:** CodeDNA annotations help AI agents navigate the codebase with less manual guidance. Even less-technical users can get better multi-file fixes by describing the problem — the architectural context is already in the code.
 
-![CodeDNA Site — Animated DNA Hero](./docs/hero.png)
+![CodeDNA Logo](./docs/logo.png)
 
 ---
 

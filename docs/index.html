@@ -455,6 +455,62 @@ img { max-width: 100%; height: auto; }
   </div>
 </div>
 
+<!-- STACK CONTEXT -->
+<div class="section" id="stack-context">
+  <div class="eyebrow">Memory Stack</div>
+  <h2>Where CodeDNA sits in the AI memory stack.</h2>
+  <p class="section-lead">Every AI coding agent relies on multiple memory layers. Most of them are external to the code. CodeDNA is the only layer that lives <em>inside</em> the source files themselves — it travels with every clone, fork, and CI pipeline.</p>
+
+  <div style="position:relative; border-radius:16px; overflow:hidden; box-shadow:var(--shadow-md); margin-bottom:2rem; background:#000;">
+    <video autoplay muted loop playsinline
+      style="width:100%; display:block; border-radius:16px;"
+      poster="stack-codedna-0.gif">
+      <source src="logocodedna.mov" type="video/mp4">
+      <source src="stack-codedna-0.mp4" type="video/mp4">
+      <img src="stack-codedna-0.gif" alt="CodeDNA Memory Layer Stack" style="width:100%;">
+    </video>
+  </div>
+
+  <div style="overflow-x:auto;">
+    <table style="width:100%; border-collapse:collapse; font-size:0.88rem;">
+      <thead>
+        <tr style="border-bottom:2px solid var(--border);">
+          <th style="text-align:left; padding:0.6rem 1rem; color:var(--text2); font-weight:600;">Layer</th>
+          <th style="text-align:left; padding:0.6rem 1rem; color:var(--text2); font-weight:600;">Examples</th>
+          <th style="text-align:left; padding:0.6rem 1rem; color:var(--text2); font-weight:600;">Where it lives</th>
+          <th style="text-align:left; padding:0.6rem 1rem; color:var(--text2); font-weight:600;">Shared across tools?</th>
+        </tr>
+      </thead>
+      <tbody>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:0.6rem 1rem;">LLM / Agent</td>
+          <td style="padding:0.6rem 1rem; color:var(--text2);">Claude, GPT-4, Cursor, Copilot</td>
+          <td style="padding:0.6rem 1rem; color:var(--text2);">Cloud</td>
+          <td style="padding:0.6rem 1rem; color:var(--text2);">—</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:0.6rem 1rem;">External memory</td>
+          <td style="padding:0.6rem 1rem; color:var(--text2);">Chat history, Memory API</td>
+          <td style="padding:0.6rem 1rem; color:var(--text2);">Cloud / external DB</td>
+          <td style="padding:0.6rem 1rem; color:var(--text2);">✗ tool-specific</td>
+        </tr>
+        <tr style="border-bottom:1px solid var(--border);">
+          <td style="padding:0.6rem 1rem;">Markdown / Config</td>
+          <td style="padding:0.6rem 1rem; color:var(--text2);">CLAUDE.md, .cursorrules, AGENTS.md</td>
+          <td style="padding:0.6rem 1rem; color:var(--text2);">Repo (outside source files)</td>
+          <td style="padding:0.6rem 1rem; color:var(--text2);">partial</td>
+        </tr>
+        <tr style="background:color-mix(in srgb,var(--accent) 8%,transparent);">
+          <td style="padding:0.6rem 1rem; font-weight:700; color:var(--accent);">CodeDNA</td>
+          <td style="padding:0.6rem 1rem; color:var(--text2);">exports, rules, agent, message, .codedna</td>
+          <td style="padding:0.6rem 1rem; color:var(--text2);">Inside every source file + repo root</td>
+          <td style="padding:0.6rem 1rem; font-weight:700; color:var(--accent);">✅ always</td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</div>
+
 <!-- SETUP -->
 <div class="full-bleed" id="setup">
   <div class="full-bleed-inner">
@@ -509,6 +565,12 @@ img { max-width: 100%; height: auto; }
         <div class="sc-title">Cline</div>
         <div class="sc-body" style="font-size:0.78rem;" data-i18n="setupCline">Copy <code>.clinerules</code> to your project root.</div>
         <a href="https://github.com/Larens94/codedna/blob/main/integrations/.clinerules" target="_blank" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">View file →</a>
+      </div>
+      <div class="sc-card" style="text-align:center;">
+        <div style="font-size:1.8rem; margin-bottom:0.5rem;">🟣</div>
+        <div class="sc-title">OpenCode</div>
+        <div class="sc-body" style="font-size:0.78rem;">Installs <code>AGENTS.md</code> + active enforcement plugin (<code>.opencode/plugins/codedna.js</code>). Warns on missing headers across 11 languages.</div>
+        <a href="https://github.com/Larens94/codedna/blob/main/integrations/AGENTS.md" target="_blank" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">View file →</a>
       </div>
     </div>
 
