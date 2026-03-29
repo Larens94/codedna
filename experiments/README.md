@@ -39,12 +39,3 @@ Condition A ancora in corso (17 file, B non ancora partita). Ecco i comandi per 
 
   Il run attivo è run_20260329_171502. Quando A finisce vedrai nel log [A] Task completed e B parte
   subito dopo.
-
-
-
-cd /Users/fabriziocorpora/Desktop/automation-lab/dynamic-bi-factory/codedna/experiments                                                                                      
-  export DEEPSEEK_API_KEY="sk-2ef79e2e985f4279ae12c495cd62bfac" && python run_experiment.py --resume-run run_20260329_174936
-
-
-
-export DEEPSEEK_API_KEY="sk-2ef79e2e985f4279ae12c495cd62bfac" && python run_experiment.py --clean-run run_20260329_174936 && python run_experiment.py 
