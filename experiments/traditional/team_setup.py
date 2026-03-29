@@ -1,6 +1,11 @@
 #!/usr/bin/env python3
-"""
-team_setup.py — Agno Team setup for modular 2D RPG game development.
+"""team_setup.py — Agno Team setup for modular 2D RPG game development.
+
+exports: create_team(tracker: DevelopmentTracker) -> Team, run_development() -> None
+used_by: [manual execution] → python3 traditional/team_setup.py
+rules:   Standard Python best practices only — no CodeDNA annotations in agent instructions;
+         base_dir=Path(".") is intentional for standalone manual execution
+agent:   claude-sonnet-4-6 | anthropic | 2026-03-29 | Standalone runner for traditional condition; not used by run_experiment.py
 """
 
 from agno.team import Team

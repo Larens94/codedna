@@ -21,3 +21,30 @@ Come usarlo:
   Differenza tra A e B: solo le istruzioni degli agenti — zero menzione del protocollo di annotazioni 
   nel branch B.                                                                                       
                                               
+
+
+
+Condition A ancora in corso (17 file, B non ancora partita). Ecco i comandi per monitorare tu:
+
+  Terminale 1 — log live:
+  tail -f /Users/fabriziocorpora/Desktop/automation-lab/dynamic-bi-factory/codedna/experiments/runs/run_20260329_171502/run.log
+
+  Terminale 2 — dashboard:
+  cd /Users/fabriziocorpora/Desktop/automation-lab/dynamic-bi-factory/codedna/experiments
+  python3.11 visualizer/dashboard.py --run run_20260329_171502
+
+  Terminale 3 — conteggio file in tempo reale (opzionale):
+  watch -n 5 'echo "A: $(find .../runs/run_20260329_171502/a -name "*.py" | wc -l) | B: $(find
+  .../runs/run_20260329_171502/b -name "*.py" | wc -l)"'
+
+  Il run attivo è run_20260329_171502. Quando A finisce vedrai nel log [A] Task completed e B parte
+  subito dopo.
+
+
+
+cd /Users/fabriziocorpora/Desktop/automation-lab/dynamic-bi-factory/codedna/experiments                                                                                      
+  export DEEPSEEK_API_KEY="sk-2ef79e2e985f4279ae12c495cd62bfac" && python run_experiment.py --resume-run run_20260329_174936
+
+
+
+export DEEPSEEK_API_KEY="sk-2ef79e2e985f4279ae12c495cd62bfac" && python run_experiment.py --clean-run run_20260329_174936 && python run_experiment.py 

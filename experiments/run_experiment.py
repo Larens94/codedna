@@ -9,6 +9,7 @@ rules:   SHARED_TASK must be byte-identical for both conditions;
          each condition writes only inside its own isolated output_dir (os.chdir + FileTools base_dir);
          --reset deletes only experiments/runs/ — never other project files
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-29 | s_20260329_002 | Initial design
+         claude-sonnet-4-6 | anthropic | 2026-03-29 | s_20260329_003 | Fixed silent-failure bug: RunErrorEvent no longer masked as success; added file-count guard on success flag; resume now requires file_count>0; added max_iterations=100 to Team (agno 2.5.11 default=10 causes premature RunCancelledEvent)
 
 USAGE:
     python run_experiment.py                          # run both conditions
@@ -23,6 +24,7 @@ import argparse
 import json
 import os
 import shutil
+import sys
 from datetime import datetime
 from pathlib import Path
 
@@ -34,6 +36,32 @@ from agno.tools.file import FileTools
 from agno.tools.shell import ShellTools
 
 RUNS_ROOT = Path(__file__).parent / "runs"
+
+
+# ─────────────────────────────────────────────────────────────────────────────
+# REAL-TIME LOGGER — writes to run_dir/run.log and stdout simultaneously
+# ─────────────────────────────────────────────────────────────────────────────
+
+class RunLogger:
+    """Writes timestamped log entries to run.log and stdout.
+
+    Rules:   Always append — never overwrite; flush after every write so the
+             dashboard can tail the file in real-time.
+    """
+
+    def __init__(self, run_dir: Path):
+        self.log_file = run_dir / "run.log"
+        self._fh = open(self.log_file, "a", buffering=1, encoding="utf-8")
+
+    def log(self, msg: str) -> None:
+        ts = datetime.now().strftime("%H:%M:%S")
+        line = f"[{ts}] {msg}"
+        print(line, flush=True)
+        self._fh.write(line + "\n")
+        self._fh.flush()
+
+    def close(self) -> None:
+        self._fh.close()
 
 
 # ─────────────────────────────────────────────────────────────────────────────
@@ -338,7 +366,8 @@ def _build_team(condition: str, output_dir: Path) -> Team:
         ]
 
     members = [
-        Agent(name=name, role=role, instructions=instr, model=model, tools=tools)
+        Agent(name=name, role=role, instructions=instr, model=model, tools=tools,
+              tool_call_limit=30)
         for name, role, instr in specs
     ]
 
@@ -347,6 +376,7 @@ def _build_team(condition: str, output_dir: Path) -> Team:
         members=members,
         model=model,
         mode=TeamMode.coordinate,
+        max_iterations=100,
     )
 
 
@@ -389,16 +419,14 @@ def _collect_metrics(output_dir: Path) -> dict:
 # SINGLE CONDITION RUNNER
 # ─────────────────────────────────────────────────────────────────────────────
 
-def run_condition(condition: str, run_dir: Path) -> dict:
+def run_condition(condition: str, run_dir: Path, logger: "RunLogger") -> dict:
     """Run one condition inside its isolated output directory."""
     output_dir = (run_dir / condition).resolve()
     output_dir.mkdir(parents=True, exist_ok=True)
 
     label = "Annotation Protocol" if condition == "a" else "Standard Practices"
-    print(f"\n{'='*68}")
-    print(f"  CONDITION {condition.upper()} — {label}")
-    print(f"  DIR: {output_dir}")
-    print(f"{'='*68}\n")
+    logger.log(f"=== CONDITION {condition.upper()} — {label} ===")
+    logger.log(f"Output dir: {output_dir}")
 
     original_cwd = Path.cwd()
     result: dict = {
@@ -416,14 +444,63 @@ def run_condition(condition: str, run_dir: Path) -> dict:
 
     try:
         os.chdir(output_dir)
+        logger.log(f"[{condition.upper()}] Building team...")
         team = _build_team(condition, output_dir)
-        resp = team.run(SHARED_TASK)
-        result["agent_response_preview"] = str(resp)[:800]
+        logger.log(f"[{condition.upper()}] Team ready — starting task...")
+        chunks = []
+        _last_member = None
+        _error_events: list[str] = []
+        _SKIP = {"RunContentEvent", "RunResponseContentEvent",
+                 "TeamRunResponseContentEvent", "AgentRunResponseContentEvent"}
+        for event in team.run(SHARED_TASK, stream=True):
+            event_type = type(event).__name__
+            chunks.append(str(event))
+
+            # detect and log agent-level error events (e.g. RunErrorEvent, TeamRunErrorEvent)
+            if "Error" in event_type:
+                err_content = (getattr(event, "content", None)
+                               or getattr(event, "error", None)
+                               or event_type)
+                _error_events.append(str(err_content))
+                logger.log(f"[{condition.upper()}] ERROR EVENT ({event_type}): {str(err_content)[:120]}")
+                continue
+
+            # skip token-level streaming events
+            if event_type in _SKIP:
+                continue
+
+            member = (getattr(event, "member_name", None)
+                      or getattr(event, "agent_name", None)
+                      or "Team")
+            tool   = getattr(event, "tool_name", None)
+            tool_args = getattr(event, "tool_args", None) or getattr(event, "function_call", None)
+
+            if tool:
+                args_str = ""
+                if isinstance(tool_args, dict):
+                    # show first meaningful arg (e.g. file path or command)
+                    first = next(iter(tool_args.values()), "")
+                    args_str = f" ({str(first)[:60]})"
+                logger.log(f"[{condition.upper()}] {member} → {tool}{args_str}")
+            else:
+                # log member transitions and task-level events
+                if member != _last_member:
+                    logger.log(f"[{condition.upper()}] → {member} [{event_type}]")
+                    _last_member = member
+                elif event_type not in ("RunEvent", "TeamRunEvent"):
+                    content = getattr(event, "content", None)
+                    if content and len(str(content)) > 20:
+                        snippet = str(content)[:100].replace("\n", " ")
+                        logger.log(f"[{condition.upper()}] {member}: {snippet}")
+
+        result["agent_response_preview"] = "".join(chunks)[:800]
+        if _error_events:
+            result["error"] = "; ".join(_error_events[:3])
         result["success"] = True
-        print(f"\n  [CONDITION {condition.upper()}] Done.")
+        logger.log(f"[{condition.upper()}] Task completed successfully.")
     except Exception as exc:
         result["error"] = str(exc)
-        print(f"\n  [CONDITION {condition.upper()}] Error: {exc}")
+        logger.log(f"[{condition.upper()}] ERROR: {exc}")
     finally:
         os.chdir(original_cwd)
 
@@ -433,6 +510,18 @@ def run_condition(condition: str, run_dir: Path) -> dict:
          datetime.fromisoformat(result["start_time"])).total_seconds(), 1
     )
     result["metrics"] = _collect_metrics(output_dir)
+    m = result["metrics"]
+    # downgrade success if no files were produced — indicates a silent agent failure
+    if result["success"] and m.get("python_file_count", 0) == 0:
+        result["success"] = False
+        if not result["error"]:
+            result["error"] = "No Python files produced — agent may have failed silently"
+        logger.log(f"[{condition.upper()}] WARNING: 0 files produced — marking success=False")
+    logger.log(
+        f"[{condition.upper()}] Metrics: files={m.get('python_file_count',0)}"
+        f" LOC={m.get('total_lines_of_code',0)}"
+        f" annotated={m.get('annotation_coverage_pct',0):.1f}%"
+    )
     return result
 
 
@@ -484,10 +573,74 @@ def list_runs() -> None:
 # MAIN RUNNER
 # ─────────────────────────────────────────────────────────────────────────────
 
+def _load_partial_results(run_dir: Path) -> dict:
+    """Load already-completed condition results from a partial run.
+
+    Rules:   A condition is considered complete only if its result JSON exists
+             AND success=True; partial/errored conditions are re-run.
+    """
+    partial_file = run_dir / "partial_results.json"
+    if partial_file.exists():
+        try:
+            return json.loads(partial_file.read_text())
+        except (OSError, json.JSONDecodeError):
+            pass
+    return {}
+
+
+def _save_partial_results(run_dir: Path, results: dict) -> None:
+    """Persist completed condition results so a resumed run can skip them."""
+    (run_dir / "partial_results.json").write_text(
+        json.dumps(results, indent=2, ensure_ascii=False)
+    )
+
+
+def resume_experiment(run_id: str) -> dict:
+    """Resume an interrupted run — skip already-successful conditions.
+
+    Rules:   Only conditions with success=False or missing are re-run;
+             files already generated are preserved.
+    """
+    run_dir = RUNS_ROOT / run_id
+    if not run_dir.exists():
+        print(f"  Run not found: {run_id}")
+        sys.exit(1)
+
+    partial = _load_partial_results(run_dir)
+    done = {c for c, r in partial.items()
+            if r.get("success") and r.get("metrics", {}).get("python_file_count", 0) > 0}
+    todo = [c for c in ("a", "b") if c not in done]
+
+    print(f"\n{'#'*68}")
+    print(f"  RESUME    : {run_id}")
+    print(f"  Already done : {', '.join(done) or 'none'}")
+    print(f"  To run       : {', '.join(todo) or 'none — already complete!'}")
+    print(f"{'#'*68}")
+
+    if not todo:
+        print("  Nothing to do.")
+        return partial
+
+    logger = RunLogger(run_dir)
+    logger.log(f"Resuming run_id={run_id} — skipping {done}, running {set(todo)}")
+
+    results = dict(partial)
+    for cond in todo:
+        results[cond] = run_condition(cond, run_dir, logger)
+        _save_partial_results(run_dir, results)
+
+    final = {"run_id": run_id, "run_dir": str(run_dir), "conditions": results}
+    cmp_file = run_dir / "comparison.json"
+    cmp_file.write_text(json.dumps(final, indent=2, ensure_ascii=False))
+    logger.log("Resume complete — comparison.json saved.")
+    logger.close()
+    return final
+
+
 def run_experiment(condition: str = "both") -> dict:
     """Create a fresh timestamped run and execute the requested condition(s).
 
-    Rules:   Never reuses an existing run_id.
+    Rules:   Never reuses an existing run_id; use resume_experiment() to continue.
     """
     run_id = f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
     run_dir = RUNS_ROOT / run_id
@@ -500,14 +653,22 @@ def run_experiment(condition: str = "both") -> dict:
     print(f"  OUTPUT    : {run_dir}")
     print(f"{'#'*68}")
 
+    logger = RunLogger(run_dir)
+    logger.log(f"Experiment started — run_id={run_id}  condition={condition}")
+    logger.log(f"Run dir: {run_dir}")
+
     to_run = ["a", "b"] if condition == "both" else [condition]
     results: dict = {"run_id": run_id, "run_dir": str(run_dir), "conditions": {}}
 
     for cond in to_run:
-        results["conditions"][cond] = run_condition(cond, run_dir)
+        results["conditions"][cond] = run_condition(cond, run_dir, logger)
+        # persist after each condition so resume can skip it
+        _save_partial_results(run_dir, results["conditions"])
 
     cmp_file = run_dir / "comparison.json"
     cmp_file.write_text(json.dumps(results, indent=2, ensure_ascii=False))
+    logger.log(f"Experiment finished — comparison.json saved.")
+    logger.close()
 
     print(f"\n{'='*68}")
     print("  SUMMARY")
@@ -560,6 +721,8 @@ Examples:
                      help="Delete a specific run by ID")
     cli.add_argument("--list-runs", action="store_true",
                      help="List all saved runs with quick stats")
+    cli.add_argument("--resume-run", metavar="RUN_ID",
+                     help="Resume an interrupted run — skips already-successful conditions")
     args = cli.parse_args()
 
     if args.reset:
@@ -569,5 +732,7 @@ Examples:
         reset_runs(args.clean_run)
     elif args.list_runs:
         list_runs()
+    elif args.resume_run:
+        resume_experiment(args.resume_run)
     else:
         run_experiment(args.condition)
