@@ -1,0 +1,17 @@
+# Game Engine Dependencies
+# Game Engine Dependencies
+# Core requirements for running the game
+
+pygame>=2.5.0  # 2D rendering and input
+PyOpenGL>=3.1.0  # 3D rendering (optional)
+glfw>=2.5.0  # Window management for OpenGL
+PyGLM>=2.6.0  # Math library
+Pillow>=9.0.0  # Image processing
+
+# Development dependencies (optional)
+# numpy>=1.21.0  # For advanced math operations
+# pydantic>=1.9.0  # For data validation
+
+# Testing dependencies
+pytest>=7.0.0
+pytest-benchmark>=3.4.0

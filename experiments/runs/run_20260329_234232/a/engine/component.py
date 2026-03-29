@@ -1,9 +1,9 @@
-"""component.py — Component base class for ECS data storage.
+"""component.py - Component base class for ECS data storage.
 
 exports: Component class
 used_by: gameplay/components/*.py
 rules:   Components must be plain data classes, no logic
-agent:   Game Director | 2024-01-15 | Defined Component interface
+agent:   Game Director | 2024-1-15 | Defined Component interface
 """
 
 from abc import ABC

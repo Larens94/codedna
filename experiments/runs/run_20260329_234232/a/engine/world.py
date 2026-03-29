@@ -1,9 +1,9 @@
-"""world.py — ECS World managing entities, components, and systems.
+"""world.py - ECS World managing entities, components, and systems.
 
 exports: World class
 used_by: gameplay/game.py → Game._world
 rules:   Must support 10,000+ entities at 60 FPS, archetype-based storage
-agent:   Game Director | 2024-01-15 | Defined World public interface
+agent:   Game Director | 2024-1-15 | Defined World public interface
 """
 
 from typing import Dict, List, Set, Type, Any, Optional

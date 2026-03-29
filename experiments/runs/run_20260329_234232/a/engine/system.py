@@ -1,9 +1,9 @@
-"""system.py — System base class for ECS logic.
+"""system.py - System base class for ECS logic.
 
 exports: System class
 used_by: gameplay/systems/*.py
 rules:   Systems contain logic, no data storage
-agent:   Game Director | 2024-01-15 | Defined System interface
+agent:   Game Director | 2024-1-15 | Defined System interface
 """
 
 from abc import ABC, abstractmethod

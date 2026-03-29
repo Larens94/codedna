@@ -1,0 +1,34 @@
+{
+  "game": {
+    "title": "2D RPG Demo",
+    "version": "1.0.0",
+    "target_fps": 60
+  },
+  "window": {
+    "width": 1280,
+    "height": 720,
+    "fullscreen": false,
+    "vsync": true
+  },
+  "player": {
+    "starting_health": 100,
+    "starting_gold": 10,
+    "inventory_slots": 20,
+    "weight_capacity": 50.0
+  },
+  "enemies": {
+    "goblin": {
+      "health": 50,
+      "damage": 5.0,
+      "experience": 25,
+      "speed": 3.0
+    }
+  },
+  "items": {
+    "health_potion": {
+      "heal_amount": 50,
+      "weight": 0.5,
+      "value": 25
+    }
+  }
+}

@@ -1,9 +1,9 @@
-"""entity.py — Entity class representing game objects.
+"""entity.py - Entity class representing game objects.
 
 exports: Entity class
 used_by: gameplay/, systems querying entities
 rules:   Entity is a lightweight handle, all data in components
-agent:   Game Director | 2024-01-15 | Defined Entity interface
+agent:   Game Director | 2024-1-15 | Defined Entity interface
 """
 
 from typing import Optional, Type
