@@ -9,6 +9,7 @@ agent:   Game Director | 2024-1-15 | Defined World public interface
 from typing import Dict, List, Set, Type, Any, Optional
 from dataclasses import dataclass
 import time
+from .entity import Entity
 
 
 @dataclass
@@ -68,9 +69,10 @@ class World:
         self._entities.add(entity_id)
         
         # Start entity in empty archetype
-        empty_archetype = self._get_or_create_archetype(set())
-        self._entity_archetype_map[entity_id] = empty_archetype
-        
+        empty_archetype_idx = self._get_or_create_archetype(set())
+        self._entity_archetype_map[entity_id] = empty_archetype_idx
+        self._archetypes[empty_archetype_idx].entities.append(entity_id)
+
         return Entity(entity_id, self)
     
     def destroy_entity(self, entity: 'Entity') -> None:
@@ -317,48 +319,36 @@ class World:
             entity_idx = from_archetype.entities.index(entity_id)
         except ValueError:
             return
-            
+
+        # Capture existing component data BEFORE removal
+        saved: Dict[Any, Any] = {
+            comp_type: from_archetype.component_data[comp_type][entity_idx]
+            for comp_type in from_archetype.component_types
+        }
+
         # Remove from source (swap with last for O(1) removal)
         last_idx = len(from_archetype.entities) - 1
         if entity_idx != last_idx:
-            # Swap with last entity
             last_entity_id = from_archetype.entities[last_idx]
             from_archetype.entities[entity_idx] = last_entity_id
-            
-            # Update component data
             for comp_type, data_list in from_archetype.component_data.items():
                 data_list[entity_idx] = data_list[last_idx]
-                data_list.pop()
-                
-            # Update mapping for swapped entity
             self._entity_archetype_map[last_entity_id] = from_idx
-            
-            # Entity index is now last_idx (since we swapped)
-            entity_idx = last_idx
-            
-        # Remove from source
+
         from_archetype.entities.pop()
         for data_list in from_archetype.component_data.values():
             data_list.pop()
-            
-        # Add to destination
+
+        # Add to destination with properly copied data
         to_archetype.entities.append(entity_id)
-        
-        # Copy existing component data
         for comp_type in to_archetype.component_types:
-            if comp_type in from_archetype.component_types:
-                # Copy from source
-                data_idx = list(from_archetype.component_types).index(comp_type)
-                # Note: We already removed from source, so we need to get from original position
-                # This is simplified - in real implementation would need to store before removal
-                to_archetype.component_data[comp_type].append(None)  # Placeholder
-            elif new_component and type(new_component) == comp_type:
-                # Add new component
+            if comp_type in saved:
+                to_archetype.component_data[comp_type].append(saved[comp_type])
+            elif new_component is not None and type(new_component) == comp_type:
                 to_archetype.component_data[comp_type].append(new_component)
             else:
-                # New empty component
                 to_archetype.component_data[comp_type].append(comp_type())
-                
+
         # Update mapping
         self._entity_archetype_map[entity_id] = to_idx
     

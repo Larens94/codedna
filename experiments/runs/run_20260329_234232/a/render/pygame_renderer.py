@@ -110,11 +110,8 @@ class PygameRenderer:
             # Set viewport size
             self._viewport_size = (width, height)
             
-            # Initialize font system
-            pygame.font.init()
-            
-            # Create default font
-            self._default_font = pygame.font.Font(None, 24)
+            # Initialize font system (Python 3.14 workaround: skip font init)
+            self._default_font = None
             
             self._initialized = True
             logger.info(f"Pygame renderer initialized: {width}x{height}")

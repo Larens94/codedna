@@ -35,6 +35,11 @@ class Entity:
     def id(self) -> int:
         """Get entity ID."""
         return self._id
+
+    @property
+    def entity_id(self) -> int:
+        """Alias for id — compatibility with game.py."""
+        return self._id
     
     def add_component(self, component: Component) -> 'Entity':
         """Add a component to this entity.

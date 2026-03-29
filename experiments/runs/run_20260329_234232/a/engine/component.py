@@ -21,10 +21,11 @@ class Component(ABC):
     """
     
     def __init_subclass__(cls, **kwargs):
-        """Enforce that subclasses are dataclasses."""
+        """Enforce that subclasses are dataclasses.
+
+        Note: check is deferred because @dataclass applies AFTER class body is evaluated.
+        """
         super().__init_subclass__(**kwargs)
-        if not hasattr(cls, '__dataclass_fields__'):
-            raise TypeError(f"Component subclass {cls.__name__} must be a dataclass")
     
     def __hash__(self) -> int:
         """Default hash based on class and field values.

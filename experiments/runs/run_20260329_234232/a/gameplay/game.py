@@ -103,12 +103,9 @@ class Game:
             self._systems.append(movement_system)
             
             # Player system (priority 10 - handles input)
-            if self._renderer and hasattr(self._renderer, '_window'):
-                player_system = PlayerSystem(self._renderer._window)
-                self._world.add_system(player_system, priority=10)
-                self._systems.append(player_system)
-            else:
-                logger.warning("Renderer window not available, PlayerSystem not initialized")
+            player_system = PlayerSystem()
+            self._world.add_system(player_system, priority=10)
+            self._systems.append(player_system)
             
             # Combat system (priority 20 - handles combat logic)
             combat_system = CombatSystem()
@@ -181,13 +178,11 @@ class Game:
         ))
         npc.add_component(Position(x=-5, y=0, z=0))
         npc.add_component(Dialogue(
-            current_state="idle",
-            available_quests=["find_lost_ring"]
+            node_id="greeting",
+            text="Welcome traveler! I have a quest for you."
         ))
         npc.add_component(Behavior(
-            behavior_type="stationary",
-            patrol_route=[],
-            idle_animation="stand"
+            patrol_route=[]
         ))
         
         logger.info(f"Created NPC entity: {npc.entity_id}")
@@ -212,17 +207,9 @@ class Game:
             quest_id="find_lost_ring",
             title="Find the Lost Ring",
             description="The merchant lost his precious ring in the forest",
-            objectives=[Objective(
-                objective_id="find_ring",
-                description="Find the merchant's lost ring",
-                target_type="item",
-                target_id="lost_ring",
-                required_count=1,
-                completed=False
-            )],
-            rewards=[{"type": "experience", "amount": 100}, {"type": "gold", "amount": 50}],
-            giver_entity_id=npc.entity_id,
-            available=True
+            giver_id=npc.entity_id,
+            reward_xp=100,
+            reward_gold=50
         ))
         
         logger.info(f"Created quest entity: {quest.entity_id}")
@@ -264,10 +251,59 @@ class Game:
             # Begin frame
             if not self._renderer.begin_frame():
                 return
-            
-            # TODO: Add actual rendering logic here
-            # For now, just render a simple colored background
-            
+
+            screen = self._renderer._screen
+            W, H = screen.get_size()
+            SCALE = 60   # world units → pixels
+            OX, OY = W // 2, H // 2  # world origin at screen center
+
+            import pygame as _pg
+
+            # Draw grid
+            grid_color = (30, 30, 50)
+            for gx in range(-10, 11):
+                sx = OX + gx * SCALE
+                _pg.draw.line(screen, grid_color, (sx, 0), (sx, H))
+            for gy in range(-6, 7):
+                sy = OY + gy * SCALE
+                _pg.draw.line(screen, grid_color, (0, sy), (W, sy))
+
+            # Draw all entities with Position
+            from gameplay.components.movement import Position
+            from gameplay.components.player import Player
+            from gameplay.components.combat import Enemy, Health
+
+            for entity in self._world.query_entities({Position}):
+                pos = self._world.get_component(entity, Position)
+                sx = int(OX + pos.x * SCALE)
+                sy = int(OY - pos.y * SCALE)
+
+                has_player  = self._world.get_component(entity, Player)  is not None
+                has_enemy   = self._world.get_component(entity, Enemy)   is not None
+                health_comp = self._world.get_component(entity, Health)
+
+                if has_player:
+                    color, size, label = (50, 200, 80), 18, "PLAYER"
+                elif has_enemy:
+                    color, size, label = (220, 60, 60), 14, "GOBLIN"
+                else:
+                    color, size, label = (180, 180, 60), 10, "NPC"
+
+                _pg.draw.circle(screen, color, (sx, sy), size)
+                _pg.draw.circle(screen, (255, 255, 255), (sx, sy), size, 2)
+
+                # Health bar
+                if health_comp:
+                    bar_w = size * 2
+                    ratio = health_comp.current / max(health_comp.maximum, 1)
+                    _pg.draw.rect(screen, (80, 0, 0),   (sx - size, sy - size - 8, bar_w, 5))
+                    _pg.draw.rect(screen, (0, 220, 0),  (sx - size, sy - size - 8, int(bar_w * ratio), 5))
+
+            # HUD — entity count dot indicator (font unavailable on Python 3.14)
+            n = len(self._world.query_entities({Position}))
+            for i in range(n):
+                _pg.draw.circle(screen, (100, 200, 255), (10 + i * 14, 14), 5)
+
             # End frame
             self._renderer.end_frame()
             
