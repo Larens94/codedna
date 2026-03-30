@@ -11,7 +11,8 @@ from typing import Any, List
 from fastapi import APIRouter, Depends, HTTPException, status, Query
 from pydantic import EmailStr
 
-from app.services import ServiceContainer, get_services
+from app.services import ServiceContainer
+from app.dependencies import get_services
 from app.dependencies import get_current_user
 from app.api.v1.schemas import (
     UserCreate, UserUpdate, PasswordChange, UserResponse,

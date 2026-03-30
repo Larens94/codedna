@@ -43,7 +43,7 @@ class PaginationParams(BaseSchema):
     page: int = Field(default=1, ge=1, description="Page number (1-indexed)")
     per_page: int = Field(default=20, ge=1, le=100, description="Items per page")
     sort_by: Optional[str] = Field(default=None, description="Field to sort by")
-    sort_order: str = Field(default="desc", regex="^(asc|desc)$", description="Sort order: asc or desc")
+    sort_order: str = Field(default="desc", pattern="^(asc|desc)$", description="Sort order: asc or desc")
 
 
 class PaginatedResponse(GenericModel, Generic[DataT]):

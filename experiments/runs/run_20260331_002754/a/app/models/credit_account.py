@@ -289,7 +289,9 @@ class CreditTransaction(Base, TimestampMixin):
         return float(self.amount) > 0
     
     @property
-    is_debit = property(lambda self: float(self.amount) < 0)
+    def is_debit(self) -> bool:
+        """True if this transaction is a debit (amount < 0)."""
+        return float(self.amount) < 0
     
     def mark_expired(self) -> None:
         """Mark transaction as expired."""

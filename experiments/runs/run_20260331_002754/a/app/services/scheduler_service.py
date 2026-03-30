@@ -58,8 +58,9 @@ class SchedulerService:
         self.scheduler: Optional[AsyncIOScheduler] = None
         
         # Job store URL (uses same database as application)
+        # Strip async driver suffix: postgresql+asyncpg:// -> postgresql://
         self.job_store_url = str(self.config.DATABASE_URL).replace(
-            "asyncpg", "postgresql"
+            "+asyncpg", ""
         ) + "?application_name=agenthub_scheduler"
         
         logger.info("SchedulerService initialized")

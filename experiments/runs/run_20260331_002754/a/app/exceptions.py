@@ -388,3 +388,15 @@ def setup_exception_handlers(app: FastAPI) -> None:
     app.add_exception_handler(Exception, generic_exception_handler)
     
     logger.info("Exception handlers setup complete")
+
+
+# ── Aliases for services that use alternate names ─────────────────────────────
+AuthenticationError = AuthError
+AuthorizationError  = PermissionError
+InvalidTokenError   = AuthError
+
+
+class ConflictError(AgentHubError):
+    """Raised when a resource already exists or conflicts with existing state."""
+    def __init__(self, detail: str = "Conflict", **kwargs):
+        super().__init__(detail=detail, status_code=409, code="CONFLICT", **kwargs)

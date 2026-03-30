@@ -238,7 +238,7 @@ class AgentService:
         input_data: Dict[str, Any],
         execution_type: str = "sync",
         priority: int = 0,
-        requested_by: str,
+        requested_by: str = "",
     ) -> Dict[str, Any]:
         """Execute agent with input data.
         

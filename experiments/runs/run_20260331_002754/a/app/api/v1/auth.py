@@ -14,7 +14,8 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer, OAuth2PasswordRequestForm
 from pydantic import BaseModel, EmailStr, Field
 
-from app.services import ServiceContainer, get_services
+from app.services import ServiceContainer
+from app.dependencies import get_services
 
 # Create router
 router = APIRouter(tags=["authentication"])

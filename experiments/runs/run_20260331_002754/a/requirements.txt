@@ -37,7 +37,7 @@ stripe==7.5.0
 
 # Background Tasks
 celery==5.3.4
-redis==5.0.1
+apscheduler==3.10.4
 
 # Monitoring & Logging
 sentry-sdk[fastapi]==1.38.0

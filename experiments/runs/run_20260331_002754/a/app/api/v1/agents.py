@@ -12,7 +12,8 @@ from typing import Any, List, Optional
 from fastapi import APIRouter, Depends, HTTPException, status, Query, Path, Header
 from fastapi.responses import StreamingResponse
 
-from app.services import ServiceContainer, get_services
+from app.services import ServiceContainer
+from app.dependencies import get_services
 from app.dependencies import get_current_user
 from app.api.v1.schemas import (
     AgentCreate, AgentUpdate, AgentResponse, AgentListResponse,

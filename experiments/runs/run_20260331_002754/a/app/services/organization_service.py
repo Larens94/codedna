@@ -158,7 +158,7 @@ class OrganizationService:
         organization_id: str,
         email: str,
         role: str = "member",
-        invited_by: str,
+        invited_by: str = "",
     ) -> Dict[str, Any]:
         """Add member to organization.
         

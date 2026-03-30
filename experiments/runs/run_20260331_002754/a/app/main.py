@@ -63,11 +63,11 @@ def create_app(config: Optional[Config] = None) -> FastAPI:
     
     # 5. Initialize core infrastructure
     logger.info("Initializing database connection...")
-    db = Database(config.DATABASE_URL)
+    db = Database(str(config.DATABASE_URL))
     app.state.db = db
-    
+
     logger.info("Initializing Redis client...")
-    redis_client = RedisClient(config.REDIS_URL)
+    redis_client = RedisClient(str(config.REDIS_URL))
     app.state.redis = redis_client
     
     # 6. Initialize service container
