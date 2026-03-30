@@ -1,0 +1,54 @@
+{
+  "run_id": "run_20260329_234232",
+  "run_dir": "/Users/fabriziocorpora/Desktop/automation-lab/dynamic-bi-factory/codedna/experiments/runs/run_20260329_234232",
+  "conditions": {
+    "a": {
+      "condition": "a",
+      "label": "Annotation Protocol",
+      "output_dir": "/Users/fabriziocorpora/Desktop/automation-lab/dynamic-bi-factory/codedna/experiments/runs/run_20260329_234232/a",
+      "start_time": "2026-03-29T23:42:32.111737",
+      "end_time": "2026-03-30T01:41:39.850487",
+      "duration_seconds": 7147.7,
+      "success": true,
+      "error": "2 validation errors for FileTools.read_file\nstart_line\n  Unexpected keyword argument [type=unexpected_keyword_argument, input_value=1, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.12/v/unexpected_keyword_argument\nend_line\n  Unexpected keyword argument [type=unexpected_keyword_argument, input_value=10, input_type=int]\n    For further information visit https://errors.pydantic.dev/2.12/v/unexpected_keyword_argument",
+      "agent_response_preview": "RunContentEvent(created_at=1774798953, event='TeamRunContent', team_id='rpg-dev-team-[a]', team_name='RPG Dev Team [A]', run_id='65e0808c-c927-4380-bbad-0ed3b6293021', parent_run_id=None, session_id='abd0e8c9-8803-492d-87d1-f39109c8c04a', workflow_id=None, workflow_run_id=None, step_id=None, step_name=None, step_index=None, content='', content_type='str', reasoning_content='', model_provider_data={'id': 'fb8af2ed-a4cc-441d-b7e4-253c2271439e', 'system_fingerprint': 'fp_eaab8d114b_prod0820_fp8_kvcache_new_kvcache'}, citations=None, response_audio=None, image=None, references=None, additional_input=None, reasoning_steps=None, reasoning_messages=None)RunContentEvent(created_at=1774798953, event='TeamRunContent', team_id='rpg-dev-team-[a]', team_name='RPG Dev Team [A]', run_id='65e0808c-c927-43",
+      "metrics": {
+        "python_file_count": 50,
+        "total_lines_of_code": 10194,
+        "files_with_annotation_header": 47,
+        "annotation_coverage_pct": 94.0,
+        "annotation_counts": {
+          "exports": 47,
+          "used_by": 47,
+          "rules": 47,
+          "agent": 47,
+          "message": 0
+        }
+      }
+    },
+    "b": {
+      "condition": "b",
+      "label": "Standard Practices",
+      "output_dir": "/Users/fabriziocorpora/Desktop/automation-lab/dynamic-bi-factory/codedna/experiments/runs/run_20260329_234232/b",
+      "start_time": "2026-03-30T01:41:39.853686",
+      "end_time": "2026-03-30T04:52:40.564919",
+      "duration_seconds": 11460.7,
+      "success": true,
+      "error": "[Errno 54] Connection reset by peer",
+      "agent_response_preview": "RunContentEvent(created_at=1774806101, event='TeamRunContent', team_id='rpg-dev-team-[b]', team_name='RPG Dev Team [B]', run_id='c6bcfc82-68c8-4b43-88ff-edcc9402e707', parent_run_id=None, session_id='232cd94c-9fcf-4720-a2c8-59da8f301d02', workflow_id=None, workflow_run_id=None, step_id=None, step_name=None, step_index=None, content='', content_type='str', reasoning_content='', model_provider_data={'id': 'cc2f7582-5a1d-4d2f-942c-906f5f9fb885', 'system_fingerprint': 'fp_eaab8d114b_prod0820_fp8_kvcache_new_kvcache'}, citations=None, response_audio=None, image=None, references=None, additional_input=None, reasoning_steps=None, reasoning_messages=None)RunContentEvent(created_at=1774806101, event='TeamRunContent', team_id='rpg-dev-team-[b]', team_name='RPG Dev Team [B]', run_id='c6bcfc82-68c8-4b",
+      "metrics": {
+        "python_file_count": 45,
+        "total_lines_of_code": 14096,
+        "files_with_annotation_header": 0,
+        "annotation_coverage_pct": 0.0,
+        "annotation_counts": {
+          "exports": 0,
+          "used_by": 0,
+          "rules": 0,
+          "agent": 0,
+          "message": 0
+        }
+      }
+    }
+  }
+}
