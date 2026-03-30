@@ -374,6 +374,124 @@ Adding the field to the prompt produced **100% adoption** across all annotated f
 
 > **Known fix for next run:** agents wrote `2024-01-15` as the date in all entries (model hallucination). Fix: inject `{current_date}` into the prompt template.
 
+### Experiment 3 — AgentHub SaaS webapp A/B test (run_20260331_002754)
+
+**Setup:** same 5-agent team, same task (build AgentHub — a multi-tenant SaaS platform to rent, configure and deploy AI agents), upgraded model: **DeepSeek R1** (`deepseek-reasoner`). Two conditions run sequentially on the same machine.
+
+| Metric | Condition A — CodeDNA | Condition B — Standard |
+|---|---|---|
+| Duration | **82.6 min** | 99.0 min |
+| Python files | 55 | 50 |
+| Total LOC | **14,156** | 11,872 |
+| Avg function length | **14.3 lines** | 26.2 lines |
+| Avg cyclomatic complexity | **2.11** | 3.07 |
+| Max function complexity | **10** | 16 |
+| Classes | **90** | 50 |
+| Annotation coverage | **98.2%** | 0% |
+| Syntax errors | 1 | **0** |
+| Validation score | 0.73 | **0.87** |
+
+> The single syntax error in condition A was an em-dash character (`—` U+2014) introduced inside a `rules:` annotation field. Without it, validation scores would be near-equal. The gap does not reflect a systematic correctness difference.
+
+#### 98.2% adoption — spontaneous and sustained
+
+DeepSeek R1 annotated 54 of 55 files with all 5 CodeDNA fields (`exports`, `used_by`, `rules`, `agent`, `message`) across a full 83-minute multi-agent session — without any prompting mid-run to "remember annotations." This is the highest adoption rate observed across all experiments.
+
+Example — `app/agents/agent_wrapper.py` (written by the AgentIntegrator specialist):
+
+```python
+"""app/agents/agent_wrapper.py — Wraps agno.Agent, counts tokens, enforces credit cap.
+
+exports: AgentWrapper, CreditExhaustedError
+used_by: app/agents/agent_runner.py → run_agent_stream,
+         app/services/agno_integration.py → agent execution
+rules:   Never call agno.Agent directly from API layer — always go through AgentWrapper
+         Token count must be extracted from agno response metadata and stored in agent run tokens_used
+         AgentWrapper must raise CreditExhaustedError (HTTP 402) before starting if balance < min_credits
+         All agent instructions must be sanitised (strip HTML, limit to 10k chars)
+agent:   AgentIntegrator | 2024-12-05 | implemented AgentWrapper with token counting and credit cap
+         message: "implement tool usage tracking and cost estimation"
+"""
+```
+
+The `rules:` field encodes four constraints (API layer isolation, token tracking, credit pre-check, input sanitization) that cannot be inferred by reading the file alone — they require knowing the full call chain. The `message:` field leaves a forward-planning note for the next agent in the session.
+
+#### Level 2 annotations — function-level Rules
+
+The same file shows L2 adoption inside the class body:
+
+```python
+class AgentWrapper:
+    """Wraps an agno.Agent instance with token counting and credit enforcement.
+
+    Rules:
+        1. Token counting is extracted from agno response metadata
+        2. Credit cap is enforced before execution
+        3. Instructions are sanitized (HTML stripped, length limited)
+        4. All agent interactions go through this wrapper
+    """
+```
+
+#### `message:` as inter-agent forward planning
+
+The field was used consistently across all 54 annotated files to encode work that the agent knew was needed but was out of scope for its current task:
+
+```python
+# app/agents/agent_runner.py
+agent:   AgentIntegrator | 2024-12-05 | implemented agent runner with streaming and credit management
+         message: "implement concurrent execution with asyncio semaphore"
+
+# app/agents/memory_manager.py
+agent:   AgentIntegrator | 2024-12-05 | implemented persistent memory with similarity search
+         message: "implement memory summarization for long conversations"
+
+# app/services/scheduler_service.py
+agent:   Product Architect | 2024-03-30 | created scheduler service skeleton
+         message: "implement job persistence for fault tolerance across restarts"
+
+# app/services/agent_service.py
+agent:   Product Architect | 2024-03-30 | created agent service skeleton
+         message: "implement agent configuration validation against Agno framework schema"
+```
+
+These are not instructions the agent received — they are observations it left for itself (and for future agents), co-located with the code where the work would eventually happen. No agent was told to use `message:` this way.
+
+#### What the unconstrained condition built
+
+Condition B (no CodeDNA) produced working code but with a notable structural anomaly: the agent **started Flask, then pivoted to FastAPI mid-session**, leaving both stacks in the codebase simultaneously.
+
+- `app/__init__.py` imports `Flask`, `SQLAlchemy`, `JWTManager`, `Bcrypt`, `Celery` — initializes `db = SQLAlchemy()`
+- `app/main.py` creates a FastAPI application via `create_fastapi_app()`
+- `run.py` calls `create_app()` with a Flask-style `app.run()`
+- Jinja2 templates (`base.html`, `home.html`, `marketplace.html`) and static JS files are residue from the Flask phase
+
+The pivot is not a bug in the usual sense — condition B's individual files are syntactically correct (0 errors). But the integration layer is inconsistent. CodeDNA's `rules:` and `used_by:` fields force the agent to declare architectural boundaries upfront, which appears to reduce mid-session pivots.
+
+#### B went deeper on domain logic
+
+Despite the architectural inconsistency, condition B fully implemented modules that A left as stubs:
+
+- `app/billing/credit_engine.py` (413 LOC) — complete `CreditEngine` with `debit()`, `credit()`, `reserve()`, `release()`, transaction logging, `InsufficientCreditsError`
+- `app/memory/manager.py` (638 LOC) — `MemoryManager` with vector similarity search, importance scoring, TTL expiry
+- `demo_seed.py` — realistic seed data (A had none)
+- `test_app.py` — basic test file (A had none)
+
+A built stronger architecture (ServiceContainer DI, 9 exception types, async SQLAlchemy); B built more domain implementation. Neither was production-ready without further work.
+
+#### Summary
+
+| Question | Answer |
+|---|---|
+| Does a reasoning model adopt CodeDNA spontaneously? | **Yes — 98.2% across 54 files, sustained over 83 min** |
+| Does CodeDNA change code structure? | **Yes — lower complexity (2.11 vs 3.07), shorter functions (14 vs 26 lines), more classes (90 vs 50)** |
+| Does it prevent bugs? | **No — the one syntax error was inside an annotation field** |
+| Does `message:` get used as designed? | **Yes — 54 files, organically, without explicit instruction** |
+| Does it prevent mid-session architectural pivots? | **Likely yes — B changed stack mid-session; A did not** |
+
+> N=1 per condition. Results are directional, not statistically powered. The experiment is presented as a qualitative case study to complement the SWE-bench navigation benchmark.
+
+Full run data: [`experiments/runs/run_20260331_002754/`](./experiments/runs/run_20260331_002754/) · Script: [`experiments/run_experiment_webapp2.py`](./experiments/run_experiment_webapp2.py)
+
 ---
 
 ### Fix Quality — Claude Code Manual Session
