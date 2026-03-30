@@ -1,0 +1,353 @@
+{% extends "base.html" %}
+
+{% block title %}Home - AgentHub{% endblock %}
+
+{% block page_title %}Dashboard Overview{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Welcome Banner -->
+    <div class="bg-gradient-to-r from-primary-900/30 to-primary-800/30 border border-primary-700/50 rounded-2xl p-6 md:p-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">Welcome back, <span class="text-primary-300">{{ current_user.username if current_user else 'Guest' }}</span>!</h1>
+                <p class="text-gray-300">Monitor your agent usage, manage subscriptions, and explore the marketplace.</p>
+            </div>
+            <div class="mt-4 md:mt-0">
+                <a href="/marketplace" class="btn btn-primary inline-flex items-center">
+                    <i class="fas fa-store mr-2"></i>
+                    Explore Marketplace
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-sm">Available Credits</p>
+                    <h3 class="text-2xl font-bold mt-1">$<span id="creditsAmount">{{ "%.2f"|format(current_user.billing_account.credits) if current_user and current_user.billing_account else "0.00" }}</span></h3>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-green-500/20 to-green-600/20 flex items-center justify-center">
+                    <i class="fas fa-coins text-green-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <a href="/billing" class="text-primary-400 hover:text-primary-300 text-sm font-medium inline-flex items-center">
+                    Add Credits
+                    <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-sm">Active Agents</p>
+                    <h3 class="text-2xl font-bold mt-1" id="activeAgentsCount">{{ active_agents_count if active_agents_count else 0 }}</h3>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center">
+                    <i class="fas fa-robot text-blue-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <a href="/studio" class="text-primary-400 hover:text-primary-300 text-sm font-medium inline-flex items-center">
+                    Create Agent
+                    <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-sm">Monthly Usage</p>
+                    <h3 class="text-2xl font-bold mt-1">$<span id="monthlyUsage">{{ "%.2f"|format(monthly_usage) if monthly_usage else "0.00" }}</span></h3>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center">
+                    <i class="fas fa-chart-line text-purple-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <a href="/dashboard" class="text-primary-400 hover:text-primary-300 text-sm font-medium inline-flex items-center">
+                    View Details
+                    <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+        </div>
+
+        <div class="bg-gray-800/50 border border-gray-700 rounded-xl p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-gray-400 text-sm">Scheduled Tasks</p>
+                    <h3 class="text-2xl font-bold mt-1" id="scheduledTasksCount">{{ scheduled_tasks_count if scheduled_tasks_count else 0 }}</h3>
+                </div>
+                <div class="w-12 h-12 rounded-full bg-gradient-to-br from-orange-500/20 to-orange-600/20 flex items-center justify-center">
+                    <i class="fas fa-clock text-orange-400 text-xl"></i>
+                </div>
+            </div>
+            <div class="mt-4">
+                <a href="/scheduler" class="text-primary-400 hover:text-primary-300 text-sm font-medium inline-flex items-center">
+                    Manage Tasks
+                    <i class="fas fa-arrow-right ml-1"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Agent Runs -->
+    <div class="bg-gray-800/30 border border-gray-700 rounded-xl p-6">
+        <div class="flex items-center justify-between mb-6">
+            <h2 class="text-xl font-bold">Recent Agent Runs</h2>
+            <a href="/dashboard" class="text-primary-400 hover:text-primary-300 text-sm font-medium">View All</a>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full table-striped">
+                <thead>
+                    <tr class="text-left text-gray-400 border-b border-gray-700">
+                        <th class="pb-3 font-medium">Agent</th>
+                        <th class="pb-3 font-medium">Status</th>
+                        <th class="pb-3 font-medium">Duration</th>
+                        <th class="pb-3 font-medium">Cost</th>
+                        <th class="pb-3 font-medium">Time</th>
+                        <th class="pb-3 font-medium">Actions</th>
+                    </tr>
+                </thead>
+                <tbody id="recentRunsTable">
+                    <!-- Will be populated by JavaScript -->
+                    <tr>
+                        <td colspan="6" class="py-8 text-center text-gray-500">
+                            <i class="fas fa-spinner fa-spin mr-2"></i>
+                            Loading recent runs...
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="bg-gray-800/30 border border-gray-700 rounded-xl p-6">
+            <div class="flex items-center mb-4">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center mr-4">
+                    <i class="fas fa-bolt text-blue-400"></i>
+                </div>
+                <h3 class="font-bold text-lg">Quick Start</h3>
+            </div>
+            <p class="text-gray-400 mb-4">Launch a pre-built agent from the marketplace in seconds.</p>
+            <a href="/marketplace?filter=popular" class="btn btn-outline w-full justify-center">
+                <i class="fas fa-rocket mr-2"></i>
+                Launch Agent
+            </a>
+        </div>
+
+        <div class="bg-gray-800/30 border border-gray-700 rounded-xl p-6">
+            <div class="flex items-center mb-4">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-green-500/20 to-green-600/20 flex items-center justify-center mr-4">
+                    <i class="fas fa-code text-green-400"></i>
+                </div>
+                <h3 class="font-bold text-lg">Build Custom</h3>
+            </div>
+            <p class="text-gray-400 mb-4">Create your own agent with our visual studio and code editor.</p>
+            <a href="/studio" class="btn btn-outline w-full justify-center">
+                <i class="fas fa-plus mr-2"></i>
+                Create Agent
+            </a>
+        </div>
+
+        <div class="bg-gray-800/30 border border-gray-700 rounded-xl p-6">
+            <div class="flex items-center mb-4">
+                <div class="w-10 h-10 rounded-lg bg-gradient-to-br from-purple-500/20 to-purple-600/20 flex items-center justify-center mr-4">
+                    <i class="fas fa-calendar-alt text-purple-400"></i>
+                </div>
+                <h3 class="font-bold text-lg">Schedule Tasks</h3>
+            </div>
+            <p class="text-gray-400 mb-4">Set up recurring agent runs with our cron-style scheduler.</p>
+            <a href="/scheduler" class="btn btn-outline w-full justify-center">
+                <i class="fas fa-clock mr-2"></i>
+                Schedule Task
+            </a>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Load recent agent runs via API
+    async function loadRecentRuns() {
+        try {
+            const response = await API.get('/agents/runs?limit=5');
+            const runs = response.data || [];
+            
+            const tableBody = document.getElementById('recentRunsTable');
+            if (!tableBody) return;
+            
+            if (runs.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="py-8 text-center text-gray-500">
+                            <i class="fas fa-inbox mr-2"></i>
+                            No agent runs yet. Launch your first agent!
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            tableBody.innerHTML = '';
+            
+            runs.forEach(run => {
+                const row = document.createElement('tr');
+                row.className = 'border-b border-gray-700/50 hover:bg-gray-800/30';
+                
+                // Format duration
+                let duration = 'N/A';
+                if (run.duration) {
+                    const secs = Math.floor(run.duration / 1000);
+                    if (secs < 60) duration = `${secs}s`;
+                    else if (secs < 3600) duration = `${Math.floor(secs / 60)}m`;
+                    else duration = `${Math.floor(secs / 3600)}h`;
+                }
+                
+                // Format cost
+                const cost = run.cost ? `$${run.cost.toFixed(4)}` : '$0.0000';
+                
+                // Format time
+                const time = new Date(run.created_at).toLocaleTimeString([], { 
+                    hour: '2-digit', 
+                    minute: '2-digit' 
+                });
+                
+                // Status badge
+                let statusClass = 'badge ';
+                let statusText = run.status || 'unknown';
+                switch (run.status) {
+                    case 'completed':
+                        statusClass += 'badge-success';
+                        break;
+                    case 'failed':
+                        statusClass += 'badge-danger';
+                        break;
+                    case 'running':
+                        statusClass += 'badge-primary';
+                        break;
+                    default:
+                        statusClass += 'badge-warning';
+                }
+                
+                row.innerHTML = `
+                    <td class="py-4">
+                        <div class="flex items-center">
+                            <div class="w-8 h-8 rounded-md bg-gradient-to-br from-blue-500/20 to-blue-600/20 flex items-center justify-center mr-3">
+                                <i class="fas fa-robot text-blue-400 text-sm"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium">${run.agent_name || 'Unnamed Agent'}</p>
+                                <p class="text-gray-400 text-sm">${run.agent_id ? run.agent_id.substring(0, 8) + '...' : ''}</p>
+                            </div>
+                        </div>
+                    </td>
+                    <td class="py-4">
+                        <span class="${statusClass}">${statusText}</span>
+                    </td>
+                    <td class="py-4">${duration}</td>
+                    <td class="py-4 font-mono">${cost}</td>
+                    <td class="py-4">${time}</td>
+                    <td class="py-4">
+                        <button class="text-primary-400 hover:text-primary-300 mr-3" onclick="viewRunDetails('${run.id}')">
+                            <i class="fas fa-eye"></i>
+                        </button>
+                        <button class="text-primary-400 hover:text-primary-300" onclick="rerunAgent('${run.agent_id}', '${run.id}')">
+                            <i class="fas fa-redo"></i>
+                        </button>
+                    </td>
+                `;
+                
+                tableBody.appendChild(row);
+            });
+            
+        } catch (error) {
+            console.error('Failed to load recent runs:', error);
+            const tableBody = document.getElementById('recentRunsTable');
+            if (tableBody) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="6" class="py-8 text-center text-red-400">
+                            <i class="fas fa-exclamation-triangle mr-2"></i>
+                            Failed to load recent runs. Please try again.
+                        </td>
+                    </tr>
+                `;
+            }
+        }
+    }
+    
+    // View run details
+    function viewRunDetails(runId) {
+        window.location.href = `/dashboard?run=${runId}`;
+    }
+    
+    // Rerun agent
+    async function rerunAgent(agentId, runId) {
+        try {
+            const response = await API.post(`/agents/${agentId}/run`, {
+                parent_run_id: runId
+            });
+            
+            AgentHubUI.showNotification('success', 'Agent run started!');
+            
+            // Redirect to run details
+            setTimeout(() => {
+                window.location.href = `/studio?run=${response.data.id}`;
+            }, 1000);
+            
+        } catch (error) {
+            AgentHubUI.showNotification('error', error.message || 'Failed to start agent run');
+        }
+    }
+    
+    // Initialize page
+    document.addEventListener('DOMContentLoaded', function() {
+        loadRecentRuns();
+        
+        // Load stats if not provided by server
+        if (!window.activeAgentsCount) {
+            API.get('/agents?filter=active').then(response => {
+                const count = response.data?.length || 0;
+                document.getElementById('activeAgentsCount').textContent = count;
+            });
+        }
+        
+        if (!window.scheduledTasksCount) {
+            API.get('/tasks/scheduled').then(response => {
+                const count = response.data?.length || 0;
+                document.getElementById('scheduledTasksCount').textContent = count;
+            });
+        }
+        
+        // Real-time updates via SSE
+        const sse = SSE.connect('/api/v1/usage/stream', {
+            events: {
+                'stats_update': function(event) {
+                    const data = event.data;
+                    if (data.credits !== undefined) {
+                        document.getElementById('creditsAmount').textContent = data.credits.toFixed(2);
+                    }
+                    if (data.monthly_usage !== undefined) {
+                        document.getElementById('monthlyUsage').textContent = data.monthly_usage.toFixed(2);
+                    }
+                },
+                'agent_run_completed': function(event) {
+                    // Reload recent runs when new run completes
+                    loadRecentRuns();
+                }
+            }
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,123 @@
+{
+  "a": {
+    "condition": "a",
+    "label": "Annotation Protocol",
+    "output_dir": "/Users/fabriziocorpora/Desktop/automation-lab/dynamic-bi-factory/codedna/experiments/runs/run_20260331_002754/a",
+    "start_time": "2026-03-31T00:29:48.996940",
+    "end_time": "2026-03-31T01:52:24.809910",
+    "duration_seconds": 4955.8,
+    "success": true,
+    "error": "[Errno 54] Connection reset by peer",
+    "agent_response_preview": "RunContentEvent(created_at=1774888190, event='TeamRunContent', team_id='agenthub-dev-team-[a]', team_name='AgentHub Dev Team [A]', run_id='51492215-caa0-4733-baef-16c7d0f8ea1f', parent_run_id=None, session_id='eb65b992-b193-41da-b1e3-6b571b31d4e8', workflow_id=None, workflow_run_id=None, step_id=None, step_name=None, step_index=None, content=None, content_type='str', reasoning_content='', model_provider_data=None, citations=None, response_audio=None, image=None, references=None, additional_input=None, reasoning_steps=None, reasoning_messages=None)RunContentEvent(created_at=1774888190, event='TeamRunContent', team_id='agenthub-dev-team-[a]', team_name='AgentHub Dev Team [A]', run_id='51492215-caa0-4733-baef-16c7d0f8ea1f', parent_run_id=None, session_id='eb65b992-b193-41da-b1e3-6b571b31d4e8'",
+    "metrics": {
+      "python_file_count": 55,
+      "html_file_count": 1,
+      "js_file_count": 0,
+      "total_lines_of_code": 14156,
+      "files_with_annotation_header": 54,
+      "annotation_coverage_pct": 98.2,
+      "annotation_counts": {
+        "exports": 54,
+        "used_by": 54,
+        "rules": 54,
+        "agent": 54,
+        "message": 54
+      }
+    },
+    "validation": {
+      "has_main_py": true,
+      "main_py_syntax_valid": true,
+      "essential_dirs": [
+        "api",
+        "agents",
+        "frontend"
+      ],
+      "total_files": 55,
+      "syntax_errors": [
+        {
+          "file": "app/dependencies.py",
+          "error": "invalid character '—' (U+2014) (<unknown>, line 2)",
+          "line": 2
+        }
+      ],
+      "import_errors": [],
+      "basic_test_passed": true,
+      "py_compile_test": true,
+      "score": 0.7285714285714285
+    },
+    "code_quality": {
+      "total_files": 55,
+      "functions": 166,
+      "classes": 90,
+      "avg_function_length": 14.3,
+      "avg_class_length": 60.3,
+      "files_with_docstrings": 28,
+      "functions_with_docstrings": 137,
+      "classes_with_docstrings": 68,
+      "cyclomatic_complexity_total": 351,
+      "max_function_complexity": 10,
+      "import_count": 198,
+      "avg_imports_per_file": 6.6,
+      "avg_function_complexity": 2.11,
+      "quality_score": 0.931
+    }
+  },
+  "b": {
+    "condition": "b",
+    "label": "Standard Practices",
+    "output_dir": "/Users/fabriziocorpora/Desktop/automation-lab/dynamic-bi-factory/codedna/experiments/runs/run_20260331_002754/b",
+    "start_time": "2026-03-31T01:52:24.955594",
+    "end_time": "2026-03-31T03:31:24.495023",
+    "duration_seconds": 5939.5,
+    "success": true,
+    "error": null,
+    "agent_response_preview": "RunContentEvent(created_at=1774893145, event='TeamRunContent', team_id='agenthub-dev-team-[b]', team_name='AgentHub Dev Team [B]', run_id='2de7971d-f55d-465a-bd6e-9625fd46d299', parent_run_id=None, session_id='d361669a-5307-4a25-a3db-2d57b09a637d', workflow_id=None, workflow_run_id=None, step_id=None, step_name=None, step_index=None, content=None, content_type='str', reasoning_content='', model_provider_data=None, citations=None, response_audio=None, image=None, references=None, additional_input=None, reasoning_steps=None, reasoning_messages=None)RunContentEvent(created_at=1774893145, event='TeamRunContent', team_id='agenthub-dev-team-[b]', team_name='AgentHub Dev Team [B]', run_id='2de7971d-f55d-465a-bd6e-9625fd46d299', parent_run_id=None, session_id='d361669a-5307-4a25-a3db-2d57b09a637d'",
+    "metrics": {
+      "python_file_count": 50,
+      "html_file_count": 3,
+      "js_file_count": 4,
+      "total_lines_of_code": 11872,
+      "files_with_annotation_header": 0,
+      "annotation_coverage_pct": 0.0,
+      "annotation_counts": {
+        "exports": 0,
+        "used_by": 0,
+        "rules": 0,
+        "agent": 0,
+        "message": 1
+      }
+    },
+    "validation": {
+      "has_main_py": true,
+      "main_py_syntax_valid": true,
+      "essential_dirs": [
+        "api",
+        "agents",
+        "scheduler",
+        "billing"
+      ],
+      "total_files": 50,
+      "syntax_errors": [],
+      "import_errors": [],
+      "basic_test_passed": true,
+      "py_compile_test": true,
+      "score": 0.8714285714285716
+    },
+    "code_quality": {
+      "total_files": 50,
+      "functions": 194,
+      "classes": 50,
+      "avg_function_length": 26.2,
+      "avg_class_length": 87.1,
+      "files_with_docstrings": 30,
+      "functions_with_docstrings": 168,
+      "classes_with_docstrings": 48,
+      "cyclomatic_complexity_total": 595,
+      "max_function_complexity": 16,
+      "import_count": 261,
+      "avg_imports_per_file": 8.7,
+      "avg_function_complexity": 3.07,
+      "quality_score": 0.928
+    }
+  }
+}

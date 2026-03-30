@@ -1,0 +1,818 @@
+{% extends "base.html" %}
+
+{% block title %}Marketplace - AgentHub{% endblock %}
+
+{% block page_title %}Agent Marketplace{% endblock %}
+
+{% block head_extra %}
+<!-- Search and filter styles -->
+<style>
+    .category-filter button.active {
+        background-color: rgba(59, 130, 246, 0.2);
+        border-color: rgba(59, 130, 246, 0.5);
+        color: #93c5fd;
+    }
+    
+    .price-badge {
+        position: absolute;
+        top: 12px;
+        right: 12px;
+        z-index: 10;
+    }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="space-y-8">
+    <!-- Marketplace Header -->
+    <div class="bg-gradient-to-r from-primary-900/30 to-primary-800/30 border border-primary-700/50 rounded-2xl p-6 md:p-8">
+        <div class="flex flex-col md:flex-row md:items-center justify-between">
+            <div>
+                <h1 class="text-3xl font-bold mb-2">Agent Marketplace</h1>
+                <p class="text-gray-300">Discover, rent, and deploy AI agents for any task. Choose from hundreds of pre-built agents.</p>
+            </div>
+            <div class="mt-4 md:mt-0 flex space-x-3">
+                <button id="createAgentBtn" class="btn btn-primary inline-flex items-center">
+                    <i class="fas fa-plus mr-2"></i>
+                    Create Agent
+                </button>
+                <button id="manageAgentsBtn" class="btn btn-outline inline-flex items-center">
+                    <i class="fas fa-robot mr-2"></i>
+                    My Agents
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Search and Filter Bar -->
+    <div class="bg-gray-800/30 border border-gray-700 rounded-xl p-4 md:p-6">
+        <div class="flex flex-col md:flex-row md:items-center justify-between space-y-4 md:space-y-0">
+            <!-- Search -->
+            <div class="flex-1 md:mr-6">
+                <div class="relative">
+                    <i class="fas fa-search absolute left-3 top-1/2 transform -translate-y-1/2 text-gray-500"></i>
+                    <input 
+                        type="text" 
+                        id="searchInput"
+                        placeholder="Search agents by name, description, or category..." 
+                        class="w-full pl-10 pr-4 py-3 bg-gray-900 border border-gray-700 rounded-lg focus:ring-2 focus:ring-primary-500 focus:border-transparent text-white"
+                    >
+                </div>
+            </div>
+            
+            <!-- Category Filter -->
+            <div class="flex space-x-2 overflow-x-auto pb-2 md:pb-0">
+                <div class="category-filter flex space-x-2">
+                    <button class="filter-btn active px-4 py-2 rounded-lg border border-gray-600 text-sm whitespace-nowrap" data-category="all">
+                        All Agents
+                    </button>
+                    <button class="filter-btn px-4 py-2 rounded-lg border border-gray-600 text-sm whitespace-nowrap" data-category="productivity">
+                        <i class="fas fa-briefcase mr-2"></i>Productivity
+                    </button>
+                    <button class="filter-btn px-4 py-2 rounded-lg border border-gray-600 text-sm whitespace-nowrap" data-category="creative">
+                        <i class="fas fa-palette mr-2"></i>Creative
+                    </button>
+                    <button class="filter-btn px-4 py-2 rounded-lg border border-gray-600 text-sm whitespace-nowrap" data-category="analytics">
+                        <i class="fas fa-chart-bar mr-2"></i>Analytics
+                    </button>
+                    <button class="filter-btn px-4 py-2 rounded-lg border border-gray-600 text-sm whitespace-nowrap" data-category="development">
+                        <i class="fas fa-code mr-2"></i>Development
+                    </button>
+                    <button class="filter-btn px-4 py-2 rounded-lg border border-gray-600 text-sm whitespace-nowrap" data-category="customer-service">
+                        <i class="fas fa-headset mr-2"></i>Support
+                    </button>
+                </div>
+            </div>
+        </div>
+        
+        <!-- Additional Filters -->
+        <div class="mt-4 flex flex-wrap items-center gap-4">
+            <div>
+                <label class="text-sm text-gray-400 mr-2">Price Range:</label>
+                <select id="priceFilter" class="bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm">
+                    <option value="all">Any Price</option>
+                    <option value="free">Free Only</option>
+                    <option value="paid">Paid Only</option>
+                    <option value="0-10">$0 - $10</option>
+                    <option value="10-50">$10 - $50</option>
+                    <option value="50+">$50+</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="text-sm text-gray-400 mr-2">Sort By:</label>
+                <select id="sortFilter" class="bg-gray-900 border border-gray-700 rounded-lg px-3 py-2 text-sm">
+                    <option value="popular">Most Popular</option>
+                    <option value="newest">Newest First</option>
+                    <option value="price_low">Price: Low to High</option>
+                    <option value="price_high">Price: High to Low</option>
+                    <option value="rating">Highest Rated</option>
+                </select>
+            </div>
+            
+            <div class="ml-auto">
+                <button id="clearFilters" class="text-sm text-gray-400 hover:text-white">
+                    <i class="fas fa-times mr-1"></i> Clear Filters
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Agent Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6" id="agentGrid">
+        <!-- Agent cards will be loaded here -->
+        <div class="col-span-full py-12 text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+            <p class="text-gray-400">Loading agents from marketplace...</p>
+        </div>
+    </div>
+
+    <!-- Pagination -->
+    <div class="flex justify-center items-center space-x-4 mt-8" id="paginationContainer">
+        <!-- Pagination will be loaded here -->
+    </div>
+
+    <!-- Empty State Template (hidden) -->
+    <div id="emptyStateTemplate" class="hidden col-span-full py-12 text-center">
+        <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-gray-800 to-gray-900 flex items-center justify-center">
+            <i class="fas fa-search text-gray-500 text-3xl"></i>
+        </div>
+        <h3 class="text-xl font-bold mb-2">No agents found</h3>
+        <p class="text-gray-400 mb-6">Try adjusting your search or filters to find what you're looking for.</p>
+        <button id="resetSearchBtn" class="btn btn-outline">
+            <i class="fas fa-redo mr-2"></i>
+            Reset Search
+        </button>
+    </div>
+</div>
+
+<!-- Agent Detail Modal -->
+<div id="agentDetailModal" class="modal hidden">
+    <div class="modal-content bg-gray-800 border border-gray-700 rounded-xl w-full max-w-4xl">
+        <div class="p-6">
+            <div class="flex justify-between items-start mb-6">
+                <h2 class="text-2xl font-bold" id="modalAgentName">Agent Name</h2>
+                <button class="text-gray-400 hover:text-white text-2xl" data-modal-close>&times;</button>
+            </div>
+            
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left Column: Agent Details -->
+                <div class="lg:col-span-2 space-y-6">
+                    <!-- Agent Image/Icon -->
+                    <div class="agent-card-image rounded-xl overflow-hidden">
+                        <div class="w-full h-48 bg-gradient-to-br from-blue-500/20 to-purple-600/20 flex items-center justify-center">
+                            <i class="fas fa-robot text-6xl text-white/30" id="modalAgentIcon"></i>
+                        </div>
+                    </div>
+                    
+                    <!-- Description -->
+                    <div>
+                        <h3 class="text-lg font-bold mb-3">Description</h3>
+                        <p class="text-gray-300" id="modalAgentDescription">Loading description...</p>
+                    </div>
+                    
+                    <!-- Features -->
+                    <div>
+                        <h3 class="text-lg font-bold mb-3">Key Features</h3>
+                        <ul class="space-y-2" id="modalAgentFeatures">
+                            <li class="flex items-center">
+                                <i class="fas fa-check text-green-400 mr-3"></i>
+                                <span>Feature one</span>
+                            </li>
+                        </ul>
+                    </div>
+                    
+                    <!-- Configuration -->
+                    <div>
+                        <h3 class="text-lg font-bold mb-3">Configuration Options</h3>
+                        <div class="bg-gray-900/50 rounded-lg p-4">
+                            <pre class="text-sm font-mono text-gray-300 overflow-x-auto" id="modalAgentConfig">{}</pre>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Right Column: Pricing and Actions -->
+                <div class="space-y-6">
+                    <!-- Pricing Card -->
+                    <div class="bg-gray-900/50 border border-gray-700 rounded-xl p-6">
+                        <h3 class="text-lg font-bold mb-4">Pricing</h3>
+                        
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-300">Base Price</span>
+                                <span class="text-2xl font-bold" id="modalAgentPrice">$0.00</span>
+                            </div>
+                            
+                            <div class="flex justify-between items-center">
+                                <span class="text-gray-300">Per Execution</span>
+                                <span class="text-lg" id="modalAgentPerExecution">$0.0000</span>
+                            </div>
+                            
+                            <div class="pt-4 border-t border-gray-700">
+                                <div class="flex justify-between items-center mb-2">
+                                    <span class="font-medium">Estimated Monthly Cost</span>
+                                    <span class="text-xl font-bold text-primary-300" id="modalAgentEstimatedCost">$0.00</span>
+                                </div>
+                                <p class="text-sm text-gray-400">Based on 100 executions/month</p>
+                            </div>
+                        </div>
+                        
+                        <div class="mt-6 space-y-3">
+                            <button id="rentAgentBtn" class="btn btn-primary w-full justify-center">
+                                <i class="fas fa-shopping-cart mr-2"></i>
+                                Rent Agent
+                            </button>
+                            <button id="tryDemoBtn" class="btn btn-outline w-full justify-center">
+                                <i class="fas fa-play mr-2"></i>
+                                Try Demo
+                            </button>
+                            <button id="saveForLaterBtn" class="btn btn-outline w-full justify-center">
+                                <i class="fas fa-bookmark mr-2"></i>
+                                Save for Later
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <!-- Agent Stats -->
+                    <div class="bg-gray-900/50 border border-gray-700 rounded-xl p-6">
+                        <h3 class="text-lg font-bold mb-4">Agent Stats</h3>
+                        
+                        <div class="space-y-4">
+                            <div class="flex justify-between">
+                                <span class="text-gray-300">Rentals</span>
+                                <span class="font-medium" id="modalAgentRentals">0</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-300">Rating</span>
+                                <span class="font-medium" id="modalAgentRating">
+                                    <i class="fas fa-star text-yellow-400 mr-1"></i>
+                                    0.0 (0)
+                                </span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-300">Success Rate</span>
+                                <span class="font-medium" id="modalAgentSuccessRate">0%</span>
+                            </div>
+                            <div class="flex justify-between">
+                                <span class="text-gray-300">Avg. Runtime</span>
+                                <span class="font-medium" id="modalAgentAvgRuntime">0s</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Provider Info -->
+                    <div class="bg-gray-900/50 border border-gray-700 rounded-xl p-6">
+                        <h3 class="text-lg font-bold mb-4">Provider</h3>
+                        
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 rounded-full bg-gradient-to-br from-green-500/20 to-blue-500/20 flex items-center justify-center mr-3">
+                                <i class="fas fa-user text-white/70"></i>
+                            </div>
+                            <div>
+                                <p class="font-medium" id="modalAgentProvider">Unknown</p>
+                                <p class="text-sm text-gray-400" id="modalAgentProviderSince">Member since 2024</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+    // Marketplace state
+    const marketplaceState = {
+        agents: [],
+        filteredAgents: [],
+        currentPage: 1,
+        itemsPerPage: 12,
+        currentCategory: 'all',
+        searchQuery: '',
+        priceFilter: 'all',
+        sortBy: 'popular'
+    };
+    
+    // DOM elements
+    const agentGrid = document.getElementById('agentGrid');
+    const paginationContainer = document.getElementById('paginationContainer');
+    const searchInput = document.getElementById('searchInput');
+    const filterButtons = document.querySelectorAll('.filter-btn');
+    const priceFilter = document.getElementById('priceFilter');
+    const sortFilter = document.getElementById('sortFilter');
+    const clearFiltersBtn = document.getElementById('clearFilters');
+    const resetSearchBtn = document.getElementById('resetSearchBtn');
+    
+    // Agent detail modal elements
+    const agentDetailModal = document.getElementById('agentDetailModal');
+    const rentAgentBtn = document.getElementById('rentAgentBtn');
+    const tryDemoBtn = document.getElementById('tryDemoBtn');
+    
+    // Current selected agent
+    let selectedAgent = null;
+    
+    /**
+     * Load agents from API
+     */
+    async function loadAgents() {
+        try {
+            // Show loading state
+            agentGrid.innerHTML = `
+                <div class="col-span-full py-12 text-center">
+                    <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-primary-500 mx-auto mb-4"></div>
+                    <p class="text-gray-400">Loading agents from marketplace...</p>
+                </div>
+            `;
+            
+            const response = await API.get('/marketplace/agents');
+            marketplaceState.agents = response.data || [];
+            
+            // Apply initial filters
+            applyFilters();
+            
+        } catch (error) {
+            console.error('Failed to load agents:', error);
+            showErrorState('Failed to load agents. Please try again.');
+        }
+    }
+    
+    /**
+     * Apply filters and update UI
+     */
+    function applyFilters() {
+        let filtered = [...marketplaceState.agents];
+        
+        // Apply category filter
+        if (marketplaceState.currentCategory !== 'all') {
+            filtered = filtered.filter(agent => 
+                agent.category === marketplaceState.currentCategory ||
+                agent.tags?.includes(marketplaceState.currentCategory)
+            );
+        }
+        
+        // Apply search query
+        if (marketplaceState.searchQuery) {
+            const query = marketplaceState.searchQuery.toLowerCase();
+            filtered = filtered.filter(agent => 
+                agent.name.toLowerCase().includes(query) ||
+                agent.description.toLowerCase().includes(query) ||
+                agent.tags?.some(tag => tag.toLowerCase().includes(query))
+            );
+        }
+        
+        // Apply price filter
+        if (marketplaceState.priceFilter !== 'all') {
+            filtered = filtered.filter(agent => {
+                const price = agent.price_per_execution || 0;
+                
+                switch (marketplaceState.priceFilter) {
+                    case 'free':
+                        return price === 0;
+                    case 'paid':
+                        return price > 0;
+                    case '0-10':
+                        return price >= 0 && price <= 10;
+                    case '10-50':
+                        return price > 10 && price <= 50;
+                    case '50+':
+                        return price > 50;
+                    default:
+                        return true;
+                }
+            });
+        }
+        
+        // Apply sorting
+        filtered.sort((a, b) => {
+            switch (marketplaceState.sortBy) {
+                case 'newest':
+                    return new Date(b.created_at) - new Date(a.created_at);
+                case 'price_low':
+                    return (a.price_per_execution || 0) - (b.price_per_execution || 0);
+                case 'price_high':
+                    return (b.price_per_execution || 0) - (a.price_per_execution || 0);
+                case 'rating':
+                    return (b.rating || 0) - (a.rating || 0);
+                case 'popular':
+                default:
+                    return (b.rental_count || 0) - (a.rental_count || 0);
+            }
+        });
+        
+        marketplaceState.filteredAgents = filtered;
+        marketplaceState.currentPage = 1;
+        
+        updateAgentGrid();
+        updatePagination();
+    }
+    
+    /**
+     * Update agent grid with current page
+     */
+    function updateAgentGrid() {
+        const { filteredAgents, currentPage, itemsPerPage } = marketplaceState;
+        
+        if (filteredAgents.length === 0) {
+            showEmptyState();
+            return;
+        }
+        
+        // Calculate pagination
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = Math.min(startIndex + itemsPerPage, filteredAgents.length);
+        const pageAgents = filteredAgents.slice(startIndex, endIndex);
+        
+        // Generate agent cards
+        agentGrid.innerHTML = '';
+        
+        pageAgents.forEach(agent => {
+            const agentCard = createAgentCard(agent);
+            agentGrid.appendChild(agentCard);
+        });
+    }
+    
+    /**
+     * Create agent card element
+     * @param {object} agent 
+     * @returns {HTMLElement}
+     */
+    function createAgentCard(agent) {
+        const card = document.createElement('div');
+        card.className = 'agent-card bg-gray-800/30 border border-gray-700 rounded-xl overflow-hidden hover:border-primary-500/50 transition-colors duration-300 card-hover';
+        
+        // Price badge
+        const price = agent.price_per_execution || 0;
+        const priceBadge = price === 0 ? 
+            '<span class="badge badge-success">Free</span>' :
+            `<span class="badge badge-primary">$${price.toFixed(4)}/run</span>`;
+        
+        // Rating stars
+        const rating = agent.rating || 0;
+        const ratingCount = agent.rating_count || 0;
+        const stars = Array(5).fill(0).map((_, i) => 
+            i < Math.floor(rating) ? 
+            '<i class="fas fa-star text-yellow-400"></i>' : 
+            '<i class="far fa-star text-gray-500"></i>'
+        ).join('');
+        
+        // Category icon
+        const categoryIcons = {
+            'productivity': 'fa-briefcase',
+            'creative': 'fa-palette',
+            'analytics': 'fa-chart-bar',
+            'development': 'fa-code',
+            'customer-service': 'fa-headset',
+            'default': 'fa-robot'
+        };
+        
+        const category = agent.category || 'default';
+        const icon = categoryIcons[category] || categoryIcons.default;
+        
+        card.innerHTML = `
+            <div class="relative">
+                <!-- Agent Image -->
+                <div class="h-40 bg-gradient-to-br from-blue-500/20 to-purple-600/20 flex items-center justify-center">
+                    <i class="fas ${icon} text-5xl text-white/30"></i>
+                </div>
+                
+                <!-- Price Badge -->
+                <div class="price-badge">
+                    ${priceBadge}
+                </div>
+            </div>
+            
+            <!-- Agent Info -->
+            <div class="p-6">
+                <div class="flex items-start justify-between mb-3">
+                    <h3 class="font-bold text-lg line-clamp-1" title="${agent.name}">${agent.name}</h3>
+                    <span class="text-xs text-gray-400">v${agent.version || '1.0'}</span>
+                </div>
+                
+                <p class="text-gray-300 text-sm mb-4 line-clamp-2">${agent.description || 'No description available.'}</p>
+                
+                <!-- Tags -->
+                <div class="flex flex-wrap gap-2 mb-4">
+                    ${(agent.tags || []).slice(0, 3).map(tag => 
+                        `<span class="px-2 py-1 bg-gray-700/50 text-xs rounded">${tag}</span>`
+                    ).join('')}
+                    ${(agent.tags || []).length > 3 ? 
+                        `<span class="px-2 py-1 bg-gray-700/50 text-xs rounded">+${(agent.tags || []).length - 3}</span>` : 
+                        ''}
+                </div>
+                
+                <!-- Stats -->
+                <div class="flex items-center justify-between text-sm text-gray-400 mb-4">
+                    <div class="flex items-center">
+                        ${stars}
+                        <span class="ml-2">${rating.toFixed(1)} (${ratingCount})</span>
+                    </div>
+                    <div class="flex items-center">
+                        <i class="fas fa-download mr-1"></i>
+                        <span>${agent.rental_count || 0}</span>
+                    </div>
+                </div>
+                
+                <!-- Actions -->
+                <div class="flex space-x-2">
+                    <button class="flex-1 btn btn-primary py-2 text-sm rent-btn" data-agent-id="${agent.id}">
+                        <i class="fas fa-shopping-cart mr-2"></i>
+                        Rent
+                    </button>
+                    <button class="px-3 py-2 border border-gray-600 rounded-lg hover:bg-gray-700/50 view-btn" data-agent-id="${agent.id}">
+                        <i class="fas fa-eye"></i>
+                    </button>
+                </div>
+            </div>
+        `;
+        
+        // Add event listeners
+        card.querySelector('.rent-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            rentAgent(agent);
+        });
+        
+        card.querySelector('.view-btn').addEventListener('click', (e) => {
+            e.stopPropagation();
+            viewAgentDetails(agent);
+        });
+        
+        // Make entire card clickable
+        card.addEventListener('click', (e) => {
+            if (!e.target.closest('button')) {
+                viewAgentDetails(agent);
+            }
+        });
+        
+        return card;
+    }
+    
+    /**
+     * Show empty state
+     */
+    function showEmptyState() {
+        const emptyState = document.getElementById('emptyStateTemplate').cloneNode(true);
+        emptyState.id = '';
+        emptyState.classList.remove('hidden');
+        
+        agentGrid.innerHTML = '';
+        agentGrid.appendChild(emptyState);
+        
+        // Add event listener to reset button
+        emptyState.querySelector('#resetSearchBtn').addEventListener('click', resetFilters);
+    }
+    
+    /**
+     * Show error state
+     * @param {string} message 
+     */
+    function showErrorState(message) {
+        agentGrid.innerHTML = `
+            <div class="col-span-full py-12 text-center">
+                <div class="w-24 h-24 mx-auto mb-6 rounded-full bg-gradient-to-br from-red-900/20 to-red-800/20 flex items-center justify-center">
+                    <i class="fas fa-exclamation-triangle text-red-400 text-3xl"></i>
+                </div>
+                <h3 class="text-xl font-bold mb-2">Something went wrong</h3>
+                <p class="text-gray-400 mb-6">${message}</p>
+                <button onclick="loadAgents()" class="btn btn-outline">
+                    <i class="fas fa-redo mr-2"></i>
+                    Try Again
+                </button>
+            </div>
+        `;
+    }
+    
+    /**
+     * Update pagination controls
+     */
+    function updatePagination() {
+        const { filteredAgents, currentPage, itemsPerPage } = marketplaceState;
+        const totalPages = Math.ceil(filteredAgents.length / itemsPerPage);
+        
+        if (totalPages <= 1) {
+            paginationContainer.innerHTML = '';
+            return;
+        }
+        
+        let paginationHTML = '';
+        
+        // Previous button
+        paginationHTML += `
+            <button class="px-4 py-2 border border-gray-700 rounded-lg hover:bg-gray-700/50 ${currentPage === 1 ? 'opacity-50 cursor-not-allowed' : ''}" 
+                    ${currentPage === 1 ? 'disabled' : ''} id="prevPage">
+                <i class="fas fa-chevron-left"></i>
+            </button>
+        `;
+        
+        // Page numbers
+        const maxVisiblePages = 5;
+        let startPage = Math.max(1, currentPage - Math.floor(maxVisiblePages / 2));
+        let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+        
+        if (endPage - startPage + 1 < maxVisiblePages) {
+            startPage = Math.max(1, endPage - maxVisiblePages + 1);
+        }
+        
+        for (let i = startPage; i <= endPage; i++) {
+            paginationHTML += `
+                <button class="px-4 py-2 border rounded-lg ${currentPage === i ? 'border-primary-500 bg-primary-500/20 text-primary-300' : 'border-gray-700 hover:bg-gray-700/50'}" 
+                        data-page="${i}">
+                    ${i}
+                </button>
+            `;
+        }
+        
+        // Next button
+        paginationHTML += `
+            <button class="px-4 py-2 border border-gray-700 rounded-lg hover:bg-gray-700/50 ${currentPage === totalPages ? 'opacity-50 cursor-not-allowed' : ''}" 
+                    ${currentPage === totalPages ? 'disabled' : ''} id="nextPage">
+                <i class="fas fa-chevron-right"></i>
+            </button>
+        `;
+        
+        // Page info
+        paginationHTML += `
+            <span class="text-gray-400 text-sm">
+                Showing ${Math.min((currentPage - 1) * itemsPerPage + 1, filteredAgents.length)}-${Math.min(currentPage * itemsPerPage, filteredAgents.length)} of ${filteredAgents.length}
+            </span>
+        `;
+        
+        paginationContainer.innerHTML = paginationHTML;
+        
+        // Add event listeners
+        document.getElementById('prevPage')?.addEventListener('click', () => {
+            if (currentPage > 1) {
+                marketplaceState.currentPage--;
+                updateAgentGrid();
+                updatePagination();
+            }
+        });
+        
+        document.getElementById('nextPage')?.addEventListener('click', () => {
+            if (currentPage < totalPages) {
+                marketplaceState.currentPage++;
+                updateAgentGrid();
+                updatePagination();
+            }
+        });
+        
+        document.querySelectorAll('[data-page]').forEach(button => {
+            button.addEventListener('click', () => {
+                marketplaceState.currentPage = parseInt(button.dataset.page);
+                updateAgentGrid();
+                updatePagination();
+            });
+        });
+    }
+    
+    /**
+     * View agent details
+     * @param {object} agent 
+     */
+    function viewAgentDetails(agent) {
+        selectedAgent = agent;
+        
+        // Update modal content
+        document.getElementById('modalAgentName').textContent = agent.name;
+        document.getElementById('modalAgentDescription').textContent = agent.description || 'No description available.';
+        document.getElementById('modalAgentPrice').textContent = `$${(agent.price_per_execution || 0).toFixed(4)}`;
+        document.getElementById('modalAgentPerExecution').textContent = `$${(agent.price_per_execution || 0).toFixed(4)}`;
+        document.getElementById('modalAgentEstimatedCost').textContent = `$${((agent.price_per_execution || 0) * 100).toFixed(2)}`;
+        document.getElementById('modalAgentRentals').textContent = agent.rental_count || 0;
+        document.getElementById('modalAgentRating').innerHTML = `
+            <i class="fas fa-star text-yellow-400 mr-1"></i>
+            ${(agent.rating || 0).toFixed(1)} (${agent.rating_count || 0})
+        `;
+        document.getElementById('modalAgentSuccessRate').textContent = `${agent.success_rate || 0}%`;
+        document.getElementById('modalAgentAvgRuntime').textContent = `${agent.avg_runtime || 0}s`;
+        document.getElementById('modalAgentProvider').textContent = agent.provider || 'Unknown';
+        
+        // Update features list
+        const featuresList = document.getElementById('modalAgentFeatures');
+        featuresList.innerHTML = (agent.features || []).map(feature => `
+            <li class="flex items-center">
+                <i class="fas fa-check text-green-400 mr-3"></i>
+                <span>${feature}</span>
+            </li>
+        `).join('');
+        
+        // Update configuration preview
+        const configElement = document.getElementById('modalAgentConfig');
+        try {
+            const config = typeof agent.config === 'string' ? JSON.parse(agent.config) : agent.config;
+            configElement.textContent = JSON.stringify(config, null, 2);
+        } catch (e) {
+            configElement.textContent = agent.config || '{}';
+        }
+        
+        // Open modal
+        AgentHubUI.openModal(agentDetailModal);
+    }
+    
+    /**
+     * Rent selected agent
+     */
+    async function rentAgent(agent) {
+        try {
+            AgentHubUI.showNotification('info', 'Processing rental...');
+            
+            const response = await API.post(`/marketplace/agents/${agent.id}/rent`);
+            
+            AgentHubUI.showNotification('success', 'Agent rented successfully!');
+            
+            // Redirect to studio with the rented agent
+            setTimeout(() => {
+                window.location.href = `/studio?agent=${agent.id}`;
+            }, 1500);
+            
+        } catch (error) {
+            AgentHubUI.showNotification('error', error.message || 'Failed to rent agent');
+        }
+    }
+    
+    /**
+     * Reset all filters
+     */
+    function resetFilters() {
+        marketplaceState.currentCategory = 'all';
+        marketplaceState.searchQuery = '';
+        marketplaceState.priceFilter = 'all';
+        marketplaceState.sortBy = 'popular';
+        
+        // Update UI
+        filterButtons.forEach(btn => {
+            if (btn.dataset.category === 'all') {
+                btn.classList.add('active');
+            } else {
+                btn.classList.remove('active');
+            }
+        });
+        
+        searchInput.value = '';
+        priceFilter.value = 'all';
+        sortFilter.value = 'popular';
+        
+        applyFilters();
+    }
+    
+    // Initialize marketplace
+    document.addEventListener('DOMContentLoaded', function() {
+        loadAgents();
+        
+        // Event listeners
+        searchInput.addEventListener('input', AgentHubUI.debounce(() => {
+            marketplaceState.searchQuery = searchInput.value;
+            applyFilters();
+        }, 300));
+        
+        filterButtons.forEach(button => {
+            button.addEventListener('click', () => {
+                filterButtons.forEach(btn => btn.classList.remove('active'));
+                button.classList.add('active');
+                marketplaceState.currentCategory = button.dataset.category;
+                applyFilters();
+            });
+        });
+        
+        priceFilter.addEventListener('change', () => {
+            marketplaceState.priceFilter = priceFilter.value;
+            applyFilters();
+        });
+        
+        sortFilter.addEventListener('change', () => {
+            marketplaceState.sortBy = sortFilter.value;
+            applyFilters();
+        });
+        
+        clearFiltersBtn.addEventListener('click', resetFilters);
+        
+        // Modal buttons
+        rentAgentBtn.addEventListener('click', () => {
+            if (selectedAgent) {
+                AgentHubUI.closeModal(agentDetailModal);
+                rentAgent(selectedAgent);
+            }
+        });
+        
+        tryDemoBtn.addEventListener('click', () => {
+            if (selectedAgent) {
+                AgentHubUI.closeModal(agentDetailModal);
+                AgentHubUI.showNotification('info', 'Starting demo...');
+                // Redirect to demo page
+                window.location.href = `/studio?demo=${selectedAgent.id}`;
+            }
+        });
+        
+        // Create agent button
+        document.getElementById('createAgentBtn').addEventListener('click', () => {
+            window.location.href = '/studio';
+        });
+        
+        // Manage agents button
+        document.getElementById('manageAgentsBtn').addEventListener('click', () => {
+            window.location.href = '/studio?my-agents=true';
+        });
+    });
+</script>
+{% endblock %}

@@ -1,0 +1,64 @@
+# Core Dependencies
+# Core Dependencies
+Flask==2.3.3
+Flask-CORS==4.0.0
+Flask-SQLAlchemy==3.0.5
+Flask-Migrate==4.0.4
+Flask-JWT-Extended==4.5.2
+Flask-Bcrypt==1.0.1
+Flask-Mail==0.9.1
+python-dotenv==1.0.0
+
+# FastAPI Dependencies
+fastapi==0.104.1
+uvicorn[standard]==0.24.0
+python-multipart==0.0.6
+fastapi-jwt-auth==0.6.0
+fastapi-limiter==0.1.6
+python-jose[cryptography]==3.3.0
+passlib[bcrypt]==1.7.4
+
+# Database
+SQLAlchemy==2.0.19
+psycopg2-binary==2.9.9  # For PostgreSQL
+mysqlclient==2.2.0  # For MySQL
+
+# Validation and Serialization
+marshmallow==3.19.0
+marshmallow-sqlalchemy==0.29.0
+pydantic==2.5.0
+pydantic-settings==2.1.0
+
+# Task Queue
+celery==5.3.1
+redis==5.0.1
+
+# API Clients
+requests==2.31.0
+stripe==7.7.0
+
+# Authentication and Security
+PyJWT==2.8.0
+cryptography==41.0.7
+
+# Development
+pytest==7.4.2
+pytest-flask==1.2.0
+pytest-asyncio==0.21.1
+black==23.9.1
+flake8==6.1.0
+mypy==1.5.1
+
+# Utilities
+click==8.1.7
+python-dateutil==2.8.2
+pytz==2023.3
+
+# Monitoring and Logging
+structlog==23.1.0
+prometheus-flask-exporter==0.22.4
+prometheus-fastapi-instrumentator==6.1.0
+
+# Documentation
+apispec==6.3.0
+flasgger==0.9.7.1
