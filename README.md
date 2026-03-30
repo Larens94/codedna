@@ -308,6 +308,74 @@ Full data: [`benchmark_agent/runs/`](./benchmark_agent/runs/) · Script: [`bench
 
 ---
 
+## 🤝 Multi-Agent Team Experiments
+
+Beyond single-agent file navigation, CodeDNA has been tested on **multi-agent team coordination** — measuring whether the protocol helps a team of AI agents divide work without collisions and produce functional software.
+
+### Experiment 1 — 2D RPG Game (run_20260329_234232)
+
+**Setup:** identical 5-agent team (`GameDirector → GameEngineer → GraphicsSpecialist → GameplayDesigner → DataArchitect`), same task, same model (DeepSeek `deepseek-chat`), same tool budget. Only the instructions differed.
+
+| Metric | Condition A — CodeDNA | Condition B — Standard |
+|---|---|---|
+| Total duration | **1h 59m** | **3h 11m** |
+| Python files | **50** | 45 |
+| Total LOC | 10,194 | **14,096** |
+| Avg LOC/file | **203** | 313 |
+| Annotation coverage | **94%** | 0% |
+| Judge fixes to boot | **8** | **12** |
+| Player controllable after fixes | **Yes (WASD)** | **No** |
+
+**CodeDNA was 1.60× faster.** More importantly: after judge intervention to fix both outputs, condition A produced a **playable game** (ECS running, 5 entities, WASD input). Condition B produced a **visible but static scene** — `engine/ecs.py` and `gameplay/systems/player_system.py` were both correct, but the integration layer connecting them was never written.
+
+#### The director centralization cascade
+
+Without `used_by:` contracts, the director spent 25 minutes occupying all four module namespaces before delegating (vs 12 minutes with CodeDNA). Every downstream specialist inherited structure they didn't design:
+
+```
+B Director builds full scaffold (25m — 2.0× A)
+  → GameEngineer reverse-engineers structure (36m — 3.9× A)
+    → GraphicsSpecialist works around pre-built renderer (41m — 1.4× A)
+      → GameplayDesigner inherits 545-line monolith (35m — 2.6× A)
+        → DataArchitect — independent domain, cleanest run (35m — 0.75× A ← only exception)
+```
+
+The cascade peaks at the agent nearest to the director's territorial decisions and diminishes toward the most independent domain. `used_by:` forces ownership upfront — the director cannot occupy a module it declared as belonging to another agent.
+
+#### Condition B's bugs were structurally different
+
+All 8 fixes in condition A were corrections to existing code. Condition B had 12 fixes — 4 on existing code and **8 missing modules**: `entity_system.py`, `physics_engine.py`, `ai_system.py`, `player_controller.py`, and the entire `integration/` directory. These modules were declared by the director in `game_state.py` but never written by anyone. Writing them from scratch would be outside the scope of judge intervention.
+
+> **More LOC does not mean more coverage.** B produced 38% more lines (14,096 vs 10,194) but 10% fewer files. Average file size: 313 lines vs 203. More code, less functionality.
+
+### Experiment 2 — AgentHub SaaS webapp (run_20260330_024934)
+
+**Setup:** same 5-agent team building a FastAPI + Agno + SQLite + Stripe SaaS webapp.
+**Key addition:** `message:` field included in prompt (was absent in Experiment 1).
+
+| Metric | Result |
+|---|---|
+| Duration (condition A) | **2h 14m 48s** |
+| Python files | 53 |
+| Annotation coverage | **83%** (44/53) |
+| `message:` entries | **44** — was **0** in Experiment 1 |
+
+#### `message:` field — first non-zero result
+
+Adding the field to the prompt produced **100% adoption** across all annotated files. More importantly, agents used it in three qualitatively distinct ways:
+
+1. **Handoff notes** — each agent writes what it built and what's still missing, creating a distributed technical backlog co-located with the code.
+
+2. **Per-function observations** — BackendEngineer wrote one message per API endpoint describing specific missing behaviours (e.g. `"implement timezone-aware scheduling"`, `"implement soft delete with archive option"`), exactly the intended Level 2 use.
+
+3. **Cross-file constraint propagation** — AgentIntegrator discovered that agent memory needs summarization when context exceeds 80% of the model limit. It encoded this in `memory.py → rules:` (consolidated truth) and in `base.py`, `runner.py`, `studio.py → message:` (flag for callers). This is the **dual-channel pattern the protocol was designed for**, and it emerged **without explicit instruction**.
+
+`rules:` and `message:` channel discipline was maintained across all agents: `rules:` encodes what is true now; `message:` encodes known gaps. No agent mixed the two.
+
+> **Known fix for next run:** agents wrote `2024-01-15` as the date in all entries (model hallucination). Fix: inject `{current_date}` into the prompt template.
+
+---
+
 ### Fix Quality — Claude Code Manual Session
 
 The SWE-bench benchmark measures **file navigation** (did the agent open the right files?). This second benchmark measures **fix completeness** (did the agent produce the correct patch?).

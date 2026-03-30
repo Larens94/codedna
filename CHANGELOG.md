@@ -2,6 +2,23 @@
 
 All notable changes to CodeDNA will be documented in this file.
 
+## [0.8.2] — 2026-03-30
+
+### Experimental Results
+
+- **Multi-agent team experiment 1 (RPG game):** CodeDNA team completed task in 1h 59m vs 3h 11m for standard Python team (**1.60× faster**). CodeDNA produced a playable game (WASD, ECS, 5 entities); standard produced a visible but static scene. Core finding: without `used_by:` contracts, the director occupies all module namespaces before delegating, creating a cascade of reverse-engineering overhead in every downstream specialist. The director centralization cascade peaks at the agent nearest to the director's decisions.
+- **Multi-agent team experiment 2 (AgentHub SaaS):** `message:` field first non-zero result — **100% adoption** (44/44 annotated files) when included in prompt. Three usage patterns observed: (1) module-level handoff notes, (2) per-function gap annotations, (3) cross-file constraint propagation via dual-channel (`rules:` in owner, `message:` in consumers). Pattern 3 emerged without explicit instruction.
+- **Director centralization finding:** `used_by:` is a delegation forcing function. Without it, director spent 2× longer in round 1 and occupied all module namespaces. Per-agent B/A ratios: GameDirector R1 2.0×, GameEngineer 3.9×, GraphicsSpecialist 1.4×, GameplayDesigner 2.6×, DataArchitect 0.75× (most independent domain). Cascade diminishes toward independent modules.
+- **LOC vs completeness:** condition B produced 38% more lines (14,096 vs 10,194) and 10% fewer files. More code, less functionality — the integration layer was never written.
+
+### Known Issues / Fixes Queued
+
+- **Date hallucination:** all agents wrote `2024-01-15` in `agent:` entries regardless of actual date. Fix: inject `{current_date}` into prompt template.
+- **`message:` lifecycle not yet activated:** no agent responded with `@prev: promoted to rules:` or `@prev: dismissed`. Director R2 needs explicit instruction to process open messages. Fix: add lifecycle instruction to Director round-2 prompt.
+- **Duplicate `message:` content:** AgentIntegrator copy-pasted same module-level message to 6 related files instead of writing per-file observations. Acceptable for now; per-function level (Level 2) showed better specificity.
+
+---
+
 ## [0.8.1] — 2026-03-27
 
 ### Added
