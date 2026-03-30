@@ -1,0 +1,457 @@
+{% extends "base.html" %}
+
+{% block title %}Reset Password - AgentHub{% endblock %}
+
+{% block description %}Reset your AgentHub account password.{% endblock %}
+
+{% block content %}
+<div class="min-h-screen flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+    <div class="max-w-md w-full space-y-8">
+        <!-- Header -->
+        <div>
+            <div class="flex justify-center">
+                <div class="w-16 h-16 bg-blue-600 rounded-2xl flex items-center justify-center">
+                    <i class="fas fa-key text-white text-3xl"></i>
+                </div>
+            </div>
+            <h2 class="mt-6 text-center text-3xl font-extrabold text-gray-900">
+                {% if token %}
+                    Reset Your Password
+                {% else %}
+                    Forgot Your Password?
+                {% endif %}
+            </h2>
+            <p class="mt-2 text-center text-sm text-gray-600">
+                {% if token %}
+                    Enter your new password below.
+                {% else %}
+                    Enter your email to receive a reset link.
+                {% endif %}
+            </p>
+        </div>
+
+        <!-- Error Message -->
+        {% if error %}
+        <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-exclamation-circle text-red-400"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-red-700">{{ error }}</p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        <!-- Success Message -->
+        {% if request.query_params.get('sent') %}
+        <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+            <div class="flex">
+                <div class="flex-shrink-0">
+                    <i class="fas fa-check-circle text-green-400"></i>
+                </div>
+                <div class="ml-3">
+                    <p class="text-sm text-green-700">
+                        Reset link sent! Check your email for instructions.
+                    </p>
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+        {% if not token %}
+        <!-- Request Reset Form -->
+        <form class="mt-8 space-y-6" action="/api/v1/auth/password/reset/request" method="POST" id="request-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            
+            <div>
+                <label for="email" class="sr-only">Email address</label>
+                <input id="email" 
+                       name="email" 
+                       type="email" 
+                       autocomplete="email" 
+                       required
+                       class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                       placeholder="Email address">
+            </div>
+
+            <div>
+                <button type="submit"
+                        class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                        <i class="fas fa-paper-plane text-blue-500 group-hover:text-blue-400"></i>
+                    </span>
+                    Send Reset Link
+                </button>
+            </div>
+        </form>
+        {% else %}
+        <!-- Reset Password Form -->
+        <form class="mt-8 space-y-6" action="/api/v1/auth/password/reset/confirm" method="POST" id="reset-form">
+            <input type="hidden" name="csrf_token" value="{{ csrf_token }}">
+            <input type="hidden" name="token" value="{{ token }}">
+            
+            <div class="rounded-md shadow-sm space-y-4">
+                <!-- New Password -->
+                <div>
+                    <label for="new_password" class="sr-only">New Password</label>
+                    <input id="new_password" 
+                           name="new_password" 
+                           type="password" 
+                           autocomplete="new-password" 
+                           required
+                           class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                           placeholder="New Password">
+                    <div class="mt-2" id="password-strength"></div>
+                </div>
+                
+                <!-- Confirm Password -->
+                <div>
+                    <label for="confirm_password" class="sr-only">Confirm Password</label>
+                    <input id="confirm_password" 
+                           name="confirm_password" 
+                           type="password" 
+                           autocomplete="new-password" 
+                           required
+                           class="appearance-none relative block w-full px-3 py-3 border border-gray-300 placeholder-gray-500 text-gray-900 rounded-md focus:outline-none focus:ring-blue-500 focus:border-blue-500 focus:z-10 sm:text-sm"
+                           placeholder="Confirm Password">
+                    <div class="mt-2" id="password-match"></div>
+                </div>
+            </div>
+
+            <div>
+                <button type="submit"
+                        class="group relative w-full flex justify-center py-3 px-4 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500">
+                    <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                        <i class="fas fa-save text-blue-500 group-hover:text-blue-400"></i>
+                    </span>
+                    Reset Password
+                </button>
+            </div>
+        </form>
+        {% endif %}
+
+        <!-- Back to Login -->
+        <div class="text-center">
+            <a href="/login" class="font-medium text-blue-600 hover:text-blue-500">
+                <i class="fas fa-arrow-left mr-2"></i> Back to login
+            </a>
+        </div>
+
+        <!-- Help Text -->
+        <div class="mt-8 bg-gray-50 rounded-lg p-6">
+            <h3 class="text-lg font-semibold text-gray-900 mb-4">Need help?</h3>
+            <ul class="space-y-3">
+                <li class="flex items-start">
+                    <i class="fas fa-info-circle text-blue-500 mt-1 mr-3"></i>
+                    <span class="text-sm text-gray-600">Check your spam folder if you don't see the email</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-clock text-blue-500 mt-1 mr-3"></i>
+                    <span class="text-sm text-gray-600">Reset links expire after 1 hour</span>
+                </li>
+                <li class="flex items-start">
+                    <i class="fas fa-envelope text-blue-500 mt-1 mr-3"></i>
+                    <span class="text-sm text-gray-600">Contact support if you need assistance</span>
+                </li>
+            </ul>
+        </div>
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        {% if not token %}
+        // Request reset form
+        const requestForm = document.getElementById('request-form');
+        
+        requestForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitButton = requestForm.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+            
+            // Show loading state
+            submitButton.innerHTML = `
+                <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                    <i class="fas fa-spinner fa-spin text-blue-500"></i>
+                </span>
+                Sending...
+            `;
+            submitButton.disabled = true;
+            
+            try {
+                const formData = new FormData(requestForm);
+                const response = await fetch(requestForm.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Show success message and redirect
+                    window.location.href = '/reset-password?sent=true';
+                } else {
+                    throw new Error(data.detail || 'Failed to send reset link');
+                }
+            } catch (error) {
+                // Show error message
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'bg-red-50 border border-red-200 rounded-lg p-4 mt-4';
+                errorDiv.innerHTML = `
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-circle text-red-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-red-700">${error.message}</p>
+                        </div>
+                    </div>
+                `;
+                
+                // Remove any existing error
+                const existingError = document.querySelector('.bg-red-50');
+                if (existingError) {
+                    existingError.remove();
+                }
+                
+                requestForm.parentNode.insertBefore(errorDiv, requestForm.nextSibling);
+                
+                // Reset button
+                submitButton.innerHTML = originalText;
+                submitButton.disabled = false;
+            }
+        });
+        
+        // Auto-focus email field
+        document.getElementById('email').focus();
+        {% else %}
+        // Reset password form
+        const resetForm = document.getElementById('reset-form');
+        const passwordInput = document.getElementById('new_password');
+        const confirmInput = document.getElementById('confirm_password');
+        const strengthDiv = document.getElementById('password-strength');
+        const matchDiv = document.getElementById('password-match');
+        
+        // Password strength checker
+        passwordInput.addEventListener('input', function() {
+            const password = this.value;
+            let strength = 0;
+            let message = '';
+            let color = 'red';
+            
+            // Check length
+            if (password.length >= 8) strength++;
+            
+            // Check for uppercase
+            if (/[A-Z]/.test(password)) strength++;
+            
+            // Check for lowercase
+            if (/[a-z]/.test(password)) strength++;
+            
+            // Check for numbers
+            if (/[0-9]/.test(password)) strength++;
+            
+            // Check for special characters
+            if (/[^A-Za-z0-9]/.test(password)) strength++;
+            
+            // Determine strength level
+            switch(strength) {
+                case 0:
+                case 1:
+                    message = 'Very weak';
+                    color = 'red';
+                    break;
+                case 2:
+                    message = 'Weak';
+                    color = 'orange';
+                    break;
+                case 3:
+                    message = 'Fair';
+                    color = 'yellow';
+                    break;
+                case 4:
+                    message = 'Good';
+                    color = 'blue';
+                    break;
+                case 5:
+                    message = 'Strong';
+                    color = 'green';
+                    break;
+            }
+            
+            strengthDiv.innerHTML = `
+                <div class="flex items-center">
+                    <div class="w-full bg-gray-200 rounded-full h-2 mr-3">
+                        <div class="h-2 rounded-full bg-${color}-500" style="width: ${strength * 20}%"></div>
+                    </div>
+                    <span class="text-xs font-medium text-${color}-600">${message}</span>
+                </div>
+            `;
+            
+            // Check password match
+            checkPasswordMatch();
+        });
+        
+        // Password match checker
+        confirmInput.addEventListener('input', checkPasswordMatch);
+        
+        function checkPasswordMatch() {
+            const password = passwordInput.value;
+            const confirm = confirmInput.value;
+            
+            if (!confirm) {
+                matchDiv.innerHTML = '';
+                return;
+            }
+            
+            if (password === confirm) {
+                matchDiv.innerHTML = `
+                    <span class="text-xs font-medium text-green-600">
+                        <i class="fas fa-check mr-1"></i> Passwords match
+                    </span>
+                `;
+            } else {
+                matchDiv.innerHTML = `
+                    <span class="text-xs font-medium text-red-600">
+                        <i class="fas fa-times mr-1"></i> Passwords do not match
+                    </span>
+                `;
+            }
+        }
+        
+        // Form submission
+        resetForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            // Validate passwords match
+            if (passwordInput.value !== confirmInput.value) {
+                alert('Passwords do not match');
+                return;
+            }
+            
+            const submitButton = resetForm.querySelector('button[type="submit"]');
+            const originalText = submitButton.innerHTML;
+            
+            // Show loading state
+            submitButton.innerHTML = `
+                <span class="absolute left-0 inset-y-0 flex items-center pl-3">
+                    <i class="fas fa-spinner fa-spin text-blue-500"></i>
+                </span>
+                Resetting...
+            `;
+            submitButton.disabled = true;
+            
+            try {
+                const formData = new FormData(resetForm);
+                const response = await fetch(resetForm.action, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                    },
+                    body: new URLSearchParams(formData)
+                });
+                
+                const data = await response.json();
+                
+                if (response.ok) {
+                    // Show success message
+                    const successDiv = document.createElement('div');
+                    successDiv.className = 'bg-green-50 border border-green-200 rounded-lg p-4 mt-4';
+                    successDiv.innerHTML = `
+                        <div class="flex">
+                            <div class="flex-shrink-0">
+                                <i class="fas fa-check-circle text-green-400"></i>
+                            </div>
+                            <div class="ml-3">
+                                <p class="text-sm text-green-700">
+                                    Password reset successfully! Redirecting to login...
+                                </p>
+                            </div>
+                        </div>
+                    `;
+                    
+                    resetForm.parentNode.insertBefore(successDiv, resetForm.nextSibling);
+                    
+                    // Redirect to login after delay
+                    setTimeout(() => {
+                        window.location.href = '/login?reset=true';
+                    }, 2000);
+                } else {
+                    throw new Error(data.detail || 'Password reset failed');
+                }
+            } catch (error) {
+                // Show error message
+                const errorDiv = document.createElement('div');
+                errorDiv.className = 'bg-red-50 border border-red-200 rounded-lg p-4 mt-4';
+                errorDiv.innerHTML = `
+                    <div class="flex">
+                        <div class="flex-shrink-0">
+                            <i class="fas fa-exclamation-circle text-red-400"></i>
+                        </div>
+                        <div class="ml-3">
+                            <p class="text-sm text-red-700">${error.message}</p>
+                        </div>
+                    </div>
+                `;
+                
+                // Remove any existing error
+                const existingError = document.querySelector('.bg-red-50');
+                if (existingError) {
+                    existingError.remove();
+                }
+                
+                resetForm.parentNode.insertBefore(errorDiv, resetForm.nextSibling);
+                
+                // Reset button
+                submitButton.innerHTML = originalText;
+                submitButton.disabled = false;
+            }
+        });
+        
+        // Auto-focus password field
+        document.getElementById('new_password').focus();
+        {% endif %}
+    });
+</script>
+
+<style>
+    /* Custom styles for reset page */
+    .min-h-screen {
+        min-height: calc(100vh - 64px);
+    }
+    
+    /* Password strength colors */
+    .bg-red-500 { background-color: #ef4444; }
+    .bg-orange-500 { background-color: #f97316; }
+    .bg-yellow-500 { background-color: #eab308; }
+    .bg-blue-500 { background-color: #3b82f6; }
+    .bg-green-500 { background-color: #10b981; }
+    
+    .text-red-600 { color: #dc2626; }
+    .text-orange-600 { color: #ea580c; }
+    .text-yellow-600 { color: #ca8a04; }
+    .text-blue-600 { color: #2563eb; }
+    .text-green-600 { color: #059669; }
+    
+    /* Smooth transitions */
+    button, input, a {
+        transition: all 0.2s ease-in-out;
+    }
+    
+    /* Loading animation */
+    .fa-spinner {
+        animation: spin 1s linear infinite;
+    }
+    
+    @keyframes spin {
+        from { transform: rotate(0deg); }
+        to { transform: rotate(360deg); }
+    }
+</style>
+{% endblock %}

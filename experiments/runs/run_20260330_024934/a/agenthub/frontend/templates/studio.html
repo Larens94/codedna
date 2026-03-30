@@ -1,0 +1,569 @@
+{% extends "base.html" %}
+
+{% block title %}Agent Studio - AgentHub{% endblock %}
+
+{% block description %}Build, test, and deploy AI agents with our visual studio. Create custom agents or modify existing ones.{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Studio Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between mb-6">
+        <div>
+            <h1 class="text-3xl font-bold text-gray-900 mb-2">Agent Studio</h1>
+            <p class="text-gray-600">
+                Build, test, and deploy AI agents. Create custom agents or modify existing ones.
+            </p>
+        </div>
+        <div class="flex space-x-3 mt-4 md:mt-0">
+            <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center">
+                <i class="fas fa-play mr-2"></i> Run Agent
+            </button>
+            <button class="bg-green-600 hover:bg-green-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center">
+                <i class="fas fa-save mr-2"></i> Save
+            </button>
+            <button class="bg-gray-200 hover:bg-gray-300 text-gray-800 font-semibold py-3 px-6 rounded-lg transition-colors flex items-center">
+                <i class="fas fa-share mr-2"></i> Deploy
+            </button>
+        </div>
+    </div>
+
+    <!-- Main Studio Layout -->
+    <div class="flex flex-col lg:flex-row gap-6 h-[calc(100vh-200px)]">
+        <!-- Left Panel: Agent Configuration -->
+        <div class="lg:w-2/5 flex flex-col">
+            <!-- Agent Selection -->
+            <div class="bg-white rounded-xl shadow-md p-6 mb-6">
+                <h2 class="text-xl font-bold text-gray-900 mb-4">Select Agent</h2>
+                <div class="space-y-3">
+                    <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-blue-500 cursor-pointer">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mr-3">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div>
+                                <div class="font-semibold">Data Analyzer</div>
+                                <div class="text-sm text-gray-500">Analyze and visualize data</div>
+                            </div>
+                        </div>
+                        <i class="fas fa-check text-blue-600"></i>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-blue-500 cursor-pointer">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-green-100 text-green-600 rounded-lg flex items-center justify-center mr-3">
+                                <i class="fas fa-file-alt"></i>
+                            </div>
+                            <div>
+                                <div class="font-semibold">Content Writer</div>
+                                <div class="text-sm text-gray-500">Generate written content</div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="flex items-center justify-between p-3 border border-gray-200 rounded-lg hover:border-blue-500 cursor-pointer">
+                        <div class="flex items-center">
+                            <div class="w-10 h-10 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center mr-3">
+                                <i class="fas fa-search"></i>
+                            </div>
+                            <div>
+                                <div class="font-semibold">Research Assistant</div>
+                                <div class="text-sm text-gray-500">Research and summarize</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <button class="w-full mt-4 bg-gray-100 hover:bg-gray-200 text-gray-800 font-semibold py-3 rounded-lg transition-colors flex items-center justify-center">
+                    <i class="fas fa-plus mr-2"></i> Create New Agent
+                </button>
+            </div>
+
+            <!-- Agent Configuration -->
+            <div class="bg-white rounded-xl shadow-md p-6 flex-1 overflow-y-auto">
+                <h2 class="text-xl font-bold text-gray-900 mb-6">Configuration</h2>
+                
+                <!-- Agent Name -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Agent Name</label>
+                    <input type="text" 
+                           class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                           placeholder="My Data Analyzer"
+                           value="Data Analyzer v2.0">
+                </div>
+
+                <!-- Model Selection -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">AI Model</label>
+                    <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                        <option>GPT-4 Turbo</option>
+                        <option>GPT-4</option>
+                        <option>Claude 3 Opus</option>
+                        <option>Claude 3 Sonnet</option>
+                        <option>Gemini Pro</option>
+                    </select>
+                </div>
+
+                <!-- Temperature -->
+                <div class="mb-6">
+                    <div class="flex justify-between mb-2">
+                        <label class="text-sm font-medium text-gray-700">Temperature: <span id="temp-value">0.7</span></label>
+                        <span class="text-sm text-gray-500">Creativity vs Consistency</span>
+                    </div>
+                    <input type="range" min="0" max="1" step="0.1" value="0.7" 
+                           class="w-full h-2 bg-gray-200 rounded-lg appearance-none cursor-pointer"
+                           id="temperature-slider">
+                    <div class="flex justify-between text-xs text-gray-500 mt-1">
+                        <span>Precise (0.0)</span>
+                        <span>Balanced (0.5)</span>
+                        <span>Creative (1.0)</span>
+                    </div>
+                </div>
+
+                <!-- Instructions -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Instructions</label>
+                    <textarea 
+                        class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none h-32"
+                        placeholder="Enter agent instructions here...">
+You are a data analysis expert. Analyze the provided data and provide insights in a clear, concise manner. Focus on trends, patterns, and actionable recommendations. Format your response with clear sections and use bullet points where appropriate.
+                    </textarea>
+                </div>
+
+                <!-- Tools -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Available Tools</label>
+                    <div class="space-y-2">
+                        <label class="flex items-center">
+                            <input type="checkbox" class="rounded text-blue-600" checked>
+                            <span class="ml-2">Web Search</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" class="rounded text-blue-600" checked>
+                            <span class="ml-2">Code Execution</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" class="rounded text-blue-600">
+                            <span class="ml-2">File Upload</span>
+                        </label>
+                        <label class="flex items-center">
+                            <input type="checkbox" class="rounded text-blue-600" checked>
+                            <span class="ml-2">Data Visualization</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Memory Settings -->
+                <div class="mb-6">
+                    <label class="block text-sm font-medium text-gray-700 mb-2">Memory Context</label>
+                    <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                        <option>4K tokens</option>
+                        <option>8K tokens</option>
+                        <option selected>16K tokens</option>
+                        <option>32K tokens</option>
+                        <option>128K tokens</option>
+                    </select>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Panel: Chat Console -->
+        <div class="lg:w-3/5 flex flex-col">
+            <div class="bg-white rounded-xl shadow-md flex-1 flex flex-col">
+                <!-- Console Header -->
+                <div class="border-b border-gray-200 p-6">
+                    <div class="flex justify-between items-center">
+                        <div>
+                            <h2 class="text-xl font-bold text-gray-900">Test Console</h2>
+                            <p class="text-sm text-gray-500">Test your agent in real-time</p>
+                        </div>
+                        <div class="flex items-center space-x-2">
+                            <span class="px-3 py-1 bg-green-100 text-green-800 text-sm font-semibold rounded-full">
+                                <i class="fas fa-circle text-xs mr-1"></i> Connected
+                            </span>
+                            <button class="text-gray-400 hover:text-gray-600">
+                                <i class="fas fa-cog text-xl"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Chat Messages -->
+                <div class="flex-1 overflow-y-auto p-6" id="chat-messages">
+                    <!-- Welcome Message -->
+                    <div class="mb-6">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="bg-blue-50 rounded-2xl rounded-tl-none px-4 py-3 max-w-3xl">
+                                <p class="text-gray-800">
+                                    Hello! I'm your Data Analyzer agent. I can help you analyze datasets, generate insights, and create visual reports. What data would you like me to analyze today?
+                                </p>
+                                <div class="text-xs text-gray-500 mt-2">Just now</div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- User Message -->
+                    <div class="mb-6 flex justify-end">
+                        <div class="max-w-3xl">
+                            <div class="bg-gray-100 rounded-2xl rounded-tr-none px-4 py-3">
+                                <p class="text-gray-800">
+                                    Can you analyze this sales data and tell me the top performing products?
+                                </p>
+                            </div>
+                            <div class="text-xs text-gray-500 mt-2 text-right">Just now</div>
+                        </div>
+                    </div>
+
+                    <!-- Agent Response -->
+                    <div class="mb-6">
+                        <div class="flex items-start space-x-3">
+                            <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                                <i class="fas fa-robot"></i>
+                            </div>
+                            <div class="bg-blue-50 rounded-2xl rounded-tl-none px-4 py-3 max-w-3xl">
+                                <p class="text-gray-800 mb-3">
+                                    I'll analyze the sales data. Let me first load and examine the dataset...
+                                </p>
+                                <div class="bg-white rounded-lg p-3 mb-3">
+                                    <div class="flex items-center justify-between mb-2">
+                                        <span class="text-sm font-medium">Loading dataset...</span>
+                                        <div class="w-4 h-4 border-2 border-blue-600 border-t-transparent rounded-full animate-spin"></div>
+                                    </div>
+                                    <div class="w-full bg-gray-200 rounded-full h-2">
+                                        <div class="bg-blue-600 h-2 rounded-full" style="width: 75%"></div>
+                                    </div>
+                                </div>
+                                <div class="text-xs text-gray-500">Processing...</div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Input Area -->
+                <div class="border-t border-gray-200 p-6">
+                    <div class="flex space-x-3">
+                        <div class="flex-1">
+                            <div class="relative">
+                                <textarea 
+                                    id="message-input"
+                                    class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none resize-none"
+                                    placeholder="Type your message here... (Press Shift+Enter for new line)"
+                                    rows="2"
+                                ></textarea>
+                                <div class="absolute right-3 bottom-3 flex items-center space-x-2">
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-paperclip"></i>
+                                    </button>
+                                    <button class="text-gray-400 hover:text-gray-600">
+                                        <i class="fas fa-code"></i>
+                                    </button>
+                                </div>
+                            </div>
+                            <div class="flex justify-between items-center mt-2">
+                                <div class="text-sm text-gray-500">
+                                    <i class="fas fa-info-circle mr-1"></i>
+                                    Estimated cost: $0.02 per message
+                                </div>
+                                <div class="text-sm text-gray-500">
+                                    Token count: <span id="token-count">0</span>
+                                </div>
+                            </div>
+                        </div>
+                        <button 
+                            id="send-button"
+                            class="self-end bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors flex items-center"
+                        >
+                            <i class="fas fa-paper-plane mr-2"></i> Send
+                        </button>
+                    </div>
+                    
+                    <!-- Quick Actions -->
+                    <div class="mt-4 flex flex-wrap gap-2">
+                        <button class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-lg transition-colors">
+                            <i class="fas fa-chart-bar mr-1"></i> Analyze CSV
+                        </button>
+                        <button class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-lg transition-colors">
+                            <i class="fas fa-table mr-1"></i> Generate Report
+                        </button>
+                        <button class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-lg transition-colors">
+                            <i class="fas fa-chart-line mr-1"></i> Create Visualization
+                        </button>
+                        <button class="px-3 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 text-sm rounded-lg transition-colors">
+                            <i class="fas fa-lightbulb mr-1"></i> Get Insights
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Running Status Modal -->
+<div id="running-modal" class="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50 hidden">
+    <div class="bg-white rounded-2xl p-8 max-w-md w-full">
+        <div class="text-center">
+            <div class="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                <i class="fas fa-robot text-2xl"></i>
+            </div>
+            <h3 class="text-2xl font-bold text-gray-900 mb-2">Running Agent</h3>
+            <p class="text-gray-600 mb-6">Your agent is being executed. This may take a few moments.</p>
+            
+            <div class="mb-6">
+                <div class="flex items-center justify-between mb-2">
+                    <span class="text-sm font-medium">Processing...</span>
+                    <span class="text-sm font-medium" id="progress-percent">0%</span>
+                </div>
+                <div class="w-full bg-gray-200 rounded-full h-2">
+                    <div class="bg-blue-600 h-2 rounded-full" id="progress-bar" style="width: 0%"></div>
+                </div>
+            </div>
+            
+            <div class="text-sm text-gray-500 mb-6">
+                <i class="fas fa-info-circle mr-1"></i>
+                Estimated time remaining: <span id="time-remaining">30s</span>
+            </div>
+            
+            <button 
+                onclick="stopExecution()"
+                class="w-full bg-red-600 hover:bg-red-700 text-white font-semibold py-3 rounded-lg transition-colors"
+            >
+                <i class="fas fa-stop mr-2"></i> Stop Execution
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+{% block extra_scripts %}
+<script>
+    // Temperature slider
+    const tempSlider = document.getElementById('temperature-slider');
+    const tempValue = document.getElementById('temp-value');
+    
+    tempSlider.addEventListener('input', function() {
+        tempValue.textContent = this.value;
+    });
+
+    // Message input character counter
+    const messageInput = document.getElementById('message-input');
+    const tokenCount = document.getElementById('token-count');
+    
+    messageInput.addEventListener('input', function() {
+        // Simple token estimation (4 characters ≈ 1 token)
+        const text = this.value;
+        const estimatedTokens = Math.ceil(text.length / 4);
+        tokenCount.textContent = estimatedTokens;
+        
+        // Auto-resize textarea
+        this.style.height = 'auto';
+        this.style.height = (this.scrollHeight) + 'px';
+    });
+
+    // Send message
+    const sendButton = document.getElementById('send-button');
+    const chatMessages = document.getElementById('chat-messages');
+    
+    sendButton.addEventListener('click', sendMessage);
+    messageInput.addEventListener('keydown', function(e) {
+        if (e.key === 'Enter' && !e.shiftKey) {
+            e.preventDefault();
+            sendMessage();
+        }
+    });
+
+    function sendMessage() {
+        const message = messageInput.value.trim();
+        if (!message) return;
+        
+        // Add user message to chat
+        addMessageToChat('user', message);
+        
+        // Clear input
+        messageInput.value = '';
+        messageInput.style.height = 'auto';
+        tokenCount.textContent = '0';
+        
+        // Show running modal
+        showRunningModal();
+        
+        // Simulate agent response after delay
+        setTimeout(() => {
+            hideRunningModal();
+            addMessageToChat('agent', 'I have analyzed the sales data. Here are the top performing products:\n\n1. **Product A** - $45,200 (18% increase from last month)\n2. **Product B** - $38,500 (12% increase)\n3. **Product C** - $32,100 (5% increase)\n\nWould you like me to create a visualization of this data?');
+        }, 2000);
+    }
+
+    function addMessageToChat(sender, text) {
+        const messageDiv = document.createElement('div');
+        messageDiv.className = 'mb-6';
+        
+        const timestamp = new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'});
+        
+        if (sender === 'user') {
+            messageDiv.classList.add('flex', 'justify-end');
+            messageDiv.innerHTML = `
+                <div class="max-w-3xl">
+                    <div class="bg-gray-100 rounded-2xl rounded-tr-none px-4 py-3">
+                        <p class="text-gray-800 whitespace-pre-wrap">${escapeHtml(text)}</p>
+                    </div>
+                    <div class="text-xs text-gray-500 mt-2 text-right">${timestamp}</div>
+                </div>
+            `;
+        } else {
+            messageDiv.innerHTML = `
+                <div class="flex items-start space-x-3">
+                    <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center flex-shrink-0">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div class="bg-blue-50 rounded-2xl rounded-tl-none px-4 py-3 max-w-3xl">
+                        <p class="text-gray-800 whitespace-pre-wrap">${escapeHtml(text)}</p>
+                        <div class="text-xs text-gray-500 mt-2">${timestamp}</div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        chatMessages.appendChild(messageDiv);
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+    }
+
+    function escapeHtml(text) {
+        const div = document.createElement('div');
+        div.textContent = text;
+        return div.innerHTML;
+    }
+
+    function showRunningModal() {
+        const modal = document.getElementById('running-modal');
+        const progressBar = document.getElementById('progress-bar');
+        const progressPercent = document.getElementById('progress-percent');
+        const timeRemaining = document.getElementById('time-remaining');
+        
+        modal.classList.remove('hidden');
+        
+        // Simulate progress
+        let progress = 0;
+        const interval = setInterval(() => {
+            progress += 2;
+            if (progress > 100) progress = 100;
+            
+            progressBar.style.width = `${progress}%`;
+            progressPercent.textContent = `${progress}%`;
+            
+            const remaining = Math.max(0, 30 - Math.floor(progress * 0.3));
+            timeRemaining.textContent = `${remaining}s`;
+            
+            if (progress >= 100) {
+                clearInterval(interval);
+            }
+        }, 100);
+        
+        // Store interval ID for cleanup
+        modal.dataset.intervalId = interval;
+    }
+
+    function hideRunningModal() {
+        const modal = document.getElementById('running-modal');
+        const intervalId = modal.dataset.intervalId;
+        
+        if (intervalId) {
+            clearInterval(intervalId);
+        }
+        
+        modal.classList.add('hidden');
+        
+        // Reset progress
+        const progressBar = document.getElementById('progress-bar');
+        const progressPercent = document.getElementById('progress-percent');
+        progressBar.style.width = '0%';
+        progressPercent.textContent = '0%';
+    }
+
+    function stopExecution() {
+        hideRunningModal();
+        addMessageToChat('agent', 'Execution stopped by user.');
+    }
+
+    // Quick action buttons
+    document.querySelectorAll('.bg-gray-100.hover\\:bg-gray-200').forEach(button => {
+        button.addEventListener('click', function() {
+            const action = this.textContent.trim();
+            const messages = {
+                'Analyze CSV': 'Please upload a CSV file for analysis.',
+                'Generate Report': 'I will generate a comprehensive report based on the data.',
+                'Create Visualization': 'What type of visualization would you like? (Bar chart, line graph, pie chart, etc.)',
+                'Get Insights': 'Analyzing data patterns and generating insights...'
+            };
+            
+            if (messages[action]) {
+                messageInput.value = messages[action];
+                messageInput.dispatchEvent(new Event('input'));
+                sendMessage();
+            }
+        });
+    });
+
+    // Initialize
+    document.addEventListener('DOMContentLoaded', function() {
+        // Scroll to bottom of chat
+        chatMessages.scrollTop = chatMessages.scrollHeight;
+        
+        // Focus on message input
+        messageInput.focus();
+    });
+</script>
+
+<style>
+    /* Custom scrollbar */
+    #chat-messages {
+        scrollbar-width: thin;
+        scrollbar-color: #cbd5e0 #f7fafc;
+    }
+    
+    #chat-messages::-webkit-scrollbar {
+        width: 8px;
+    }
+    
+    #chat-messages::-webkit-scrollbar-track {
+        background: #f7fafc;
+    }
+    
+    #chat-messages::-webkit-scrollbar-thumb {
+        background-color: #cbd5e0;
+        border-radius: 4px;
+    }
+    
+    /* Smooth transitions */
+    .transition-all {
+        transition-property: all;
+        transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
+        transition-duration: 150ms;
+    }
+    
+    /* Animation for new messages */
+    @keyframes fadeInUp {
+        from {
+            opacity: 0;
+            transform: translateY(10px);
+        }
+        to {
+            opacity: 1;
+            transform: translateY(0);
+        }
+    }
+    
+    .mb-6:last-child {
+        animation: fadeInUp 0.3s ease-out;
+    }
+    
+    /* Loading animation */
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+    
+    .animate-spin {
+        animation: spin 1s linear infinite;
+    }
+</style>
+{% endblock %}

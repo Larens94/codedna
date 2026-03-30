@@ -1,0 +1,299 @@
+{% extends "base.html" %}
+
+{% block title %}Workspace - AgentHub{% endblock %}
+
+{% block description %}Manage your team workspace, agents, and settings.{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Workspace Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Workspace</h1>
+        <p class="text-gray-600">
+            Manage your team workspace, agents, and settings.
+        </p>
+    </div>
+
+    <!-- Workspace Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Workspace Name</p>
+                    <h3 class="text-xl font-bold text-gray-900">{{ workspace_settings.name }}</h3>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-building text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Agent Limit</p>
+                    <h3 class="text-xl font-bold text-gray-900">{{ workspace_settings.max_agents }} agents</h3>
+                </div>
+                <div class="w-12 h-12 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-robot text-2xl"></i>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex items-center justify-between">
+                <div>
+                    <p class="text-sm text-gray-500">Data Retention</p>
+                    <h3 class="text-xl font-bold text-gray-900">{{ workspace_settings.data_retention }} days</h3>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-database text-2xl"></i>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="mb-8">
+        <div class="border-b border-gray-200">
+            <nav class="-mb-px flex space-x-8">
+                <button class="border-b-2 border-blue-600 text-blue-600 px-1 py-4 text-sm font-semibold">
+                    Team Members
+                </button>
+                <button class="border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 px-1 py-4 text-sm font-semibold">
+                    Agents
+                </button>
+                <button class="border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 px-1 py-4 text-sm font-semibold">
+                    Settings
+                </button>
+                <button class="border-b-2 border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 px-1 py-4 text-sm font-semibold">
+                    API Keys
+                </button>
+            </nav>
+        </div>
+    </div>
+
+    <!-- Team Members -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden mb-8">
+        <div class="px-6 py-4 border-b border-gray-200 flex justify-between items-center">
+            <h2 class="text-xl font-bold text-gray-900">Team Members</h2>
+            <button class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-4 rounded-lg transition-colors">
+                <i class="fas fa-user-plus mr-2"></i> Invite Member
+            </button>
+        </div>
+        
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Name</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Email</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Role</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for member in team_members %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mr-3">
+                                    <span class="font-semibold">{{ member.name[0]|upper }}</span>
+                                </div>
+                                <div class="font-medium text-gray-900">{{ member.name }}</div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">{{ member.email }}</td>
+                        <td class="px-6 py-4">
+                            <span class="px-3 py-1 bg-gray-100 text-gray-800 text-xs font-semibold rounded-full">
+                                {{ member.role }}
+                            </span>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if member.status == 'active' %}
+                            <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                                Active
+                            </span>
+                            {% else %}
+                            <span class="px-3 py-1 bg-yellow-100 text-yellow-800 text-xs font-semibold rounded-full">
+                                Pending
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4">
+                            <div class="flex space-x-2">
+                                {% if member.email != user_email %}
+                                <button class="text-blue-600 hover:text-blue-900 text-sm font-semibold">
+                                    Edit
+                                </button>
+                                <button class="text-red-600 hover:text-red-900 text-sm font-semibold">
+                                    Remove
+                                </button>
+                                {% endif %}
+                            </div>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- User Agents -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-bold text-gray-900">Your Agents</h2>
+        </div>
+        
+        {% if user_agents %}
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 p-6">
+            {% for agent in user_agents %}
+            <div class="border border-gray-200 rounded-lg p-4 hover:border-blue-500 transition-colors">
+                <div class="flex items-center justify-between mb-4">
+                    <div class="w-10 h-10 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <span class="px-2 py-1 bg-gray-100 text-gray-800 text-xs font-semibold rounded">
+                        {{ agent.status|default('draft')|title }}
+                    </span>
+                </div>
+                <h3 class="font-semibold text-gray-900 mb-2">{{ agent.name }}</h3>
+                <p class="text-sm text-gray-600 mb-4 line-clamp-2">
+                    {{ agent.description or 'No description' }}
+                </p>
+                <div class="flex justify-between items-center">
+                    <span class="text-xs text-gray-500">
+                        Updated {{ agent.updated_at.strftime('%Y-%m-%d') if agent.updated_at else 'Recently' }}
+                    </span>
+                    <div class="flex space-x-2">
+                        <button class="text-blue-600 hover:text-blue-900 text-sm">
+                            <i class="fas fa-edit"></i>
+                        </button>
+                        <button class="text-red-600 hover:text-red-900 text-sm">
+                            <i class="fas fa-trash"></i>
+                        </button>
+                    </div>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+        {% else %}
+        <div class="px-6 py-12 text-center">
+            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                <i class="fas fa-robot text-2xl text-gray-400"></i>
+            </div>
+            <h3 class="text-lg font-semibold text-gray-700 mb-2">No Agents Yet</h3>
+            <p class="text-gray-500 mb-6">Create your first agent to get started.</p>
+            <a href="/studio" class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-2 px-6 rounded-lg transition-colors inline-block">
+                <i class="fas fa-plus mr-2"></i> Create Agent
+            </a>
+        </div>
+        {% endif %}
+    </div>
+</div>
+
+<script>
+    document.addEventListener('DOMContentLoaded', function() {
+        // Tab switching
+        const tabs = document.querySelectorAll('nav button');
+        tabs.forEach(tab => {
+            tab.addEventListener('click', function() {
+                // Update active tab
+                tabs.forEach(t => {
+                    t.classList.remove('border-blue-600', 'text-blue-600');
+                    t.classList.add('border-transparent', 'text-gray-500');
+                });
+                this.classList.add('border-blue-600', 'text-blue-600');
+                this.classList.remove('border-transparent', 'text-gray-500');
+                
+                // Show corresponding content
+                // This would load content via HTMX in production
+            });
+        });
+
+        // Invite member modal
+        document.querySelector('button.bg-blue-600').addEventListener('click', function() {
+            const modal = document.createElement('div');
+            modal.className = 'fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center p-4 z-50';
+            modal.innerHTML = `
+                <div class="bg-white rounded-2xl p-8 max-w-md w-full">
+                    <div class="flex justify-between items-center mb-6">
+                        <h3 class="text-2xl font-bold text-gray-900">Invite Team Member</h3>
+                        <button onclick="this.closest('.fixed').remove()" class="text-gray-400 hover:text-gray-600">
+                            <i class="fas fa-times text-2xl"></i>
+                        </button>
+                    </div>
+                    <form id="invite-form" class="space-y-4">
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Email Address</label>
+                            <input type="email" 
+                                   class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none"
+                                   placeholder="colleague@example.com"
+                                   required>
+                        </div>
+                        <div>
+                            <label class="block text-sm font-medium text-gray-700 mb-2">Role</label>
+                            <select class="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 focus:border-blue-500 outline-none">
+                                <option value="member">Member</option>
+                                <option value="admin">Admin</option>
+                                <option value="viewer">Viewer</option>
+                            </select>
+                        </div>
+                        <div class="flex justify-end space-x-3 pt-4">
+                            <button type="button" 
+                                    onclick="this.closest('.fixed').remove()"
+                                    class="px-6 py-3 border border-gray-300 text-gray-700 font-semibold rounded-lg hover:bg-gray-50 transition-colors">
+                                Cancel
+                            </button>
+                            <button type="submit" 
+                                    class="bg-blue-600 hover:bg-blue-700 text-white font-semibold py-3 px-6 rounded-lg transition-colors">
+                                Send Invite
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            `;
+            
+            document.body.appendChild(modal);
+            
+            // Handle form submission
+            modal.querySelector('form').addEventListener('submit', function(e) {
+                e.preventDefault();
+                const email = this.querySelector('input[type="email"]').value;
+                const role = this.querySelector('select').value;
+                
+                // Show success message
+                alert(`Invitation sent to ${email} as ${role}`);
+                modal.remove();
+            });
+        });
+
+        // Agent actions
+        document.querySelectorAll('button.text-blue-600').forEach(button => {
+            if (button.innerHTML.includes('fa-edit')) {
+                button.addEventListener('click', function() {
+                    const agentName = this.closest('.border').querySelector('.font-semibold').textContent;
+                    window.location.href = `/studio?agent=${encodeURIComponent(agentName)}`;
+                });
+            }
+        });
+
+        document.querySelectorAll('button.text-red-600').forEach(button => {
+            if (button.innerHTML.includes('fa-trash')) {
+                button.addEventListener('click', function() {
+                    const agentCard = this.closest('.border');
+                    const agentName = agentCard.querySelector('.font-semibold').textContent;
+                    
+                    if (confirm(`Are you sure you want to delete "${agentName}"?`)) {
+                        agentCard.style.opacity = '0.5';
+                        setTimeout(() => {
+                            agentCard.remove();
+                        }, 300);
+                    }
+                });
+            }
+        });
+    });
+</script>
+{% endblock %}

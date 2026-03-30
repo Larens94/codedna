@@ -1,0 +1,415 @@
+{% extends "base.html" %}
+
+{% block title %}Dashboard - AgentHub{% endblock %}
+
+{% block description %}Monitor your agent usage, track costs, and view performance metrics in real-time.{% endblock %}
+
+{% block content %}
+<div class="container mx-auto px-4 py-6">
+    <!-- Dashboard Header -->
+    <div class="mb-8">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">Dashboard</h1>
+        <p class="text-gray-600">
+            Monitor your agent usage, track costs, and view performance metrics in real-time.
+        </p>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <!-- Credit Balance -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <p class="text-sm text-gray-500">Credit Balance</p>
+                    <h3 class="text-3xl font-bold text-gray-900">${{ "%.2f"|format(credit_balance) }}</h3>
+                </div>
+                <div class="w-12 h-12 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-wallet text-2xl"></i>
+                </div>
+            </div>
+            <a href="/billing" class="text-blue-600 hover:text-blue-700 text-sm font-semibold">
+                Add Credits <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+
+        <!-- Active Agents -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <p class="text-sm text-gray-500">Active Agents</p>
+                    <h3 class="text-3xl font-bold text-gray-900">{{ active_agents }}</h3>
+                </div>
+                <div class="w-12 h-12 bg-green-100 text-green-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-robot text-2xl"></i>
+                </div>
+            </div>
+            <p class="text-sm text-gray-500">
+                {{ total_runs }} total runs this month
+            </p>
+        </div>
+
+        <!-- Success Rate -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <p class="text-sm text-gray-500">Success Rate</p>
+                    <h3 class="text-3xl font-bold text-gray-900">{{ success_rate }}%</h3>
+                </div>
+                <div class="w-12 h-12 bg-purple-100 text-purple-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-chart-line text-2xl"></i>
+                </div>
+            </div>
+            <div class="w-full bg-gray-200 rounded-full h-2">
+                <div class="bg-green-600 h-2 rounded-full" style="width: {{ success_rate }}%"></div>
+            </div>
+        </div>
+
+        <!-- Estimated Cost -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex items-center justify-between mb-4">
+                <div>
+                    <p class="text-sm text-gray-500">This Month</p>
+                    <h3 class="text-3xl font-bold text-gray-900">$42.75</h3>
+                </div>
+                <div class="w-12 h-12 bg-yellow-100 text-yellow-600 rounded-lg flex items-center justify-center">
+                    <i class="fas fa-dollar-sign text-2xl"></i>
+                </div>
+            </div>
+            <p class="text-sm text-green-600 font-semibold">
+                <i class="fas fa-arrow-up mr-1"></i> 12% from last month
+            </p>
+        </div>
+    </div>
+
+    <!-- Charts Section -->
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-8 mb-8">
+        <!-- Usage Chart -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900">Usage Trends</h2>
+                <select class="border border-gray-300 rounded-lg px-3 py-2 text-sm">
+                    <option>Last 7 Days</option>
+                    <option>Last 30 Days</option>
+                    <option>Last 90 Days</option>
+                </select>
+            </div>
+            <div class="h-64">
+                <canvas id="usageChart"></canvas>
+            </div>
+        </div>
+
+        <!-- Cost Breakdown -->
+        <div class="bg-white rounded-xl shadow-md p-6">
+            <div class="flex justify-between items-center mb-6">
+                <h2 class="text-xl font-bold text-gray-900">Cost Breakdown</h2>
+                <span class="text-sm text-gray-500">This Month</span>
+            </div>
+            <div class="h-64">
+                <canvas id="costChart"></canvas>
+            </div>
+        </div>
+    </div>
+
+    <!-- Recent Activity -->
+    <div class="bg-white rounded-xl shadow-md overflow-hidden">
+        <div class="px-6 py-4 border-b border-gray-200">
+            <h2 class="text-xl font-bold text-gray-900">Recent Activity</h2>
+        </div>
+        <div class="overflow-x-auto">
+            <table class="w-full">
+                <thead class="bg-gray-50">
+                    <tr>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Agent</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Started</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Duration</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cost</th>
+                        <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Actions</th>
+                    </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-200">
+                    {% for task in recent_tasks %}
+                    <tr class="hover:bg-gray-50">
+                        <td class="px-6 py-4">
+                            <div class="flex items-center">
+                                <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mr-3">
+                                    <i class="fas fa-robot"></i>
+                                </div>
+                                <div>
+                                    <div class="font-medium text-gray-900">{{ task.agent.name if task.agent else 'Unknown Agent' }}</div>
+                                    <div class="text-sm text-gray-500">{{ task.id[:8] }}...</div>
+                                </div>
+                            </div>
+                        </td>
+                        <td class="px-6 py-4">
+                            {% if task.status == 'completed' %}
+                            <span class="px-3 py-1 bg-green-100 text-green-800 text-xs font-semibold rounded-full">
+                                Completed
+                            </span>
+                            {% elif task.status == 'running' %}
+                            <span class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
+                                Running
+                            </span>
+                            {% elif task.status == 'failed' %}
+                            <span class="px-3 py-1 bg-red-100 text-red-800 text-xs font-semibold rounded-full">
+                                Failed
+                            </span>
+                            {% else %}
+                            <span class="px-3 py-1 bg-gray-100 text-gray-800 text-xs font-semibold rounded-full">
+                                {{ task.status|title }}
+                            </span>
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                            {{ task.created_at.strftime('%Y-%m-%d %H:%M') if task.created_at else 'N/A' }}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-500">
+                            {% if task.completed_at and task.created_at %}
+                                {{ (task.completed_at - task.created_at).seconds }}s
+                            {% else %}
+                                -
+                            {% endif %}
+                        </td>
+                        <td class="px-6 py-4 text-sm text-gray-900">
+                            ${{ "%.4f"|format(task.cost or 0) }}
+                        </td>
+                        <td class="px-6 py-4">
+                            <button class="text-blue-600 hover:text-blue-900 text-sm font-semibold">
+                                View Logs
+                            </button>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="px-6 py-8 text-center text-gray-500">
+                            <div class="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                <i class="fas fa-robot text-2xl text-gray-400"></i>
+                            </div>
+                            <p>No recent activity found.</p>
+                            <p class="text-sm mt-2">Run your first agent to see activity here.</p>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+        <div class="px-6 py-4 border-t border-gray-200">
+            <a href="/scheduler" class="text-blue-600 hover:text-blue-700 font-semibold">
+                View All Activity <i class="fas fa-arrow-right ml-1"></i>
+            </a>
+        </div>
+    </div>
+
+    <!-- SSE Connection Status -->
+    <div class="mt-6 flex items-center justify-end">
+        <div class="flex items-center text-sm text-gray-500">
+            <div class="w-2 h-2 bg-green-500 rounded-full mr-2 animate-pulse"></div>
+            <span>Live updates connected</span>
+        </div>
+    </div>
+</div>
+
+<!-- SSE Script -->
+<script>
+    // Initialize charts
+    document.addEventListener('DOMContentLoaded', function() {
+        // Usage Chart
+        const usageCtx = document.getElementById('usageChart').getContext('2d');
+        const usageChart = new Chart(usageCtx, {
+            type: 'line',
+            data: {
+                labels: ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun'],
+                datasets: [{
+                    label: 'Agent Runs',
+                    data: [12, 19, 15, 25, 22, 30, 28],
+                    borderColor: '#3b82f6',
+                    backgroundColor: 'rgba(59, 130, 246, 0.1)',
+                    borderWidth: 2,
+                    fill: true,
+                    tension: 0.4
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        display: false
+                    }
+                },
+                scales: {
+                    y: {
+                        beginAtZero: true,
+                        grid: {
+                            drawBorder: false
+                        }
+                    },
+                    x: {
+                        grid: {
+                            display: false
+                        }
+                    }
+                }
+            }
+        });
+
+        // Cost Chart
+        const costCtx = document.getElementById('costChart').getContext('2d');
+        const costChart = new Chart(costCtx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Data Analysis', 'Content Creation', 'Automation', 'Research'],
+                datasets: [{
+                    data: [35, 25, 20, 20],
+                    backgroundColor: [
+                        '#3b82f6',
+                        '#10b981',
+                        '#8b5cf6',
+                        '#f59e0b'
+                    ],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: {
+                        position: 'right'
+                    }
+                }
+            }
+        });
+
+        // SSE Connection for live updates
+        const eventSource = new EventSource('/api/usage/stream');
+        
+        eventSource.onmessage = function(event) {
+            const data = JSON.parse(event.data);
+            
+            // Update stats
+            if (data.type === 'stats_update') {
+                updateDashboardStats(data.data);
+            }
+            
+            // Update chart
+            if (data.type === 'chart_update') {
+                updateUsageChart(data.data);
+            }
+            
+            // Add new activity
+            if (data.type === 'new_activity') {
+                addNewActivity(data.activity);
+            }
+        };
+        
+        eventSource.onerror = function() {
+            console.log('SSE connection error');
+            // Implement reconnection logic
+        };
+    });
+
+    function updateDashboardStats(stats) {
+        // Update credit balance
+        const balanceElement = document.querySelector('.text-3xl.font-bold.text-gray-900');
+        if (balanceElement && stats.credit_balance !== undefined) {
+            balanceElement.textContent = `$${stats.credit_balance.toFixed(2)}`;
+        }
+        
+        // Update active agents
+        const activeElement = document.querySelectorAll('.text-3xl.font-bold.text-gray-900')[1];
+        if (activeElement && stats.active_agents !== undefined) {
+            activeElement.textContent = stats.active_agents;
+        }
+        
+        // Update success rate
+        const successElement = document.querySelectorAll('.text-3xl.font-bold.text-gray-900')[2];
+        const progressBar = document.querySelector('.bg-green-600.h-2.rounded-full');
+        if (successElement && progressBar && stats.success_rate !== undefined) {
+            successElement.textContent = `${stats.success_rate}%`;
+            progressBar.style.width = `${stats.success_rate}%`;
+        }
+    }
+
+    function updateUsageChart(data) {
+        // This would update the chart with new data
+        console.log('Updating chart with:', data);
+    }
+
+    function addNewActivity(activity) {
+        const tbody = document.querySelector('tbody');
+        if (!tbody) return;
+        
+        const newRow = document.createElement('tr');
+        newRow.className = 'hover:bg-gray-50';
+        newRow.innerHTML = `
+            <td class="px-6 py-4">
+                <div class="flex items-center">
+                    <div class="w-8 h-8 bg-blue-100 text-blue-600 rounded-lg flex items-center justify-center mr-3">
+                        <i class="fas fa-robot"></i>
+                    </div>
+                    <div>
+                        <div class="font-medium text-gray-900">${activity.agent_name}</div>
+                        <div class="text-sm text-gray-500">${activity.id.slice(0, 8)}...</div>
+                    </div>
+                </div>
+            </td>
+            <td class="px-6 py-4">
+                <span class="px-3 py-1 bg-blue-100 text-blue-800 text-xs font-semibold rounded-full">
+                    Running
+                </span>
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-500">
+                ${new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'})}
+            </td>
+            <td class="px-6 py-4 text-sm text-gray-500">-</td>
+            <td class="px-6 py-4 text-sm text-gray-900">$0.0000</td>
+            <td class="px-6 py-4">
+                <button class="text-blue-600 hover:text-blue-900 text-sm font-semibold">
+                    View Logs
+                </button>
+            </td>
+        `;
+        
+        // Add to top of table
+        tbody.insertBefore(newRow, tbody.firstChild);
+        
+        // Limit to 10 rows
+        if (tbody.children.length > 10) {
+            tbody.removeChild(tbody.lastChild);
+        }
+        
+        // Add animation
+        newRow.style.animation = 'fadeInUp 0.3s ease-out';
+    }
+
+    // Animation for new rows
+    const style = document.createElement('style');
+    style.textContent = `
+        @keyframes fadeInUp {
+            from {
+                opacity: 0;
+                transform: translateY(10px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .animate-pulse {
+            animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+        }
+        
+        @keyframes pulse {
+            0%, 100% {
+                opacity: 1;
+            }
+            50% {
+                opacity: .5;
+            }
+        }
+    `;
+    document.head.appendChild(style);
+</script>
+{% endblock %}
