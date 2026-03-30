@@ -314,9 +314,54 @@ class Renderer:
         pass
     
     def _mock_render(self, render_data: Dict[str, Any]):
-        """Mock rendering for development without OpenGL."""
-        entities = render_data.get('entities', [])
-        print(f"Mock rendering {len(entities)} entities")
+        """JUDGE FIX 12: replace print-only mock with pygame visual renderer.
+        Root cause: OpenGL unavailable, _mock_render had no visual output.
+        Fix: pygame surface mirrors condition A's judge rendering approach."""
+        import pygame as _pg
+        W, H = self.viewport_size
+        SCALE = 60
+        OX, OY = W // 2, H // 2
+
+        if not hasattr(self, '_pg_screen'):
+            _pg.init()
+            self._pg_screen = _pg.display.set_mode((W, H))
+            _pg.display.set_caption("2D RPG — Condition B (Standard)")
+
+        for event in _pg.event.get():
+            if event.type == _pg.QUIT:
+                raise KeyboardInterrupt
+
+        self._pg_screen.fill((15, 15, 30))
+
+        # grid
+        for gx in range(-10, 11):
+            _pg.draw.line(self._pg_screen, (30, 30, 50), (OX + gx*SCALE, 0), (OX + gx*SCALE, H))
+        for gy in range(-6, 7):
+            _pg.draw.line(self._pg_screen, (30, 30, 50), (0, OY + gy*SCALE), (W, OY + gy*SCALE))
+
+        COLORS = {'player': (50,200,80), 'enemy': (220,60,60), 'npc': (100,180,255), 'item': (255,200,50), 'quest': (180,100,255)}
+        SIZES  = {'player': 18, 'enemy': 14, 'npc': 12, 'item': 8, 'quest': 8}
+
+        for ent in render_data.get('entities', []):
+            sx = int(OX + ent.get('x', 0) * SCALE)
+            sy = int(OY - ent.get('y', 0) * SCALE)
+            etype = ent.get('type', 'npc')
+            color = COLORS.get(etype, (150,150,150))
+            size  = SIZES.get(etype, 10)
+            _pg.draw.circle(self._pg_screen, color, (sx, sy), size)
+            _pg.draw.circle(self._pg_screen, (255,255,255), (sx, sy), size, 2)
+            hp, maxhp = ent.get('health'), ent.get('max_health')
+            if hp is not None and maxhp:
+                ratio = hp / maxhp
+                bw = size * 2
+                _pg.draw.rect(self._pg_screen, (80,0,0),  (sx-size, sy-size-8, bw, 5))
+                _pg.draw.rect(self._pg_screen, (0,220,0), (sx-size, sy-size-8, int(bw*ratio), 5))
+
+        # HUD dot indicator
+        for i, _ in enumerate(render_data.get('entities', [])):
+            _pg.draw.circle(self._pg_screen, (100,200,255), (10 + i*14, 14), 5)
+
+        _pg.display.flip()
     
     def update_interpolation(self, alpha: float):
         """
