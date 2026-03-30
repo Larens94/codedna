@@ -1,6 +1,6 @@
 """users.py — User profile and organization management schemas.
 
-exports: ProfileUpdate, OrgCreate, OrgInvite, OrgMemberResponse, UsageStats
+exports: ProfileUpdate, OrgCreate, OrgInvite, OrgMemberResponse, UsageStats, TeamMember, TeamInvite, TeamResponse
 used_by: users.py router
 rules:   must validate email uniqueness; must enforce role-based permissions
 agent:   BackendEngineer | 2024-01-15 | created user and organization schemas
@@ -72,6 +72,51 @@ class OrgMemberResponse(BaseModel):
     avatar_url: Optional[str] = Field(None, description="Avatar URL")
     role: str = Field(..., description="Organization role")
     joined_at: datetime = Field(..., description="Join timestamp")
+    
+    class Config:
+        from_attributes = True
+
+
+class TeamMember(BaseModel):
+    """Schema for team member response."""
+    
+    id: str = Field(..., description="Public user ID")
+    email: EmailStr = Field(..., description="User email")
+    full_name: Optional[str] = Field(None, description="User full name")
+    role: str = Field(..., description="Team role")
+    joined_at: datetime = Field(..., description="Join timestamp")
+    is_active: bool = Field(..., description="User active status")
+    
+    class Config:
+        from_attributes = True
+
+
+class TeamInvite(BaseModel):
+    """Schema for team invitation response."""
+    
+    team_id: str = Field(..., description="Team ID")
+    team_name: str = Field(..., description="Team name")
+    invitee_email: EmailStr = Field(..., description="Invitee email")
+    invited_by: EmailStr = Field(..., description="Inviter email")
+    role: str = Field(..., description="Assigned role")
+    invited_at: str = Field(..., description="Invitation timestamp")
+    status: str = Field(..., description="Invitation status")
+    
+    class Config:
+        from_attributes = True
+
+
+class TeamResponse(BaseModel):
+    """Schema for team response."""
+    
+    id: str = Field(..., description="Team ID")
+    name: str = Field(..., description="Team name")
+    email: EmailStr = Field(..., description="Team email")
+    role: str = Field(..., description="Current user role")
+    member_count: int = Field(..., description="Number of members")
+    agent_count: int = Field(..., description="Number of agents")
+    created_at: datetime = Field(..., description="Creation timestamp")
+    is_active: bool = Field(..., description="Team active status")
     
     class Config:
         from_attributes = True

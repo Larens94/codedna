@@ -27,6 +27,7 @@ import shutil
 import sys
 from datetime import datetime
 from pathlib import Path
+from typing import List, Sequence, Union
 
 from agno.agent import Agent
 from agno.team import Team
@@ -573,7 +574,7 @@ def _build_team(condition: str, output_dir: Path) -> Team:
             ("FrontendDesigner",  "Implement frontend/ templates and auth/",          _instr_b_frontend()),
         ]
 
-    members = [
+    members: List[Union[Agent, Team]] = [
         Agent(name=name, role=role, instructions=instr, model=model, tools=tools,
               tool_call_limit=30)
         for name, role, instr in specs
@@ -584,7 +585,7 @@ def _build_team(condition: str, output_dir: Path) -> Team:
         members=members,
         model=model,
         mode=TeamMode.coordinate,
-        max_iterations=100,
+        max_iterations=200,
     )
 
 
@@ -627,6 +628,488 @@ def _collect_metrics(output_dir: Path) -> dict:
     }
 
 
+def _validate_application(output_dir: Path) -> dict:
+    """Validate generated application structure and syntax.
+    
+    Returns dict with validation results.
+    """
+    import ast
+    import subprocess
+    import sys
+    
+    validation = {
+        "has_main_py": False,
+        "main_py_syntax_valid": False,
+        "essential_dirs": [],
+        "total_files": 0,
+        "syntax_errors": [],
+        "import_errors": [],
+        "basic_test_passed": False,
+    }
+    
+    # Check essential structure
+    main_py = output_dir / "agenthub" / "main.py"
+    validation["has_main_py"] = main_py.exists()
+    
+    essential_dirs = ["api", "agents", "db", "scheduler", "billing", "frontend", "auth"]
+    for d in essential_dirs:
+        if (output_dir / "agenthub" / d).exists():
+            validation["essential_dirs"].append(d)
+    
+    # Count total Python files
+    py_files = list(output_dir.rglob("*.py"))
+    validation["total_files"] = len(py_files)
+    
+    # Syntax check for all Python files
+    for f in py_files[:20]:  # Limit to first 20 files to avoid timeout
+        try:
+            content = f.read_text(encoding="utf-8", errors="ignore")
+            ast.parse(content)
+        except SyntaxError as e:
+            validation["syntax_errors"].append({
+                "file": str(f.relative_to(output_dir)),
+                "error": str(e),
+                "line": e.lineno,
+            })
+    
+    # Specific validation for main.py
+    if main_py.exists():
+        try:
+            content = main_py.read_text(encoding="utf-8")
+            ast.parse(content)
+            validation["main_py_syntax_valid"] = True
+            
+            # Try to check if it's a valid FastAPI app (basic heuristic)
+            if "FastAPI" in content or "from fastapi import FastAPI" in content:
+                validation["basic_test_passed"] = True
+                
+        except SyntaxError as e:
+            validation["syntax_errors"].append({
+                "file": "agenthub/main.py",
+                "error": str(e),
+                "line": e.lineno,
+            })
+    
+    # Try to run a simple syntax check via python -m py_compile (optional)
+    if py_files:
+        test_file = py_files[0]
+        try:
+            subprocess.run(
+                [sys.executable, "-m", "py_compile", str(test_file)],
+                capture_output=True,
+                timeout=5,
+                check=True
+            )
+            validation["py_compile_test"] = True
+        except (subprocess.CalledProcessError, subprocess.TimeoutExpired) as e:
+            validation["py_compile_test"] = False
+    
+    validation["score"] = (
+        (validation["has_main_py"] * 2) +
+        (validation["main_py_syntax_valid"] * 2) +
+        (len(validation["essential_dirs"]) / len(essential_dirs) * 3) +
+        (validation["basic_test_passed"] * 2) +
+        (0 if validation["syntax_errors"] else 1)
+    ) / 10.0  # Normalize to 0-1
+    
+    return validation
+
+
+def _measure_code_quality(output_dir: Path) -> dict:
+    """Measure code quality metrics using AST analysis."""
+    import ast
+    
+    py_files = list(output_dir.rglob("*.py"))
+    quality = {
+        "total_files": len(py_files),
+        "functions": 0,
+        "classes": 0,
+        "avg_function_length": 0.0,
+        "avg_class_length": 0.0,
+        "files_with_docstrings": 0,
+        "functions_with_docstrings": 0,
+        "classes_with_docstrings": 0,
+        "cyclomatic_complexity_total": 0,
+        "max_function_complexity": 0,
+        "import_count": 0,
+        "avg_imports_per_file": 0.0,
+        "avg_function_complexity": 0.0,
+        "quality_score": 0.0,
+    }
+    
+    if not py_files:
+        return quality
+    
+    total_function_lines = 0
+    total_class_lines = 0
+    total_imports = 0
+    files_with_docstring = 0
+    
+    for f in py_files[:30]:  # Limit analysis to 30 files
+        try:
+            content = f.read_text(encoding="utf-8", errors="ignore")
+            tree = ast.parse(content)
+            
+            # Count imports
+            imports = sum(1 for node in ast.walk(tree) if isinstance(node, (ast.Import, ast.ImportFrom)))
+            total_imports += imports
+            
+            # Check module-level docstring
+            if ast.get_docstring(tree):
+                files_with_docstring += 1
+            
+            # Walk through AST nodes
+            for node in ast.walk(tree):
+                if isinstance(node, ast.FunctionDef):
+                    quality["functions"] += 1
+                    # Function length (lines)
+                    func_lines = node.end_lineno - node.lineno if node.end_lineno else 0
+                    total_function_lines += func_lines
+                    # Docstring
+                    if ast.get_docstring(node):
+                        quality["functions_with_docstrings"] += 1
+                    # Cyclomatic complexity approximation
+                    complexity = 1  # base complexity
+                    for subnode in ast.walk(node):
+                        if isinstance(subnode, (ast.If, ast.While, ast.For, ast.AsyncFor,
+                                               ast.Try, ast.ExceptHandler, ast.Assert,
+                                               ast.And, ast.Or)):
+                            complexity += 1
+                    quality["cyclomatic_complexity_total"] += complexity
+                    if complexity > quality["max_function_complexity"]:
+                        quality["max_function_complexity"] = complexity
+                        
+                elif isinstance(node, ast.ClassDef):
+                    quality["classes"] += 1
+                    # Class length
+                    class_lines = node.end_lineno - node.lineno if node.end_lineno else 0
+                    total_class_lines += class_lines
+                    # Docstring
+                    if ast.get_docstring(node):
+                        quality["classes_with_docstrings"] += 1
+        
+        except (SyntaxError, UnicodeDecodeError):
+            continue
+    
+    quality["files_with_docstrings"] = files_with_docstring
+    quality["import_count"] = total_imports
+    
+    if quality["functions"] > 0:
+        quality["avg_function_length"] = round(total_function_lines / quality["functions"], 1)
+        quality["avg_function_complexity"] = round(quality["cyclomatic_complexity_total"] / quality["functions"], 2)
+    else:
+        quality["avg_function_complexity"] = 0
+    
+    if quality["classes"] > 0:
+        quality["avg_class_length"] = round(total_class_lines / quality["classes"], 1)
+    
+    if len(py_files[:30]) > 0:
+        quality["avg_imports_per_file"] = round(total_imports / len(py_files[:30]), 1)
+    
+    # Calculate overall quality score (0-1)
+    score_components = []
+    
+    # Docstring coverage
+    if quality["functions"] > 0:
+        docstring_coverage = quality["functions_with_docstrings"] / quality["functions"]
+        score_components.append(docstring_coverage * 0.3)
+    
+    # File docstring coverage
+    file_doc_coverage = files_with_docstring / len(py_files[:30]) if py_files[:30] else 0
+    score_components.append(file_doc_coverage * 0.2)
+    
+    # Complexity penalty (lower is better)
+    if quality["functions"] > 0:
+        complexity_norm = max(0, 1 - (quality["avg_function_complexity"] - 2) / 10)  # Target ~2
+        score_components.append(complexity_norm * 0.3)
+    
+    # Import organization (simple heuristic)
+    import_norm = min(1, 10 / (quality["avg_imports_per_file"] + 1))  # Lower imports better
+    score_components.append(import_norm * 0.2)
+    
+    quality["quality_score"] = round(sum(score_components), 3) if score_components else 0
+    
+    return quality
+
+
+def _generate_reports(run_dir: Path, results: dict) -> None:
+    """Generate HTML and CSV reports for the experiment results."""
+    import csv
+    
+    reports_dir = run_dir / "reports"
+    reports_dir.mkdir(exist_ok=True)
+    
+    # CSV summary report
+    csv_path = reports_dir / "summary.csv"
+    with open(csv_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow([
+            "condition", "label", "success", "duration_seconds",
+            "python_files", "html_files", "total_loc",
+            "annotation_coverage_pct", "message_count",
+            "validation_score", "quality_score",
+            "functions", "classes", "docstring_coverage_pct",
+            "avg_complexity", "syntax_errors"
+        ])
+        
+        for cond, res in results.get("conditions", {}).items():
+            m = res.get("metrics", {})
+            v = res.get("validation", {})
+            q = res.get("code_quality", {})
+            
+            doc_cov = 0
+            if q.get("functions", 0) > 0:
+                doc_cov = round(100 * q.get("functions_with_docstrings", 0) / q["functions"], 1)
+            
+            writer.writerow([
+                cond,
+                res.get("label", ""),
+                res.get("success", False),
+                res.get("duration_seconds", 0),
+                m.get("python_file_count", 0),
+                m.get("html_file_count", 0),
+                m.get("total_lines_of_code", 0),
+                m.get("annotation_coverage_pct", 0),
+                m.get("annotation_counts", {}).get("message", 0),
+                v.get("score", 0),
+                q.get("quality_score", 0),
+                q.get("functions", 0),
+                q.get("classes", 0),
+                doc_cov,
+                q.get("avg_function_complexity", 0),
+                len(v.get("syntax_errors", []))
+            ])
+    
+    # HTML report
+    html_path = reports_dir / "report.html"
+    html_content = f"""
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Experiment Report - {results.get('run_id', 'unknown')}</title>
+    <style>
+        body {{ font-family: system-ui, sans-serif; margin: 2rem; background: #f8f9fa; }}
+        .container {{ max-width: 1200px; margin: 0 auto; }}
+        .header {{ background: #2c3e50; color: white; padding: 2rem; border-radius: 10px; }}
+        .cards {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 1rem; margin: 2rem 0; }}
+        .card {{ background: white; border-radius: 8px; padding: 1.5rem; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }}
+        .card h3 {{ margin-top: 0; color: #2c3e50; }}
+        .comparison {{ display: flex; gap: 2rem; margin-top: 2rem; }}
+        .condition {{ flex: 1; background: white; padding: 1.5rem; border-radius: 8px; }}
+        .condition-a {{ border-left: 5px solid #3498db; }}
+        .condition-b {{ border-left: 5px solid #f39c12; }}
+        .metric {{ display: flex; justify-content: space-between; margin: 0.5rem 0; }}
+        .metric .value {{ font-weight: bold; }}
+        .success {{ color: #27ae60; }}
+        .error {{ color: #e74c3c; }}
+        table {{ width: 100%; border-collapse: collapse; margin-top: 1rem; }}
+        th, td {{ padding: 0.75rem; text-align: left; border-bottom: 1px solid #ddd; }}
+        th {{ background: #f2f2f2; }}
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>Experiment Report</h1>
+            <p>Run ID: <strong>{results.get('run_id', 'unknown')}</strong></p>
+            <p>Generated: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')}</p>
+        </div>
+        
+        <div class="cards">
+            <div class="card">
+                <h3>📊 Overview</h3>
+                <p>Comparison between Annotation Protocol (Condition A) and Standard Practices (Condition B).</p>
+                <p><strong>Total Conditions:</strong> {len(results.get('conditions', {}))}</p>
+                <p><strong>Successful:</strong> {sum(1 for r in results.get('conditions', {}).values() if r.get('success'))}</p>
+            </div>
+            <div class="card">
+                <h3>📈 Key Metrics</h3>
+                <div class="metric"><span>Total Python Files:</span> <span class="value">{sum(r.get('metrics', {}).get('python_file_count', 0) for r in results.get('conditions', {}).values())}</span></div>
+                <div class="metric"><span>Total Lines of Code:</span> <span class="value">{sum(r.get('metrics', {}).get('total_lines_of_code', 0) for r in results.get('conditions', {}).values())}</span></div>
+                <div class="metric"><span>Average Validation Score:</span> <span class="value">{round(sum(r.get('validation', {}).get('score', 0) for r in results.get('conditions', {}).values()) / max(len(results.get('conditions', {})), 1), 2)}</span></div>
+            </div>
+        </div>
+        
+        <div class="comparison">
+    """
+    
+    # Add condition details
+    labels = {"a": "Annotation Protocol", "b": "Standard Practices"}
+    for cond, res in results.get("conditions", {}).items():
+        m = res.get("metrics", {})
+        v = res.get("validation", {})
+        q = res.get("code_quality", {})
+        
+        doc_cov = "N/A"
+        if q.get("functions", 0) > 0:
+            doc_cov = f"{round(100 * q.get('functions_with_docstrings', 0) / q['functions'], 1)}%"
+        
+        html_content += f"""
+            <div class="condition condition-{cond}">
+                <h2>Condition {cond.upper()} - {labels.get(cond, cond)}</h2>
+                <p class="{'success' if res.get('success') else 'error'}">
+                    <strong>Status:</strong> {'✅ Success' if res.get('success') else '❌ Error'}
+                </p>
+                <p><strong>Duration:</strong> {res.get('duration_seconds', 0)} seconds</p>
+                
+                <h3>📁 Files & Structure</h3>
+                <div class="metric"><span>Python Files:</span> <span class="value">{m.get('python_file_count', 0)}</span></div>
+                <div class="metric"><span>HTML Files:</span> <span class="value">{m.get('html_file_count', 0)}</span></div>
+                <div class="metric"><span>Total LOC:</span> <span class="value">{m.get('total_lines_of_code', 0)}</span></div>
+                <div class="metric"><span>Annotation Coverage:</span> <span class="value">{m.get('annotation_coverage_pct', 0)}%</span></div>
+                <div class="metric"><span>Message Count:</span> <span class="value">{m.get('annotation_counts', {{}}).get('message', 0)}</span></div>
+                
+                <h3>✅ Validation</h3>
+                <div class="metric"><span>Validation Score:</span> <span class="value">{v.get('score', 0):.2f}</span></div>
+                <div class="metric"><span>Syntax Errors:</span> <span class="value">{len(v.get('syntax_errors', []))}</span></div>
+                <div class="metric"><span>Has Main.py:</span> <span class="value">{'✅' if v.get('has_main_py') else '❌'}</span></div>
+                
+                <h3>⚙️ Code Quality</h3>
+                <div class="metric"><span>Quality Score:</span> <span class="value">{q.get('quality_score', 0):.3f}</span></div>
+                <div class="metric"><span>Functions/Classes:</span> <span class="value">{q.get('functions', 0)} / {q.get('classes', 0)}</span></div>
+                <div class="metric"><span>Docstring Coverage:</span> <span class="value">{doc_cov}</span></div>
+                <div class="metric"><span>Avg Complexity:</span> <span class="value">{q.get('avg_function_complexity', 0):.2f}</span></div>
+            </div>
+        """
+    
+    html_content += """
+        </div>
+        
+        <div class="card">
+            <h3>📋 Detailed Metrics</h3>
+            <table>
+                <thead>
+                    <tr>
+                        <th>Metric</th>
+    """
+    
+    # Table headers
+    for cond in results.get("conditions", {}).keys():
+        html_content += f"<th>Condition {cond.upper()}</th>"
+    html_content += "</tr></thead><tbody>"
+    
+    # Table rows
+    metrics = [
+        ("Python Files", lambda r: r.get("metrics", {}).get("python_file_count", 0)),
+        ("HTML Files", lambda r: r.get("metrics", {}).get("html_file_count", 0)),
+        ("Total LOC", lambda r: r.get("metrics", {}).get("total_lines_of_code", 0)),
+        ("Annotation Coverage", lambda r: f"{r.get('metrics', {}).get('annotation_coverage_pct', 0)}%"),
+        ("Message Count", lambda r: r.get("metrics", {}).get("annotation_counts", {}).get("message", 0)),
+        ("Validation Score", lambda r: f"{r.get('validation', {}).get('score', 0):.2f}"),
+        ("Quality Score", lambda r: f"{r.get('code_quality', {}).get('quality_score', 0):.3f}"),
+        ("Functions", lambda r: r.get("code_quality", {}).get("functions", 0)),
+        ("Classes", lambda r: r.get("code_quality", {}).get("classes", 0)),
+        ("Syntax Errors", lambda r: len(r.get("validation", {}).get("syntax_errors", []))),
+    ]
+    
+    for metric_name, extractor in metrics:
+        html_content += f"<tr><td><strong>{metric_name}</strong></td>"
+        for cond, res in results.get("conditions", {}).items():
+            html_content += f"<td>{extractor(res)}</td>"
+        html_content += "</tr>"
+    
+    html_content += """
+                </tbody>
+            </table>
+        </div>
+        
+        <div class="card">
+            <h3>📄 Files</h3>
+            <p>Detailed results available in:</p>
+            <ul>
+                <li><code>comparison.json</code> - Full JSON results</li>
+                <li><code>reports/summary.csv</code> - CSV summary</li>
+                <li><code>run.log</code> - Execution log</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>
+    """
+    
+    html_path.write_text(html_content, encoding="utf-8")
+    
+    print(f"  Reports generated: {reports_dir}/")
+
+
+def _run_with_retry(team, task: str, max_retries: int = 3, logger=None) -> tuple[bool, list, list]:
+    """Run team task with exponential backoff retry on failure.
+    
+    Returns: (success, chunks, error_events)
+    """
+    import time
+    
+    chunks = []
+    error_events = []
+    base_delay = 2  # seconds
+    
+    for attempt in range(max_retries):
+        if attempt > 0 and logger:
+            logger.log(f"Retry attempt {attempt}/{max_retries} after {base_delay * (2 ** (attempt-1))}s delay")
+            time.sleep(base_delay * (2 ** (attempt-1)))
+        
+        try:
+            current_chunks = []
+            current_errors = []
+            _last_member = None
+            _SKIP = {"RunContentEvent", "RunResponseContentEvent",
+                     "TeamRunResponseContentEvent", "AgentRunResponseContentEvent"}
+            
+            for event in team.run(task, stream=True):
+                event_type = type(event).__name__
+                current_chunks.append(str(event))
+                
+                if "Error" in event_type:
+                    err_content = (getattr(event, "content", None)
+                                   or getattr(event, "error", None)
+                                   or event_type)
+                    current_errors.append(str(err_content))
+                    if logger:
+                        logger.log(f"ERROR EVENT ({event_type}): {str(err_content)[:120]}")
+                    continue
+                
+                if event_type in _SKIP:
+                    continue
+                
+                member    = (getattr(event, "member_name", None)
+                             or getattr(event, "agent_name", None)
+                             or "Team")
+                tool      = getattr(event, "tool_name", None)
+                tool_args = getattr(event, "tool_args", None) or getattr(event, "function_call", None)
+                
+                if tool and logger:
+                    args_str = ""
+                    if isinstance(tool_args, dict):
+                        first    = next(iter(tool_args.values()), "")
+                        args_str = f"({str(first)[:60]})"
+                    logger.log(f"{member}: {tool}{args_str} completed")
+                elif logger:
+                    if member != _last_member:
+                        logger.log(f"→ {member} [{event_type}]")
+                        _last_member = member
+                    elif event_type not in ("RunEvent", "TeamRunEvent"):
+                        content = getattr(event, "content", None)
+                        if content and len(str(content)) > 20:
+                            snippet = str(content)[:100].replace("\n", " ")
+                            logger.log(f"{member}: {snippet}")
+            
+            # If we got here without exception, consider successful
+            chunks = current_chunks
+            error_events = current_errors
+            return True, chunks, error_events
+            
+        except Exception as exc:
+            if logger:
+                logger.log(f"Attempt {attempt+1} failed: {exc}")
+            if attempt == max_retries - 1:
+                return False, chunks, [str(exc)]
+            # Continue to next retry
+    
+    return False, chunks, error_events
+
+
 # ─────────────────────────────────────────────────────────────────────────────
 # SINGLE CONDITION RUNNER
 # ─────────────────────────────────────────────────────────────────────────────
@@ -659,54 +1142,19 @@ def run_condition(condition: str, run_dir: Path, logger: "RunLogger") -> dict:
         logger.log(f"[{condition.upper()}] Building team...")
         team = _build_team(condition, output_dir)
         logger.log(f"[{condition.upper()}] Team ready — starting task...")
-        chunks = []
-        _last_member = None
-        _error_events: list[str] = []
-        _SKIP = {"RunContentEvent", "RunResponseContentEvent",
-                 "TeamRunResponseContentEvent", "AgentRunResponseContentEvent"}
-
-        for event in team.run(SHARED_TASK, stream=True):
-            event_type = type(event).__name__
-            chunks.append(str(event))
-
-            if "Error" in event_type:
-                err_content = (getattr(event, "content", None)
-                               or getattr(event, "error", None)
-                               or event_type)
-                _error_events.append(str(err_content))
-                logger.log(f"[{condition.upper()}] ERROR EVENT ({event_type}): {str(err_content)[:120]}")
-                continue
-
-            if event_type in _SKIP:
-                continue
-
-            member    = (getattr(event, "member_name", None)
-                         or getattr(event, "agent_name", None)
-                         or "Team")
-            tool      = getattr(event, "tool_name", None)
-            tool_args = getattr(event, "tool_args", None) or getattr(event, "function_call", None)
-
-            if tool:
-                args_str = ""
-                if isinstance(tool_args, dict):
-                    first    = next(iter(tool_args.values()), "")
-                    args_str = f"({str(first)[:60]})"
-                logger.log(f"[{condition.upper()}] {member}: {tool}{args_str} completed")
-            else:
-                if member != _last_member:
-                    logger.log(f"[{condition.upper()}] → {member} [{event_type}]")
-                    _last_member = member
-                elif event_type not in ("RunEvent", "TeamRunEvent"):
-                    content = getattr(event, "content", None)
-                    if content and len(str(content)) > 20:
-                        snippet = str(content)[:100].replace("\n", " ")
-                        logger.log(f"[{condition.upper()}] {member}: {snippet}")
-
+        # Run with retry mechanism
+        success, chunks, error_events = _run_with_retry(
+            team, SHARED_TASK, max_retries=3, logger=logger
+        )
+        
         result["agent_response_preview"] = "".join(chunks)[:800]
-        if _error_events:
-            result["error"] = "; ".join(_error_events[:3])
-        result["success"] = True
-        logger.log(f"[{condition.upper()}] Task completed successfully.")
+        if error_events:
+            result["error"] = "; ".join(error_events[:3])
+        result["success"] = success
+        if success:
+            logger.log(f"[{condition.upper()}] Task completed successfully.")
+        else:
+            logger.log(f"[{condition.upper()}] Task failed after retries.")
 
     except Exception as exc:
         result["error"] = str(exc)
@@ -721,19 +1169,45 @@ def run_condition(condition: str, run_dir: Path, logger: "RunLogger") -> dict:
     )
     result["metrics"] = _collect_metrics(output_dir)
     m = result["metrics"]
-
+    
+    # Validate application structure and syntax
+    validation = _validate_application(output_dir)
+    result["validation"] = validation
+    
+    # Measure code quality
+    code_quality = _measure_code_quality(output_dir)
+    result["code_quality"] = code_quality
+    
     if result["success"] and m.get("python_file_count", 0) == 0:
         result["success"] = False
         if not result["error"]:
             result["error"] = "No Python files produced — agent may have failed silently"
         logger.log(f"[{condition.upper()}] WARNING: 0 files produced — marking success=False")
-
+    
+    # Log validation results
+    if validation.get("syntax_errors"):
+        logger.log(f"[{condition.upper()}] Validation: {len(validation['syntax_errors'])} syntax errors")
+    else:
+        logger.log(f"[{condition.upper()}] Validation: No syntax errors")
+    
+    # Log code quality highlights
+    if code_quality["functions"] > 0:
+        logger.log(
+            f"[{condition.upper()}] Quality: funcs={code_quality['functions']}"
+            f" classes={code_quality['classes']}"
+            f" doc_cov={code_quality['functions_with_docstrings']}/{code_quality['functions']}"
+            f" avg_complexity={code_quality['avg_function_complexity']:.1f}"
+            f" quality_score={code_quality['quality_score']:.3f}"
+        )
+    
     logger.log(
         f"[{condition.upper()}] Metrics: py={m.get('python_file_count',0)}"
         f" html={m.get('html_file_count',0)}"
         f" LOC={m.get('total_lines_of_code',0)}"
         f" annotated={m.get('annotation_coverage_pct',0):.1f}%"
         f" message:{m.get('annotation_counts',{}).get('message',0)}"
+        f" | valid_score={validation.get('score', 0):.2f}"
+        f" | quality_score={code_quality.get('quality_score', 0):.3f}"
     )
     return result
 
@@ -859,6 +1333,12 @@ def run_experiment(condition: str = "both") -> dict:
     cmp_file = run_dir / "comparison.json"
     cmp_file.write_text(json.dumps(results, indent=2, ensure_ascii=False))
     logger.log("Experiment finished — comparison.json saved.")
+    
+    # Generate detailed reports
+    logger.log("Generating HTML and CSV reports...")
+    _generate_reports(run_dir, results)
+    logger.log("Reports generated in reports/ directory.")
+    
     logger.close()
 
     print(f"\n{'='*68}")

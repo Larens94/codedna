@@ -14,7 +14,7 @@ from sqlalchemy.orm import Session
 from typing import Optional, Dict, Any
 
 from agenthub.db.session import get_db
-from agenthub.db.models import User, Agent, Task, CreditAccount
+from agenthub.db.models import User, Agent, ScheduledTask as Task, CreditAccount
 from agenthub.auth.dependencies import get_current_user
 from agenthub.config import settings
 

@@ -51,12 +51,13 @@ async def stream_usage_updates(
                 
                 # Check for changes
                 if run_count != last_run_count or balance != last_balance:
-                    yield f"data: {json.dumps({
+                    data_dict = {
                         'run_count': run_count,
                         'credit_balance': balance,
                         'currency': credit_account.currency if credit_account else 'USD',
                         'timestamp': time.time()
-                    })}\n\n"
+                    }
+                    yield f"data: {json.dumps(data_dict)}\n\n"
                     
                     last_run_count = run_count
                     last_balance = balance

@@ -25,6 +25,9 @@ def hash_password(password: str) -> str:
     Rules:   must use secure salt rounds; must verify against hash
     message: claude-sonnet-4-6 | 2024-01-15 | consider making salt rounds configurable
     """
+    # bcrypt has 72-byte limit, truncate if longer (should not happen with demo passwords)
+    if len(password.encode('utf-8')) > 72:
+        password = password[:72]
     return pwd_context.hash(password)
 
 

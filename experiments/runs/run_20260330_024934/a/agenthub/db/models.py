@@ -45,7 +45,7 @@ class User(Base):
     agents = relationship("Agent", back_populates="owner", cascade="all, delete-orphan")
     agent_runs = relationship("AgentRun", back_populates="user", cascade="all, delete-orphan")
     credit_accounts = relationship("CreditAccount", back_populates="user", cascade="all, delete-orphan")
-    org_memberships = relationship("OrgMembership", back_populates="user", cascade="all, delete-orphan")
+    org_memberships = relationship("OrgMembership", back_populates="user", cascade="all, delete-orphan", primaryjoin="User.id==OrgMembership.user_id", foreign_keys="[OrgMembership.user_id]")
     audit_logs = relationship("AuditLog", back_populates="user", cascade="all, delete-orphan")
 
 
@@ -109,7 +109,7 @@ class AgentRun(Base):
     started_at = Column(DateTime(timezone=True))
     completed_at = Column(DateTime(timezone=True))
     error_message = Column(Text)
-    metadata = Column(JSON, default=dict)  # Additional run metadata
+    metadata_ = Column('metadata', JSON, default=dict)  # Additional run metadata
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     
     # Relationships
@@ -144,7 +144,7 @@ class ScheduledTask(Base):
     last_run_status = Column(
         Enum("pending", "running", "completed", "failed", name="task_status")
     )
-    metadata = Column(JSON, default=dict)
+    metadata_ = Column('metadata', JSON, default=dict)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     updated_at = Column(DateTime(timezone=True), onupdate=func.now())
     
@@ -209,7 +209,7 @@ class Invoice(Base):
     payment_method = Column(String(100))
     payment_id = Column(String(255))  # External payment system ID
     credits_added = Column(Float, nullable=False)
-    metadata = Column(JSON, default=dict)
+    metadata_ = Column('metadata', JSON, default=dict)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
     paid_at = Column(DateTime(timezone=True))
     

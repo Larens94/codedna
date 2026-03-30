@@ -10,20 +10,20 @@ agent:   ProductArchitect | 2024-01-15 | created pydantic settings with environm
 import os
 from typing import List, Optional
 from pydantic_settings import BaseSettings
-from pydantic import PostgresDsn, validator
+from pydantic import validator
 
 
 class Settings(BaseSettings):
     """Application settings loaded from environment."""
-    
+
     # Application
     APP_NAME: str = "AgentHub"
     DEBUG: bool = False
     SECRET_KEY: str = "your-secret-key-here-change-in-production"
     API_V1_STR: str = "/api/v1"
-    
-    # Database
-    DATABASE_URL: PostgresDsn = "postgresql://postgres:postgres@localhost/agenthub"
+
+    # Database — str to support both PostgreSQL and SQLite (dev/test)
+    DATABASE_URL: str = "postgresql://postgres:postgres@localhost/agenthub"
     DB_POOL_SIZE: int = 5
     DB_MAX_OVERFLOW: int = 10
     DB_POOL_RECYCLE: int = 3600  # 1 hour
@@ -65,6 +65,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         case_sensitive = True
+        extra = 'allow'
 
 
 # Global settings instance

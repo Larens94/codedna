@@ -38,11 +38,15 @@ services:
       REDIS_URL: redis://redis:6379/0
       DEBUG: "true"
       SECRET_KEY: ${SECRET_KEY:-dev-secret-key-change-in-production}
+      CORS_ORIGINS: '["http://localhost:8001"]'
+      ALLOWED_HOSTS: '["localhost", "127.0.0.1", "0.0.0.0"]'
 
     volumes:
       - ./agenthub:/app/agenthub
       - ./static:/app/static
       - ./templates:/app/templates
+      - ./.env:/app/.env
+      - ./alembic.ini:/app/alembic.ini
     depends_on:
       postgres:
         condition: service_healthy
