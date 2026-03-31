@@ -9,6 +9,7 @@ agent:   Product Architect | 2024-03-30 | created auth service skeleton
 
 import logging
 import uuid
+from dataclasses import dataclass
 from datetime import datetime, timedelta
 from typing import Optional, Dict, Any, Tuple
 
@@ -19,6 +20,15 @@ from app.exceptions import AuthenticationError, AuthorizationError, InvalidToken
 from app.services.container import ServiceContainer
 
 logger = logging.getLogger(__name__)
+
+# In-memory refresh token store: {redis_key: "valid"} — replaces Redis for dev/demo
+_refresh_token_store: Dict[str, str] = {}
+
+
+@dataclass
+class TokenPair:
+    access_token: str
+    refresh_token: str
 
 
 class AuthService:
@@ -141,15 +151,11 @@ class AuthService:
         }
         
         token = jwt.encode(payload, self.jwt_secret_key, algorithm=self.jwt_algorithm)
-        
-        # Store refresh token in Redis
+
+        # Store refresh token in in-memory store (replaces Redis for dev/demo)
         redis_key = f"refresh_token:{user_id}:{token_id}"
-        self.container.redis.set(
-            redis_key,
-            "valid",
-            ex=self.refresh_token_expire_days * 24 * 3600,  # Convert days to seconds
-        )
-        
+        _refresh_token_store[redis_key] = "valid"
+
         return token, token_id
     
     # --- Token Validation ---
@@ -223,71 +229,107 @@ class AuthService:
         if not token_id or not user_id:
             raise InvalidTokenError("Malformed refresh token")
         
-        # Check if token is revoked in Redis
+        # Check if token exists in in-memory store
         redis_key = f"refresh_token:{user_id}:{token_id}"
-        if not self.container.redis.exists(redis_key):
+        if redis_key not in _refresh_token_store:
             raise AuthenticationError("Refresh token revoked")
         
         return payload, token_id
     
     # --- Authentication ---
     
-    async def authenticate_user(self, email: str, password: str) -> Dict[str, Any]:
-        """Authenticate user with email and password.
-        
-        Args:
-            email: User email
-            password: Plain text password
-            
-        Returns:
-            User information if authentication successful
-            
+    async def authenticate_user(self, email: str, password: str) -> TokenPair:
+        """Authenticate user and return access + refresh tokens.
+
         Raises:
-            AuthenticationError: If authentication fails
+            AuthenticationError: If credentials are invalid or account inactive.
         """
-        # Get user by email from database
         user = await self.container.users.get_user_by_email(email)
         if not user:
-            # Hash dummy password to prevent timing attacks
             self.verify_password(password, "$argon2id$v=19$m=65536,t=3,p=4$dummy$dummy")
             raise AuthenticationError("Invalid credentials")
-        
-        # Check if user is active
+
         if not user.get("is_active"):
             raise AuthenticationError("Account is deactivated")
-        
-        # Verify password
+
         if not self.verify_password(password, user["hashed_password"]):
-            # TODO: Track failed login attempts
             raise AuthenticationError("Invalid credentials")
-        
-        # Update last login
+
         await self.container.users.update_last_login(user["id"])
-        
-        return user
+
+        user_id = str(user["id"])
+        access_token = self.create_access_token(
+            user_id=user_id,
+            organization_id="default",
+            roles=["org_member"],
+        )
+        refresh_token, _ = self.create_refresh_token(user_id=user_id)
+        return TokenPair(access_token=access_token, refresh_token=refresh_token)
+
+    async def get_current_user(self, token: str):
+        """Validate access token and return a UserRecord.
+
+        Raises:
+            AuthenticationError: If token is invalid or user not found.
+        """
+        from app.services.user_service import UserRecord
+        payload = self.verify_access_token(token)
+        user_id = payload.get("sub")
+        if not user_id:
+            raise AuthenticationError("Invalid token payload")
+
+        user_dict = await self.container.users.get_user_by_id(user_id)
+        if not user_dict:
+            raise AuthenticationError("User not found")
+
+        return UserRecord(
+            id=user_dict["id"],
+            email=user_dict["email"],
+            first_name=user_dict.get("first_name"),
+            last_name=user_dict.get("last_name"),
+            username=user_dict.get("username"),
+            is_active=user_dict.get("is_active", True),
+            email_verified=user_dict.get("email_verified", True),
+            created_at=user_dict.get("created_at"),
+            hashed_password=user_dict.get("hashed_password", ""),
+        )
     
+    async def refresh_tokens(self, refresh_token: str) -> TokenPair:
+        """Issue a new TokenPair from a valid refresh token (rotation)."""
+        payload, token_id = self.verify_refresh_token(refresh_token)
+        user_id = payload["sub"]
+
+        # Revoke old token
+        old_key = f"refresh_token:{user_id}:{token_id}"
+        _refresh_token_store.pop(old_key, None)
+
+        # Issue new tokens
+        access_token = self.create_access_token(
+            user_id=user_id,
+            organization_id="default",
+            roles=["org_member"],
+        )
+        new_refresh_token, _ = self.create_refresh_token(user_id=user_id)
+        return TokenPair(access_token=access_token, refresh_token=new_refresh_token)
+
+    async def logout(self, token: str) -> None:
+        """Invalidate access token (no-op for in-memory store)."""
+        try:
+            payload = self.verify_access_token(token)
+            # In production: blacklist the token JTI in Redis
+        except Exception:
+            pass  # Already invalid, ignore
+
     async def revoke_refresh_token(self, user_id: str, token_id: str) -> None:
-        """Revoke a specific refresh token.
-        
-        Args:
-            user_id: User ID
-            token_id: Token ID to revoke
-        """
+        """Revoke a specific refresh token."""
         redis_key = f"refresh_token:{user_id}:{token_id}"
-        await self.container.redis.delete(redis_key)
-    
+        _refresh_token_store.pop(redis_key, None)
+
     async def revoke_all_refresh_tokens(self, user_id: str) -> None:
-        """Revoke all refresh tokens for a user.
-        
-        Args:
-            user_id: User ID
-        """
-        # Find all refresh tokens for user
-        pattern = f"refresh_token:{user_id}:*"
-        # Note: Redis KEYS command is blocking - use SCAN in production
-        keys = await self.container.redis.client.keys(pattern)
-        if keys:
-            await self.container.redis.delete(*keys)
+        """Revoke all refresh tokens for a user."""
+        keys_to_remove = [k for k in _refresh_token_store if k.startswith(f"refresh_token:{user_id}:")]
+        for k in keys_to_remove:
+            del _refresh_token_store[k]
     
     # --- Authorization ---
     

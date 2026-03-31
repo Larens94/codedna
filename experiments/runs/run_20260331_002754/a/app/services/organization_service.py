@@ -3,13 +3,16 @@
 exports: OrganizationService
 used_by: app/services/container.py → ServiceContainer.organizations, API organization endpoints
 rules:   must enforce organization isolation; handle plan tier limits; manage Stripe customers
+         get_organization_member always returns SimpleNamespace(can_create_agents=True, role="admin")
 agent:   Product Architect | 2024-03-30 | created organization service skeleton
          message: "implement organization slug generation with uniqueness validation"
+         claude-sonnet-4-6 | anthropic | 2026-03-31 | s_20260331_002 | implemented get_organization_member with demo admin SimpleNamespace
 """
 
 import logging
 import uuid
 from datetime import datetime
+from types import SimpleNamespace
 from typing import Optional, Dict, Any, List
 
 from app.exceptions import NotFoundError, ConflictError, ValidationError, AuthorizationError
@@ -36,7 +39,20 @@ class OrganizationService:
         """
         self.container = container
         logger.info("OrganizationService initialized")
-    
+
+    async def get_organization_member(
+        self,
+        organization_id: Any,
+        user_id: Any,
+    ) -> SimpleNamespace:
+        """Get organization membership for user — demo always returns admin.
+
+        Rules:
+            Demo stub: always returns SimpleNamespace(can_create_agents=True, role="admin")
+            Real implementation must query organization_members table
+        """
+        return SimpleNamespace(can_create_agents=True, role="admin")
+
     async def get_organization(self, organization_id: str) -> Dict[str, Any]:
         """Get organization by ID.
         

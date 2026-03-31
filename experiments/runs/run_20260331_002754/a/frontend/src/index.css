@@ -1,95 +1,13 @@
-/* Global styles */
-:root {
-  --primary-color: #6366f1;
-  --secondary-color: #8b5cf6;
-  --dark-bg: #111827;
-  --sidebar-bg: #1f2937;
-  --card-bg: #374151;
-  --text-primary: #f9fafb;
-  --text-secondary: #d1d5db;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
 body {
-  margin: 0;
-  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', 'Oxygen',
-    'Ubuntu', 'Cantarell', 'Fira Sans', 'Droid Sans', 'Helvetica Neue',
-    sans-serif;
-  -webkit-font-smoothing: antialiased;
-  -moz-osx-font-smoothing: grayscale;
-  background-color: var(--dark-bg);
-  color: var(--text-primary);
+  background-color: #f9fafb;
+  color: #111827;
 }
 
-/* Custom scrollbar */
-::-webkit-scrollbar {
-  width: 8px;
-  height: 8px;
-}
-
-::-webkit-scrollbar-track {
-  background: var(--sidebar-bg);
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--primary-color);
-  border-radius: 4px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--secondary-color);
-}
-
-/* Utility classes */
-.text-primary {
-  color: var(--text-primary) !important;
-}
-
-.text-secondary {
-  color: var(--text-secondary) !important;
-}
-
-.bg-dark {
-  background-color: var(--dark-bg) !important;
-}
-
-.bg-sidebar {
-  background-color: var(--sidebar-bg) !important;
-}
-
-.bg-card {
-  background-color: var(--card-bg) !important;
-}
-
-/* Bootstrap overrides */
-.btn-primary {
-  background-color: var(--primary-color) !important;
-  border-color: var(--primary-color) !important;
-}
-
-.btn-primary:hover {
-  background-color: var(--secondary-color) !important;
-  border-color: var(--secondary-color) !important;
-}
-
-.form-control, .form-select {
-  background-color: var(--card-bg) !important;
-  border-color: #4b5563 !important;
-  color: var(--text-primary) !important;
-}
-
-.form-control:focus, .form-select:focus {
-  background-color: var(--card-bg) !important;
-  border-color: var(--primary-color) !important;
-  color: var(--text-primary) !important;
-  box-shadow: 0 0 0 0.25rem rgba(99, 102, 241, 0.25) !important;
-}
-
-.card {
-  background-color: var(--card-bg) !important;
-  border-color: #4b5563 !important;
-}
-
-.nav-link.active {
-  background-color: var(--primary-color) !important;
-  border-color: var(--primary-color) !important;
-}
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: #f3f4f6; }
+::-webkit-scrollbar-thumb { background: #ea580c; border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: #f97316; }

@@ -6,9 +6,9 @@ export const ProtectedRoute = () => {
 
   if (isLoading) {
     return (
-      <div className="d-flex justify-content-center align-items-center vh-100">
-        <div className="spinner-border text-primary" role="status">
-          <span className="visually-hidden">Loading...</span>
+      <div className="flex items-center justify-center min-h-screen bg-gray-50">
+        <div className="w-8 h-8 border-4 border-orange-500 border-t-transparent rounded-full animate-spin" role="status">
+          <span className="sr-only">Loading...</span>
         </div>
       </div>
     )

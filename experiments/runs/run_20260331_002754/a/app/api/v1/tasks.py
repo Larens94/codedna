@@ -64,3 +64,17 @@ async def delete_task(
         await services.tasks.delete_task(task_id=task_id, user_id=current_user.id)
     except Exception as e:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
+
+
+@router.patch("/{task_id}")
+async def patch_task(
+    task_id: int,
+    updates: dict,
+    services: ServiceContainer = Depends(get_services),
+    current_user: Any = Depends(get_current_user),
+):
+    """Patch a scheduled task with partial updates."""
+    try:
+        return await services.tasks.patch_task(task_id=task_id, user_id=current_user.id, updates=updates)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))

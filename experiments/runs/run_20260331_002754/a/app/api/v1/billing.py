@@ -15,6 +15,18 @@ from app.services import ServiceContainer
 router = APIRouter()
 
 
+@router.get("/")
+async def get_billing(
+    services: ServiceContainer = Depends(get_services),
+    current_user: Any = Depends(get_current_user),
+):
+    """Get full billing dashboard data."""
+    try:
+        return await services.billing.get_organization_usage(user_id=current_user.id)
+    except Exception as e:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=str(e))
+
+
 @router.get("/usage")
 async def get_usage(
     services: ServiceContainer = Depends(get_services),

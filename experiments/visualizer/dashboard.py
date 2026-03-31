@@ -7,13 +7,17 @@ rules:   read-only — never writes any file;
          gracefully handles missing directories (run not started yet);
          requires: rich>=13.0
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-29 | s_20260329_002 | Initial design
+         claude-sonnet-4-6 | anthropic | 2026-03-30 | s_20260330_001 | Added interactive run picker (_pick_run); added --latest flag; imported rich.prompt.Prompt
 
 USAGE:
-    # Watch the latest run (auto-detected):
+    # Interactive run picker (default):
     python visualizer/dashboard.py
 
-    # Watch a specific run:
+    # Watch a specific run directly:
     python visualizer/dashboard.py --run run_20260329_153000
+
+    # Auto-select latest run (skip picker):
+    python visualizer/dashboard.py --latest
 
     # Change poll interval (default 2s):
     python visualizer/dashboard.py --interval 3
@@ -36,6 +40,7 @@ try:
     from rich.layout import Layout
     from rich.live import Live
     from rich.panel import Panel
+    from rich.prompt import Prompt
     from rich.table import Table
     from rich.text import Text
     from rich import box
@@ -278,6 +283,57 @@ def run_dashboard(run_dir: Path, interval: float = 2.0) -> None:
 
 
 # ─────────────────────────────────────────────────────────────────────────────
+# INTERACTIVE RUN PICKER
+# ─────────────────────────────────────────────────────────────────────────────
+
+def _pick_run(runs_root: Path) -> Path | None:
+    """Display available runs and let the user choose one interactively.
+
+    Rules:   Returns None if no runs exist; never raises on empty directory.
+    """
+    list_path_runs = sorted(
+        [d for d in runs_root.iterdir() if d.is_dir()],
+        key=lambda d: d.name,
+        reverse=True,
+    )
+    if not list_path_runs:
+        return None
+
+    table = Table(box=box.SIMPLE_HEAD, expand=False, show_header=True,
+                  header_style="bold white")
+    table.add_column("#",    width=4,  justify="right", style="bold cyan")
+    table.add_column("Run ID", style="white")
+    table.add_column("Size",   justify="right", style="dim")
+
+    for idx, run_dir in enumerate(list_path_runs, start=1):
+        list_path_py = list(run_dir.rglob("*.py"))
+        str_size = f"{len(list_path_py)} .py" if list_path_py else "—"
+        str_marker_latest = "  [green]← latest[/]" if idx == 1 else ""
+        table.add_row(str(idx), run_dir.name + str_marker_latest, str_size)
+
+    console.print()
+    console.print(Panel(table, title="[bold]Available runs[/]", border_style="white"))
+
+    str_choice = Prompt.ask(
+        "Select run",
+        default="1",
+        console=console,
+    )
+    try:
+        int_choice = int(str_choice)
+        if 1 <= int_choice <= len(list_path_runs):
+            return list_path_runs[int_choice - 1]
+    except ValueError:
+        # user typed a run ID directly
+        path_direct = runs_root / str_choice
+        if path_direct.exists():
+            return path_direct
+
+    console.print(f"[red]Invalid selection:[/] {str_choice!r}")
+    return None
+
+
+# ─────────────────────────────────────────────────────────────────────────────
 # CLI
 # ─────────────────────────────────────────────────────────────────────────────
 
@@ -287,13 +343,16 @@ if __name__ == "__main__":
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 Examples:
-  python visualizer/dashboard.py                        # auto-detect latest run
+  python visualizer/dashboard.py                        # interactive run picker
   python visualizer/dashboard.py --run run_20260329_153000
-  python visualizer/dashboard.py --interval 5          # slower polling
+  python visualizer/dashboard.py --latest               # skip picker, use latest
+  python visualizer/dashboard.py --interval 5           # slower polling
         """
     )
     cli.add_argument("--run", metavar="RUN_ID",
-                     help="Run ID to watch (default: latest run in experiments/runs/)")
+                     help="Run ID to watch directly (skips picker)")
+    cli.add_argument("--latest", action="store_true",
+                     help="Auto-select the latest run without prompting")
     cli.add_argument("--interval", type=float, default=2.0,
                      help="Poll interval in seconds (default: 2)")
     args = cli.parse_args()
@@ -303,8 +362,14 @@ Examples:
         if not target.exists():
             console.print(f"[red]Run not found:[/] {target}")
             sys.exit(1)
-    else:
+    elif args.latest:
         target = find_latest_run(RUNS_ROOT)
+        if target is None:
+            console.print(f"[yellow]No runs found in[/] {RUNS_ROOT}")
+            sys.exit(1)
+        console.print(f"[dim]Latest run:[/] {target.name}")
+    else:
+        target = _pick_run(RUNS_ROOT)
         if target is None:
             console.print(
                 f"[yellow]No runs found in[/] {RUNS_ROOT}\n"
@@ -312,6 +377,5 @@ Examples:
                 "  [bold]python run_experiment.py[/]"
             )
             sys.exit(1)
-        console.print(f"[dim]Auto-detected latest run:[/] {target.name}")
 
     run_dashboard(target, interval=args.interval)

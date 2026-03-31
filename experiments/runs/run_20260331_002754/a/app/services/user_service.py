@@ -9,6 +9,7 @@ agent:   Product Architect | 2024-03-30 | created user service skeleton
 
 import logging
 import uuid
+from dataclasses import dataclass, field
 from datetime import datetime
 from typing import Optional, Dict, Any, List
 
@@ -16,6 +17,23 @@ from app.exceptions import NotFoundError, ConflictError, ValidationError
 from app.services.container import ServiceContainer
 
 logger = logging.getLogger(__name__)
+
+# In-memory user store (keyed by email) — dev/demo only; no Postgres needed
+_users_by_email: Dict[str, Dict[str, Any]] = {}
+_users_by_id: Dict[str, Dict[str, Any]] = {}
+
+
+@dataclass
+class UserRecord:
+    id: int
+    email: str
+    first_name: Optional[str]
+    last_name: Optional[str]
+    username: Optional[str]
+    is_active: bool
+    email_verified: bool
+    created_at: datetime
+    hashed_password: str
 
 
 class UserService:
@@ -58,54 +76,53 @@ class UserService:
         raise NotImplementedError("get_user_by_id not yet implemented")
     
     async def get_user_by_email(self, email: str) -> Optional[Dict[str, Any]]:
-        """Get user by email (including sensitive fields for authentication).
-        
-        Args:
-            email: User email
-            
-        Returns:
-            User information including hashed_password, or None if not found
-        """
-        # TODO: Implement database query
-        # 1. Query users table by email (case-insensitive)
-        # 2. Include sensitive fields needed for authentication
-        # 3. Return None if not found or soft-deleted
-        
-        raise NotImplementedError("get_user_by_email not yet implemented")
+        """Get user by email (including sensitive fields for authentication)."""
+        return _users_by_email.get(email.lower())
     
     async def create_user(
         self,
         email: str,
         password: str,
-        full_name: str,
+        first_name: Optional[str] = None,
+        last_name: Optional[str] = None,
+        username: Optional[str] = None,
         organization_id: Optional[str] = None,
-    ) -> Dict[str, Any]:
-        """Create new user.
-        
-        Args:
-            email: User email (must be unique)
-            password: Plain text password
-            full_name: User's full name
-            organization_id: Optional organization ID to join
-            
-        Returns:
-            Created user information
-            
-        Raises:
-            ConflictError: If email already exists
-            ValidationError: If email or password doesn't meet requirements
-        """
-        # TODO: Implement user creation
-        # 1. Validate email format and password strength
-        # 2. Check email uniqueness
-        # 3. Hash password
-        # 4. Create user record with is_active=True, is_verified=False
-        # 5. Generate email verification token
-        # 6. If organization_id provided, add as organization member
-        # 7. Send verification email
-        # 8. Return user information (excluding sensitive fields)
-        
-        raise NotImplementedError("create_user not yet implemented")
+    ) -> "UserRecord":
+        """Create new user (in-memory store for dev/demo)."""
+        email_lower = email.lower()
+        if email_lower in _users_by_email:
+            raise ConflictError(f"Email already registered: {email}")
+
+        from passlib.context import CryptContext
+        pwd_context = CryptContext(schemes=["argon2"], deprecated="auto")
+        hashed = pwd_context.hash(password)
+
+        user_id = len(_users_by_id) + 1
+        record = {
+            "id": user_id,
+            "email": email_lower,
+            "first_name": first_name,
+            "last_name": last_name,
+            "username": username,
+            "is_active": True,
+            "email_verified": True,   # skip email verification in dev
+            "created_at": datetime.utcnow(),
+            "hashed_password": hashed,
+        }
+        _users_by_email[email_lower] = record
+        _users_by_id[str(user_id)] = record
+
+        return UserRecord(
+            id=user_id,
+            email=email_lower,
+            first_name=first_name,
+            last_name=last_name,
+            username=username,
+            is_active=True,
+            email_verified=True,
+            created_at=record["created_at"],
+            hashed_password=hashed,
+        )
     
     async def update_user(
         self,
@@ -205,16 +222,14 @@ class UserService:
         raise NotImplementedError("reactivate_user not yet implemented")
     
     async def update_last_login(self, user_id: str) -> None:
-        """Update user's last login timestamp.
-        
-        Args:
-            user_id: User ID
-        """
-        # TODO: Implement last login update
-        # 1. Update users.last_login_at = now()
-        # 2. Optional: track login IP, user agent, etc.
-        
-        raise NotImplementedError("update_last_login not yet implemented")
+        """Update user's last login timestamp (in-memory)."""
+        record = _users_by_id.get(str(user_id))
+        if record:
+            record["last_login_at"] = datetime.utcnow()
+
+    async def get_user_by_id(self, user_id: str) -> Optional[Dict[str, Any]]:
+        """Get user by ID from in-memory store."""
+        return _users_by_id.get(str(user_id))
     
     async def initiate_email_verification(self, user_id: str) -> str:
         """Initiate email verification process.
