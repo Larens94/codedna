@@ -14,7 +14,7 @@
 #   1. pip install codedna  — CLI tool with multi-language support (11 languages)
 #   2. codedna install      — pre-commit hook + AI tool prompt + .codedna manifest
 #
-# Supported AI tools: claude cursor copilot cline windsurf opencode
+# Supported AI tools: claude claude-hooks cursor copilot cline windsurf opencode
 # Supported languages: Python, TypeScript/JS, Go, PHP, Rust, Java, Kotlin, Ruby, C#, Swift
 
 set -euo pipefail
@@ -58,6 +58,46 @@ do_opencode() {
     curl -fsSL "$RAW/opencode-plugin/codedna.js" > "$REPO_ROOT/.opencode/plugins/codedna.js"
     echo "  OK  OpenCode Plugin -> .opencode/plugins/codedna.js"
 }
+do_claude_hooks() {
+    TOOLS_RAW="https://raw.githubusercontent.com/Larens94/codedna/main/tools"
+    mkdir -p "$REPO_ROOT/tools"
+    curl -fsSL "$TOOLS_RAW/claude_hook_codedna.sh" > "$REPO_ROOT/tools/claude_hook_codedna.sh"
+    chmod +x "$REPO_ROOT/tools/claude_hook_codedna.sh"
+    curl -fsSL "$TOOLS_RAW/claude_hook_stop.sh" > "$REPO_ROOT/tools/claude_hook_stop.sh"
+    chmod +x "$REPO_ROOT/tools/claude_hook_stop.sh"
+    curl -fsSL "$TOOLS_RAW/validate_manifests.py" > "$REPO_ROOT/tools/validate_manifests.py"
+    echo "  OK  Claude Hooks   -> tools/claude_hook_codedna.sh, claude_hook_stop.sh"
+    # Create .claude/settings.local.json with hooks if it doesn't exist
+    SETTINGS="$REPO_ROOT/.claude/settings.local.json"
+    if [[ ! -f "$SETTINGS" ]]; then
+        mkdir -p "$REPO_ROOT/.claude"
+        cat > "$SETTINGS" << 'SETTINGSEOF'
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_codedna.sh", "timeout": 10, "statusMessage": "CodeDNA v0.8 — validating annotations..." }]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_codedna.sh", "timeout": 10, "statusMessage": "CodeDNA v0.8 — validating annotations..." }]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_stop.sh", "timeout": 5, "statusMessage": "CodeDNA v0.8 — checking session end protocol..." }]
+      }
+    ]
+  }
+}
+SETTINGSEOF
+        echo "  OK  Settings       -> .claude/settings.local.json (hooks configured)"
+    else
+        echo "  !!  .claude/settings.local.json already exists — add hooks manually"
+        echo "      See: https://github.com/Larens94/codedna#claude-code-hooks"
+    fi
+}
 
 case "$TOOL" in
     claude)   do_claude ;;
@@ -66,9 +106,10 @@ case "$TOOL" in
     cline)    do_cline ;;
     windsurf) do_windsurf ;;
     agents)   do_agents ;;
-    opencode) do_opencode ;;
-    all)      do_claude; do_cursor; do_copilot; do_cline; do_windsurf; do_agents; do_opencode ;;
-    *) echo "Usage: install.sh [claude|cursor|copilot|cline|windsurf|agents|opencode|all]"; exit 1 ;;
+    opencode)      do_opencode ;;
+    claude-hooks)  do_claude_hooks ;;
+    all)           do_claude; do_cursor; do_copilot; do_cline; do_windsurf; do_agents; do_opencode; do_claude_hooks ;;
+    *) echo "Usage: install.sh [claude|claude-hooks|cursor|copilot|cline|windsurf|agents|opencode|all]"; exit 1 ;;
 esac
 
 echo ""

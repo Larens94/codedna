@@ -15,7 +15,7 @@ Install for a **single tool** only:
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) claude
-# Options: claude | cursor | copilot | cline | windsurf | agents | opencode | all
+# Options: claude | claude-hooks | cursor | copilot | cline | windsurf | agents | opencode | all
 ```
 
 Or copy the files manually — one file per tool:
@@ -29,6 +29,48 @@ Or copy the files manually — one file per tool:
 Claude Code reads `CLAUDE.md` automatically before every session.
 
 → Copy [`integrations/CLAUDE.md`](./CLAUDE.md) to your repo root.
+
+### Claude Code Hooks (active enforcement)
+
+Claude Code supports **hooks** — shell commands that run automatically during agent sessions.
+CodeDNA provides two hooks that enforce protocol compliance in real time:
+
+| Hook | Event | What it does |
+|---|---|---|
+| `PostToolUse` on `Write`/`Edit` | After every file write/edit | Validates CodeDNA v0.8 header on `.py`, `.ts`, `.go`, etc. |
+| `Stop` | When the agent finishes | Reminds to update `.codedna` and use git trailers |
+
+**Install hooks:**
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) claude-hooks
+```
+
+Or manually — add to `.claude/settings.local.json`:
+
+```json
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_codedna.sh", "timeout": 10 }]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_codedna.sh", "timeout": 10 }]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_stop.sh", "timeout": 5 }]
+      }
+    ]
+  }
+}
+```
+
+The hook scripts are in [`tools/claude_hook_codedna.sh`](../tools/claude_hook_codedna.sh) and [`tools/claude_hook_stop.sh`](../tools/claude_hook_stop.sh).
 
 ---
 
