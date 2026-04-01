@@ -1,14 +1,15 @@
 #!/usr/bin/env python3
-"""cli.py — CodeDNA v0.8 annotation tool: init, update, check.
+"""cli.py — CodeDNA v0.8 annotation tool: init, update, check, install.
 
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
 
 Commands:
-  init   PATH   First-time annotation of every source file under PATH
-  update PATH   Annotate only files missing CodeDNA headers (incremental)
-  check  PATH   Report annotation coverage without modifying files
+  install        Setup CodeDNA in a project (pre-commit hook + AI tool prompt + .codedna)
+  init   PATH    First-time annotation of every source file under PATH
+  update PATH    Annotate only files missing CodeDNA headers (incremental)
+  check  PATH    Report annotation coverage without modifying files
 
 LLM calls: max 2 per Python file (1 module skeleton rules + 1 function batch).
            0 calls if file already annotated (skipped by init/update).
@@ -22,7 +23,7 @@ Provider priority: litellm (all providers) > anthropic (fallback, Claude only).
 Multi-language: pass --extensions ts go php rs java kt rb cs swift (or with dots).
 Supported: .ts .tsx .js .jsx .mjs | .go | .php | .rs | .java | .kt .kts | .rb | .cs | .swift
 
-exports: main() -> int | run(...) | cmd_check(...) -> int | collect_files(...) -> list[Path]
+exports: main() -> int | run(...) | cmd_check(...) -> int | cmd_install(...) -> int | collect_files(...) -> list[Path]
 used_by: none — CLI entrypoint, called via `codedna` console script
 rules:   L2 (function Rules:) applies Python AST only; language adapters are L1-only.
          LLM calls are capped at 2 per Python file; --no-llm skips all LLM calls.
@@ -30,6 +31,7 @@ rules:   L2 (function Rules:) applies Python AST only; language adapters are L1-
 agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_001 | initial CodeDNA annotation pass; fixed cross-package used_by graph
          claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_002 | added --extensions flag, run_lang_files(), multi-language pipeline; updated collect_files, cmd_check
          claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_004 | added cmd_manifest (Level 0 auto-generation); fixed --exclude glob (fnmatch), graceful LLM fallback, __init__ skip in purpose heuristic
+         claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | added cmd_install subcommand: pre-commit hook + AI tool prompt + .codedna setup in one command
 """
 
 import argparse
@@ -546,16 +548,32 @@ def inject_function_rules(source: str, func: FuncInfo, rules_text: str) -> str:
 # ── Pipeline ──────────────────────────────────────────────────────────────────
 
 
+def _get_extension(path: Path) -> str:
+    """Return the file extension, handling compound extensions like .blade.php.
+
+    Rules:   Compound extensions (.blade.php, etc.) take priority over simple suffix.
+             Falls back to path.suffix for standard extensions.
+    """
+    name = path.name.lower()
+    # Check for known compound extensions
+    _COMPOUND_EXTS = [".blade.php"]
+    for ext in _COMPOUND_EXTS:
+        if name.endswith(ext):
+            return ext
+    return path.suffix.lower()
+
+
 def collect_files(target: Path, exclude: list[str], extensions: Optional[list[str]] = None) -> list[Path]:
     """Collect source files under target matching the given extensions.
 
     Rules:   Default extensions = ['.py'] (Python only).
              extensions values must include leading dot (e.g. ['.ts', '.go']).
+             Supports compound extensions (e.g. '.blade.php').
     """
     if extensions is None:
         extensions = [".py"]
     if target.is_file():
-        return [target] if target.suffix.lower() in extensions else []
+        return [target] if _get_extension(target) in extensions else []
     skip = {"__pycache__", ".git", "venv", ".venv", "node_modules", "migrations"}
     files = []
     for f in sorted(target.rglob("*")):
@@ -563,7 +581,7 @@ def collect_files(target: Path, exclude: list[str], extensions: Optional[list[st
             continue
         if any(p in f.parts for p in skip):
             continue
-        if f.suffix.lower() not in extensions:
+        if _get_extension(f) not in extensions:
             continue
         rel_str = str(f.relative_to(target))
         if any(fnmatch.fnmatch(rel_str, p) or f.match(p) for p in exclude):
@@ -577,6 +595,34 @@ def _normalize_extensions(raw: Optional[list[str]]) -> list[str]:
     if not raw:
         return [".py"]
     return [e if e.startswith(".") else f".{e}" for e in raw]
+
+
+def _auto_detect_extensions(target: Path) -> list[str]:
+    """Scan target directory and return extensions that have matching language adapters.
+
+    Rules:   Always includes .py. Only returns extensions for which an adapter exists.
+             Skips __pycache__, .git, venv, node_modules, etc.
+    """
+    skip = {"__pycache__", ".git", "venv", ".venv", "node_modules",
+            "migrations", "dist", "build", ".tox", ".mypy_cache"}
+    set_str_found_exts: set[str] = {".py"}
+
+    if not target.is_dir():
+        ext = _get_extension(target)
+        if get_adapter(ext):
+            set_str_found_exts.add(ext)
+        return sorted(set_str_found_exts)
+
+    for f in target.rglob("*"):
+        if not f.is_file():
+            continue
+        if any(p in f.parts for p in skip):
+            continue
+        ext = _get_extension(f)
+        if ext not in set_str_found_exts and get_adapter(ext):
+            set_str_found_exts.add(ext)
+
+    return sorted(set_str_found_exts)
 
 
 def run_lang_files(
@@ -618,7 +664,7 @@ def run_lang_files(
     annotated = 0
 
     for path in lang_files:
-        adapter = get_adapter(path.suffix.lower())
+        adapter = get_adapter(_get_extension(path))
         if adapter is None:
             continue
 
@@ -907,7 +953,7 @@ def cmd_check(target: Path, repo_root: Optional[Path], exclude: list[str], verbo
     # Non-Python coverage
     lang_missing = []
     for path in lang_files:
-        adapter = get_adapter(path.suffix.lower())
+        adapter = get_adapter(_get_extension(path))
         if adapter is None:
             continue
         try:
@@ -976,7 +1022,251 @@ def _add_common_args(sub):
             f"Supported non-Python: {', '.join(SUPPORTED_EXTENSIONS)}"
         ),
     )
+    sub.add_argument(
+        "--auto", action="store_true",
+        help="Auto-detect languages in the project and annotate all supported file types",
+    )
     sub.add_argument("-v", "--verbose", action="store_true", help="Per-file progress")
+
+
+# ── Install command ───────────────────────────────────────────────────────────
+
+_TOOL_FILES = {
+    "claude":   ("CLAUDE.md",   "CLAUDE.md"),
+    "cursor":   (".cursorrules", ".cursorrules"),
+    "copilot":  ("copilot-instructions.md", ".github/copilot-instructions.md"),
+    "cline":    (".clinerules",  ".clinerules"),
+    "windsurf": (".windsurfrules", ".windsurfrules"),
+    "opencode": ("AGENTS.md",   "AGENTS.md"),
+}
+
+_PRE_COMMIT_HOOK = r'''#!/usr/bin/env bash
+# CodeDNA v0.8 pre-commit hook — validates staged files.
+# Installed by: codedna install
+
+set -euo pipefail
+
+CODEDNA=""
+for cmd in codedna; do
+    if command -v "$cmd" &>/dev/null; then
+        CODEDNA="$cmd"
+        break
+    fi
+done
+
+if [[ -z "$CODEDNA" ]]; then
+    echo "WARNING: codedna CLI not found in PATH — skipping validation"
+    echo "         pip install codedna"
+    exit 0
+fi
+
+REPO_ROOT="$(git rev-parse --show-toplevel)"
+
+# Collect staged source files (new, modified, copied)
+STAGED=$(git diff --cached --name-only --diff-filter=ACM \
+    | grep -E '\.(py|ts|tsx|js|jsx|mjs|go|php|rs|java|kt|kts|rb|cs|swift|blade\.php|j2|jinja2|twig|erb|ejs|hbs|mustache|cshtml|razor|vue|svelte)$' \
+    || true)
+
+if [[ -z "$STAGED" ]]; then
+    exit 0
+fi
+
+echo "CodeDNA v0.8 — validating staged files..."
+
+# Detect extensions in use
+EXTS=""
+for f in $STAGED; do
+    # Handle compound extensions (e.g. .blade.php)
+    if [[ "$f" == *.blade.php ]]; then
+        EXTS="$EXTS blade.php"
+        continue
+    fi
+    ext="${f##*.}"
+    case "$ext" in
+        ts|tsx|js|jsx|mjs) EXTS="$EXTS ts" ;;
+        go)                EXTS="$EXTS go" ;;
+        rs)                EXTS="$EXTS rs" ;;
+        java)              EXTS="$EXTS java" ;;
+        kt|kts)            EXTS="$EXTS kt" ;;
+        rb)                EXTS="$EXTS rb" ;;
+        cs)                EXTS="$EXTS cs" ;;
+        swift)             EXTS="$EXTS swift" ;;
+        j2|jinja2)         EXTS="$EXTS j2" ;;
+        twig)              EXTS="$EXTS twig" ;;
+        erb)               EXTS="$EXTS erb" ;;
+        ejs)               EXTS="$EXTS ejs" ;;
+        hbs|mustache)      EXTS="$EXTS hbs" ;;
+        cshtml|razor)      EXTS="$EXTS cshtml" ;;
+        vue)               EXTS="$EXTS vue" ;;
+        svelte)            EXTS="$EXTS svelte" ;;
+    esac
+done
+# Deduplicate
+EXTS=$(echo "$EXTS" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+
+# Build codedna check args
+ARGS=""
+if [[ -n "$EXTS" ]]; then
+    ARGS="--extensions $EXTS"
+fi
+
+# Validate each staged file individually
+ERRORS=0
+for FILE in $STAGED; do
+    FULL="$REPO_ROOT/$FILE"
+    [[ -f "$FULL" ]] || continue
+
+    OUTPUT=$("$CODEDNA" check "$FULL" $ARGS 2>&1) || true
+
+    if echo "$OUTPUT" | grep -q "INCOMPLETE"; then
+        ERRORS=$((ERRORS + 1))
+        echo ""
+        echo "FAIL  $FILE"
+        echo "      Missing CodeDNA v0.8 header"
+    fi
+done
+
+echo ""
+if [[ $ERRORS -gt 0 ]]; then
+    echo "Commit blocked: $ERRORS file(s) missing CodeDNA v0.8 annotations."
+    echo ""
+    echo "Quick fix:  codedna init <path> --no-llm    (structural only, instant)"
+    echo "Full fix:   codedna init <path>              (with AI-generated rules:)"
+    echo "Skip once:  git commit --no-verify"
+    exit 1
+fi
+
+echo "All staged files pass CodeDNA v0.8 validation."
+exit 0
+'''
+
+_CODEDNA_TEMPLATE = """# .codedna — CodeDNA project manifest
+project: {project_name}
+description: "{project_name} project"
+
+packages: {{}}
+
+cross_cutting_patterns: {{}}
+
+agent_sessions: []
+"""
+
+
+def _detect_ai_tools(repo_root: Path) -> list[str]:
+    """Detect which AI coding tools are likely in use based on existing config files.
+
+    Rules:   Only checks for file existence — never reads file contents.
+    """
+    list_str_detected_tools = []
+    checks = {
+        "claude":   [".claude", "CLAUDE.md"],
+        "cursor":   [".cursor", ".cursorrules"],
+        "copilot":  [".github/copilot-instructions.md"],
+        "cline":    [".clinerules", ".cline"],
+        "windsurf": [".windsurfrules", ".windsurf"],
+        "opencode": ["AGENTS.md", ".opencode"],
+    }
+    for tool, paths in checks.items():
+        for p in paths:
+            if (repo_root / p).exists():
+                list_str_detected_tools.append(tool)
+                break
+    return list_str_detected_tools
+
+
+def cmd_install(repo_root: Path, tools: list[str], skip_hook: bool = False,
+                skip_prompt: bool = False) -> int:
+    """Setup CodeDNA in a project: pre-commit hook + AI tool prompt + .codedna.
+
+    Rules:   Never overwrite an existing pre-commit hook without --force.
+             Always create .codedna if missing.
+             Prompt files are fetched from GitHub raw; fall back to a minimal template on network error.
+    """
+    import stat
+    import urllib.request
+
+    str_raw_base_url = "https://raw.githubusercontent.com/Larens94/codedna/main/integrations"
+
+    print("CodeDNA v0.8 — Project Setup")
+    print(f"  Target: {repo_root}")
+    print()
+
+    int_count_installed = 0
+
+    # 1. Git pre-commit hook
+    if not skip_hook:
+        path_git_dir = repo_root / ".git"
+        if not path_git_dir.is_dir():
+            print("  WARNING: Not a git repository — skipping pre-commit hook")
+        else:
+            path_hooks_dir = path_git_dir / "hooks"
+            path_hooks_dir.mkdir(exist_ok=True)
+            path_hook = path_hooks_dir / "pre-commit"
+
+            if path_hook.exists():
+                str_existing_content = path_hook.read_text(encoding="utf-8", errors="replace")
+                if "CodeDNA" in str_existing_content:
+                    print("  SKIP  pre-commit hook (CodeDNA hook already installed)")
+                else:
+                    print("  SKIP  pre-commit hook (existing hook found — won't overwrite)")
+                    print("        To add manually, append CodeDNA validation to your hook")
+            else:
+                path_hook.write_text(_PRE_COMMIT_HOOK, encoding="utf-8")
+                path_hook.chmod(path_hook.stat().st_mode | stat.S_IEXEC)
+                print("  OK    pre-commit hook installed")
+                int_count_installed += 1
+
+    # 2. AI tool prompt files
+    if not skip_prompt:
+        for tool in tools:
+            if tool not in _TOOL_FILES:
+                print(f"  SKIP  {tool} (unknown tool)")
+                continue
+
+            str_remote_name, str_local_path = _TOOL_FILES[tool]
+            path_dest = repo_root / str_local_path
+
+            if path_dest.exists():
+                print(f"  SKIP  {tool} ({str_local_path} already exists)")
+                continue
+
+            # Create parent dirs if needed (e.g. .github/)
+            path_dest.parent.mkdir(parents=True, exist_ok=True)
+
+            str_url = f"{str_raw_base_url}/{str_remote_name}"
+            try:
+                urllib.request.urlretrieve(str_url, str(path_dest))
+                print(f"  OK    {tool} -> {str_local_path}")
+                int_count_installed += 1
+            except Exception as e:
+                print(f"  FAIL  {tool} — could not fetch {str_url}: {e}")
+
+    # 3. .codedna manifest
+    path_codedna = repo_root / ".codedna"
+    if path_codedna.exists():
+        print(f"  SKIP  .codedna (already exists)")
+    else:
+        str_project_name = repo_root.name
+        path_codedna.write_text(
+            _CODEDNA_TEMPLATE.format(project_name=str_project_name),
+            encoding="utf-8",
+        )
+        print(f"  OK    .codedna created")
+        int_count_installed += 1
+
+    # Summary
+    print()
+    if int_count_installed > 0:
+        print(f"Done — {int_count_installed} component(s) installed.")
+    else:
+        print("Nothing to install — CodeDNA is already set up.")
+
+    print()
+    print("Next steps:")
+    print("  codedna init .                  # annotate existing source files")
+    print("  codedna init . --no-llm         # fast mode (no AI, structural only)")
+    print("  codedna check .                 # verify coverage")
+    return 0
 
 
 # ── Manifest command (Level 0) ────────────────────────────────────────────────
@@ -1295,6 +1585,36 @@ def main():
     subs = p.add_subparsers(dest="command", metavar="COMMAND")
     subs.required = True
 
+    # ── install ───────────────────────────────────────────────────────────────
+    install_p = subs.add_parser(
+        "install",
+        help="Setup CodeDNA in a project (pre-commit hook + AI tool prompt + .codedna)",
+        description=(
+            "One-command setup for any project. Installs:\n"
+            "  1. Git pre-commit hook (multi-language validation)\n"
+            "  2. AI tool prompt file (CLAUDE.md, .cursorrules, etc.)\n"
+            "  3. .codedna project manifest\n\n"
+            "Auto-detects which AI tools are in use. Override with --tools.\n\n"
+            "Examples:\n"
+            "  codedna install                          # auto-detect tools\n"
+            "  codedna install --tools claude cursor     # specific tools\n"
+            "  codedna install --tools all               # all supported tools\n"
+            "  codedna install --skip-hook               # prompt files only\n"
+            "  codedna install --skip-prompt              # hook only"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    install_p.add_argument(
+        "--path", type=Path, default=Path("."),
+        help="Project root (default: current directory)",
+    )
+    install_p.add_argument(
+        "--tools", nargs="*", default=None,
+        help="AI tools to install prompts for: claude cursor copilot cline windsurf opencode all (default: auto-detect)",
+    )
+    install_p.add_argument("--skip-hook", action="store_true", help="Skip pre-commit hook installation")
+    install_p.add_argument("--skip-prompt", action="store_true", help="Skip AI tool prompt installation")
+
     # ── init ──────────────────────────────────────────────────────────────────
     init_p = subs.add_parser(
         "init",
@@ -1337,9 +1657,13 @@ def main():
         "--extensions", nargs="*", default=None, metavar="EXT",
         help=f"Extra extensions to check. Supported: {', '.join(SUPPORTED_EXTENSIONS)}",
     )
+    check_p.add_argument(
+        "--auto", action="store_true",
+        help="Auto-detect languages in the project and check all supported file types",
+    )
     check_p.add_argument("-v", "--verbose", action="store_true", help="List specific files missing annotations")
 
-    # ── manifest ──────────────────────────────────────────────────────────────
+    # ── manifest ───────────────────────────────────────────────��──────────────
     manifest_p = subs.add_parser(
         "manifest",
         help="Generate or update .codedna Level 0 manifest from codebase structure",
@@ -1374,6 +1698,30 @@ def main():
     args = p.parse_args()
 
     # ── dispatch ──────────────────────────────────────────────────────────────
+    if args.command == "install":
+        path_repo_root = args.path.resolve()
+        if not path_repo_root.exists():
+            print(f"Error: {path_repo_root} does not exist", file=sys.stderr)
+            return 1
+
+        # Resolve tools list
+        if args.tools is None:
+            list_str_tools = _detect_ai_tools(path_repo_root)
+            if not list_str_tools:
+                list_str_tools = ["claude"]  # sensible default
+                print("  No AI tool detected — defaulting to Claude Code")
+        elif "all" in args.tools:
+            list_str_tools = list(_TOOL_FILES.keys())
+        else:
+            list_str_tools = args.tools
+
+        return cmd_install(
+            repo_root=path_repo_root,
+            tools=list_str_tools,
+            skip_hook=args.skip_hook,
+            skip_prompt=args.skip_prompt,
+        )
+
     if args.command == "manifest":
         target = args.path.resolve()
         if not target.exists():
@@ -1398,7 +1746,11 @@ def main():
             print(f"Error: {target} does not exist", file=sys.stderr)
             return 1
         repo_root = args.repo_root.resolve() if args.repo_root else None
-        exts = _normalize_extensions(getattr(args, "extensions", None))
+        if getattr(args, "auto", False):
+            exts = _auto_detect_extensions(target)
+            print(f"Auto-detected: {', '.join(exts)}")
+        else:
+            exts = _normalize_extensions(getattr(args, "extensions", None))
         return cmd_check(target, repo_root, list(args.exclude), args.verbose, extensions=exts)
 
     # init / update share the same run() — only difference is force flag
@@ -1409,7 +1761,11 @@ def main():
 
     force = getattr(args, "force", False)  # update never forces
     repo_root = args.repo_root.resolve() if args.repo_root else None
-    exts = _normalize_extensions(getattr(args, "extensions", None))
+    if getattr(args, "auto", False):
+        exts = _auto_detect_extensions(target)
+        print(f"Auto-detected: {', '.join(exts)}")
+    else:
+        exts = _normalize_extensions(getattr(args, "extensions", None))
 
     run(
         target=target,

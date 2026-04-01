@@ -7,7 +7,8 @@ used_by: none — standalone CLI tool
 rules:   validates v0.8 format only (exports:/used_by:/rules:/agent: in module docstring).
          Python uses AST; other languages use regex on first 40 lines.
          read-only — never modifies files.
-agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | rewritten from v0.3 to v0.8
+agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_001 | rewritten from v0.3 to v0.8
+         claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | added template engine extensions to COMMENT_PREFIX, added _get_ext for .blade.php, fixed validate_directory to use _get_ext, added _INNER_PREFIXES for block-comment parsing
 
 Usage:
     python tools/validate_manifests.py [path] [-v] [--extensions py ts go]
@@ -37,6 +38,12 @@ COMMENT_PREFIX = {
     ".js": "//", ".ts": "//", ".jsx": "//", ".tsx": "//",
     ".go": "//", ".rs": "//", ".java": "//", ".kt": "//", ".swift": "//",
     ".rb": "#", ".sh": "#",
+    # Template engines — use block comment openers as prefix for field detection
+    ".blade.php": "{{--", ".j2": "{#", ".jinja2": "{#", ".twig": "{#",
+    ".erb": "<%#", ".ejs": "<%#",
+    ".hbs": "{{!--", ".mustache": "{{!--",
+    ".cshtml": "@*", ".razor": "@*",
+    ".vue": "<!--", ".svelte": "<!--",
 }
 
 # agent: line format: "model | provider | YYYY-MM-DD | ..."  or  "model | YYYY-MM-DD | ..."
@@ -106,16 +113,40 @@ def _extract_other(path: Path, prefix: str) -> tuple[Optional[str], Optional[dic
     except OSError:
         return None, None
 
+    # For block-comment languages, inner lines may use a shorter prefix
+    # e.g. {{-- ... --}} block uses "-- " for inner lines, {# #} uses "#", <!-- uses "  "
+    _INNER_PREFIXES = {
+        "{{--": ("{{--", "--"),
+        "{#": ("{#", "#"),
+        "<%#": ("<%#", "#"),
+        "{{!--": ("{{!--",),
+        "@*": ("@*", "*"),
+        "<!--": ("<!--", "--"),
+    }
+    prefixes_to_check = _INNER_PREFIXES.get(prefix, (prefix,))
+
     # Look for a block like:  // exports: ...
     block_lines = []
     in_block = False
     for line in lines:
         s = line.strip()
-        if s.startswith(prefix) and any(s[len(prefix):].strip().startswith(k + ":") for k in REQUIRED_FIELDS):
+        # Try to strip any known prefix from the line
+        content = None
+        for p in prefixes_to_check:
+            if s.startswith(p):
+                content = s[len(p):].strip()
+                break
+        if content is None:
+            # Also try bare field lines (indented inside block comments)
+            if any(s.startswith(k + ":") for k in REQUIRED_FIELDS):
+                content = s
+            elif in_block and s and not any(s.startswith(end) for end in ("-->", "--}}", "#}", "%>", "*@")):
+                content = s
+        if content is not None and any(content.startswith(k + ":") for k in REQUIRED_FIELDS):
             in_block = True
         if in_block:
-            if s.startswith(prefix):
-                block_lines.append(s[len(prefix):].strip())
+            if content is not None:
+                block_lines.append(content)
             elif block_lines:
                 break
 
@@ -193,9 +224,17 @@ def _validate_fields(result: ValidationResult, fields: dict[str, str]) -> None:
 # ── Public API ────────────────────────────────────────────────────────────────
 
 
+def _get_ext(path: Path) -> str:
+    """Return file extension, handling compound extensions like .blade.php."""
+    name = path.name.lower()
+    if name.endswith(".blade.php"):
+        return ".blade.php"
+    return path.suffix.lower()
+
+
 def validate_file(path: Path) -> ValidationResult:
     result = ValidationResult(path=str(path))
-    ext = path.suffix.lower()
+    ext = _get_ext(path)
 
     if ext == ".py":
         first_line, fields = _extract_python(path)
@@ -238,7 +277,7 @@ def validate_directory(
             continue
         if any(part in SKIP_DIRS for part in f.parts):
             continue
-        if f.suffix.lower() in extensions:
+        if _get_ext(f) in extensions:
             results.append(validate_file(f))
     return results
 

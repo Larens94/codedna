@@ -1,77 +1,101 @@
 #!/usr/bin/env bash
-# CodeDNA v0.8 pre-commit hook — blocks commits on missing annotations.
+# CodeDNA v0.8 pre-commit hook — validates staged files.
 #
-# Installation:
-#   bash tools/install-hooks.sh
-# Or manually:
+# Installation (recommended):
+#   codedna install
+#
+# Manual installation:
 #   cp tools/pre-commit .git/hooks/pre-commit && chmod +x .git/hooks/pre-commit
 
 set -euo pipefail
 
-echo "CodeDNA v0.8 — validating staged files..."
-
-PYTHON=""
-for cmd in python3 python; do
+CODEDNA=""
+for cmd in codedna; do
     if command -v "$cmd" &>/dev/null; then
-        PYTHON="$cmd"
+        CODEDNA="$cmd"
         break
     fi
 done
 
-if [[ -z "$PYTHON" ]]; then
-    echo "WARNING: Python not found — skipping CodeDNA validation"
+if [[ -z "$CODEDNA" ]]; then
+    echo "WARNING: codedna CLI not found in PATH — skipping validation"
+    echo "         pip install git+https://github.com/Larens94/codedna.git"
     exit 0
 fi
 
 REPO_ROOT="$(git rev-parse --show-toplevel)"
-VALIDATOR="$REPO_ROOT/tools/validate_manifests.py"
 
-if [[ ! -f "$VALIDATOR" ]]; then
-    echo "WARNING: tools/validate_manifests.py not found — skipping"
-    exit 0
-fi
-
-# Staged source files only (new, modified, copied)
+# Collect staged source files (new, modified, copied)
 STAGED=$(git diff --cached --name-only --diff-filter=ACM \
-    | grep -E '\.(py|ts|tsx|js|jsx|go|rs|java|kt|swift|rb)$' \
+    | grep -E '\.(py|ts|tsx|js|jsx|mjs|go|php|rs|java|kt|kts|rb|cs|swift|blade\.php|j2|jinja2|twig|erb|ejs|hbs|mustache|cshtml|razor|vue|svelte)$' \
     || true)
 
 if [[ -z "$STAGED" ]]; then
     exit 0
 fi
 
-ERRORS=0
-WARNED=0
+echo "CodeDNA v0.8 — validating staged files..."
 
+# Detect extensions in use
+EXTS=""
+for f in $STAGED; do
+    # Handle compound extensions (e.g. .blade.php)
+    if [[ "$f" == *.blade.php ]]; then
+        EXTS="$EXTS blade.php"
+        continue
+    fi
+    ext="${f##*.}"
+    case "$ext" in
+        ts|tsx|js|jsx|mjs) EXTS="$EXTS ts" ;;
+        go)                EXTS="$EXTS go" ;;
+        rs)                EXTS="$EXTS rs" ;;
+        java)              EXTS="$EXTS java" ;;
+        kt|kts)            EXTS="$EXTS kt" ;;
+        rb)                EXTS="$EXTS rb" ;;
+        cs)                EXTS="$EXTS cs" ;;
+        swift)             EXTS="$EXTS swift" ;;
+        j2|jinja2)         EXTS="$EXTS j2" ;;
+        twig)              EXTS="$EXTS twig" ;;
+        erb)               EXTS="$EXTS erb" ;;
+        ejs)               EXTS="$EXTS ejs" ;;
+        hbs|mustache)      EXTS="$EXTS hbs" ;;
+        cshtml|razor)      EXTS="$EXTS cshtml" ;;
+        vue)               EXTS="$EXTS vue" ;;
+        svelte)            EXTS="$EXTS svelte" ;;
+    esac
+done
+# Deduplicate
+EXTS=$(echo "$EXTS" | tr ' ' '\n' | sort -u | tr '\n' ' ')
+
+# Build codedna check args
+ARGS=""
+if [[ -n "$EXTS" ]]; then
+    ARGS="--extensions $EXTS"
+fi
+
+# Validate each staged file individually
+ERRORS=0
 for FILE in $STAGED; do
     FULL="$REPO_ROOT/$FILE"
     [[ -f "$FULL" ]] || continue
 
-    OUTPUT=$("$PYTHON" "$VALIDATOR" "$FULL" 2>&1) || true
+    OUTPUT=$("$CODEDNA" check "$FULL" $ARGS 2>&1) || true
 
-    if echo "$OUTPUT" | grep -q "^FAIL "; then
+    if echo "$OUTPUT" | grep -q "INCOMPLETE"; then
         ERRORS=$((ERRORS + 1))
         echo ""
         echo "FAIL  $FILE"
-        echo "$OUTPUT" | grep -E "error:|warning:" | sed 's/^/      /'
+        echo "      Missing CodeDNA v0.8 header"
     fi
 done
 
 echo ""
 if [[ $ERRORS -gt 0 ]]; then
-    echo "Commit blocked: $ERRORS file(s) have CodeDNA v0.8 annotation errors."
+    echo "Commit blocked: $ERRORS file(s) missing CodeDNA v0.8 annotations."
     echo ""
-    echo "Minimum v0.8 header (Python):"
-    echo '  """filename.py — what this file does.'
-    echo ""
-    echo "  exports: public_function(arg) -> return_type"
-    echo "  used_by: caller.py -> caller_function"
-    echo "  rules:   hard constraints an agent must never violate"
-    echo '  agent:   model-id | provider | YYYY-MM-DD | session_id | what was done'
-    echo '  """'
-    echo ""
-    echo "Run:  codedna init <path>   to auto-annotate missing files"
-    echo "Run:  python tools/validate_manifests.py <path>   to check coverage"
+    echo "Quick fix:  codedna init <path> --no-llm    (structural only, instant)"
+    echo "Full fix:   codedna init <path>              (with AI-generated rules:)"
+    echo "Skip once:  git commit --no-verify"
     exit 1
 fi
 
