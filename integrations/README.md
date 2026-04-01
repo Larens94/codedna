@@ -32,6 +32,8 @@ Claude Code reads `CLAUDE.md` automatically before every session.
 
 ### Claude Code Hooks (active enforcement)
 
+> **With hooks enabled, an agent can never forget to annotate a file.** Every write and every edit is automatically validated — if the CodeDNA header is missing or incomplete, the agent receives immediate feedback and can fix it before moving on. No annotation is ever skipped, regardless of context window size, task complexity, or model used.
+
 Claude Code supports **hooks** — shell commands that run automatically during agent sessions.
 CodeDNA provides two hooks that enforce protocol compliance in real time:
 
@@ -187,6 +189,7 @@ cp integrations/.agents/workflows/codedna.md .agents/workflows/codedna.md
 | AI edits break cross-file deps | AI reads `used_by:` and `Rules:` before editing |
 | AI skips related files | AI follows `used_by:` graph and function-level `Rules:` |
 | No constraint memory in long files | `rules:` in docstring repeats at every function scope |
+| AI forgets annotations on complex tasks | **With hooks: impossible** — every write is validated automatically |
 
 ---
 
