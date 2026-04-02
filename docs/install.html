@@ -25,7 +25,7 @@ code, pre { font-family: 'DM Mono', monospace; }
 a { color: inherit; text-decoration: none; }
 
 /* ── NAV ── */
-nav {
+nav.topnav {
   position: sticky; top: 0; z-index: 200;
   background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
   border-bottom: 1px solid var(--border);
@@ -173,9 +173,10 @@ tr:last-child td { border-bottom: none; }
   width: 168px; flex-shrink: 0;
   position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto;
   padding: 2rem 1rem 2rem 1.25rem;
+  display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
 }
 .toc-label { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: .5rem; display: block; }
-.toc-group { font-size: 9.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--border2); display: block; margin: .85rem 0 .2rem 8px; }
+.toc-group { font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--border2); display: block; margin: .85rem 0 .2rem 8px; }
 .toc a { display: flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--muted); padding: 3px 0 3px 8px; border-left: 2px solid transparent; transition: color .12s, border-color .12s; line-height: 1.4; }
 .toc a:hover { color: var(--text2); }
 .toc a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 500; }
@@ -207,7 +208,7 @@ tr:last-child td { border-bottom: none; }
 </head>
 <body>
 
-<nav>
+<nav class="topnav">
   <a class="nav-logo" href="index.html">
     <img src="logo.png" alt="CodeDNA">
     CodeDNA
