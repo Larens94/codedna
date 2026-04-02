@@ -1,0 +1,26 @@
+{
+  "version": "1.0",
+  "hooks": {
+    "sessionStart": [
+      {
+        "id": "codedna-session-start",
+        "description": "Inject CodeDNA project context at session start",
+        "command": "bash .github/hooks/codedna.sh session_start"
+      }
+    ],
+    "postToolUse": [
+      {
+        "id": "codedna-post-tool-use",
+        "description": "Validate CodeDNA annotation after every file write/edit",
+        "command": "bash .github/hooks/codedna.sh post_tool_use"
+      }
+    ],
+    "sessionEnd": [
+      {
+        "id": "codedna-session-end",
+        "description": "Remind to update .codedna with agent_sessions entry",
+        "command": "bash .github/hooks/codedna.sh session_end"
+      }
+    ]
+  }
+}

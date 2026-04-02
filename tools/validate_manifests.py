@@ -9,6 +9,7 @@ rules:   validates v0.8 format only (exports:/used_by:/rules:/agent: in module d
          read-only — never modifies files.
 agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_001 | rewritten from v0.3 to v0.8
          claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | added template engine extensions to COMMENT_PREFIX, added _get_ext for .blade.php, fixed validate_directory to use _get_ext, added _INNER_PREFIXES for block-comment parsing
+         claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | fixed _extract_python: return (None, {}) instead of (None, None) for valid Python without docstring, so validate_file shows "No module docstring found" instead of "Cannot parse file"
 
 Usage:
     python tools/validate_manifests.py [path] [-v] [--extensions py ts go]
@@ -99,7 +100,7 @@ def _extract_python(path: Path) -> tuple[Optional[str], Optional[dict[str, str]]
 
     docstring = ast.get_docstring(tree)
     if not docstring:
-        return None, None
+        return None, {}  # valid Python, but no module docstring
 
     first_line = docstring.strip().split("\n")[0].strip()
     fields = _parse_fields(docstring)

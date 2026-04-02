@@ -415,3 +415,39 @@ agent_sessions:
       tasks.py adds PATCH endpoint; billing.py adds GET / root; router.py adds /usage,
       /agent-runs, /workspace, /memories convenience endpoints.
       Verified: python -c "from app.main import create_app; app = create_app(); print('OK')" → OK.
+
+  - agent: claude-sonnet-4-6
+    provider: anthropic
+    date: 2026-04-02
+    session_id: s_20260402_001
+    task: "simplify install docs, add hooks for Cursor/Copilot/Cline, fix bugs"
+    changed:
+      - README.md
+      - integrations/README.md
+      - integrations/install.sh
+      - integrations/cline-hooks/PostToolUse.sh
+      - integrations/cline-hooks/TaskStart.sh
+      - integrations/copilot-hooks/hooks.json
+      - integrations/copilot-hooks/codedna.sh
+      - integrations/cursor-hooks/after-file-edit.sh
+      - integrations/cursor-hooks/stop.sh
+      - tools/validate_manifests.py
+      - docs/install.html
+      - .codedna
+    visited:
+      - README.md
+      - integrations/README.md
+      - integrations/install.sh
+      - tools/validate_manifests.py
+      - docs/install.html
+      - .codedna
+    message: >
+      Rewrote install docs: clarified 2-step setup flow (integration + annotation),
+      renamed "Quick Install" to "Install for your tool", added enforcement column to
+      tool table. Created actual hook implementations for Cursor (v1.7+), GitHub Copilot,
+      and Cline (v3.36+) — all use validate_manifests.py for consistent enforcement.
+      Two bugs fixed: (1) validate_manifests.py returned (None, None) for missing docstring
+      causing "Cannot parse file" error — fixed to return (None, {}) for correct message.
+      (2) PostToolUse hook grep pattern `agent:.*$today` missed continuation lines —
+      fixed to `grep -q "$today"`. docs/install.html fully rewritten with Mintlify-style
+      minimal layout (left sidebar + right TOC, green/amber enforcement dots).
