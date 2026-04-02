@@ -6,9 +6,9 @@ used_by: codedna_tool/cli.py -> collect_files, scan_file_lang
 rules:   adapters are stateless; get_adapter returns None for unsupported extensions.
          Never import language-specific deps here — keep this registry lightweight.
 agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_001 | initial multi-language adapter registry
-         claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_002 | CodeDNA v0.8 compliance pass: added session_id to agent: field; no logic changes
          claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | added PHP/Laravel, Rust, Java, Kotlin, Ruby, C#, Swift adapters — full 11-language coverage
          claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | added template engine adapters: Blade, Jinja2/Twig, ERB/EJS, Handlebars, Razor, Vue SFC, Svelte — 17 total extensions
+         claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | added .volt (Phalcon Volt engine) via JinjaAdapter — same {# #} comment syntax
 """
 
 from typing import Optional
@@ -50,6 +50,7 @@ _REGISTRY: dict[str, LanguageAdapter] = {
     ".j2": JinjaAdapter(),
     ".jinja2": JinjaAdapter(),
     ".twig": JinjaAdapter(),
+    ".volt": JinjaAdapter(),  # Phalcon Volt — same {# #} comment syntax
     ".erb": ErbAdapter(),
     ".ejs": ErbAdapter(),
     ".hbs": HandlebarsAdapter(),

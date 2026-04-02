@@ -1,13 +1,15 @@
-"""php.py — CodeDNA v0.8 adapter for PHP source files (including Laravel).
+"""php.py — CodeDNA v0.8 adapter for PHP source files (Laravel + Phalcon).
 
 exports: class PhpAdapter
 used_by: languages/__init__.py -> _REGISTRY
 rules:   regex-based only — no PHP interpreter dependency required.
          Detects exports: public functions/methods, classes, interfaces, traits, enums.
          Laravel-aware: detects Route facades, controller methods, Eloquent model fillable.
+         Phalcon-aware: detects extends Controller/Model, $router->add, $di->set/setShared.
          PHP uses block comments (/** ... */ or /* ... */); single-line uses //.
          inject_header uses single-line // comments to avoid conflict with PHPDoc blocks.
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | initial PHP/Laravel adapter
+         claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | added Phalcon framework awareness: Controller/Model/DI/Router patterns
 """
 
 from __future__ import annotations
@@ -41,6 +43,29 @@ _NAMESPACE_RE = re.compile(r"^namespace\s+([\w\\]+)\s*;", re.MULTILINE)
 
 # use imports (relative)
 _USE_RE = re.compile(r"^use\s+([\w\\]+)(?:\s+as\s+\w+)?\s*;", re.MULTILINE)
+
+# ── Phalcon-specific patterns ──────────────────────────────────────────────
+
+# Phalcon controller/model/service base classes (short or FQCN)
+_PHALCON_EXTENDS_RE = re.compile(
+    r"class\s+\w+\s+extends\s+"
+    r"(?:\\?Phalcon\\(?:Mvc\\)?(?:Controller|Model|Plugin|Injectable)|Controller|Model)",
+    re.MULTILINE,
+)
+
+# Phalcon router: $router->add/addGet/addPost/addPut/addDelete/addPatch('/uri', ...)
+_PHALCON_ROUTER_RE = re.compile(
+    r"\$router\s*->\s*add(?:Get|Post|Put|Patch|Delete|Options|Head)?\s*"
+    r"\(\s*['\"]([^'\"]+)['\"]",
+    re.MULTILINE,
+)
+
+# Phalcon DI: $di->set/setShared/setRaw/attempt('serviceName', ...)
+_PHALCON_DI_RE = re.compile(
+    r"\$(?:di|container)\s*->\s*(?:set|setShared|setRaw|attempt)\s*"
+    r"\(\s*['\"](\w+)['\"]",
+    re.MULTILINE,
+)
 
 
 class PhpAdapter(LanguageAdapter):
@@ -110,6 +135,20 @@ class PhpAdapter(LanguageAdapter):
         routes = _ROUTE_RE.findall(source)
         for route in routes[:5]:
             entry = f"route:{route}"
+            if entry not in list_str_exports:
+                list_str_exports.append(entry)
+
+        # Phalcon router definitions as exports
+        phalcon_routes = _PHALCON_ROUTER_RE.findall(source)
+        for route in phalcon_routes[:5]:
+            entry = f"route:{route}"
+            if entry not in list_str_exports:
+                list_str_exports.append(entry)
+
+        # Phalcon DI service registrations as exports
+        phalcon_services = _PHALCON_DI_RE.findall(source)
+        for svc in phalcon_services[:5]:
+            entry = f"service:{svc}"
             if entry not in list_str_exports:
                 list_str_exports.append(entry)
 
