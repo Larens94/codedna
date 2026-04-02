@@ -451,3 +451,30 @@ agent_sessions:
       (2) PostToolUse hook grep pattern `agent:.*$today` missed continuation lines —
       fixed to `grep -q "$today"`. docs/install.html fully rewritten with Mintlify-style
       minimal layout (left sidebar + right TOC, green/amber enforcement dots).
+
+  - agent: claude-sonnet-4-6
+    provider: anthropic
+    date: 2026-04-02
+    session_id: s_20260402_002
+    task: "dark theme for docs, PHP+Phalcon README docs, TOC fix"
+    changed:
+      - README.md
+      - docs/index.html
+      - docs/install.html
+    visited:
+      - README.md
+      - docs/index.html
+      - docs/install.html
+      - codedna_tool/languages/__init__.py
+      - codedna_tool/languages/php.py
+      - tools/validate_manifests.py
+      - .codedna
+    message: >
+      Applied X/Twitter-style dark theme to both docs pages (bg #000, surface #12141a,
+      accent #1d9bf0, text #e7e9ea, border #2f3336). Fixed GitHub button in nav:
+      now transparent with border, hover turns blue (not a large colored block).
+      Fixed TOC group labels: were using var(--border2) = nearly invisible on light bg;
+      now use var(--muted) = #71767b, clearly visible on dark bg.
+      README expanded PHP+Phalcon section: added framework-awareness column to language
+      table, added Volt template engine table, added Laravel and Phalcon annotation
+      examples with comments explaining auto-detection (routes, DI services, public methods).

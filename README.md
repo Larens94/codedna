@@ -698,27 +698,86 @@ Current benchmark results are **zero-shot** — no fine-tuning on the protocol. 
 
 CodeDNA v0.8 supports **11 languages**. Python is the reference implementation with full AST-based extraction (L1 module headers + L2 function `Rules:`). All other languages get L1-only annotation via regex adapters — no external toolchain required.
 
-| Language | Extensions | L1 | L2 |
-|---|---|---|---|
-| Python | `.py` | ✅ AST | ✅ AST |
-| TypeScript / JavaScript | `.ts .tsx .js .jsx .mjs` | ✅ | — |
-| Go | `.go` | ✅ | — |
-| PHP (Laravel-aware) | `.php` | ✅ | — |
-| Rust | `.rs` | ✅ | — |
-| Java | `.java` | ✅ | — |
-| Kotlin | `.kt .kts` | ✅ | — |
-| C# | `.cs` | ✅ | — |
-| Swift | `.swift` | ✅ | — |
-| Ruby | `.rb` | ✅ | — |
+| Language | Extensions | L1 | L2 | Framework awareness |
+|---|---|---|---|---|
+| Python | `.py` | ✅ AST | ✅ AST | — |
+| TypeScript / JavaScript | `.ts .tsx .js .jsx .mjs` | ✅ | — | — |
+| Go | `.go` | ✅ | — | — |
+| PHP | `.php` | ✅ | — | **Laravel** (Route facades, Eloquent) · **Phalcon** (Controller/Model, DI, Router) |
+| Rust | `.rs` | ✅ | — | — |
+| Java | `.java` | ✅ | — | — |
+| Kotlin | `.kt .kts` | ✅ | — | — |
+| C# | `.cs` | ✅ | — | — |
+| Swift | `.swift` | ✅ | — | — |
+| Ruby | `.rb` | ✅ | — | — |
+
+**Template engines** (L1 via block-comment extraction):
+
+| Template | Extensions | Comment syntax |
+|---|---|---|
+| Blade (Laravel) | `.blade.php` | `{{-- --}}` |
+| Jinja2 / Twig | `.j2 .jinja2 .twig` | `{# #}` |
+| Volt (Phalcon) | `.volt` | `{# #}` |
+| ERB / EJS | `.erb .ejs` | `<%# %>` |
+| Handlebars / Mustache | `.hbs .mustache` | `{{!-- --}}` |
+| Razor / Cshtml | `.cshtml .razor` | `@* *@` |
+| Vue SFC / Svelte | `.vue .svelte` | `<!-- -->` |
 
 Pass `--extensions` to annotate non-Python files:
 
 ```bash
-codedna init ./src --extensions ts go          # TypeScript + Go
-codedna init ./app --extensions php            # PHP/Laravel
-codedna init . --extensions ts go php rs java  # mixed project
-codedna check . --extensions ts go -v          # coverage report
+codedna init ./src --extensions ts go              # TypeScript + Go
+codedna init ./app --extensions php                # PHP/Laravel or PHP/Phalcon
+codedna init ./templates --extensions volt blade   # Phalcon Volt + Laravel Blade
+codedna init . --extensions ts go php rs java      # mixed project
+codedna check . --extensions ts go -v              # coverage report
 ```
+
+### PHP + Laravel example
+
+```php
+<?php
+// app/Http/Controllers/UserController.php — Handles user CRUD endpoints.
+//
+// exports: UserController::index() -> Response
+//          UserController::store(Request) -> JsonResponse
+// used_by: routes/web.php -> Route::resource('users', UserController::class)
+// rules:   must extend App\Http\Controllers\Controller.
+//          all public methods are auto-detected as exports.
+// agent:   claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | initial controller scaffold
+```
+
+### PHP + Phalcon example
+
+```php
+<?php
+// app/controllers/UserController.php — Handles user CRUD in Phalcon MVC.
+//
+// exports: UserController::indexAction() -> Response
+//          UserController::createAction() -> Response
+//          route:/users
+//          service:userService
+// used_by: app/config/router.php -> $router->addGet('/users', ...)
+// rules:   extends Phalcon\Mvc\Controller — do not add constructor, use DI.
+//          $di->set('userService', ...) registers this service globally.
+// agent:   claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | initial Phalcon controller
+
+namespace App\Controllers;
+
+use Phalcon\Mvc\Controller;
+
+class UserController extends Controller
+{
+    public function indexAction() { ... }
+    public function createAction() { ... }
+}
+```
+
+The PHP adapter auto-detects:
+- `extends Controller` / `extends Model` / `extends Phalcon\Mvc\Controller` → marks as Phalcon component
+- `$router->addGet('/uri', ...)` → exports as `route:/uri`
+- `$di->set('serviceName', ...)` / `$di->setShared(...)` → exports as `service:serviceName`
+- Public methods → annotated as `ClassName::method`
 
 ---
 
