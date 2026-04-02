@@ -175,9 +175,13 @@ tr:last-child td { border-bottom: none; }
   padding: 2rem 1rem 2rem 1.25rem;
 }
 .toc-label { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: .5rem; display: block; }
-.toc a { display: block; font-size: 12.5px; color: var(--muted); padding: 3px 0 3px 8px; border-left: 2px solid transparent; transition: color .12s, border-color .12s; line-height: 1.4; }
+.toc-group { font-size: 9.5px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--border2); display: block; margin: .85rem 0 .2rem 8px; }
+.toc a { display: flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--muted); padding: 3px 0 3px 8px; border-left: 2px solid transparent; transition: color .12s, border-color .12s; line-height: 1.4; }
 .toc a:hover { color: var(--text2); }
 .toc a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 500; }
+.toc-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
+.toc-dot.g { background: var(--green); }
+.toc-dot.a { background: var(--amber); }
 
 /* ── MOBILE ── */
 .mobile-drawer { display: none; position: fixed; inset: 56px 0 0 0; z-index: 90; background: var(--surface); border-top: 1px solid var(--border); padding: 1.25rem 1rem; overflow-y: auto; }
@@ -849,20 +853,30 @@ const something = require('./something');</pre></div>
 <!-- RIGHT TOC -->
 <nav class="toc" aria-label="On this page">
   <span class="toc-label">On this page</span>
+
+  <span class="toc-group">Get started</span>
   <a href="#overview">Overview</a>
   <a href="#quick-setup">Quick Setup</a>
-  <a href="#claude-code">Claude Code</a>
-  <a href="#cursor">Cursor</a>
-  <a href="#copilot">GitHub Copilot</a>
-  <a href="#cline">Cline</a>
-  <a href="#opencode">OpenCode</a>
-  <a href="#windsurf">Windsurf</a>
-  <a href="#aider">Aider</a>
-  <a href="#antigravity">Antigravity</a>
+
+  <span class="toc-group">Active enforcement</span>
+  <a href="#claude-code"><span class="toc-dot g"></span>Claude Code</a>
+  <a href="#cursor"><span class="toc-dot g"></span>Cursor</a>
+  <a href="#copilot"><span class="toc-dot g"></span>GitHub Copilot</a>
+  <a href="#cline"><span class="toc-dot g"></span>Cline</a>
+  <a href="#opencode"><span class="toc-dot g"></span>OpenCode</a>
+
+  <span class="toc-group">Instructions only</span>
+  <a href="#windsurf"><span class="toc-dot a"></span>Windsurf</a>
+  <a href="#aider"><span class="toc-dot a"></span>Aider</a>
+  <a href="#antigravity"><span class="toc-dot a"></span>Antigravity</a>
+
+  <span class="toc-group">Annotate your code</span>
   <a href="#cli">CLI</a>
   <a href="#languages">Languages</a>
+
+  <span class="toc-group">Reference</span>
   <a href="#hook-events">Hook Events</a>
-  <a href="#plugin">Plugin</a>
+  <a href="#plugin">Plugin <span style="font-size:9px;color:var(--muted)">soon</span></a>
 </nav>
 </div><!-- content-wrap -->
 
