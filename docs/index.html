@@ -8,239 +8,263 @@
 <link rel="icon" href="logo.png" type="image/png">
 <link rel="apple-touch-icon" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700;9..40,800&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
 :root {
+  --black: #0a0a0a;
   --white: #ffffff;
-  --bg: #fafafa;
-  --bg2: #f4f4f6;
-  --surface: #ffffff;
-  --border: #e5e5ea;
-  --border2: #d1d1d6;
-  --text: #1a1a2e;
-  --text2: #3d3d5c;
-  --muted: #8787a0;
-  --accent: #4338ca;
-  --accent-h: #3730a3;
-  --accent-lt: #eef2ff;
+  --gray-100: #f5f5f5;
+  --gray-200: #e8e8e8;
+  --gray-400: #999999;
+  --gray-600: #555555;
+  --gray-800: #222222;
+  --radius: 3px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --green: #16a34a;
   --green-lt: #f0fdf4;
   --red: #dc2626;
   --red-lt: #fef2f2;
   --amber: #d97706;
   --amber-lt: #fffbeb;
-  --cyan: #0891b2;
-  --shadow-sm: 0 1px 3px rgba(0,0,0,0.06), 0 1px 2px rgba(0,0,0,0.04);
-  --shadow-md: 0 4px 16px rgba(0,0,0,0.08), 0 1px 4px rgba(0,0,0,0.04);
-  --shadow-lg: 0 12px 40px rgba(0,0,0,0.1), 0 4px 12px rgba(0,0,0,0.06);
 }
 
 html { scroll-behavior: smooth; }
-body { font-family:'DM Sans',sans-serif; background:var(--bg); color:var(--text); line-height:1.6; overflow-x:hidden; -webkit-font-smoothing:antialiased; }
-code, pre, .mono { font-family:'DM Mono',monospace; }
+body { font-family: var(--font); background: var(--white); color: var(--black); line-height: 1.6; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
+a { color: inherit; }
 
 /* ── NAVIGATION ── */
 nav {
-  position:fixed; top:0; left:0; right:0; z-index:200;
-  display:flex; align-items:center; justify-content:space-between;
-  padding:0 3rem; height:60px;
-  background:rgba(255,255,255,0.92); backdrop-filter:blur(20px);
-  border-bottom:1px solid var(--border);
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px; height: 60px;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--gray-200);
 }
-.nav-logo { display:flex; align-items:center; gap:0.6rem; text-decoration:none; }
+.nav-logo { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
 .nav-logo-mark {
-  width:32px; height:32px; border-radius:8px;
-  overflow:hidden; flex-shrink:0;
-  box-shadow: 0 2px 8px rgba(67,56,202,0.25);
+  width: 32px; height: 32px; border-radius: var(--radius);
+  overflow: hidden; flex-shrink: 0;
+  border: 1px solid var(--gray-200);
 }
-.nav-logo-mark img { width:100%; height:100%; object-fit:cover; display:block; }
-.nav-logo-text { font-size:1rem; font-weight:700; color:var(--text); letter-spacing:-0.02em; }
-.nav-version { font-size:0.6rem; font-weight:700; letter-spacing:0.08em; padding:0.15rem 0.5rem; border-radius:4px; background:var(--accent-lt); color:var(--accent); border:1px solid rgba(67,56,202,0.15); }
-.nav-links { display:flex; align-items:center; gap:2.5rem; }
-.nav-links a { font-size:0.875rem; font-weight:500; color:var(--muted); text-decoration:none; transition:color .15s; }
-.nav-links a:hover { color:var(--text); }
-.nav-cta { padding:0.45rem 1.1rem; border-radius:8px; font-size:0.85rem; font-weight:600; background:var(--accent); color:white; text-decoration:none; transition:background .15s; }
-.nav-cta:hover { background:var(--accent-h); }
-.lang-toggle { padding:0.35rem 0.85rem; border-radius:8px; font-size:0.78rem; font-weight:600; background:transparent; color:var(--muted); border:1px solid var(--border2); cursor:pointer; transition:all .15s; margin-left:0.25rem; font-family:inherit; }
-.lang-toggle:hover { border-color:var(--accent); color:var(--accent); }
+.nav-logo-mark img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.nav-logo-text { font-size: 0.9375rem; font-weight: 700; color: var(--black); letter-spacing: -0.02em; }
+.nav-version { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; padding: 0.15rem 0.5rem; border-radius: var(--radius); background: var(--gray-100); color: var(--gray-600); border: 1px solid var(--gray-200); }
+.nav-links { display: flex; align-items: center; gap: 2rem; }
+.nav-links a { font-size: 0.875rem; font-weight: 500; color: var(--gray-600); text-decoration: none; transition: color .15s; }
+.nav-links a:hover { color: var(--black); }
+.nav-cta {
+  padding: 0.45rem 1.1rem; border-radius: var(--radius); font-size: 0.85rem; font-weight: 600;
+  background: var(--black); color: #ffffff !important; text-decoration: none; transition: opacity .15s;
+  border: 1px solid var(--black);
+}
+.nav-cta:hover { opacity: 0.8; }
+.lang-toggle {
+  padding: 0.35rem 0.85rem; border-radius: var(--radius); font-size: 0.78rem; font-weight: 600;
+  background: transparent; color: var(--gray-600); border: 1px solid var(--gray-200);
+  cursor: pointer; transition: all .15s; margin-left: 0.25rem; font-family: inherit;
+}
+.lang-toggle:hover { border-color: var(--black); color: var(--black); }
+
+/* ── CONTAINER ── */
+.container { max-width: 1100px; margin: 0 auto; padding: 0 28px; }
 
 /* ── HERO ── */
 .hero {
-  min-height:100vh; position:relative; overflow:hidden;
-  display:flex; align-items:center; justify-content:center;
-  padding:100px 2rem 60px;
-  background: linear-gradient(160deg, #ffffff 0%, #f0f4ff 50%, #fafafa 100%);
+  min-height: 100vh; position: relative; overflow: hidden;
+  display: flex; align-items: center; justify-content: flex-start;
+  padding: 100px 28px 60px;
+  background: var(--white);
 }
 .hero-grid-bg {
-  position:absolute; inset:0; pointer-events:none;
+  position: absolute; inset: 0; pointer-events: none;
   background-image:
-    linear-gradient(rgba(67,56,202,0.04) 1px, transparent 1px),
-    linear-gradient(90deg, rgba(67,56,202,0.04) 1px, transparent 1px);
-  background-size:40px 40px;
+    linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
 }
-#hero-canvas { position:absolute; right:0; top:0; width:50%; height:100%; pointer-events:none; opacity:0.7; }
-.hero-inner { position:relative; z-index:1; max-width:620px; }
+#hero-canvas { position: absolute; right: 0; top: 0; width: 50%; height: 100%; pointer-events: none; opacity: 0.6; }
+.hero-inner { position: relative; z-index: 1; max-width: 620px; margin-left: calc((100vw - 1100px) / 2); }
 .hero-eyebrow {
-  display:inline-flex; align-items:center; gap:0.5rem; margin-bottom:1.75rem;
-  padding:0.35rem 0.9rem; border-radius:999px;
-  background:var(--accent-lt); border:1px solid rgba(67,56,202,0.2);
-  font-size:0.72rem; font-weight:700; letter-spacing:0.1em; text-transform:uppercase; color:var(--accent);
+  display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 1.75rem;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray-400);
 }
-.eyebrow-dot { width:5px; height:5px; border-radius:50%; background:var(--accent); animation:pulse 2s infinite; }
+.eyebrow-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gray-400); animation: pulse 2s infinite; }
 @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
 
 h1 {
-  font-size:clamp(2.6rem,5.5vw,4.8rem); font-weight:800; letter-spacing:-0.04em; line-height:1.05;
-  color:var(--text); margin-bottom:1.5rem;
+  font-size: clamp(2.4rem, 5vw, 4.2rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.08;
+  color: var(--black); margin-bottom: 1.5rem;
 }
-h1 em { font-style:normal; color:var(--accent); }
+h1 em { font-style: normal; color: var(--black); text-decoration: underline; text-underline-offset: 4px; }
 .hero-sub {
-  font-size:1.1rem; color:var(--text2); line-height:1.75; margin-bottom:2.5rem; max-width:500px;
+  font-size: 1.05rem; color: var(--gray-600); line-height: 1.75; margin-bottom: 2.5rem; max-width: 500px;
 }
-.hero-sub strong { color:var(--text); font-weight:600; }
-.hero-actions { display:flex; gap:0.75rem; flex-wrap:wrap; }
+.hero-sub strong { color: var(--black); font-weight: 600; }
+.hero-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
 .btn-primary {
-  display:inline-flex; align-items:center; gap:0.5rem;
-  padding:0.75rem 1.75rem; border-radius:10px; font-size:0.9rem; font-weight:600;
-  background:var(--accent); color:white; text-decoration:none; border:none; cursor:pointer;
-  box-shadow:0 2px 8px rgba(67,56,202,0.25); transition:all .15s;
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.75rem 1.75rem; border-radius: var(--radius); font-size: 0.875rem; font-weight: 600;
+  background: var(--black); color: var(--white); text-decoration: none; border: 1px solid var(--black); cursor: pointer;
+  transition: opacity .15s;
 }
-.btn-primary:hover { background:var(--accent-h); box-shadow:0 4px 16px rgba(67,56,202,0.3); transform:translateY(-1px); }
+.btn-primary:hover { opacity: 0.8; }
 .btn-secondary {
-  display:inline-flex; align-items:center; gap:0.5rem;
-  padding:0.75rem 1.75rem; border-radius:10px; font-size:0.9rem; font-weight:600;
-  background:white; color:var(--text); text-decoration:none;
-  border:1px solid var(--border2); box-shadow:var(--shadow-sm); transition:all .15s;
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.75rem 1.75rem; border-radius: var(--radius); font-size: 0.875rem; font-weight: 600;
+  background: var(--white); color: var(--black); text-decoration: none;
+  border: 1px solid var(--gray-200); transition: border-color .15s;
 }
-.btn-secondary:hover { border-color:var(--accent); color:var(--accent); transform:translateY(-1px); }
+.btn-secondary:hover { border-color: var(--black); }
+
+/* ── EYEBROW LABEL ── */
+.eyebrow {
+  display: block; margin-bottom: 0.75rem;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray-400);
+}
 
 /* ── STATS ROW ── */
 .stats-row {
-  background:white; border-top:1px solid var(--border); border-bottom:1px solid var(--border);
-  display:grid; grid-template-columns:repeat(4,1fr);
+  background: var(--white); border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200);
+  display: grid; grid-template-columns: repeat(4,1fr);
 }
 .stat-cell {
-  padding:2rem 2.5rem; border-right:1px solid var(--border);
-  position:relative; overflow:hidden;
+  padding: 2rem 2.5rem; border-right: 1px solid var(--gray-200);
+  position: relative; overflow: hidden;
 }
-.stat-cell:last-child { border-right:none; }
-.stat-cell::after {
-  content:''; position:absolute; bottom:0; left:0; right:0; height:2px;
-  background:var(--accent); transform:scaleX(0); transition:transform .3s; transform-origin:left;
-}
-.stat-cell:hover::after { transform:scaleX(1); }
-.stat-number { font-size:2.2rem; font-weight:800; letter-spacing:-0.04em; line-height:1; }
-.stat-number.red   { color:var(--red); }
-.stat-number.green { color:var(--green); }
-.stat-number.blue  { color:var(--accent); }
-.stat-label { font-size:0.72rem; font-weight:600; letter-spacing:0.06em; text-transform:uppercase; color:var(--muted); margin-top:0.35rem; }
-.stat-note  { font-size:0.75rem; color:var(--muted); margin-top:0.2rem; }
+.stat-cell:last-child { border-right: none; }
+.stat-number { font-size: 2.2rem; font-weight: 700; letter-spacing: -0.04em; line-height: 1; color: var(--black); }
+.stat-label { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray-400); margin-top: 0.35rem; }
+.stat-note { font-size: 0.75rem; color: var(--gray-400); margin-top: 0.2rem; }
 
-/* ── SECTION ── */
-.section { padding:7rem 2rem; max-width:1100px; margin:0 auto; }
-.full-bleed { background:white; border-top:1px solid var(--border); border-bottom:1px solid var(--border); }
-.full-bleed-inner { max-width:1100px; margin:0 auto; padding:6rem 2rem; }
-.eyebrow {
-  display:inline-flex; align-items:center; gap:0.4rem; margin-bottom:1rem;
-  font-size:0.68rem; font-weight:700; letter-spacing:0.14em; text-transform:uppercase; color:var(--accent);
-}
-.eyebrow::before { content:'▸'; }
-h2 { font-size:clamp(1.8rem,3.5vw,2.8rem); font-weight:800; letter-spacing:-0.03em; color:var(--text); margin-bottom:1rem; }
-.section-lead { font-size:1.05rem; color:var(--text2); max-width:560px; line-height:1.75; margin-bottom:3.5rem; }
+/* ── SECTIONS ── */
+.section { padding: 96px 0; }
+.section-inner { max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+.section-alt { background: var(--gray-100); }
+.section-dark { background: var(--black); color: var(--white); }
+.section-dark h2 { color: var(--white); }
+.section-dark .section-lead { color: var(--gray-400); }
+.section-dark .eyebrow { color: var(--gray-400); }
+
+h2 { font-size: clamp(1.8rem, 3vw, 2.8rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; color: var(--black); margin-bottom: 1rem; }
+.section-lead { font-size: 1.05rem; color: var(--gray-600); max-width: 560px; line-height: 1.75; margin-bottom: 3.5rem; }
 
 /* ── PROBLEM CARDS ── */
-.problem-grid { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1px; background:var(--border); border:1px solid var(--border); border-radius:16px; overflow:hidden; }
-.prob-card { background:white; padding:2rem; position:relative; }
-.prob-card:first-child .prob-accent { background:var(--red); }
-.prob-card:nth-child(2) .prob-accent { background:var(--amber); }
-.prob-card:last-child .prob-accent { background:var(--green); }
-.prob-accent { width:36px; height:36px; border-radius:10px; display:flex; align-items:center; justify-content:center; font-size:1.1rem; margin-bottom:1.25rem; color:white; }
-.prob-title { font-size:1rem; font-weight:700; color:var(--text); margin-bottom:0.5rem; }
-.prob-text { font-size:0.875rem; color:var(--text2); line-height:1.7; margin-bottom:1rem; }
-.prob-verdict { display:inline-flex; align-items:center; gap:0.35rem; font-size:0.75rem; font-weight:600; padding:0.3rem 0.7rem; border-radius:6px; }
-.pv-bad  { background:var(--red-lt); color:var(--red); }
-.pv-good { background:var(--green-lt); color:var(--green); }
+.problem-grid {
+  display: grid; grid-template-columns: repeat(auto-fit,minmax(300px,1fr));
+  gap: 1px; background: var(--gray-200); border: 1px solid var(--gray-200);
+  border-radius: var(--radius); overflow: hidden;
+}
+.prob-card { background: var(--white); padding: 2rem; position: relative; }
+.section-alt .prob-card { background: var(--gray-100); }
+.prob-accent { width: 36px; height: 36px; border-radius: var(--radius); display: flex; align-items: center; justify-content: center; font-size: 1.1rem; margin-bottom: 1.25rem; background: var(--gray-100); border: 1px solid var(--gray-200); }
+.prob-title { font-size: 1rem; font-weight: 700; color: var(--black); margin-bottom: 0.5rem; }
+.prob-text { font-size: 0.875rem; color: var(--gray-600); line-height: 1.7; margin-bottom: 1rem; }
+.prob-verdict { display: inline-flex; align-items: center; gap: 0.35rem; font-size: 0.75rem; font-weight: 600; padding: 0.3rem 0.7rem; border-radius: var(--radius); }
+.pv-bad  { background: var(--red-lt); color: var(--red); border: 1px solid rgba(220,38,38,0.15); }
+.pv-good { background: var(--green-lt); color: var(--green); border: 1px solid rgba(22,163,74,0.15); }
 
-/* ── LEVELS ── */
-.levels-list { display:flex; flex-direction:column; gap:0; border:1px solid var(--border); border-radius:16px; overflow:hidden; }
-.level-item { display:grid; grid-template-columns:280px 1fr; border-bottom:1px solid var(--border); background:white; }
-.level-item:last-child { border-bottom:none; }
-.level-meta { padding:2rem; border-right:1px solid var(--border); background:var(--bg); }
-.level-num { font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent); margin-bottom:0.5rem; }
-.level-name { font-size:1rem; font-weight:700; color:var(--text); margin-bottom:0.5rem; }
-.level-desc { font-size:0.82rem; color:var(--muted); line-height:1.6; }
-.level-code { padding:0 0; }
-.code-block { background:#1e1e2e; height:100%; display:flex; flex-direction:column; }
-.code-bar { display:flex; align-items:center; gap:0.4rem; padding:0.6rem 1rem; border-bottom:1px solid rgba(255,255,255,0.06); }
-.dot { width:9px; height:9px; border-radius:50%; }
-.code-filename { font-size:0.7rem; color:#6272a4; font-family:'DM Mono',monospace; margin-left:0.25rem; }
-.code-pre { padding:1.25rem 1.5rem; font-size:0.75rem; line-height:1.85; overflow-x:auto; flex:1; }
-.tk { color:#bd93f9; } .ts { color:#50fa7b; } .tc { color:#6272a4; } .th { color:#ffb86c; font-weight:500; } .ti { color:#ff79c6; }
+/* ── LEVELS LIST ── */
+.levels-list { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
+.level-item { display: grid; grid-template-columns: 280px 1fr; border-bottom: 1px solid var(--gray-200); background: var(--white); }
+.level-item:last-child { border-bottom: none; }
+.level-meta { padding: 2rem; border-right: 1px solid var(--gray-200); background: var(--gray-100); }
+.level-num { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray-400); margin-bottom: 0.5rem; }
+.level-name { font-size: 1rem; font-weight: 700; color: var(--black); margin-bottom: 0.5rem; }
+.level-desc { font-size: 0.82rem; color: var(--gray-600); line-height: 1.6; }
+.level-code { padding: 0; }
+.code-block { background: var(--black); height: 100%; display: flex; flex-direction: column; }
+.code-bar { display: flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.dot { width: 9px; height: 9px; border-radius: 50%; }
+.code-filename { font-size: 0.7rem; color: #6272a4; font-family: 'JetBrains Mono', monospace; margin-left: 0.25rem; }
+.code-pre { padding: 1.25rem 1.5rem; font-size: 0.75rem; line-height: 1.85; overflow-x: auto; flex: 1; }
+.tk { color: #bd93f9; } .ts { color: #50fa7b; } .tc { color: #6272a4; } .th { color: #ffb86c; font-weight: 500; } .ti { color: #ff79c6; }
 
-/* ── BENCHMARK ── */
-.chart-pair { display:grid; grid-template-columns:1fr 1fr; gap:1.5rem; margin-bottom:3rem; }
-@media(max-width:720px){ .chart-pair { grid-template-columns:1fr; } }
-.chart-card { background:white; border:1px solid var(--border); border-radius:14px; padding:1.5rem; box-shadow:var(--shadow-sm); }
-.chart-label { font-size:0.72rem; font-weight:700; text-transform:uppercase; letter-spacing:0.08em; color:var(--muted); margin-bottom:1.25rem; }
+/* ── BENCHMARK / CHARTS ── */
+.chart-pair { display: grid; grid-template-columns: 1fr 1fr; gap: 1px; background: var(--gray-200); margin-bottom: 3rem; border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
+@media(max-width:720px){ .chart-pair { grid-template-columns: 1fr; } }
+.chart-card { background: var(--white); padding: 1.5rem; }
+.chart-label { font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.08em; color: var(--gray-400); margin-bottom: 1.25rem; }
 
-.scenario-cards { display:grid; grid-template-columns:repeat(auto-fit,minmax(300px,1fr)); gap:1rem; }
-.sc-card { background:white; border:1px solid var(--border); border-radius:12px; padding:1.5rem; box-shadow:var(--shadow-sm); transition:box-shadow .2s,transform .2s; }
-.sc-card:hover { box-shadow:var(--shadow-md); transform:translateY(-2px); }
-.sc-tag { font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:var(--accent); margin-bottom:0.4rem; }
-.sc-title { font-size:0.95rem; font-weight:700; color:var(--text); margin-bottom:0.5rem; }
-.sc-body { font-size:0.82rem; color:var(--text2); line-height:1.65; margin-bottom:1rem; }
-.sc-scores { display:flex; gap:0.5rem; }
-.sc-score { flex:1; padding:0.6rem 0.75rem; border-radius:8px; font-size:0.72rem; font-weight:600; text-align:center; }
-.bad  { background:var(--red-lt); color:var(--red); border:1px solid rgba(220,38,38,0.15); }
-.good { background:var(--green-lt); color:var(--green); border:1px solid rgba(22,163,74,0.15); }
-.sc-score strong { display:block; font-size:1rem; font-weight:800; margin-top:0.2rem; }
+/* ── SCENARIO CARDS ── */
+.scenario-cards { display: grid; grid-template-columns: repeat(auto-fit,minmax(300px,1fr)); gap: 1px; background: var(--gray-200); border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
+.sc-card { background: var(--white); padding: 1.5rem; transition: background .15s; }
+.sc-card:hover { background: var(--gray-100); }
+.section-alt .sc-card { background: var(--gray-100); }
+.section-alt .sc-card:hover { background: var(--white); }
+.sc-tag { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray-400); margin-bottom: 0.4rem; }
+.sc-title { font-size: 0.95rem; font-weight: 700; color: var(--black); margin-bottom: 0.5rem; }
+.sc-body { font-size: 0.82rem; color: var(--gray-600); line-height: 1.65; margin-bottom: 1rem; }
+.sc-scores { display: flex; gap: 0.5rem; }
+.sc-score { flex: 1; padding: 0.6rem 0.75rem; border-radius: var(--radius); font-size: 0.72rem; font-weight: 600; text-align: center; border: 1px solid var(--gray-200); }
+.bad  { background: var(--red-lt); color: var(--red); border: 1px solid rgba(220,38,38,0.15); }
+.good { background: var(--green-lt); color: var(--green); border: 1px solid rgba(22,163,74,0.15); }
+.sc-score strong { display: block; font-size: 1rem; font-weight: 700; margin-top: 0.2rem; }
 
 /* ── COMPARE TABLE ── */
-.compare-table-wrap { border:1px solid var(--border); border-radius:14px; overflow:hidden; background:white; box-shadow:var(--shadow-sm); }
-table.comp { width:100%; border-collapse:collapse; font-size:0.875rem; }
-.comp th { padding:0.875rem 1.25rem; text-align:left; background:var(--bg2); border-bottom:1px solid var(--border); font-size:0.68rem; font-weight:700; text-transform:uppercase; letter-spacing:0.07em; color:var(--muted); }
-.comp td { padding:0.875rem 1.25rem; border-bottom:1px solid var(--border); color:var(--text2); }
-.comp tr:last-child td { border-bottom:none; }
-.comp tr.hl td { background:#fafaff; }
-.comp tr.hl td:first-child { font-weight:700; color:var(--accent); }
-.pill { display:inline-block; padding:0.2rem 0.65rem; border-radius:5px; font-size:0.7rem; font-weight:700; }
-.pill-g { background:var(--green-lt); color:var(--green); }
-.pill-r { background:var(--red-lt); color:var(--red); }
-.pill-a { background:var(--amber-lt); color:var(--amber); }
+.compare-table-wrap { border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; background: var(--white); }
+table.comp { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.comp th { padding: 0.875rem 1.25rem; text-align: left; background: var(--gray-100); border-bottom: 1px solid var(--gray-200); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--gray-400); }
+.comp td { padding: 0.875rem 1.25rem; border-bottom: 1px solid var(--gray-200); color: var(--gray-600); }
+.comp tr:last-child td { border-bottom: none; }
+.comp tr.hl td { background: var(--gray-100); }
+.comp tr.hl td:first-child { font-weight: 700; color: var(--black); }
+.pill { display: inline-block; padding: 0.2rem 0.65rem; border-radius: var(--radius); font-size: 0.7rem; font-weight: 700; border: 1px solid var(--gray-200); }
+.pill-g { background: var(--green-lt); color: var(--green); border-color: rgba(22,163,74,0.2); }
+.pill-r { background: var(--red-lt); color: var(--red); border-color: rgba(220,38,38,0.2); }
+.pill-a { background: var(--amber-lt); color: var(--amber); border-color: rgba(217,119,6,0.2); }
 
 /* ── ROADMAP ── */
-.rm-list { display:flex; flex-direction:column; gap:0; border:1px solid var(--border); border-radius:14px; overflow:hidden; background:white; }
-.rm-row { display:flex; align-items:flex-start; gap:1.25rem; padding:1.25rem 1.5rem; border-bottom:1px solid var(--border); }
-.rm-row:last-child { border-bottom:none; }
-.rm-indicator { display:flex; flex-direction:column; align-items:center; gap:4px; flex-shrink:0; margin-top:2px; }
-.rm-dot { width:12px; height:12px; border-radius:50%; flex-shrink:0; }
-.rm-dot.done { background:var(--green); }
-.rm-dot.wip  { background:var(--accent); box-shadow:0 0 0 3px var(--accent-lt); }
-.rm-dot.next { background:var(--border2); }
-.rm-badge { font-size:0.6rem; font-weight:700; padding:0.15rem 0.4rem; border-radius:4px; white-space:nowrap; margin-top:2px; }
-.rb-done { background:var(--green-lt); color:var(--green); }
-.rb-wip  { background:var(--accent-lt); color:var(--accent); }
-.rb-next { background:var(--bg2); color:var(--muted); }
-.rm-title { font-size:0.9rem; font-weight:700; color:var(--text); }
-.rm-sub   { font-size:0.8rem; color:var(--muted); margin-top:0.15rem; }
+.rm-list { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; background: var(--white); }
+.rm-row { display: flex; align-items: flex-start; gap: 1.25rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--gray-200); }
+.rm-row:last-child { border-bottom: none; }
+.rm-indicator { display: flex; flex-direction: column; align-items: center; gap: 4px; flex-shrink: 0; margin-top: 2px; }
+.rm-dot { width: 10px; height: 10px; border-radius: 50%; flex-shrink: 0; }
+.rm-dot.done { background: var(--green); }
+.rm-dot.wip  { background: var(--black); }
+.rm-dot.next { background: var(--gray-200); border: 1px solid var(--gray-400); }
+.rm-badge { font-size: 0.6rem; font-weight: 700; padding: 0.15rem 0.4rem; border-radius: var(--radius); white-space: nowrap; margin-top: 2px; }
+.rb-done { background: var(--green-lt); color: var(--green); border: 1px solid rgba(22,163,74,0.2); }
+.rb-wip  { background: var(--black); color: var(--white); }
+.rb-next { background: var(--gray-100); color: var(--gray-600); border: 1px solid var(--gray-200); }
+.rm-title { font-size: 0.9rem; font-weight: 700; color: var(--black); }
+.rm-sub   { font-size: 0.8rem; color: var(--gray-600); margin-top: 0.15rem; }
+
+/* ── MEMORY STACK TABLE ── */
+.stack-table-wrap { overflow-x: auto; }
+table.stack { width: 100%; border-collapse: collapse; font-size: 0.88rem; border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
+.stack thead tr { border-bottom: 1px solid var(--gray-200); background: var(--gray-100); }
+.stack th { text-align: left; padding: 0.75rem 1rem; color: var(--gray-600); font-weight: 600; font-size: 11px; text-transform: uppercase; letter-spacing: 0.06em; }
+.stack td { padding: 0.75rem 1rem; border-bottom: 1px solid var(--gray-200); color: var(--gray-600); }
+.stack tr:last-child td { border-bottom: none; }
+.stack tr.hl-row td { background: var(--gray-100); }
+.stack tr.hl-row td:first-child { font-weight: 700; color: var(--black); }
+
+/* ── SETUP INSTALL BLOCK ── */
+.setup-code-block {
+  background: var(--black); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin-bottom: 2.5rem;
+  border: 1px solid var(--gray-800);
+}
+.setup-code-label { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray-600); margin-bottom: 0.5rem; }
+.setup-code-divider { margin-top: 0.75rem; padding-top: 0.75rem; border-top: 1px solid #333; }
 
 /* ── FOOTER ── */
-footer { padding:3rem 2rem; text-align:center; border-top:1px solid var(--border); background:white; }
-footer .logo-row { display:flex; align-items:center; justify-content:center; gap:0.5rem; margin-bottom:0.75rem; }
-footer .logo-mark { width:28px; height:28px; border-radius:7px; background:var(--accent); display:flex; align-items:center; justify-content:center; font-size:0.8rem; font-weight:900; color:white; }
-footer p { font-size:0.82rem; color:var(--muted); }
-footer a { color:var(--accent); text-decoration:none; }
+footer { padding: 3rem 28px; text-align: center; border-top: 1px solid var(--gray-200); background: var(--white); }
+footer .logo-row { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+footer .logo-mark { width: 28px; height: 28px; border-radius: var(--radius); background: var(--black); display: flex; align-items: center; justify-content: center; font-size: 0.8rem; font-weight: 900; color: var(--white); border: 1px solid var(--gray-800); }
+footer p { font-size: 0.82rem; color: var(--gray-400); }
+footer a { color: var(--black); text-decoration: underline; text-underline-offset: 3px; }
 
 /* ── ANIMATIONS ── */
 @keyframes fadeUp { from { opacity:0; transform:translateY(20px); } to { opacity:1; transform:translateY(0); } }
-.fade-up { opacity:0; animation:fadeUp .6s ease forwards; }
-.fade-up:nth-child(1) { animation-delay:.1s; }
-.fade-up:nth-child(2) { animation-delay:.2s; }
-.fade-up:nth-child(3) { animation-delay:.3s; }
+.fade-up { opacity: 0; animation: fadeUp .6s ease forwards; }
+.fade-up:nth-child(1) { animation-delay: .1s; }
+.fade-up:nth-child(2) { animation-delay: .2s; }
+.fade-up:nth-child(3) { animation-delay: .3s; }
 
 /* ── GLOBAL MOBILE SAFETY ── */
 pre, code { overflow-x: auto; word-break: break-word; }
@@ -248,118 +272,100 @@ img { max-width: 100%; height: auto; }
 
 /* ── HAMBURGER ── */
 .nav-hamburger {
-  display:none; flex-direction:column; justify-content:center; gap:5px;
-  width:40px; height:40px; background:none; border:none; cursor:pointer; padding:6px; flex-shrink:0;
+  display: none; flex-direction: column; justify-content: center; gap: 5px;
+  width: 40px; height: 40px; background: none; border: none; cursor: pointer; padding: 6px; flex-shrink: 0;
 }
-.nav-hamburger span { display:block; height:2px; border-radius:2px; background:var(--text); transition:all .25s; }
-.nav-hamburger.open span:nth-child(1) { transform:translateY(7px) rotate(45deg); }
-.nav-hamburger.open span:nth-child(2) { opacity:0; transform:scaleX(0); }
-.nav-hamburger.open span:nth-child(3) { transform:translateY(-7px) rotate(-45deg); }
+.nav-hamburger span { display: block; height: 2px; border-radius: 2px; background: var(--black); transition: all .25s; }
+.nav-hamburger.open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.nav-hamburger.open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.nav-hamburger.open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
 
 /* ── TABLET (≤900px) ── */
 @media(max-width:900px){
-  /* Nav: hide text links, show hamburger */
-  nav { padding:0 1.25rem; }
+  nav { padding: 0 1.25rem; }
   .nav-links {
-    display:none; flex-direction:column; gap:0;
-    position:fixed; top:60px; left:0; right:0;
-    height:calc(100vh - 60px); height:calc(100svh - 60px);
-    background:rgba(255,255,255,0.98); backdrop-filter:blur(20px);
-    border-top:1px solid var(--border); padding:1.25rem 1.5rem 2rem;
-    z-index:199; overflow-y:scroll;
-    -webkit-overflow-scrolling:touch; overscroll-behavior:contain;
+    display: none; flex-direction: column; gap: 0;
+    position: fixed; top: 60px; left: 0; right: 0;
+    height: calc(100vh - 60px);
+    background: rgba(255,255,255,0.98); backdrop-filter: blur(12px);
+    border-top: 1px solid var(--gray-200); padding: 1.25rem 1.5rem 2rem;
+    z-index: 199; overflow-y: scroll;
   }
-  .nav-links.open { display:flex; }
+  .nav-links.open { display: flex; }
   .nav-links a {
-    padding:1rem 0; border-bottom:1px solid var(--border);
-    font-size:1.05rem; font-weight:500; color:var(--text); gap:0;
+    padding: 1rem 0; border-bottom: 1px solid var(--gray-200);
+    font-size: 1.05rem; font-weight: 500; color: var(--black);
   }
-  .nav-links a:last-of-type { border-bottom:none; }
-  .nav-cta { margin-top:0.75rem; text-align:center; justify-content:center; width:100%; border-radius:10px; }
-  .lang-toggle { margin-top:0.5rem; width:100%; text-align:center; justify-content:center; }
-  .nav-hamburger { display:flex; }
+  .nav-links a:last-of-type { border-bottom: none; }
+  .nav-cta { margin-top: 0.75rem; text-align: center; justify-content: center; width: 100%; }
+  .lang-toggle { margin-top: 0.5rem; width: 100%; text-align: center; justify-content: center; }
+  .nav-hamburger { display: flex; }
 
-  /* Hero */
-  #hero-canvas { display:none; }
-  .hero { padding:80px 1.5rem 50px; min-height:auto; }
-  .hero-inner { max-width:100%; }
+  #hero-canvas { display: none; }
+  .hero { padding: 80px 1.5rem 50px; min-height: auto; }
+  .hero-inner { max-width: 100%; margin-left: 0; }
 
-  /* Stats */
-  .stats-row { grid-template-columns:1fr 1fr; }
-  .stat-cell { padding:1.5rem 1.25rem; }
-  .stat-cell:nth-child(2) { border-right:none; }
-  .stat-cell:nth-child(3) { border-right:1px solid var(--border); border-top:1px solid var(--border); }
-  .stat-cell:nth-child(4) { border-right:none; border-top:1px solid var(--border); }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .stat-cell { padding: 1.5rem 1.25rem; }
+  .stat-cell:nth-child(2) { border-right: none; }
+  .stat-cell:nth-child(3) { border-right: 1px solid var(--gray-200); border-top: 1px solid var(--gray-200); }
+  .stat-cell:nth-child(4) { border-right: none; border-top: 1px solid var(--gray-200); }
 
-  /* Sections */
-  .section { padding:4rem 1.5rem; }
-  .full-bleed-inner { padding:4rem 1.5rem; }
+  .section { padding: 64px 0; }
+  .section-inner { padding: 0 1.5rem; }
 
-  /* Levels: stack vertically */
-  .level-item { grid-template-columns:1fr; }
-  .level-meta { border-right:none; border-bottom:1px solid var(--border); }
+  .level-item { grid-template-columns: 1fr; }
+  .level-meta { border-right: none; border-bottom: 1px solid var(--gray-200); }
 
-  /* Table */
-  .compare-table-wrap { overflow-x:auto; -webkit-overflow-scrolling:touch; }
-  table.comp { min-width:560px; }
+  .compare-table-wrap { overflow-x: auto; }
+  table.comp { min-width: 560px; }
 
-  /* Setup cards: override inline style */
   div[style*="minmax(220px"] { grid-template-columns: repeat(auto-fit, minmax(180px,1fr)) !important; }
 }
 
 /* ── MOBILE (≤600px) ── */
 @media(max-width:600px){
-  nav { padding:0 1rem; }
+  nav { padding: 0 1rem; }
+  .hero { padding: 72px 1rem 40px; }
+  h1 { font-size: clamp(1.9rem,7.5vw,2.8rem); letter-spacing: -0.03em; }
+  .hero-sub { font-size: 0.95rem; max-width: 100%; margin-bottom: 2rem; }
+  .hero-eyebrow { font-size: 0.65rem; white-space: normal; text-align: left; }
+  .hero-actions { flex-direction: column; align-items: stretch; }
+  .btn-primary, .btn-secondary { justify-content: center; width: 100%; }
 
-  /* Hero */
-  .hero { padding:72px 1rem 40px; }
-  h1 { font-size:clamp(1.9rem,7.5vw,2.8rem); letter-spacing:-0.03em; }
-  .hero-sub { font-size:0.95rem; max-width:100%; margin-bottom:2rem; }
-  .hero-eyebrow { font-size:0.65rem; white-space:normal; text-align:center; }
-  .hero-actions { flex-direction:column; align-items:stretch; }
-  .btn-primary, .btn-secondary { justify-content:center; width:100%; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .stat-cell { padding: 1.25rem 1rem; }
+  .stat-number { font-size: 1.75rem; }
 
-  /* Stats: 2×2 grid */
-  .stats-row { grid-template-columns:1fr 1fr; }
-  .stat-cell { padding:1.25rem 1rem; }
-  .stat-number { font-size:1.75rem; }
+  .section { padding: 48px 0; }
+  .section-inner { padding: 0 1rem; }
+  .section-lead { font-size: 0.9rem; max-width: 100%; margin-bottom: 1.75rem; }
 
-  /* Sections */
-  .section { padding:3rem 1rem; }
-  .full-bleed-inner { padding:3rem 1rem; }
-  .section-lead { font-size:0.9rem; max-width:100%; margin-bottom:1.75rem; }
+  .problem-grid { grid-template-columns: 1fr; }
+  .prob-card { padding: 1.25rem; }
+  .scenario-cards { grid-template-columns: 1fr !important; }
+  .sc-card { padding: 1.25rem; }
 
-  /* Cards: 1 column */
-  .problem-grid { grid-template-columns:1fr; }
-  .prob-card { padding:1.25rem; }
-  .scenario-cards { grid-template-columns:1fr !important; }
-  .sc-card { padding:1.25rem; }
+  .chart-pair { grid-template-columns: 1fr; gap: 1px; margin-bottom: 1.5rem; }
 
-  /* Charts */
-  .chart-pair { grid-template-columns:1fr; gap:1rem; margin-bottom:1.5rem; }
+  .code-pre { font-size: 0.68rem; padding: 1rem; }
 
-  /* Code blocks */
-  .code-pre { font-size:0.68rem; padding:1rem; }
+  pre[style] { font-size: 0.72rem !important; word-break: break-all; white-space: pre-wrap; }
 
-  /* Install command */
-  pre[style] { font-size:0.72rem !important; word-break:break-all; white-space:pre-wrap; }
+  .rm-row { padding: 0.875rem 1rem; gap: 0.625rem; }
+  .rm-title { font-size: 0.82rem; }
+  .rm-sub { font-size: 0.72rem; }
 
-  /* Roadmap */
-  .rm-row { padding:0.875rem 1rem; gap:0.625rem; }
-  .rm-title { font-size:0.82rem; }
-  .rm-sub { font-size:0.72rem; }
-
-  /* Footer */
-  footer { padding:2rem 1rem; }
+  footer { padding: 2rem 1rem; }
 }
 
 /* ── SMALL PHONES (≤380px) ── */
 @media(max-width:380px){
-  h1 { font-size:1.75rem; }
-  .stats-row { grid-template-columns:1fr; }
-  .stat-cell { border-right:none !important; border-bottom:1px solid var(--border); border-top:none !important; }
-  .stat-cell:last-child { border-bottom:none; }
-  .stat-number { font-size:2rem; }
+  h1 { font-size: 1.75rem; }
+  .stats-row { grid-template-columns: 1fr; }
+  .stat-cell { border-right: none !important; border-bottom: 1px solid var(--gray-200); border-top: none !important; }
+  .stat-cell:last-child { border-bottom: none; }
+  .stat-number { font-size: 2rem; }
 }
 </style>
 </head>
@@ -378,8 +384,8 @@ img { max-width: 100%; height: auto; }
     <a href="#come-funziona" data-i18n="navHow" onclick="closeNav()">How It Works</a>
     <a href="#benchmark" onclick="closeNav()">Benchmark</a>
     <a href="install.html" onclick="closeNav()">Install</a>
-    <a href="https://github.com/Larens94/codedna" target="_blank" style="color:white" class="nav-cta">GitHub →</a>
-    <button class="lang-toggle" id="lang-toggle" onclick="toggleLang()">🌐 IT</button>
+    <a href="https://github.com/Larens94/codedna" target="_blank" class="nav-cta">GitHub →</a>
+    <button class="lang-toggle" id="lang-toggle" onclick="toggleLang()">IT</button>
   </div>
   <button class="nav-hamburger" id="nav-hamburger" onclick="toggleNav()" aria-label="Menu">
     <span></span><span></span><span></span>
@@ -406,22 +412,22 @@ img { max-width: 100%; height: auto; }
 <!-- STATS ROW -->
 <div class="stats-row">
   <div class="stat-cell">
-    <div class="stat-number green">+13pp</div>
+    <div class="stat-number">+13pp</div>
     <div class="stat-label" data-i18n="stat1Label">F1 improvement</div>
-    <div class="stat-note" data-i18n="stat1Note">Gemini 2.5 Flash, p=0.040 ✅</div>
+    <div class="stat-note" data-i18n="stat1Note">Gemini 2.5 Flash, p=0.040</div>
   </div>
   <div class="stat-cell">
-    <div class="stat-number blue">3</div>
+    <div class="stat-number">3</div>
     <div class="stat-label" data-i18n="stat2Label">LLMs tested</div>
     <div class="stat-note" data-i18n="stat2Note">positive Δ on all 3 models</div>
   </div>
   <div class="stat-cell">
-    <div class="stat-number green">−52%</div>
+    <div class="stat-number">−52%</div>
     <div class="stat-label" data-i18n="stat3Label">Retry risk reduction</div>
     <div class="stat-note" data-i18n="stat3Note">high-risk runs: 52% → 25%</div>
   </div>
   <div class="stat-cell">
-    <div class="stat-number green">0</div>
+    <div class="stat-number">0</div>
     <div class="stat-label" data-i18n="stat4Label">Infrastructure required</div>
     <div class="stat-note" data-i18n="stat4Note">no RAG, no vector DB</div>
   </div>
@@ -429,158 +435,157 @@ img { max-width: 100%; height: auto; }
 
 <!-- PROBLEMA -->
 <div class="section" id="problema">
-  <div class="eyebrow" data-i18n="probEyebrow">The Problem</div>
-  <h2 data-i18n="probH2">AI makes mistakes when it lacks context.</h2>
-  <p class="section-lead" data-i18n="probLead">Imagine asking a contractor to renovate your apartment without showing them the floor plan. Same problem with AI editing your code. CodeDNA is the floor plan.</p>
+  <div class="section-inner">
+    <div class="eyebrow" data-i18n="probEyebrow">The Problem</div>
+    <h2 data-i18n="probH2">AI makes mistakes when it lacks context.</h2>
+    <p class="section-lead" data-i18n="probLead">Imagine asking a contractor to renovate your apartment without showing them the floor plan. Same problem with AI editing your code. CodeDNA is the floor plan.</p>
 
-  <div class="problem-grid">
-    <div class="prob-card">
-      <div class="prob-accent">🔍</div>
-      <div class="prob-title" data-i18n="prob1Title">Sliding Window</div>
-      <div class="prob-text" data-i18n="prob1Text">AI reads code in windows of 50–100 lines. If a critical rule is defined 200 lines above, they don't see it — and they break it.</div>
-      <span class="prob-verdict pv-bad" data-i18n="prob1Verdict">❌ Scenario S4: violates MAX_DISCOUNT_RATE</span>
-    </div>
-    <div class="prob-card">
-      <div class="prob-accent">🔗</div>
-      <div class="prob-title" data-i18n="prob2Title">Cascade Effect</div>
-      <div class="prob-text" data-i18n="prob2Text">You change a function. Three other parts of the system depend on it. Without a map, the AI updates only the file it sees and leaves the rest broken.</div>
-      <span class="prob-verdict pv-bad" data-i18n="prob2Verdict">❌ Scenario S5: KeyError at runtime in main.py</span>
-    </div>
-    <div class="prob-card">
-      <div class="prob-accent">🧬</div>
-      <div class="prob-title" data-i18n="prob3Title">The Solution: CodeDNA</div>
-      <div class="prob-text" data-i18n="prob3Text">Context lives in the file itself — not in an external document. Each snippet the AI reads carries architectural constraints for that module.</div>
-      <span class="prob-verdict pv-good" data-i18n="prob3Verdict">✅ +13pp F1 on SWE-bench (Gemini 2.5 Flash, p=0.040)</span>
+    <div class="problem-grid">
+      <div class="prob-card">
+        <div class="prob-accent"></div>
+        <div class="prob-title" data-i18n="prob1Title">Sliding Window</div>
+        <div class="prob-text" data-i18n="prob1Text">AI reads code in windows of 50–100 lines. If a critical rule is defined 200 lines above, they don't see it — and they break it.</div>
+        <span class="prob-verdict pv-bad" data-i18n="prob1Verdict">❌ Scenario S4: violates MAX_DISCOUNT_RATE</span>
+      </div>
+      <div class="prob-card">
+        <div class="prob-accent"></div>
+        <div class="prob-title" data-i18n="prob2Title">Cascade Effect</div>
+        <div class="prob-text" data-i18n="prob2Text">You change a function. Three other parts of the system depend on it. Without a map, the AI updates only the file it sees and leaves the rest broken.</div>
+        <span class="prob-verdict pv-bad" data-i18n="prob2Verdict">❌ Scenario S5: KeyError at runtime in main.py</span>
+      </div>
+      <div class="prob-card">
+        <div class="prob-accent"></div>
+        <div class="prob-title" data-i18n="prob3Title">The Solution: CodeDNA</div>
+        <div class="prob-text" data-i18n="prob3Text">Context lives in the file itself — not in an external document. Each snippet the AI reads carries architectural constraints for that module.</div>
+        <span class="prob-verdict pv-good" data-i18n="prob3Verdict">+13pp F1 on SWE-bench (Gemini 2.5 Flash, p=0.040)</span>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- STACK CONTEXT -->
-<div class="section" id="stack-context">
-  <div class="eyebrow">Memory Stack</div>
-  <h2>Where CodeDNA sits in the AI memory stack.</h2>
-  <p class="section-lead">Every AI coding agent relies on multiple memory layers. Most of them are external to the code. CodeDNA is the only layer that lives <em>inside</em> the source files themselves — it travels with every clone, fork, and CI pipeline.</p>
+<div class="section section-alt" id="stack-context">
+  <div class="section-inner">
+    <div class="eyebrow">Memory Stack</div>
+    <h2>Where CodeDNA sits in the AI memory stack.</h2>
+    <p class="section-lead">Every AI coding agent relies on multiple memory layers. Most of them are external to the code. CodeDNA is the only layer that lives <em>inside</em> the source files themselves — it travels with every clone, fork, and CI pipeline.</p>
 
-
-  <div style="overflow-x:auto;">
-    <table style="width:100%; border-collapse:collapse; font-size:0.88rem;">
-      <thead>
-        <tr style="border-bottom:2px solid var(--border);">
-          <th style="text-align:left; padding:0.6rem 1rem; color:var(--text2); font-weight:600;">Layer</th>
-          <th style="text-align:left; padding:0.6rem 1rem; color:var(--text2); font-weight:600;">Examples</th>
-          <th style="text-align:left; padding:0.6rem 1rem; color:var(--text2); font-weight:600;">Where it lives</th>
-          <th style="text-align:left; padding:0.6rem 1rem; color:var(--text2); font-weight:600;">Shared across tools?</th>
-        </tr>
-      </thead>
-      <tbody>
-        <tr style="border-bottom:1px solid var(--border);">
-          <td style="padding:0.6rem 1rem;">LLM / Agent</td>
-          <td style="padding:0.6rem 1rem; color:var(--text2);">Claude, GPT-4, Cursor, Copilot</td>
-          <td style="padding:0.6rem 1rem; color:var(--text2);">Cloud</td>
-          <td style="padding:0.6rem 1rem; color:var(--text2);">—</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border);">
-          <td style="padding:0.6rem 1rem;">External memory</td>
-          <td style="padding:0.6rem 1rem; color:var(--text2);">Chat history, Memory API</td>
-          <td style="padding:0.6rem 1rem; color:var(--text2);">Cloud / external DB</td>
-          <td style="padding:0.6rem 1rem; color:var(--text2);">✗ tool-specific</td>
-        </tr>
-        <tr style="border-bottom:1px solid var(--border);">
-          <td style="padding:0.6rem 1rem;">Markdown / Config</td>
-          <td style="padding:0.6rem 1rem; color:var(--text2);">CLAUDE.md, .cursorrules, AGENTS.md</td>
-          <td style="padding:0.6rem 1rem; color:var(--text2);">Repo (outside source files)</td>
-          <td style="padding:0.6rem 1rem; color:var(--text2);">partial</td>
-        </tr>
-        <tr style="background:color-mix(in srgb,var(--accent) 8%,transparent);">
-          <td style="padding:0.6rem 1rem; font-weight:700; color:var(--accent);">CodeDNA</td>
-          <td style="padding:0.6rem 1rem; color:var(--text2);">exports, rules, agent, message, .codedna</td>
-          <td style="padding:0.6rem 1rem; color:var(--text2);">Inside every source file + repo root</td>
-          <td style="padding:0.6rem 1rem; font-weight:700; color:var(--accent);">✅ always</td>
-        </tr>
-      </tbody>
-    </table>
+    <div class="stack-table-wrap">
+      <table class="stack">
+        <thead>
+          <tr>
+            <th>Layer</th>
+            <th>Examples</th>
+            <th>Where it lives</th>
+            <th>Shared across tools?</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>LLM / Agent</td>
+            <td style="color:var(--gray-600)">Claude, GPT-4, Cursor, Copilot</td>
+            <td style="color:var(--gray-600)">Cloud</td>
+            <td style="color:var(--gray-600)">—</td>
+          </tr>
+          <tr>
+            <td>External memory</td>
+            <td style="color:var(--gray-600)">Chat history, Memory API</td>
+            <td style="color:var(--gray-600)">Cloud / external DB</td>
+            <td style="color:var(--gray-600)">✗ tool-specific</td>
+          </tr>
+          <tr>
+            <td>Markdown / Config</td>
+            <td style="color:var(--gray-600)">CLAUDE.md, .cursorrules, AGENTS.md</td>
+            <td style="color:var(--gray-600)">Repo (outside source files)</td>
+            <td style="color:var(--gray-600)">partial</td>
+          </tr>
+          <tr class="hl-row">
+            <td><strong>CodeDNA</strong></td>
+            <td style="color:var(--gray-600)">exports, rules, agent, message, .codedna</td>
+            <td style="color:var(--gray-600)">Inside every source file + repo root</td>
+            <td><strong>always</strong></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
   </div>
 </div>
 
 <!-- SETUP -->
-<div class="full-bleed" id="setup">
-  <div class="full-bleed-inner">
+<div class="section" id="setup">
+  <div class="section-inner">
     <div class="eyebrow" data-i18n="setupEyebrow">Setup</div>
     <h2 data-i18n="setupH2">Works with your favorite AI tool.</h2>
     <p class="section-lead" data-i18n="setupLead">One command installs CodeDNA rules for any AI coding assistant. Or pick the file for your tool and paste it into your project.</p>
 
-    <div style="background:#1e1e2e; border-radius:12px; padding:1.25rem 1.5rem; margin-bottom:2.5rem; box-shadow:var(--shadow-md);">
-      <div style="font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#6272a4; margin-bottom:0.5rem;">Step 1 — Install for your AI tool (instructions + enforcement hooks)</div>
+    <div class="setup-code-block">
+      <div class="setup-code-label">Step 1 — Install for your AI tool (instructions + enforcement hooks)</div>
       <pre style="font-size:0.85rem; color:#f8f8f2; line-height:1.9; margin:0; border:none; background:transparent; padding:0;"><span style="color:#50fa7b;">bash</span> <span style="color:#bd93f9;">&lt;(</span><span style="color:#ff79c6;">curl</span> -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh<span style="color:#bd93f9;">)</span> claude-hooks
 <span style="color:#6272a4;"># or: cursor-hooks  copilot-hooks  cline-hooks  opencode  windsurf</span></pre>
-      <div style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #44475a; font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#6272a4; margin-bottom:0.5rem;">Step 2 — Annotate existing files (CLI)</div>
-      <pre style="font-size:0.85rem; color:#f8f8f2; line-height:1.9; margin:0; border:none; background:transparent; padding:0;"><span style="color:#50fa7b;">pip</span> install git+https://github.com/Larens94/codedna.git
+      <div class="setup-code-divider">
+        <div class="setup-code-label">Step 2 — Annotate existing files (CLI)</div>
+        <pre style="font-size:0.85rem; color:#f8f8f2; line-height:1.9; margin:0; border:none; background:transparent; padding:0;"><span style="color:#50fa7b;">pip</span> install git+https://github.com/Larens94/codedna.git
 <span style="color:#6272a4;"># set ANTHROPIC_API_KEY first</span>
 <span style="color:#50fa7b;">codedna</span> init ./          <span style="color:#6272a4;"># first-time: annotates every .py file</span>
 <span style="color:#50fa7b;">codedna</span> update ./        <span style="color:#6272a4;"># incremental: only unannotated files</span>
 <span style="color:#50fa7b;">codedna</span> check ./         <span style="color:#6272a4;"># coverage report, no changes</span></pre>
+      </div>
     </div>
 
     <div class="scenario-cards" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
       <div class="sc-card" style="text-align:center;">
-        <div style="font-size:1.8rem; margin-bottom:0.5rem;">🟠</div>
         <div class="sc-title">Claude Code</div>
-        <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:0.65rem; font-weight:700; padding:0.2rem 0.55rem; border-radius:5px; background:var(--green-lt); color:var(--green); margin-bottom:0.5rem;">✅ Active enforcement</div>
+        <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:11px; font-weight:700; letter-spacing:0.06em; padding:0.2rem 0.55rem; border-radius:var(--radius); background:var(--green-lt); color:var(--green); margin-bottom:0.5rem; border:1px solid rgba(22,163,74,0.2);">Active enforcement</div>
         <div class="sc-body" style="font-size:0.78rem;">4 hooks: SessionStart, PreToolUse, PostToolUse, Stop. Validates every <code>.py</code> write automatically.</div>
-        <a href="install.html#claude-code" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">Install guide →</a>
+        <a href="install.html#claude-code" style="font-size:0.75rem; color:var(--black); text-decoration:underline; text-underline-offset:3px; font-weight:600;">Install guide →</a>
       </div>
       <div class="sc-card" style="text-align:center;">
-        <div style="font-size:1.8rem; margin-bottom:0.5rem;">⚡</div>
         <div class="sc-title">Cursor</div>
-        <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:0.65rem; font-weight:700; padding:0.2rem 0.55rem; border-radius:5px; background:var(--green-lt); color:var(--green); margin-bottom:0.5rem;">✅ Active enforcement</div>
+        <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:11px; font-weight:700; letter-spacing:0.06em; padding:0.2rem 0.55rem; border-radius:var(--radius); background:var(--green-lt); color:var(--green); margin-bottom:0.5rem; border:1px solid rgba(22,163,74,0.2);">Active enforcement</div>
         <div class="sc-body" style="font-size:0.78rem;">2 hooks in <code>.cursor/hooks/</code>: validates on every file edit, reminds at session end. Requires v1.7+.</div>
-        <a href="install.html#cursor" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">Install guide →</a>
+        <a href="install.html#cursor" style="font-size:0.75rem; color:var(--black); text-decoration:underline; text-underline-offset:3px; font-weight:600;">Install guide →</a>
       </div>
       <div class="sc-card" style="text-align:center;">
-        <div style="font-size:1.8rem; margin-bottom:0.5rem;">🐙</div>
         <div class="sc-title">GitHub Copilot</div>
-        <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:0.65rem; font-weight:700; padding:0.2rem 0.55rem; border-radius:5px; background:var(--green-lt); color:var(--green); margin-bottom:0.5rem;">✅ Active enforcement</div>
+        <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:11px; font-weight:700; letter-spacing:0.06em; padding:0.2rem 0.55rem; border-radius:var(--radius); background:var(--green-lt); color:var(--green); margin-bottom:0.5rem; border:1px solid rgba(22,163,74,0.2);">Active enforcement</div>
         <div class="sc-body" style="font-size:0.78rem;">3 hooks in <code>.github/hooks/</code>: session start context, post-write validation, session end reminder.</div>
-        <a href="install.html#copilot" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">Install guide →</a>
+        <a href="install.html#copilot" style="font-size:0.75rem; color:var(--black); text-decoration:underline; text-underline-offset:3px; font-weight:600;">Install guide →</a>
       </div>
       <div class="sc-card" style="text-align:center;">
-        <div style="font-size:1.8rem; margin-bottom:0.5rem;">🔧</div>
         <div class="sc-title">Cline</div>
-        <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:0.65rem; font-weight:700; padding:0.2rem 0.55rem; border-radius:5px; background:var(--green-lt); color:var(--green); margin-bottom:0.5rem;">✅ Active enforcement</div>
+        <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:11px; font-weight:700; letter-spacing:0.06em; padding:0.2rem 0.55rem; border-radius:var(--radius); background:var(--green-lt); color:var(--green); margin-bottom:0.5rem; border:1px solid rgba(22,163,74,0.2);">Active enforcement</div>
         <div class="sc-body" style="font-size:0.78rem;">2 hooks in <code>.clinerules/hooks/</code>: TaskStart context injection, PostToolUse validation. Requires v3.36+.</div>
-        <a href="install.html#cline" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">Install guide →</a>
+        <a href="install.html#cline" style="font-size:0.75rem; color:var(--black); text-decoration:underline; text-underline-offset:3px; font-weight:600;">Install guide →</a>
       </div>
       <div class="sc-card" style="text-align:center;">
-        <div style="font-size:1.8rem; margin-bottom:0.5rem;">💻</div>
         <div class="sc-title">OpenCode</div>
-        <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:0.65rem; font-weight:700; padding:0.2rem 0.55rem; border-radius:5px; background:var(--green-lt); color:var(--green); margin-bottom:0.5rem;">✅ Active enforcement</div>
+        <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:11px; font-weight:700; letter-spacing:0.06em; padding:0.2rem 0.55rem; border-radius:var(--radius); background:var(--green-lt); color:var(--green); margin-bottom:0.5rem; border:1px solid rgba(22,163,74,0.2);">Active enforcement</div>
         <div class="sc-body" style="font-size:0.78rem;"><code>AGENTS.md</code> + JS plugin in <code>.opencode/plugins/</code>. Validates 11 languages on every write.</div>
-        <a href="install.html#opencode" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">Install guide →</a>
+        <a href="install.html#opencode" style="font-size:0.75rem; color:var(--black); text-decoration:underline; text-underline-offset:3px; font-weight:600;">Install guide →</a>
       </div>
       <div class="sc-card" style="text-align:center;">
-        <div style="font-size:1.8rem; margin-bottom:0.5rem;">🏄</div>
         <div class="sc-title">Windsurf</div>
-        <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:0.65rem; font-weight:700; padding:0.2rem 0.55rem; border-radius:5px; background:var(--amber-lt); color:var(--amber); margin-bottom:0.5rem;">⚠️ Instructions only</div>
+        <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:11px; font-weight:700; letter-spacing:0.06em; padding:0.2rem 0.55rem; border-radius:var(--radius); background:var(--amber-lt); color:var(--amber); margin-bottom:0.5rem; border:1px solid rgba(217,119,6,0.2);">Instructions only</div>
         <div class="sc-body" style="font-size:0.78rem;">Copy <code>.windsurfrules</code> to your project root. Cascade reads it automatically.</div>
-        <a href="install.html#windsurf" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">Install guide →</a>
+        <a href="install.html#windsurf" style="font-size:0.75rem; color:var(--black); text-decoration:underline; text-underline-offset:3px; font-weight:600;">Install guide →</a>
       </div>
       <div class="sc-card" style="text-align:center;">
-        <div style="font-size:1.8rem; margin-bottom:0.5rem;">🤖</div>
         <div class="sc-title">Antigravity / Agents</div>
-        <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:0.65rem; font-weight:700; padding:0.2rem 0.55rem; border-radius:5px; background:var(--amber-lt); color:var(--amber); margin-bottom:0.5rem;">⚠️ Instructions only</div>
+        <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:11px; font-weight:700; letter-spacing:0.06em; padding:0.2rem 0.55rem; border-radius:var(--radius); background:var(--amber-lt); color:var(--amber); margin-bottom:0.5rem; border:1px solid rgba(217,119,6,0.2);">Instructions only</div>
         <div class="sc-body" style="font-size:0.78rem;">Copy <code>.agents/workflows/codedna.md</code> to your project. Compatible with Antigravity and custom agent frameworks.</div>
-        <a href="https://github.com/Larens94/codedna/tree/main/integrations/.agents" target="_blank" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">View file →</a>
+        <a href="https://github.com/Larens94/codedna/tree/main/integrations/.agents" target="_blank" style="font-size:0.75rem; color:var(--black); text-decoration:underline; text-underline-offset:3px; font-weight:600;">View file →</a>
       </div>
     </div>
 
-    <p style="text-align:center; margin-top:1.5rem;">
-      <a href="install.html" class="btn-secondary" data-i18n="setupQuickstart">📖 Full Install Guide</a>
+    <p style="text-align:center; margin-top:2rem;">
+      <a href="install.html" class="btn-secondary" data-i18n="setupQuickstart">Full Install Guide</a>
     </p>
   </div>
 </div>
+
 <!-- COME FUNZIONA -->
-<div class="full-bleed" id="come-funziona">
-  <div class="full-bleed-inner">
+<div class="section section-alt" id="come-funziona">
+  <div class="section-inner">
     <div class="eyebrow" data-i18n="howEyebrow">How It Works</div>
     <h2 data-i18n="howH2">Three levels. Every snippet is self-contained.</h2>
     <p class="section-lead" data-i18n="howLead">Like biological DNA: cutting it in half produces two fragments that still carry the complete information. With CodeDNA, 10 random lines from anywhere in a file are enough for the AI to act correctly.</p>
@@ -675,45 +680,47 @@ data  = get_users()
 
 <!-- BENCHMARK -->
 <div class="section" id="benchmark">
-  <div class="eyebrow" data-i18n="bmkEyebrow">Illustrative Scenarios</div>
-  <h2 data-i18n="bmkH2">Problems CodeDNA is designed to solve.</h2>
-  <p class="section-lead" data-i18n-html="bmkLead">5 scenarios that illustrate the categories of errors AI agents make without architectural context. For measured results, see the SWE-bench benchmark below.</p>
+  <div class="section-inner">
+    <div class="eyebrow" data-i18n="bmkEyebrow">Illustrative Scenarios</div>
+    <h2 data-i18n="bmkH2">Problems CodeDNA is designed to solve.</h2>
+    <p class="section-lead" data-i18n-html="bmkLead">5 scenarios that illustrate the categories of errors AI agents make without architectural context. For measured results, see the SWE-bench benchmark below.</p>
 
-  <div class="scenario-cards">
-    <div class="sc-card">
-      <div class="sc-tag">Scenario S4</div>
-      <div class="sc-title" data-i18n="s4Title">🔍 Sliding Window — Hidden Constraint</div>
-      <div class="sc-body" data-i18n="s4Body">The AI reads only lines 200–250. The max discount limit is in the manifest (line 7). Without CodeDNA it ignores it and applies illegal discounts of 50%+.</div>
-    </div>
-    <div class="sc-card">
-      <div class="sc-tag">Scenario S5</div>
-      <div class="sc-title" data-i18n="s5Title">🔗 Cascade Change — Domino Effect</div>
-      <div class="sc-body" data-i18n-html="s5Body">utils.py is modified. Without <code>used_by:</code>, the AI only updates utils.py and leaves main.py with a runtime KeyError.</div>
-    </div>
-    <div class="sc-card">
-      <div class="sc-tag">Scenario S6</div>
-      <div class="sc-title" data-i18n="s6Title">🔢 Ambiguous Type — Euros or Cents?</div>
-      <div class="sc-body" data-i18n-html="s6Body"><code>price = 1999</code> — euros or cents? Without semantic naming the AI gets the unit wrong. With CodeDNA: <code>int_cents_price_from_request</code> — zero ambiguity.</div>
-    </div>
-    <div class="sc-card">
-      <div class="sc-tag">Scenario S7</div>
-      <div class="sc-title" data-i18n="s7Title">💥 Broken Dependency — Silent Rename</div>
-      <div class="sc-body" data-i18n-html="s7Body"><code>format_revenue()</code> → <code>format_currency()</code>. The <code>rules:</code> field records the rename. The Control calls the old name: crash.</div>
-    </div>
-    <div class="sc-card">
-      <div class="sc-tag">Scenario S8</div>
-      <div class="sc-title" data-i18n="s8Title">🗺️ Planning — 8 Files, Manifest Only</div>
-      <div class="sc-body" data-i18n-html="s8Body">The AI must find the 2 right files to change by reading only the module docstrings (8–12 lines each). Using the <code>exports:</code> → <code>used_by:</code> graph it identifies exactly the 2 files.</div>
+    <div class="scenario-cards">
+      <div class="sc-card">
+        <div class="sc-tag">Scenario S4</div>
+        <div class="sc-title" data-i18n="s4Title">Sliding Window — Hidden Constraint</div>
+        <div class="sc-body" data-i18n="s4Body">The AI reads only lines 200–250. The max discount limit is in the manifest (line 7). Without CodeDNA it ignores it and applies illegal discounts of 50%+.</div>
+      </div>
+      <div class="sc-card">
+        <div class="sc-tag">Scenario S5</div>
+        <div class="sc-title" data-i18n="s5Title">Cascade Change — Domino Effect</div>
+        <div class="sc-body" data-i18n-html="s5Body">utils.py is modified. Without <code>used_by:</code>, the AI only updates utils.py and leaves main.py with a runtime KeyError.</div>
+      </div>
+      <div class="sc-card">
+        <div class="sc-tag">Scenario S6</div>
+        <div class="sc-title" data-i18n="s6Title">Ambiguous Type — Euros or Cents?</div>
+        <div class="sc-body" data-i18n-html="s6Body"><code>price = 1999</code> — euros or cents? Without semantic naming the AI gets the unit wrong. With CodeDNA: <code>int_cents_price_from_request</code> — zero ambiguity.</div>
+      </div>
+      <div class="sc-card">
+        <div class="sc-tag">Scenario S7</div>
+        <div class="sc-title" data-i18n="s7Title">💥 Broken Dependency — Silent Rename</div>
+        <div class="sc-body" data-i18n-html="s7Body"><code>format_revenue()</code> → <code>format_currency()</code>. The <code>rules:</code> field records the rename. The Control calls the old name: crash.</div>
+      </div>
+      <div class="sc-card">
+        <div class="sc-tag">Scenario S8</div>
+        <div class="sc-title" data-i18n="s8Title">🗺️ Planning — 8 Files, Manifest Only</div>
+        <div class="sc-body" data-i18n-html="s8Body">The AI must find the 2 right files to change by reading only the module docstrings (8–12 lines each). Using the <code>exports:</code> → <code>used_by:</code> graph it identifies exactly the 2 files.</div>
+      </div>
     </div>
   </div>
 </div>
 
 <!-- MULTI-MODEL SWE-BENCH -->
-<div class="full-bleed">
-  <div class="full-bleed-inner">
+<div class="section section-alt">
+  <div class="section-inner">
     <div class="eyebrow" data-i18n="mmEyebrow">Multi-Model SWE-bench</div>
     <h2 data-i18n="mmH2">Tested across multiple LLMs.</h2>
-    <p class="section-lead" data-i18n-html="mmLead">5 real Django issues from <strong>SWE-bench</strong>, tested across multiple LLMs. Same prompt, same tools, same tasks. <strong>Gemini 2.5 Flash: +13pp F1, p=0.040 ✅ · DeepSeek Chat: +9pp F1, p=0.11 · Gemini 2.5 Pro: +9pp F1, p=0.11 ✅ All 3 models complete.</strong></p>
+    <p class="section-lead" data-i18n-html="mmLead">5 real Django issues from <strong>SWE-bench</strong>, tested across multiple LLMs. Same prompt, same tools, same tasks. <strong>Gemini 2.5 Flash: +13pp F1, p=0.040 · DeepSeek Chat: +9pp F1, p=0.11 · Gemini 2.5 Pro: +9pp F1, p=0.11. All 3 models improve.</strong></p>
 
     <div class="chart-pair">
       <div class="chart-card" style="grid-column: span 2;">
@@ -724,17 +731,17 @@ data  = get_users()
 
     <!-- NAVIGATION DEMO GIF -->
     <div style="margin:2rem 0; text-align:center;">
-      <p style="font-size:0.8rem; color:var(--muted); margin-bottom:0.75rem; text-transform:uppercase; letter-spacing:0.08em; font-weight:600;">Navigation Demo — django__django-11808 · DeepSeek Chat · 5 runs</p>
-      <img src="codedna_viz.gif" alt="CodeDNA navigation demo: without CodeDNA the agent wanders, with CodeDNA it follows the used_by chain" style="width:100%; max-width:900px; border-radius:12px; border:1px solid var(--border); box-shadow:var(--shadow-md);">
-      <p style="font-size:0.8rem; color:var(--muted); margin-top:0.75rem;">
+      <p style="font-size:11px; color:var(--gray-400); margin-bottom:0.75rem; text-transform:uppercase; letter-spacing:0.08em; font-weight:600;">Navigation Demo — django__django-11808 · DeepSeek Chat · 5 runs</p>
+      <img src="codedna_viz.gif" alt="CodeDNA navigation demo: without CodeDNA the agent wanders, with CodeDNA it follows the used_by chain" style="width:100%; max-width:900px; border-radius:var(--radius); border:1px solid var(--gray-200);">
+      <p style="font-size:0.8rem; color:var(--gray-400); margin-top:0.75rem;">
         Without CodeDNA: agent opens random files, stops early — 2/10 critical files found. &nbsp;|&nbsp;
         With CodeDNA: follows <code>used_by:</code> chain — 6/10 critical files found.
       </p>
       <div style="display:flex; gap:0.75rem; justify-content:center; flex-wrap:wrap; margin-top:1rem;">
         <a href="codedna_viz.html" target="_blank" class="btn-primary" style="font-size:0.85rem; padding:0.6rem 1.25rem;">▶ VS Code Navigation Demo</a>
-        <a href="codedna_viz_3metaphors.html" target="_blank" class="btn-secondary" style="font-size:0.85rem; padding:0.6rem 1.25rem;">🎨 3 Visual Metaphors</a>
-        <a href="agent-visualizer.html" target="_blank" class="btn-secondary" style="font-size:0.85rem; padding:0.6rem 1.25rem;">🕸 Agent Graph Visualizer</a>
-        <a href="codedna_world.html" target="_blank" class="btn-secondary" style="font-size:0.85rem; padding:0.6rem 1.25rem;">🧱 CodeDNA World</a>
+        <a href="codedna_viz_3metaphors.html" target="_blank" class="btn-secondary" style="font-size:0.85rem; padding:0.6rem 1.25rem;">3 Visual Metaphors</a>
+        <a href="agent-visualizer.html" target="_blank" class="btn-secondary" style="font-size:0.85rem; padding:0.6rem 1.25rem;">Agent Graph Visualizer</a>
+        <a href="codedna_world.html" target="_blank" class="btn-secondary" style="font-size:0.85rem; padding:0.6rem 1.25rem;">CodeDNA World</a>
       </div>
     </div>
 
@@ -750,7 +757,7 @@ data  = get_users()
       </div>
       <div class="sc-card">
         <div class="sc-tag">DeepSeek Chat</div>
-        <div class="sc-title" data-i18n="mmSurpTitle">✅ DeepSeek Chat — +9pp F1 (p=0.11)</div>
+        <div class="sc-title" data-i18n="mmSurpTitle">DeepSeek Chat — +9pp F1 (p=0.11)</div>
         <div class="sc-body" data-i18n="mmSurpBody">From 50% to 60%. Wins 4/5 tasks. Notable: +35pp on cross-cutting task 11808 — opposite direction from Gemini Flash (−1pp). Task 13495 anomaly (−9pp) under investigation. Not statistically significant.</div>
         <div class="sc-scores">
           <div class="sc-score bad">Control<strong>50%</strong></div>
@@ -767,15 +774,15 @@ data  = get_users()
       </div>
     </div>
 
-    <p style="margin-top:1.75rem; font-size:0.8rem; color:var(--muted); padding:1rem 1.25rem; background:var(--bg2); border:1px solid var(--border); border-radius:10px;" data-i18n-html="mmMethod">
-      🔬 <strong style="color:var(--text2)">Methodology:</strong> 5 SWE-bench Django tasks × 3 models (Gemini 2.5 Flash ✓, DeepSeek Chat ✓, Gemini 2.5 Pro ✓). 5 runs/task at T=0.1. Identical system prompt, same 3 tools (read_file, list_files, grep), max 30 turns. Metric: File Localization F1 (ground-truth files from patch). Statistical test: Wilcoxon signed-rank (one-tailed). Script: <code>benchmark_agent/swebench/run_agent_multi.py</code>.
+    <p style="margin-top:1.75rem; font-size:0.8rem; color:var(--gray-600); padding:1rem 1.25rem; background:var(--white); border:1px solid var(--gray-200); border-radius:var(--radius);" data-i18n-html="mmMethod">
+      🔬 <strong style="color:var(--black)">Methodology:</strong> 5 SWE-bench Django tasks × 3 models (Gemini 2.5 Flash ✓, DeepSeek Chat ✓, Gemini 2.5 Pro ✓). 5 runs/task at T=0.1. Identical system prompt, same 3 tools (read_file, list_files, grep), max 30 turns. Metric: File Localization F1 (ground-truth files from patch). Statistical test: Wilcoxon signed-rank (one-tailed). Script: <code>benchmark_agent/swebench/run_agent_multi.py</code>.
     </p>
   </div>
 </div>
 
 <!-- CONFRONTO -->
-<div class="full-bleed">
-  <div class="full-bleed-inner">
+<div class="section">
+  <div class="section-inner">
     <div class="eyebrow" data-i18n="cmpEyebrow">Comparison</div>
     <h2 style="margin-bottom:2rem;" data-i18n="cmpH2">CodeDNA vs. existing approaches</h2>
     <div class="compare-table-wrap">
@@ -795,37 +802,38 @@ data  = get_users()
 </div>
 
 <!-- ROADMAP -->
-<div class="section" id="roadmap">
-  <div class="eyebrow" data-i18n="rmEyebrow">Status</div>
-  <h2>Roadmap</h2>
-  <div class="rm-list">
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Level 1 — Manifest Header (v0.1–v0.4)</div><div class="rm-sub">FILE, PURPOSE, DEPENDS_ON, EXPORTS, AGENT_RULES, REQUIRED_BY, DB_TABLES, LAST_MODIFIED.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Level 2 — Sliding-Window Annotations (v0.2–v0.3)</div><div class="rm-sub" data-i18n="rm2Sub">@REQUIRES-READ, @SEE, @MODIFIES-ALSO, @BREAKS-IF-RENAMED — solves the sliding-window problem.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Level 3 — Semantic Naming + CONTEXT_BUDGET (v0.3)</div><div class="rm-sub" data-i18n-html="rm3Sub">Naming <code>&lt;type&gt;_&lt;shape&gt;_&lt;domain&gt;_&lt;origin&gt;</code>. Manifest-Only Planner Read.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">LLM-Optimised Format (v0.5)</div><div class="rm-sub" data-i18n="rm4Sub">Python-native module docstring (L1) + function-level Rules: docstrings (L2). Maximises LLM comprehension trained on Python corpora.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm5Title">Enterprise Benchmark — 105-file, 3 bugs, 48 distractors</div><div class="rm-sub" data-i18n="rm5Sub">−29% tool calls, 0 incorrect root-cause identifications (vs 1 Control). Replicable on disk.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm6Title">Multi-Model SWE-bench Benchmark — 5 tasks, 5 runs/task</div><div class="rm-sub" data-i18n="rm6Sub">Gemini 2.5 Flash: ctrl=60%, DNA=72%, Δ=+13pp, p=0.040 ✅ · DeepSeek Chat: ctrl=50%, DNA=60%, Δ=+9pp, p=0.11 · Gemini 2.5 Pro: ctrl=60%, DNA=69%, Δ=+9pp, p=0.11 ✅</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm7Title">White Paper / arXiv preprint</div><div class="rm-sub" data-i18n="rm7Sub">Formal study with reproducible methodology, DNA analogy, and comparison against SWE-bench, LoCoBench-Agent, ETH Zurich (2026).</div></div></div>
-
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Redundancy Audit (v0.8) ✦ Current</div><div class="rm-sub">Header reduced to 3 fields: exports, used_by, rules. rules: promoted to required — the inter-agent communication channel. Python-only focus.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">M1 — CLI &amp; Auto-Annotation</div><div class="rm-sub">AST skeleton extraction · <code>codedna init</code>, <code>codedna update</code>, <code>codedna check</code> · pip installable · Claude Code Challenge: 7/7 patch files in ~8 min vs 6/7 in ~10–11 min (control). <a href="https://github.com/Larens94/codedna/tree/main/benchmark_agent/claude_code_challenge" target="_blank" style="color:var(--accent);">Results →</a></div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">M3 — Multi-Tool Enforcement Hooks</div><div class="rm-sub">Active hooks for Claude Code (4), Cursor (2), GitHub Copilot (3), Cline (2), OpenCode (plugin). Validates on every write — no manual reminder needed. Pre-commit hook for all tools.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm11Title">M4 — Language Extension</div><div class="rm-sub">CLI supports 10 languages: Python (AST), TypeScript/JS, Go, PHP, Rust, Java, Kotlin, Ruby, C#, Swift. validate_manifests.py supports template engines (Blade, Jinja2, ERB, Vue, Svelte…).</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm9Title">M2 — Benchmark Expansion</div><div class="rm-sub" data-i18n="rm9Sub">20+ SWE-bench tasks across multiple projects · 5+ LLMs · confidence intervals · Zenodo dataset · public dashboard.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title">M5 — VS Code Extension &amp; GitHub Action</div><div class="rm-sub">VS Code extension (used_by graph, stale annotation highlight) · GitHub Action for CI/CD validation.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm12Title">M6 — Research Paper &amp; Dissemination</div><div class="rm-sub" data-i18n="rm12Sub">Finalize paper · submit to ICSE NIER / LLM4Code workshop · contribute annotations to Flask, FastAPI and one non-Python project.</div></div></div>
+<div class="section section-alt" id="roadmap">
+  <div class="section-inner">
+    <div class="eyebrow" data-i18n="rmEyebrow">Status</div>
+    <h2>Roadmap</h2>
+    <div class="rm-list">
+      <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Level 1 — Manifest Header (v0.1–v0.4)</div><div class="rm-sub">FILE, PURPOSE, DEPENDS_ON, EXPORTS, AGENT_RULES, REQUIRED_BY, DB_TABLES, LAST_MODIFIED.</div></div></div>
+      <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Level 2 — Sliding-Window Annotations (v0.2–v0.3)</div><div class="rm-sub" data-i18n="rm2Sub">@REQUIRES-READ, @SEE, @MODIFIES-ALSO, @BREAKS-IF-RENAMED — solves the sliding-window problem.</div></div></div>
+      <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Level 3 — Semantic Naming + CONTEXT_BUDGET (v0.3)</div><div class="rm-sub" data-i18n-html="rm3Sub">Naming <code>&lt;type&gt;_&lt;shape&gt;_&lt;domain&gt;_&lt;origin&gt;</code>. Manifest-Only Planner Read.</div></div></div>
+      <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">LLM-Optimised Format (v0.5)</div><div class="rm-sub" data-i18n="rm4Sub">Python-native module docstring (L1) + function-level Rules: docstrings (L2). Maximises LLM comprehension trained on Python corpora.</div></div></div>
+      <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm5Title">Enterprise Benchmark — 105-file, 3 bugs, 48 distractors</div><div class="rm-sub" data-i18n="rm5Sub">−29% tool calls, 0 incorrect root-cause identifications (vs 1 Control). Replicable on disk.</div></div></div>
+      <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm6Title">Multi-Model SWE-bench Benchmark — 5 tasks, 5 runs/task</div><div class="rm-sub" data-i18n="rm6Sub">Gemini 2.5 Flash: ctrl=60%, DNA=72%, Δ=+13pp, p=0.040 · DeepSeek Chat: ctrl=50%, DNA=60%, Δ=+9pp, p=0.11 · Gemini 2.5 Pro: ctrl=60%, DNA=69%, Δ=+9pp, p=0.11</div></div></div>
+      <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm7Title">White Paper / arXiv preprint</div><div class="rm-sub" data-i18n="rm7Sub">Formal study with reproducible methodology, DNA analogy, and comparison against SWE-bench, LoCoBench-Agent, ETH Zurich (2026).</div></div></div>
+      <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Redundancy Audit (v0.8) ✦ Current</div><div class="rm-sub">Header reduced to 3 fields: exports, used_by, rules. rules: promoted to required — the inter-agent communication channel. Python-only focus.</div></div></div>
+      <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">M1 — CLI &amp; Auto-Annotation</div><div class="rm-sub">AST skeleton extraction · <code>codedna init</code>, <code>codedna update</code>, <code>codedna check</code> · pip installable · Claude Code Challenge: 7/7 patch files in ~8 min vs 6/7 in ~10–11 min (control). <a href="https://github.com/Larens94/codedna/tree/main/benchmark_agent/claude_code_challenge" target="_blank" style="color:var(--black);">Results →</a></div></div></div>
+      <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">M3 — Multi-Tool Enforcement Hooks</div><div class="rm-sub">Active hooks for Claude Code (4), Cursor (2), GitHub Copilot (3), Cline (2), OpenCode (plugin). Validates on every write — no manual reminder needed. Pre-commit hook for all tools.</div></div></div>
+      <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm11Title">M4 — Language Extension</div><div class="rm-sub">CLI supports 10 languages: Python (AST), TypeScript/JS, Go, PHP, Rust, Java, Kotlin, Ruby, C#, Swift. validate_manifests.py supports template engines (Blade, Jinja2, ERB, Vue, Svelte…).</div></div></div>
+      <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm9Title">M2 — Benchmark Expansion</div><div class="rm-sub" data-i18n="rm9Sub">20+ SWE-bench tasks across multiple projects · 5+ LLMs · confidence intervals · Zenodo dataset · public dashboard.</div></div></div>
+      <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title">M5 — VS Code Extension &amp; GitHub Action</div><div class="rm-sub">VS Code extension (used_by graph, stale annotation highlight) · GitHub Action for CI/CD validation.</div></div></div>
+      <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm12Title">M6 — Research Paper &amp; Dissemination</div><div class="rm-sub" data-i18n="rm12Sub">Finalize paper · submit to ICSE NIER / LLM4Code workshop · contribute annotations to Flask, FastAPI and one non-Python project.</div></div></div>
+    </div>
+    <p style="margin-top:1.25rem; font-size:0.8rem; color:var(--gray-600); padding:0.9rem 1.25rem; background:var(--white); border:1px solid var(--gray-200); border-radius:var(--radius);" data-i18n-html="rmNote">
+      M1–M5 are part of a funding application to <a href="https://nlnet.nl/commonsfund/" target="_blank" style="color:var(--black);">NLnet NGI0 Commons Fund</a>. If you find CodeDNA useful, ⭐ the repo and share it.
+    </p>
   </div>
-  <p style="margin-top:1.25rem; font-size:0.8rem; color:var(--muted); padding:0.9rem 1.25rem; background:var(--bg2); border:1px solid var(--border); border-radius:10px;" data-i18n-html="rmNote">
-    M1–M5 are part of a funding application to <a href="https://nlnet.nl/commonsfund/" target="_blank" style="color:var(--accent);">NLnet NGI0 Commons Fund</a>. If you find CodeDNA useful, ⭐ the repo and share it.
-  </p>
 </div>
 
 <!-- FOOTER -->
 <footer>
   <div class="logo-row">
-    <div class="logo-mark">🧬</div>
-    <strong style="color:var(--text); font-size:1rem;">CodeDNA</strong>
-    <span style="font-size:0.7rem; color:var(--muted);">v0.8 · MIT</span>
+    <div class="logo-mark">DNA</div>
+    <strong style="color:var(--black); font-size:1rem;">CodeDNA</strong>
+    <span style="font-size:0.7rem; color:var(--gray-400);">v0.8 · MIT</span>
   </div>
   <p style="margin-bottom:0.5rem;"><em>"Every file carries the complete genome of the project it belongs to."</em></p>
   <p><a href="https://github.com/Larens94/codedna">github.com/Larens94/codedna</a></p>
@@ -877,7 +885,7 @@ const IT = {
   rm10Title:'M3 \u2014 Integrazioni Editor &amp; Workflow', rm10Sub:'Estensione VS Code (grafo used_by, annotazioni stale) \u00b7 pre-commit hook \u00b7 GitHub Action CI/CD.',
   rm11Title:'M4 \u2014 Estensione Linguaggi', rm11Sub:'JavaScript/TypeScript (JSDoc) \u00b7 Go (godoc) \u00b7 Rust (/// comments) \u00b7 punti di estensione v1.0 per la community.',
   rm12Title:'M5 \u2014 Paper &amp; Disseminazione', rm12Sub:'Finalizza paper \u00b7 submission ICSE NIER / workshop LLM4Code \u00b7 annotazioni su Flask, FastAPI e un progetto non-Python.',
-  rmNote:'M1\u2013M5 fanno parte di una domanda di finanziamento al <a href="https://nlnet.nl/commonsfund/" target="_blank" style="color:var(--accent);">NLnet NGI0 Commons Fund</a>. Se trovi CodeDNA utile, metti \u2b50 al repo e condividilo.'
+  rmNote:'M1\u2013M5 fanno parte di una domanda di finanziamento al <a href="https://nlnet.nl/commonsfund/" target="_blank" style="color:var(--black);">NLnet NGI0 Commons Fund</a>. Se trovi CodeDNA utile, metti \u2b50 al repo e condividilo.'
 };
 
 const EN_TEXT = {}, EN_HTML = {};
@@ -946,19 +954,19 @@ function updateCharts(l) {
     data: {
       labels: ['Gemini 2.5\nFlash ✓', 'DeepSeek\nChat ✓', 'Gemini 2.5\nPro ✓'],
       datasets: [
-        { label:'Control', data:[60,50,60], backgroundColor:'rgba(220,38,38,0.15)', borderColor:'rgba(220,38,38,0.7)', borderWidth:1.5, borderRadius:5 },
-        { label:'CodeDNA', data:[72,60,69], backgroundColor:'rgba(67,56,202,0.15)', borderColor:'rgba(67,56,202,0.7)', borderWidth:1.5, borderRadius:5 }
+        { label:'Control', data:[60,50,60], backgroundColor:'rgba(0,0,0,0.06)', borderColor:'rgba(0,0,0,0.3)', borderWidth:1.5, borderRadius:2 },
+        { label:'CodeDNA', data:[72,60,69], backgroundColor:'rgba(0,0,0,0.14)', borderColor:'rgba(0,0,0,0.7)', borderWidth:1.5, borderRadius:2 }
       ]
     },
     options:{
       responsive:true,
       scales:{
-        y:{ min:0, max:100, grid:{color:'rgba(0,0,0,0.04)'}, ticks:{color:'#8787a0',font:{size:11},callback:v=>v+'%'} },
-        x:{ grid:{display:false}, ticks:{color:'#8787a0',font:{size:10}} }
+        y:{ min:0, max:100, grid:{color:'rgba(0,0,0,0.06)'}, ticks:{color:'#999',font:{size:11},callback:v=>v+'%'} },
+        x:{ grid:{display:false}, ticks:{color:'#999',font:{size:10}} }
       },
       plugins:{
-        legend:{labels:{color:'#1a1a2e',font:{size:11},boxWidth:10}},
-        tooltip:{backgroundColor:'#1a1a2e',titleColor:'#fff',bodyColor:'#c7d2fe',cornerRadius:8,callbacks:{label:ctx=>ctx.dataset.label+': '+ctx.parsed.y+'%'}}
+        legend:{labels:{color:'#0a0a0a',font:{size:11},boxWidth:10}},
+        tooltip:{backgroundColor:'#0a0a0a',titleColor:'#fff',bodyColor:'#ccc',cornerRadius:3,callbacks:{label:ctx=>ctx.dataset.label+': '+ctx.parsed.y+'%'}}
       }
     }
   });
@@ -978,7 +986,7 @@ document.querySelectorAll('.count-up').forEach(el=>io.observe(el));
 </script>
 
 <script>
-// THREE.JS — DNA helix sul lato destro della hero, stile light
+// THREE.JS — DNA helix on the right side of the hero, light style
 (function(){
   const canvas = document.getElementById('hero-canvas');
   if (!canvas) return;
@@ -996,10 +1004,9 @@ document.querySelectorAll('.count-up').forEach(el=>io.observe(el));
   const group = new THREE.Group();
   scene.add(group);
 
-  // Materiali: colori sobri per light theme
-  const matA = new THREE.MeshStandardMaterial({ color:0x4338ca, emissive:0x4338ca, emissiveIntensity:0.3, roughness:0.4, metalness:0.2 });
-  const matB = new THREE.MeshStandardMaterial({ color:0x0891b2, emissive:0x0891b2, emissiveIntensity:0.3, roughness:0.4, metalness:0.2 });
-  const matLine = new THREE.MeshStandardMaterial({ color:0xc7d2fe, roughness:0.8 });
+  const matA = new THREE.MeshStandardMaterial({ color:0x6366f1, emissive:0x4338ca, emissiveIntensity:0.35, roughness:0.4, metalness:0.2 });
+  const matB = new THREE.MeshStandardMaterial({ color:0xec4899, emissive:0xdb2777, emissiveIntensity:0.35, roughness:0.4, metalness:0.2 });
+  const matLine = new THREE.MeshStandardMaterial({ color:0x94a3b8, roughness:0.6 });
 
   const sphere = new THREE.SphereGeometry(0.1, 14, 14);
   const N = 36;
@@ -1030,8 +1037,8 @@ document.querySelectorAll('.count-up').forEach(el=>io.observe(el));
   }
 
   scene.add(new THREE.AmbientLight(0xffffff, 1.2));
-  const pl1 = new THREE.PointLight(0x4338ca, 3, 15); pl1.position.set(2,3,3); scene.add(pl1);
-  const pl2 = new THREE.PointLight(0x0891b2, 2, 15); pl2.position.set(-2,-2,3); scene.add(pl2);
+  const pl1 = new THREE.PointLight(0x818cf8, 3, 15); pl1.position.set(2,3,3); scene.add(pl1);
+  const pl2 = new THREE.PointLight(0xfb7185, 2.5, 15); pl2.position.set(-2,-2,3); scene.add(pl2);
 
   let tick = 0;
   function loop() {

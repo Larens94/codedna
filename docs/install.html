@@ -7,71 +7,76 @@
 <meta name="description" content="Install CodeDNA for Claude Code, Cursor, Copilot, Cline, OpenCode and 8 programming languages.">
 <link rel="icon" href="logo.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
-<link href="https://fonts.googleapis.com/css2?family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500;9..40,600;9..40,700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 :root {
-  --bg: #fafafa; --surface: #fff; --border: #e5e5ea; --border2: #d1d1d6;
-  --text: #1a1a2e; --text2: #4b4b6a; --muted: #8787a0;
-  --accent: #4338ca; --accent-h: #3730a3; --accent-lt: #eef2ff;
+  --black: #0a0a0a;
+  --white: #ffffff;
+  --gray-100: #f5f5f5;
+  --gray-200: #e8e8e8;
+  --gray-400: #999999;
+  --gray-600: #555555;
+  --gray-800: #222222;
+  --radius: 3px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
   --green: #16a34a; --green-lt: #f0fdf4; --green-border: #bbf7d0;
   --amber: #d97706; --amber-lt: #fffbeb; --amber-border: #fde68a;
-  --code-bg: #1e1e2e; --code-text: #cdd6f4;
-  --r: 8px; --shadow-md: 0 4px 16px rgba(0,0,0,0.08);
+  --code-bg: #0a0a0a; --code-text: #e8e8e8;
 }
 html { scroll-behavior: smooth; }
-body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; -webkit-font-smoothing: antialiased; }
-code, pre { font-family: 'DM Mono', monospace; }
+body { font-family: var(--font); background: var(--white); color: var(--black); line-height: 1.6; -webkit-font-smoothing: antialiased; }
+code, pre { font-family: 'JetBrains Mono', monospace; }
 a { color: inherit; text-decoration: none; }
 
 /* ── NAV ── */
 nav.topnav {
   position: sticky; top: 0; z-index: 200;
-  background: rgba(255,255,255,0.95); backdrop-filter: blur(12px);
-  border-bottom: 1px solid var(--border);
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--gray-200);
   display: flex; align-items: center; justify-content: space-between;
-  padding: 0 1.5rem; height: 56px; gap: 1rem;
+  padding: 0 28px; height: 60px; gap: 1rem;
 }
-.nav-logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; flex-shrink: 0; }
-.nav-logo img { width: 26px; height: 26px; }
+.nav-logo { display: flex; align-items: center; gap: 8px; font-weight: 700; font-size: 15px; flex-shrink: 0; color: var(--black); }
+.nav-logo img { width: 26px; height: 26px; border-radius: var(--radius); border: 1px solid var(--gray-200); }
 .nav-links { display: flex; align-items: center; }
 .nav-links a {
-  color: var(--text2); font-size: 14px; font-weight: 500;
-  padding: 0 12px; height: 56px; display: flex; align-items: center;
+  color: var(--gray-600); font-size: 14px; font-weight: 500;
+  padding: 0 12px; height: 60px; display: flex; align-items: center;
   border-bottom: 2px solid transparent; transition: color .15s, border-color .15s;
 }
-.nav-links a:hover { color: var(--accent); }
-.nav-links a.active { color: var(--accent); border-bottom-color: var(--accent); }
+.nav-links a:hover { color: var(--black); }
+.nav-links a.active { color: var(--black); border-bottom-color: var(--black); }
 .nav-cta {
-  background: var(--accent); color: #fff !important;
-  padding: 6px 14px; border-radius: 6px; font-size: 13px; font-weight: 600;
-  border-bottom: none !important; transition: background .15s; flex-shrink: 0;
+  background: var(--black); color: var(--white) !important;
+  padding: 6px 14px; border-radius: var(--radius); font-size: 13px; font-weight: 600;
+  border-bottom: none !important; transition: opacity .15s; flex-shrink: 0;
 }
-.nav-cta:hover { background: var(--accent-h) !important; }
+.nav-cta:hover { opacity: 0.8; }
 .nav-hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 4px; }
-.nav-hamburger span { display: block; width: 22px; height: 2px; background: var(--text2); border-radius: 2px; }
+.nav-hamburger span { display: block; width: 22px; height: 2px; background: var(--gray-800); border-radius: 2px; }
 
 /* ── LAYOUT ── */
-.page { display: flex; min-height: calc(100vh - 56px); }
+.page { display: flex; min-height: calc(100vh - 60px); }
 
 /* ── LEFT SIDEBAR ── */
 aside {
   width: 220px; flex-shrink: 0;
-  position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto;
-  border-right: 1px solid var(--border); padding: 1.25rem 0; background: var(--surface);
+  position: sticky; top: 60px; height: calc(100vh - 60px); overflow-y: auto;
+  border-right: 1px solid var(--gray-200); padding: 1.25rem 0; background: var(--white);
 }
 aside::-webkit-scrollbar { width: 4px; }
-aside::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px; }
+aside::-webkit-scrollbar-thumb { background: var(--gray-200); border-radius: 2px; }
 .sb-group { margin-bottom: 1.25rem; }
-.sb-label { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); padding: 0 1rem; margin-bottom: .25rem; display: block; }
+.sb-label { font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--gray-400); padding: 0 1rem; margin-bottom: .25rem; display: block; }
 .sb-link {
   display: flex; align-items: center; gap: 7px;
-  padding: 4px 1rem; font-size: 13px; color: var(--text2);
+  padding: 5px 1rem; font-size: 13px; color: var(--gray-600);
   border-left: 2px solid transparent;
   transition: color .12s, background .12s, border-color .12s; cursor: pointer;
 }
-.sb-link:hover { color: var(--accent); background: var(--accent-lt); }
-.sb-link.active { color: var(--accent); border-left-color: var(--accent); background: var(--accent-lt); font-weight: 600; }
+.sb-link:hover { color: var(--black); background: var(--gray-100); }
+.sb-link.active { color: var(--black); border-left-color: var(--black); background: var(--gray-100); font-weight: 600; }
 .sb-dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
 .sb-dot.green { background: var(--green); }
 .sb-dot.amber { background: var(--amber); }
@@ -81,26 +86,31 @@ aside::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 4px;
 main { flex: 1; max-width: 740px; padding: 2.5rem 2.5rem 6rem; min-width: 0; }
 section { scroll-margin-top: 72px; }
 
-h1 { font-size: 1.8rem; font-weight: 700; line-height: 1.2; margin-bottom: .4rem; letter-spacing: -.02em; }
-h2 { font-size: 1.15rem; font-weight: 700; margin: 2.5rem 0 .5rem; letter-spacing: -.01em; }
-h3 { font-size: .9rem; font-weight: 600; margin: 1.5rem 0 .4rem; color: var(--text); }
-p { color: var(--text2); margin-bottom: .8rem; font-size: 14.5px; }
-hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
-.ic { display: inline-block; background: var(--accent-lt); color: var(--accent); padding: 1px 5px; border-radius: 4px; font-family: 'DM Mono', monospace; font-size: 12px; }
-.page-meta { font-size: 11px; color: var(--muted); text-transform: uppercase; letter-spacing: .07em; font-weight: 700; margin-bottom: .3rem; }
+h1 { font-size: clamp(1.6rem, 3vw, 2rem); font-weight: 700; line-height: 1.2; margin-bottom: .4rem; letter-spacing: -.02em; color: var(--black); }
+h2 { font-size: 1.1rem; font-weight: 700; margin: 2.5rem 0 .5rem; letter-spacing: -.01em; color: var(--black); }
+h3 { font-size: .875rem; font-weight: 600; margin: 1.5rem 0 .4rem; color: var(--black); }
+p { color: var(--gray-600); margin-bottom: .8rem; font-size: 14.5px; line-height: 1.75; }
+hr { border: none; border-top: 1px solid var(--gray-200); margin: 2rem 0; }
+.ic {
+  display: inline-block; background: var(--gray-100); color: var(--gray-800);
+  padding: 1px 6px; border-radius: var(--radius); font-family: 'JetBrains Mono', monospace;
+  font-size: 12px; border: 1px solid var(--gray-200);
+}
+.page-meta { font-size: 11px; color: var(--gray-400); text-transform: uppercase; letter-spacing: .1em; font-weight: 700; margin-bottom: .3rem; }
 
 /* ── BADGES ── */
-.badge { display: inline-flex; align-items: center; gap: 5px; border-radius: 5px; padding: 2px 8px; font-size: 12px; font-weight: 500; vertical-align: middle; margin-left: 6px; }
+.badge { display: inline-flex; align-items: center; gap: 5px; border-radius: var(--radius); padding: 2px 8px; font-size: 12px; font-weight: 600; vertical-align: middle; margin-left: 6px; }
 .badge-green { background: var(--green-lt); color: var(--green); border: 1px solid var(--green-border); }
 .badge-amber { background: var(--amber-lt); color: var(--amber); border: 1px solid var(--amber-border); }
-.badge-gray { background: #f4f4f6; color: var(--muted); border: 1px solid var(--border2); }
+.badge-gray { background: var(--gray-100); color: var(--gray-600); border: 1px solid var(--gray-200); }
 
 /* ── CODE ── */
 .cb {
   background: var(--code-bg); color: var(--code-text);
-  border-radius: var(--r); padding: 1rem 1.1rem;
+  border-radius: var(--radius); padding: 1rem 1.1rem;
   font-size: 12.5px; line-height: 1.75; overflow-x: auto;
   margin: .5rem 0 1.1rem; position: relative;
+  border: 1px solid #1a1a1a;
 }
 .cb .c { color: #6c7086; }
 .cb .k { color: #89b4fa; }
@@ -109,40 +119,46 @@ hr { border: none; border-top: 1px solid var(--border); margin: 2rem 0; }
 .cp {
   position: absolute; top: 9px; right: 9px;
   background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.12);
-  color: #bac2de; border-radius: 5px; padding: 2px 8px; font-size: 11px;
-  cursor: pointer; font-family: 'DM Mono', monospace; transition: background .15s;
+  color: #bac2de; border-radius: var(--radius); padding: 2px 8px; font-size: 11px;
+  cursor: pointer; font-family: 'JetBrains Mono', monospace; transition: background .15s;
 }
 .cp:hover { background: rgba(255,255,255,0.16); }
 
 /* ── INSTALL BOX ── */
 .install-box {
-  background: var(--code-bg); border-radius: var(--r);
+  background: var(--code-bg); border-radius: var(--radius);
   padding: 1.1rem 1.25rem; margin: .5rem 0 1.1rem;
   display: flex; align-items: center; justify-content: space-between; gap: 1rem;
+  border: 1px solid #1a1a1a;
 }
-.install-box .lbl { color: #6c7086; font-size: 11px; font-family: 'DM Mono', monospace; margin-bottom: 3px; }
+.install-box .lbl { color: #6c7086; font-size: 11px; font-family: 'JetBrains Mono', monospace; margin-bottom: 3px; }
 .install-box code { color: #89b4fa; font-size: 13.5px; }
 
 /* ── CALLOUTS ── */
-.callout { border-radius: 0 var(--r) var(--r) 0; padding: .65rem 1rem; font-size: 13.5px; margin: .75rem 0 1rem; line-height: 1.5; }
+.callout { border-radius: 0 var(--radius) var(--radius) 0; padding: .65rem 1rem; font-size: 13.5px; margin: .75rem 0 1rem; line-height: 1.5; }
 .callout strong { font-weight: 600; }
-.callout-blue { background: var(--accent-lt); border-left: 3px solid var(--accent); color: var(--text2); }
+.callout-blue { background: #f0f4ff; border-left: 3px solid #4338ca; color: var(--gray-600); }
 .callout-green { background: var(--green-lt); border-left: 3px solid var(--green); color: #14532d; }
 .callout-amber { background: var(--amber-lt); border-left: 3px solid var(--amber); color: #78350f; }
 
 /* ── TABLES ── */
-.table-wrap { overflow-x: auto; margin: .5rem 0 1.5rem; }
+.table-wrap { overflow-x: auto; margin: .5rem 0 1.5rem; border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
 table { width: 100%; border-collapse: collapse; font-size: 13.5px; }
-th { text-align: left; font-size: 10.5px; font-weight: 700; letter-spacing: .06em; text-transform: uppercase; color: var(--muted); border-bottom: 1px solid var(--border); padding: 7px 10px; }
-td { padding: 8px 10px; border-bottom: 1px solid var(--border); color: var(--text2); vertical-align: top; }
+th { text-align: left; font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--gray-400); background: var(--gray-100); border-bottom: 1px solid var(--gray-200); padding: 8px 10px; }
+td { padding: 8px 10px; border-bottom: 1px solid var(--gray-200); color: var(--gray-600); vertical-align: top; }
 tr:last-child td { border-bottom: none; }
 
 /* ── STEPS ── */
 .steps { display: flex; flex-direction: column; gap: .75rem; margin: .75rem 0 1.25rem; }
 .step { display: flex; gap: .85rem; align-items: flex-start; }
-.step-n { width: 22px; height: 22px; border-radius: 50%; background: var(--accent); color: #fff; font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center; flex-shrink: 0; margin-top: 2px; }
+.step-n {
+  width: 22px; height: 22px; border-radius: 50%;
+  background: var(--black); color: var(--white);
+  font-size: 11px; font-weight: 700; display: flex; align-items: center; justify-content: center;
+  flex-shrink: 0; margin-top: 2px;
+}
 .step-body { flex: 1; }
-.step-body strong { font-size: 14px; color: var(--text); display: block; margin-bottom: 2px; }
+.step-body strong { font-size: 14px; color: var(--black); display: block; margin-bottom: 2px; }
 .step-body p { margin: 0; font-size: 13.5px; }
 
 /* ── TOOL SECTION HEADER ── */
@@ -152,43 +168,48 @@ tr:last-child td { border-bottom: none; }
 /* ── LANG CARDS ── */
 .lang-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(110px, 1fr)); gap: 8px; margin: .75rem 0 1.25rem; }
 .lang-card {
-  border: 2px solid var(--border); border-radius: var(--r); padding: .85rem .6rem;
-  cursor: pointer; background: var(--surface); text-align: center;
-  transition: border-color .15s, box-shadow .15s, background .15s;
+  border: 1px solid var(--gray-200); border-radius: var(--radius); padding: .85rem .6rem;
+  cursor: pointer; background: var(--white); text-align: center;
+  transition: border-color .15s, background .15s;
   display: flex; flex-direction: column; align-items: center; gap: 6px;
 }
-.lang-card:hover { border-color: var(--accent); box-shadow: var(--shadow-md); }
-.lang-card.active { border-color: var(--accent); background: var(--accent-lt); }
-.lang-card-name { font-size: 12px; font-weight: 600; color: var(--text); }
-.lang-card-sub { font-size: 10.5px; color: var(--muted); }
+.lang-card:hover { border-color: var(--black); background: var(--gray-100); }
+.lang-card.active { border-color: var(--black); background: var(--gray-100); }
+.lang-card-name { font-size: 12px; font-weight: 600; color: var(--black); }
+.lang-card-sub { font-size: 10.5px; color: var(--gray-400); }
 .lang-pane { display: none; }
 .lang-pane.visible { display: block; }
-.lang-head { display: flex; align-items: center; gap: 10px; background: var(--surface); border: 1px solid var(--border); border-radius: var(--r); padding: .8rem 1rem; margin-bottom: .75rem; }
+.lang-head {
+  display: flex; align-items: center; gap: 10px;
+  background: var(--white); border: 1px solid var(--gray-200); border-radius: var(--radius);
+  padding: .8rem 1rem; margin-bottom: .75rem;
+}
 .lang-head svg { width: 28px; height: 28px; flex-shrink: 0; }
 .lang-head-text h3 { margin: 0 0 1px; font-size: 14px; }
-.lang-head-text p { margin: 0; font-size: 12px; color: var(--muted); }
+.lang-head-text p { margin: 0; font-size: 12px; color: var(--gray-400); }
 
 /* ── RIGHT TOC ── */
 .toc {
   width: 168px; flex-shrink: 0;
-  position: sticky; top: 56px; height: calc(100vh - 56px); overflow-y: auto;
+  position: sticky; top: 60px; height: calc(100vh - 60px); overflow-y: auto;
   padding: 2rem 1rem 2rem 1.25rem;
   display: flex; flex-direction: column; align-items: stretch; justify-content: flex-start;
+  border-left: 1px solid var(--gray-200);
 }
-.toc-label { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: .5rem; display: block; }
-.toc-group { font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--border2); display: block; margin: .85rem 0 .2rem 8px; }
-.toc a { display: flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--muted); padding: 3px 0 3px 8px; border-left: 2px solid transparent; transition: color .12s, border-color .12s; line-height: 1.4; }
-.toc a:hover { color: var(--text2); }
-.toc a.active { color: var(--accent); border-left-color: var(--accent); font-weight: 500; }
+.toc-label { font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--gray-400); margin-bottom: .5rem; display: block; }
+.toc-group { font-size: 9px; font-weight: 700; letter-spacing: .07em; text-transform: uppercase; color: var(--gray-200); display: block; margin: .85rem 0 .2rem 8px; }
+.toc a { display: flex; align-items: center; gap: 5px; font-size: 12.5px; color: var(--gray-400); padding: 3px 0 3px 8px; border-left: 2px solid transparent; transition: color .12s, border-color .12s; line-height: 1.4; }
+.toc a:hover { color: var(--gray-800); }
+.toc a.active { color: var(--black); border-left-color: var(--black); font-weight: 500; }
 .toc-dot { width: 5px; height: 5px; border-radius: 50%; flex-shrink: 0; }
 .toc-dot.g { background: var(--green); }
 .toc-dot.a { background: var(--amber); }
 
-/* ── MOBILE ── */
-.mobile-drawer { display: none; position: fixed; inset: 56px 0 0 0; z-index: 90; background: var(--surface); border-top: 1px solid var(--border); padding: 1.25rem 1rem; overflow-y: auto; }
+/* ── MOBILE DRAWER ── */
+.mobile-drawer { display: none; position: fixed; inset: 60px 0 0 0; z-index: 90; background: var(--white); border-top: 1px solid var(--gray-200); padding: 1.25rem 1rem; overflow-y: auto; }
 .mobile-drawer.open { display: block; }
-.mobile-drawer .sb-label { font-size: 10.5px; font-weight: 700; letter-spacing: .08em; text-transform: uppercase; color: var(--muted); margin-bottom: .35rem; display: block; margin-top: 1rem; }
-.mobile-drawer a { display: flex; align-items: center; gap: 8px; padding: 9px 0; font-size: 14px; color: var(--text2); border-bottom: 1px solid var(--border); }
+.mobile-drawer .sb-label { font-size: 10.5px; font-weight: 700; letter-spacing: .1em; text-transform: uppercase; color: var(--gray-400); margin-bottom: .35rem; display: block; margin-top: 1rem; }
+.mobile-drawer a { display: flex; align-items: center; gap: 8px; padding: 9px 0; font-size: 14px; color: var(--gray-600); border-bottom: 1px solid var(--gray-200); }
 .mobile-drawer a:last-child { border-bottom: none; }
 
 @media (max-width: 1100px) { .toc { display: none; } }
@@ -202,7 +223,7 @@ tr:last-child td { border-bottom: none; }
 @media (max-width: 480px) {
   h1 { font-size: 1.4rem; }
   .lang-grid { grid-template-columns: repeat(3, 1fr); }
-  nav { padding: 0 1rem; }
+  nav.topnav { padding: 0 1rem; }
 }
 </style>
 </head>
@@ -254,11 +275,11 @@ tr:last-child td { border-bottom: none; }
   <div class="sb-group">
     <span class="sb-label">Get started</span>
     <a class="sb-link" href="#overview">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8787a0" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></svg>
       Overview
     </a>
     <a class="sb-link" href="#quick-setup">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8787a0" stroke-width="2"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><polyline points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
       Quick Setup
     </a>
   </div>
@@ -282,11 +303,11 @@ tr:last-child td { border-bottom: none; }
   <div class="sb-group">
     <span class="sb-label">Annotate your code</span>
     <a class="sb-link" href="#cli">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8787a0" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><polyline points="4 17 10 11 4 5"/><line x1="12" y1="19" x2="20" y2="19"/></svg>
       CLI
     </a>
     <a class="sb-link" href="#languages">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8787a0" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><polyline points="16 18 22 12 16 6"/><polyline points="8 6 2 12 8 18"/></svg>
       Languages
     </a>
   </div>
@@ -294,12 +315,12 @@ tr:last-child td { border-bottom: none; }
   <div class="sb-group">
     <span class="sb-label">Reference</span>
     <a class="sb-link" href="#hook-events">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8787a0" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/></svg>
       Hook Events
     </a>
     <a class="sb-link" href="#plugin">
-      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#8787a0" stroke-width="2"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>
-      Plugin <span style="font-size:10px;color:var(--muted);margin-left:4px">soon</span>
+      <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>
+      Plugin <span style="font-size:10px;color:var(--gray-400);margin-left:4px">soon</span>
     </a>
   </div>
 </aside>
@@ -311,7 +332,7 @@ tr:last-child td { border-bottom: none; }
   <div style="margin-bottom:2rem">
     <p class="page-meta">Documentation</p>
     <h1>Install CodeDNA</h1>
-    <p style="font-size:15.5px;max-width:500px;color:var(--text2)">One command installs the protocol for your AI tool — instructions + real-time enforcement.</p>
+    <p style="font-size:15.5px;max-width:500px;color:var(--gray-600)">One command installs the protocol for your AI tool — instructions + real-time enforcement.</p>
   </div>
 
   <!-- OVERVIEW -->
@@ -331,7 +352,7 @@ tr:last-child td { border-bottom: none; }
         <div class="step-n">2</div>
         <div class="step-body">
           <strong>Annotate your existing codebase (existing projects only)</strong>
-          <p>Bulk-adds CodeDNA headers to files already in your repo. See <a href="#cli" style="color:var(--accent)">CLI</a>.</p>
+          <p>Bulk-adds CodeDNA headers to files already in your repo. See <a href="#cli" style="color:var(--black);text-decoration:underline;text-underline-offset:3px">CLI</a>.</p>
         </div>
       </div>
     </div>
@@ -339,14 +360,14 @@ tr:last-child td { border-bottom: none; }
     <div class="table-wrap">
     <table>
       <tr><th>Tool</th><th>Option</th><th>Enforcement</th></tr>
-      <tr><td><strong>Claude Code</strong></td><td><span class="ic">claude-hooks</span></td><td><span class="badge badge-green">✅ Active</span></td></tr>
-      <tr><td><strong>Cursor</strong></td><td><span class="ic">cursor-hooks</span></td><td><span class="badge badge-green">✅ Active</span> <span style="font-size:11px;color:var(--muted)">v1.7+</span></td></tr>
-      <tr><td><strong>GitHub Copilot</strong></td><td><span class="ic">copilot-hooks</span></td><td><span class="badge badge-green">✅ Active</span></td></tr>
-      <tr><td><strong>Cline</strong></td><td><span class="ic">cline-hooks</span></td><td><span class="badge badge-green">✅ Active</span> <span style="font-size:11px;color:var(--muted)">v3.36+</span></td></tr>
-      <tr><td><strong>OpenCode</strong></td><td><span class="ic">opencode</span></td><td><span class="badge badge-green">✅ Active</span></td></tr>
-      <tr><td>Windsurf</td><td><span class="ic">windsurf</span></td><td><span class="badge badge-amber">⚠️ Instructions only</span></td></tr>
-      <tr><td>Aider</td><td><span class="ic">claude</span></td><td><span class="badge badge-amber">⚠️ Instructions only</span></td></tr>
-      <tr><td>Antigravity / custom agents</td><td><span class="ic">agents</span></td><td><span class="badge badge-amber">⚠️ Instructions only</span></td></tr>
+      <tr><td><strong>Claude Code</strong></td><td><span class="ic">claude-hooks</span></td><td><span class="badge badge-green">Active</span></td></tr>
+      <tr><td><strong>Cursor</strong></td><td><span class="ic">cursor-hooks</span></td><td><span class="badge badge-green">Active</span> <span style="font-size:11px;color:var(--gray-400)">v1.7+</span></td></tr>
+      <tr><td><strong>GitHub Copilot</strong></td><td><span class="ic">copilot-hooks</span></td><td><span class="badge badge-green">Active</span></td></tr>
+      <tr><td><strong>Cline</strong></td><td><span class="ic">cline-hooks</span></td><td><span class="badge badge-green">Active</span> <span style="font-size:11px;color:var(--gray-400)">v3.36+</span></td></tr>
+      <tr><td><strong>OpenCode</strong></td><td><span class="ic">opencode</span></td><td><span class="badge badge-green">Active</span></td></tr>
+      <tr><td>Windsurf</td><td><span class="ic">windsurf</span></td><td><span class="badge badge-amber">Instructions only</span></td></tr>
+      <tr><td>Aider</td><td><span class="ic">claude</span></td><td><span class="badge badge-amber">Instructions only</span></td></tr>
+      <tr><td>Antigravity / custom agents</td><td><span class="ic">agents</span></td><td><span class="badge badge-amber">Instructions only</span></td></tr>
     </table>
     </div>
 
@@ -379,7 +400,7 @@ codedna init /path/to/project <span class="c">--no-llm  # free, structural only<
   <section id="claude-code">
     <div class="tool-header">
       <h2>Claude Code</h2>
-      <span class="badge badge-green">✅ Active enforcement</span>
+      <span class="badge badge-green">Active enforcement</span>
     </div>
 
     <div class="install-box">
@@ -407,7 +428,7 @@ codedna init /path/to/project <span class="c">--no-llm  # free, structural only<
     <div class="table-wrap"><table>
       <tr><th>File</th><th>Committed?</th><th>Use when</th></tr>
       <tr><td><span class="ic">.claude/settings.local.json</span></td><td>❌ gitignored</td><td>Personal setup — each developer configures locally</td></tr>
-      <tr><td><span class="ic">.claude/settings.json</span></td><td>✅ committed</td><td>Team / CI — shared via the repo, always present</td></tr>
+      <tr><td><span class="ic">.claude/settings.json</span></td><td>committed</td><td>Team / CI — shared via the repo, always present</td></tr>
     </table></div>
   </section>
 
@@ -417,7 +438,7 @@ codedna init /path/to/project <span class="c">--no-llm  # free, structural only<
   <section id="cursor">
     <div class="tool-header">
       <h2>Cursor</h2>
-      <span class="badge badge-green">✅ Active enforcement</span>
+      <span class="badge badge-green">Active enforcement</span>
       <span class="badge badge-gray">v1.7+</span>
     </div>
 
@@ -446,7 +467,7 @@ codedna init /path/to/project <span class="c">--no-llm  # free, structural only<
   <section id="copilot">
     <div class="tool-header">
       <h2>GitHub Copilot</h2>
-      <span class="badge badge-green">✅ Active enforcement</span>
+      <span class="badge badge-green">Active enforcement</span>
     </div>
 
     <div class="install-box">
@@ -473,7 +494,7 @@ codedna init /path/to/project <span class="c">--no-llm  # free, structural only<
   <section id="cline">
     <div class="tool-header">
       <h2>Cline</h2>
-      <span class="badge badge-green">✅ Active enforcement</span>
+      <span class="badge badge-green">Active enforcement</span>
       <span class="badge badge-gray">v3.36+</span>
     </div>
 
@@ -500,7 +521,7 @@ codedna init /path/to/project <span class="c">--no-llm  # free, structural only<
   <section id="opencode">
     <div class="tool-header">
       <h2>OpenCode</h2>
-      <span class="badge badge-green">✅ Active enforcement</span>
+      <span class="badge badge-green">Active enforcement</span>
     </div>
 
     <div class="install-box">
@@ -528,7 +549,7 @@ codedna init /path/to/project <span class="c">--no-llm  # free, structural only<
   <section id="windsurf">
     <div class="tool-header">
       <h2>Windsurf</h2>
-      <span class="badge badge-amber">⚠️ Instructions only</span>
+      <span class="badge badge-amber">Instructions only</span>
     </div>
 
     <div class="install-box">
@@ -549,7 +570,7 @@ codedna init /path/to/project <span class="c">--no-llm  # free, structural only<
   <section id="aider">
     <div class="tool-header">
       <h2>Aider</h2>
-      <span class="badge badge-amber">⚠️ Instructions only</span>
+      <span class="badge badge-amber">Instructions only</span>
     </div>
 
     <div class="install-box">
@@ -572,7 +593,7 @@ codedna init /path/to/project <span class="c">--no-llm  # free, structural only<
   <section id="antigravity">
     <div class="tool-header">
       <h2>Antigravity / Custom Agents</h2>
-      <span class="badge badge-amber">⚠️ Instructions only</span>
+      <span class="badge badge-amber">Instructions only</span>
     </div>
 
     <div class="install-box">
@@ -877,7 +898,7 @@ const something = require('./something');</pre></div>
 
   <span class="toc-group">Reference</span>
   <a href="#hook-events">Hook Events</a>
-  <a href="#plugin">Plugin <span style="font-size:9px;color:var(--muted)">soon</span></a>
+  <a href="#plugin">Plugin <span style="font-size:9px;color:var(--gray-400)">soon</span></a>
 </nav>
 </div><!-- content-wrap -->
 
