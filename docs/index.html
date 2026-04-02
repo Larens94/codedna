@@ -3,8 +3,8 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CodeDNA — An In-Source Annotation Standard for LLM Agent Navigation</title>
-<meta name="description" content="CodeDNA embeds context directly in source code. Real benchmarks: without CodeDNA, AI makes deterministic errors. With CodeDNA: zero errors.">
+<title>CodeDNA — An In-Source Communication Protocol for AI Coding Agents</title>
+<meta name="description" content="CodeDNA embeds context directly in source code. Active enforcement hooks for Claude Code, Cursor, Copilot, Cline. +13pp F1 on SWE-bench. Zero RAG, zero infrastructure.">
 <link rel="icon" href="logo.png" type="image/png">
 <link rel="apple-touch-icon" href="logo.png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
@@ -519,63 +519,71 @@ img { max-width: 100%; height: auto; }
     <p class="section-lead" data-i18n="setupLead">One command installs CodeDNA rules for any AI coding assistant. Or pick the file for your tool and paste it into your project.</p>
 
     <div style="background:#1e1e2e; border-radius:12px; padding:1.25rem 1.5rem; margin-bottom:2.5rem; box-shadow:var(--shadow-md);">
-      <div style="font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#6272a4; margin-bottom:0.5rem;">Annotate your project (CLI)</div>
+      <div style="font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#6272a4; margin-bottom:0.5rem;">Step 1 — Install for your AI tool (instructions + enforcement hooks)</div>
+      <pre style="font-size:0.85rem; color:#f8f8f2; line-height:1.9; margin:0; border:none; background:transparent; padding:0;"><span style="color:#50fa7b;">bash</span> <span style="color:#bd93f9;">&lt;(</span><span style="color:#ff79c6;">curl</span> -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh<span style="color:#bd93f9;">)</span> claude-hooks
+<span style="color:#6272a4;"># or: cursor-hooks  copilot-hooks  cline-hooks  opencode  windsurf</span></pre>
+      <div style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #44475a; font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#6272a4; margin-bottom:0.5rem;">Step 2 — Annotate existing files (CLI)</div>
       <pre style="font-size:0.85rem; color:#f8f8f2; line-height:1.9; margin:0; border:none; background:transparent; padding:0;"><span style="color:#50fa7b;">pip</span> install git+https://github.com/Larens94/codedna.git
 <span style="color:#6272a4;"># set ANTHROPIC_API_KEY first</span>
 <span style="color:#50fa7b;">codedna</span> init ./          <span style="color:#6272a4;"># first-time: annotates every .py file</span>
 <span style="color:#50fa7b;">codedna</span> update ./        <span style="color:#6272a4;"># incremental: only unannotated files</span>
 <span style="color:#50fa7b;">codedna</span> check ./         <span style="color:#6272a4;"># coverage report, no changes</span></pre>
-      <div style="margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid #44475a; font-size:0.65rem; font-weight:700; letter-spacing:0.12em; text-transform:uppercase; color:#6272a4; margin-bottom:0.5rem;" data-i18n="setupCmdLabel">One-line installer (AI tool rules)</div>
-      <pre style="font-size:0.85rem; color:#f8f8f2; line-height:1.7; margin:0; border:none; background:transparent; padding:0;"><span style="color:#50fa7b;">bash</span> <span style="color:#bd93f9;">&lt;(</span><span style="color:#ff79c6;">curl</span> -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh<span style="color:#bd93f9;">)</span></pre>
     </div>
 
     <div class="scenario-cards" style="grid-template-columns:repeat(auto-fit,minmax(220px,1fr));">
       <div class="sc-card" style="text-align:center;">
-        <div style="font-size:1.8rem; margin-bottom:0.5rem;">🟣</div>
-        <div class="sc-title">Antigravity</div>
-        <div class="sc-body" style="font-size:0.78rem;" data-i18n="setupAntigravity">Copy <code>.agents/workflows/codedna.md</code> into your project. Antigravity follows the protocol automatically.</div>
-        <a href="https://github.com/Larens94/codedna/tree/main/integrations/.agents" target="_blank" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">View file →</a>
-      </div>
-      <div class="sc-card" style="text-align:center;">
         <div style="font-size:1.8rem; margin-bottom:0.5rem;">🟠</div>
         <div class="sc-title">Claude Code</div>
-        <div class="sc-body" style="font-size:0.78rem;" data-i18n="setupClaude">Copy <code>CLAUDE.md</code> to your project root. Claude reads it on every session.</div>
-        <a href="https://github.com/Larens94/codedna/blob/main/integrations/CLAUDE.md" target="_blank" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">View file →</a>
+        <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:0.65rem; font-weight:700; padding:0.2rem 0.55rem; border-radius:5px; background:var(--green-lt); color:var(--green); margin-bottom:0.5rem;">✅ Active enforcement</div>
+        <div class="sc-body" style="font-size:0.78rem;">4 hooks: SessionStart, PreToolUse, PostToolUse, Stop. Validates every <code>.py</code> write automatically.</div>
+        <a href="install.html#claude-code" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">Install guide →</a>
       </div>
       <div class="sc-card" style="text-align:center;">
         <div style="font-size:1.8rem; margin-bottom:0.5rem;">⚡</div>
         <div class="sc-title">Cursor</div>
-        <div class="sc-body" style="font-size:0.78rem;" data-i18n="setupCursor">Copy <code>.cursorrules</code> to your project root. Cursor applies the rules on every edit.</div>
-        <a href="https://github.com/Larens94/codedna/blob/main/integrations/.cursorrules" target="_blank" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">View file →</a>
+        <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:0.65rem; font-weight:700; padding:0.2rem 0.55rem; border-radius:5px; background:var(--green-lt); color:var(--green); margin-bottom:0.5rem;">✅ Active enforcement</div>
+        <div class="sc-body" style="font-size:0.78rem;">2 hooks in <code>.cursor/hooks/</code>: validates on every file edit, reminds at session end. Requires v1.7+.</div>
+        <a href="install.html#cursor" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">Install guide →</a>
       </div>
       <div class="sc-card" style="text-align:center;">
         <div style="font-size:1.8rem; margin-bottom:0.5rem;">🐙</div>
         <div class="sc-title">GitHub Copilot</div>
-        <div class="sc-body" style="font-size:0.78rem;" data-i18n="setupCopilot">Copy to <code>.github/copilot-instructions.md</code>. Copilot follows the instructions in every suggestion.</div>
-        <a href="https://github.com/Larens94/codedna/blob/main/integrations/copilot-instructions.md" target="_blank" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">View file →</a>
-      </div>
-      <div class="sc-card" style="text-align:center;">
-        <div style="font-size:1.8rem; margin-bottom:0.5rem;">🏄</div>
-        <div class="sc-title">Windsurf</div>
-        <div class="sc-body" style="font-size:0.78rem;" data-i18n="setupWindsurf">Copy <code>.windsurfrules</code> to your project root.</div>
-        <a href="https://github.com/Larens94/codedna/blob/main/integrations/.windsurfrules" target="_blank" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">View file →</a>
+        <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:0.65rem; font-weight:700; padding:0.2rem 0.55rem; border-radius:5px; background:var(--green-lt); color:var(--green); margin-bottom:0.5rem;">✅ Active enforcement</div>
+        <div class="sc-body" style="font-size:0.78rem;">3 hooks in <code>.github/hooks/</code>: session start context, post-write validation, session end reminder.</div>
+        <a href="install.html#github-copilot" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">Install guide →</a>
       </div>
       <div class="sc-card" style="text-align:center;">
         <div style="font-size:1.8rem; margin-bottom:0.5rem;">🔧</div>
         <div class="sc-title">Cline</div>
-        <div class="sc-body" style="font-size:0.78rem;" data-i18n="setupCline">Copy <code>.clinerules</code> to your project root.</div>
-        <a href="https://github.com/Larens94/codedna/blob/main/integrations/.clinerules" target="_blank" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">View file →</a>
+        <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:0.65rem; font-weight:700; padding:0.2rem 0.55rem; border-radius:5px; background:var(--green-lt); color:var(--green); margin-bottom:0.5rem;">✅ Active enforcement</div>
+        <div class="sc-body" style="font-size:0.78rem;">2 hooks in <code>.clinerules/hooks/</code>: TaskStart context injection, PostToolUse validation. Requires v3.36+.</div>
+        <a href="install.html#cline" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">Install guide →</a>
       </div>
       <div class="sc-card" style="text-align:center;">
-        <div style="font-size:1.8rem; margin-bottom:0.5rem;">🟣</div>
+        <div style="font-size:1.8rem; margin-bottom:0.5rem;">💻</div>
         <div class="sc-title">OpenCode</div>
-        <div class="sc-body" style="font-size:0.78rem;">Installs <code>AGENTS.md</code> + active enforcement plugin (<code>.opencode/plugins/codedna.js</code>). Warns on missing headers across 11 languages.</div>
-        <a href="https://github.com/Larens94/codedna/blob/main/integrations/AGENTS.md" target="_blank" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">View file →</a>
+        <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:0.65rem; font-weight:700; padding:0.2rem 0.55rem; border-radius:5px; background:var(--green-lt); color:var(--green); margin-bottom:0.5rem;">✅ Active enforcement</div>
+        <div class="sc-body" style="font-size:0.78rem;"><code>AGENTS.md</code> + JS plugin in <code>.opencode/plugins/</code>. Validates 11 languages on every write.</div>
+        <a href="install.html#opencode" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">Install guide →</a>
+      </div>
+      <div class="sc-card" style="text-align:center;">
+        <div style="font-size:1.8rem; margin-bottom:0.5rem;">🏄</div>
+        <div class="sc-title">Windsurf</div>
+        <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:0.65rem; font-weight:700; padding:0.2rem 0.55rem; border-radius:5px; background:var(--amber-lt); color:var(--amber); margin-bottom:0.5rem;">⚠️ Instructions only</div>
+        <div class="sc-body" style="font-size:0.78rem;">Copy <code>.windsurfrules</code> to your project root. Cascade reads it automatically.</div>
+        <a href="install.html#windsurf" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">Install guide →</a>
+      </div>
+      <div class="sc-card" style="text-align:center;">
+        <div style="font-size:1.8rem; margin-bottom:0.5rem;">🤖</div>
+        <div class="sc-title">Antigravity / Agents</div>
+        <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:0.65rem; font-weight:700; padding:0.2rem 0.55rem; border-radius:5px; background:var(--amber-lt); color:var(--amber); margin-bottom:0.5rem;">⚠️ Instructions only</div>
+        <div class="sc-body" style="font-size:0.78rem;">Copy <code>.agents/workflows/codedna.md</code> to your project. Compatible with Antigravity and custom agent frameworks.</div>
+        <a href="https://github.com/Larens94/codedna/tree/main/integrations/.agents" target="_blank" style="font-size:0.75rem; color:var(--accent); text-decoration:none; font-weight:600;">View file →</a>
       </div>
     </div>
 
     <p style="text-align:center; margin-top:1.5rem;">
-      <a href="https://github.com/Larens94/codedna/blob/main/QUICKSTART.md" target="_blank" class="btn-secondary" data-i18n="setupQuickstart">📖 Full Quickstart Guide</a>
+      <a href="install.html" class="btn-secondary" data-i18n="setupQuickstart">📖 Full Install Guide</a>
     </p>
   </div>
 </div>
@@ -810,10 +818,11 @@ data  = get_users()
 
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Redundancy Audit (v0.8) ✦ Current</div><div class="rm-sub">Header reduced to 3 fields: exports, used_by, rules. rules: promoted to required — the inter-agent communication channel. Python-only focus.</div></div></div>
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">M1 — CLI &amp; Auto-Annotation</div><div class="rm-sub">AST skeleton extraction · <code>codedna init</code>, <code>codedna update</code>, <code>codedna check</code> · pip installable · Claude Code Challenge: 7/7 patch files in ~8 min vs 6/7 in ~10–11 min (control). <a href="https://github.com/Larens94/codedna/tree/main/benchmark_agent/claude_code_challenge" target="_blank" style="color:var(--accent);">Results →</a></div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">M3 — Multi-Tool Enforcement Hooks</div><div class="rm-sub">Active hooks for Claude Code (4), Cursor (2), GitHub Copilot (3), Cline (2), OpenCode (plugin). Validates on every write — no manual reminder needed. Pre-commit hook for all tools.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm11Title">M4 — Language Extension</div><div class="rm-sub">CLI supports 10 languages: Python (AST), TypeScript/JS, Go, PHP, Rust, Java, Kotlin, Ruby, C#, Swift. validate_manifests.py supports template engines (Blade, Jinja2, ERB, Vue, Svelte…).</div></div></div>
     <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm9Title">M2 — Benchmark Expansion</div><div class="rm-sub" data-i18n="rm9Sub">20+ SWE-bench tasks across multiple projects · 5+ LLMs · confidence intervals · Zenodo dataset · public dashboard.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm10Title">M3 — Editor &amp; Workflow Integrations</div><div class="rm-sub" data-i18n="rm10Sub">VS Code extension (used_by graph, stale annotation highlight) · pre-commit hook · GitHub Action CI/CD.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm11Title">M4 — Language Extension</div><div class="rm-sub" data-i18n="rm11Sub">JavaScript/TypeScript (JSDoc) · Go (godoc) · Rust (/// comments) · v1.0 extension points for community languages.</div></div></div>
-    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm12Title">M5 — Research Paper &amp; Dissemination</div><div class="rm-sub" data-i18n="rm12Sub">Finalize paper · submit to ICSE NIER / LLM4Code workshop · contribute annotations to Flask, FastAPI and one non-Python project.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title">M5 — VS Code Extension &amp; GitHub Action</div><div class="rm-sub">VS Code extension (used_by graph, stale annotation highlight) · GitHub Action for CI/CD validation.</div></div></div>
+    <div class="rm-row"><div class="rm-indicator"><div class="rm-dot next"></div><span class="rm-badge rb-next" data-i18n="badgeNext">Next</span></div><div><div class="rm-title" data-i18n="rm12Title">M6 — Research Paper &amp; Dissemination</div><div class="rm-sub" data-i18n="rm12Sub">Finalize paper · submit to ICSE NIER / LLM4Code workshop · contribute annotations to Flask, FastAPI and one non-Python project.</div></div></div>
   </div>
   <p style="margin-top:1.25rem; font-size:0.8rem; color:var(--muted); padding:0.9rem 1.25rem; background:var(--bg2); border:1px solid var(--border); border-radius:10px;" data-i18n-html="rmNote">
     M1–M5 are part of a funding application to <a href="https://nlnet.nl/commonsfund/" target="_blank" style="color:var(--accent);">NLnet NGI0 Commons Fund</a>. If you find CodeDNA useful, ⭐ the repo and share it.
