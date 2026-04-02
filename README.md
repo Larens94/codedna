@@ -12,7 +12,7 @@
 
 [![Discord](https://img.shields.io/badge/Discord-Join_Community-5865F2?logo=discord&logoColor=white)](https://discord.gg/7Fs5J2ua)
 [![Claude Code Plugin](https://img.shields.io/badge/Claude_Code-Plugin_Under_Review-orange?logo=anthropic&logoColor=white)](https://claude.com/plugins)
-[![Languages](https://img.shields.io/badge/Languages-Python_·_TS_·_Go_·_Rust_·_Java_·_Ruby-6366f1)](#)
+[![Languages](https://img.shields.io/badge/Languages-11_languages-6366f1)](#language-support)
 [![Docs](https://img.shields.io/badge/Docs-Install_Guide-6366f1)](https://larens94.github.io/codedna/install.html)
 
 **Compatible with:**
@@ -523,9 +523,10 @@ CodeDNA v0.8 is the current release. The planned development path:
 |---|---|---|
 | **M1 — Protocol & CLI** | v0.8 spec · `codedna init/update/check` · AST-based auto-extraction · `message:` agent chat layer | ✅ Done |
 | **M2 — Benchmark Expansion** | 20+ SWE-bench tasks · 5+ LLMs · Zenodo dataset · public dashboard | 🔜 |
-| **M3 — Editor & Workflow** | VS Code extension (used_by graph · agent timeline · model heatmap) · pre-commit hook · GitHub Action CI | 🔜 |
-| **M4 — Language Extension** | JavaScript/TypeScript · Go · Rust · full docs rewrite | 🔜 |
-| **M5 — Research & Dissemination** | arXiv preprint · ICSE NIER/workshop submission · annotate Flask, FastAPI | 🔜 |
+| **M3 — Multi-Tool Hooks** | Active enforcement hooks for Claude Code · Cursor · Copilot · Cline · OpenCode — validates on every write | ✅ Done |
+| **M4 — Language Extension** | 11 languages: Python · TS/JS · Go · PHP (Laravel) · Rust · Java · Kotlin · Ruby · C# · Swift · Blade/Jinja2/Vue | ✅ Done |
+| **M5 — Editor & Workflow** | VS Code extension (used_by graph · agent timeline · model heatmap) · GitHub Action CI | 🔜 |
+| **M6 — Research & Dissemination** | arXiv preprint · ICSE NIER/workshop submission · annotate Flask, FastAPI | 🔜 |
 
 > This roadmap is part of a funding application to [NLnet NGI0 Commons Fund](https://nlnet.nl/commonsfund/) (deadline April 1st 2026). If you find CodeDNA useful and want to support its development, ⭐ the repo and share it.
 
