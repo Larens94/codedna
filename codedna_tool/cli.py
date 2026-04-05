@@ -1040,6 +1040,23 @@ _TOOL_FILES = {
     "opencode": ("AGENTS.md",   "AGENTS.md"),
 }
 
+# Hook-based integrations: tool name -> (list of (remote_path, local_path), settings_template)
+# These require script files + settings.json, not just a prompt file.
+_HOOK_TOOLS = {
+    "claude-hooks",
+    "cursor-hooks",
+    "copilot-hooks",
+    "cline-hooks",
+}
+
+# Maps base tool name to its -hooks variant for auto-detect
+_TOOL_HOOKS_MAP = {
+    "claude": "claude-hooks",
+    "cursor": "cursor-hooks",
+    "copilot": "copilot-hooks",
+    "cline": "cline-hooks",
+}
+
 _PRE_COMMIT_HOOK = r'''#!/usr/bin/env bash
 # CodeDNA v0.8 pre-commit hook — validates staged files.
 # Installed by: codedna install
@@ -1156,6 +1173,7 @@ def _detect_ai_tools(repo_root: Path) -> list[str]:
     """Detect which AI coding tools are likely in use based on existing config files.
 
     Rules:   Only checks for file existence — never reads file contents.
+             When a tool is detected, include its -hooks variant if available.
     """
     list_str_detected_tools = []
     checks = {
@@ -1170,8 +1188,216 @@ def _detect_ai_tools(repo_root: Path) -> list[str]:
         for p in paths:
             if (repo_root / p).exists():
                 list_str_detected_tools.append(tool)
+                # Anche la variante hooks se disponibile
+                if tool in _TOOL_HOOKS_MAP:
+                    list_str_detected_tools.append(_TOOL_HOOKS_MAP[tool])
                 break
     return list_str_detected_tools
+
+
+def _install_claude_hooks(repo_root: Path) -> int:
+    """Installa hook scripts e settings.local.json per Claude Code.
+
+    Rules:   Non sovrascrivere settings.local.json se esiste — mostra istruzioni merge.
+             Gli script vanno in tools/ con chmod +x.
+    """
+    import stat
+    import urllib.request
+
+    str_tools_raw = "https://raw.githubusercontent.com/Larens94/codedna/main/tools"
+    int_count = 0
+
+    # Crea directory tools/
+    path_tools = repo_root / "tools"
+    path_tools.mkdir(exist_ok=True)
+
+    # Scarica hook scripts
+    hooks = {
+        "claude_hook_codedna.sh": "PostToolUse validation script",
+        "claude_hook_stop.sh": "Stop session-end protocol",
+        "validate_manifests.py": "Manifest validator",
+    }
+
+    for filename, desc in hooks.items():
+        path_dest = path_tools / filename
+        str_url = f"{str_tools_raw}/{filename}"
+        try:
+            urllib.request.urlretrieve(str_url, str(path_dest))
+            if filename.endswith(".sh"):
+                path_dest.chmod(path_dest.stat().st_mode | stat.S_IEXEC)
+            int_count += 1
+        except Exception as e:
+            print(f"  FAIL  {filename} — could not fetch: {e}")
+
+    if int_count > 0:
+        print(f"  OK    Claude Hooks -> tools/ ({int_count} files)")
+
+    # Crea o avvisa per settings.local.json
+    path_settings = repo_root / ".claude" / "settings.local.json"
+    if path_settings.exists():
+        print(f"  !!    .claude/settings.local.json already exists — merge hooks manually")
+        print(f"        See: https://github.com/Larens94/codedna#claude-code-hooks")
+    else:
+        path_settings.parent.mkdir(parents=True, exist_ok=True)
+        path_settings.write_text(_CLAUDE_HOOKS_SETTINGS, encoding="utf-8")
+        print(f"  OK    .claude/settings.local.json (hooks configured)")
+        int_count += 1
+
+    return int_count
+
+
+def _install_cursor_hooks(repo_root: Path) -> int:
+    """Installa hook scripts per Cursor."""
+    import stat
+    import urllib.request
+
+    str_raw = "https://raw.githubusercontent.com/Larens94/codedna/main/integrations/cursor-hooks"
+    str_tools_raw = "https://raw.githubusercontent.com/Larens94/codedna/main/tools"
+    int_count = 0
+
+    path_hooks = repo_root / ".cursor" / "hooks"
+    path_hooks.mkdir(parents=True, exist_ok=True)
+    path_tools = repo_root / "tools"
+    path_tools.mkdir(exist_ok=True)
+
+    files = [
+        (f"{str_raw}/after-file-edit.sh", path_hooks / "after-file-edit.sh"),
+        (f"{str_raw}/stop.sh", path_hooks / "stop.sh"),
+        (f"{str_tools_raw}/validate_manifests.py", path_tools / "validate_manifests.py"),
+    ]
+    for url, dest in files:
+        try:
+            urllib.request.urlretrieve(url, str(dest))
+            if dest.suffix == ".sh":
+                dest.chmod(dest.stat().st_mode | stat.S_IEXEC)
+            int_count += 1
+        except Exception as e:
+            print(f"  FAIL  {dest.name} — could not fetch: {e}")
+
+    if int_count > 0:
+        print(f"  OK    Cursor Hooks -> .cursor/hooks/ ({int_count} files)")
+    return int_count
+
+
+def _install_copilot_hooks(repo_root: Path) -> int:
+    """Installa hook scripts per GitHub Copilot."""
+    import urllib.request
+
+    str_raw = "https://raw.githubusercontent.com/Larens94/codedna/main/integrations/copilot-hooks"
+    int_count = 0
+
+    path_hooks = repo_root / ".github" / "hooks"
+    path_hooks.mkdir(parents=True, exist_ok=True)
+
+    files = [
+        (f"{str_raw}/hooks.json", path_hooks / "hooks.json"),
+        (f"{str_raw}/codedna.sh", path_hooks / "codedna.sh"),
+    ]
+    for url, dest in files:
+        try:
+            urllib.request.urlretrieve(url, str(dest))
+            int_count += 1
+        except Exception as e:
+            print(f"  FAIL  {dest.name} — could not fetch: {e}")
+
+    if int_count > 0:
+        print(f"  OK    Copilot Hooks -> .github/hooks/ ({int_count} files)")
+    return int_count
+
+
+def _install_cline_hooks(repo_root: Path) -> int:
+    """Installa hook scripts per Cline."""
+    import stat
+    import urllib.request
+
+    str_raw = "https://raw.githubusercontent.com/Larens94/codedna/main/integrations/cline-hooks"
+    int_count = 0
+
+    # .clinerules potrebbe essere un file (prompt) — serve come directory per hooks
+    path_clinerules = repo_root / ".clinerules"
+    if path_clinerules.exists() and path_clinerules.is_file():
+        # Rinomina il file prompt, poi crea la directory con il file dentro
+        str_content = path_clinerules.read_text(encoding="utf-8", errors="replace")
+        path_clinerules.unlink()
+        path_clinerules.mkdir(parents=True, exist_ok=True)
+        (path_clinerules / "rules.md").write_text(str_content, encoding="utf-8")
+        print("  INFO  .clinerules converted: file -> directory (.clinerules/rules.md)")
+
+    path_hooks = path_clinerules / "hooks"
+    path_hooks.mkdir(parents=True, exist_ok=True)
+
+    files = [
+        (f"{str_raw}/PostToolUse.sh", path_hooks / "PostToolUse.sh"),
+        (f"{str_raw}/TaskStart.sh", path_hooks / "TaskStart.sh"),
+    ]
+    for url, dest in files:
+        try:
+            urllib.request.urlretrieve(url, str(dest))
+            dest.chmod(dest.stat().st_mode | stat.S_IEXEC)
+            int_count += 1
+        except Exception as e:
+            print(f"  FAIL  {dest.name} — could not fetch: {e}")
+
+    if int_count > 0:
+        print(f"  OK    Cline Hooks -> .clinerules/hooks/ ({int_count} files)")
+    return int_count
+
+
+# Dispatch per hook installers
+_HOOK_INSTALLERS = {
+    "claude-hooks": _install_claude_hooks,
+    "cursor-hooks": _install_cursor_hooks,
+    "copilot-hooks": _install_copilot_hooks,
+    "cline-hooks": _install_cline_hooks,
+}
+
+
+_CLAUDE_HOOKS_SETTINGS = r'''{
+  "hooks": {
+    "SessionStart": [
+      {
+        "hooks": [{
+          "type": "command",
+          "command": "codedna=\".codedna\"; if [[ -f \"$codedna\" ]]; then pkgs=$(grep -c 'purpose:' \"$codedna\" 2>/dev/null || echo 0); proj=$(grep '^project:' \"$codedna\" | head -1 | cut -d' ' -f2-); echo \"{\\\"hookSpecificOutput\\\":{\\\"hookEventName\\\":\\\"SessionStart\\\",\\\"additionalContext\\\":\\\"[CodeDNA] Project: $proj — $pkgs documented modules. Read .codedna and CLAUDE.md before editing source files. Every source edit requires updating agent: with today's date.\\\"}}\"; fi",
+          "timeout": 5
+        }]
+      }
+    ],
+    "PreToolUse": [
+      {
+        "matcher": "Write|Edit",
+        "hooks": [{
+          "type": "command",
+          "command": "f=$(echo $TOOL_INPUT | python3 -c \"import json,sys; print(json.load(sys.stdin).get('file_path',''))\" 2>/dev/null); [[ -n \"$f\" ]] && echo \"$f\" | grep -qE '\\.(py|ts|tsx|js|go|rs|java|kt|swift|rb|cs|php)$' && echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"[CodeDNA] Source file. Before editing: (1) read the docstring, (2) verify exports/used_by/rules/agent, (3) plan agent: update with the current session.\"}}' || true",
+          "timeout": 5
+        }]
+      }
+    ],
+    "PostToolUse": [
+      {
+        "matcher": "Write",
+        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_codedna.sh", "timeout": 10, "statusMessage": "CodeDNA v0.8 — validating annotations..." }]
+      },
+      {
+        "matcher": "Edit",
+        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_codedna.sh", "timeout": 10, "statusMessage": "CodeDNA v0.8 — validating annotations..." }]
+      }
+    ],
+    "Stop": [
+      {
+        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_stop.sh", "timeout": 5, "statusMessage": "CodeDNA v0.8 — checking session end protocol..." }]
+      },
+      {
+        "hooks": [{
+          "type": "command",
+          "command": "echo '{\"systemMessage\": \"[CodeDNA] Remember: update .codedna with a new agent_sessions entry (agent, provider, date, session_id, task, changed, visited, message).\"}'",
+          "timeout": 5
+        }]
+      }
+    ]
+  }
+}
+'''
 
 
 def cmd_install(repo_root: Path, tools: list[str], skip_hook: bool = False,
@@ -1219,6 +1445,11 @@ def cmd_install(repo_root: Path, tools: list[str], skip_hook: bool = False,
     # 2. AI tool prompt files
     if not skip_prompt:
         for tool in tools:
+            # Gestione hook-based tools (claude-hooks, cursor-hooks, etc.)
+            if tool in _HOOK_INSTALLERS:
+                int_count_installed += _HOOK_INSTALLERS[tool](repo_root)
+                continue
+
             if tool not in _TOOL_FILES:
                 print(f"  SKIP  {tool} (unknown tool)")
                 continue
@@ -1610,7 +1841,7 @@ def main():
     )
     install_p.add_argument(
         "--tools", nargs="*", default=None,
-        help="AI tools to install prompts for: claude cursor copilot cline windsurf opencode all (default: auto-detect)",
+        help="AI tools to install prompts/hooks for: claude cursor copilot cline windsurf opencode claude-hooks cursor-hooks copilot-hooks cline-hooks all (default: auto-detect)",
     )
     install_p.add_argument("--skip-hook", action="store_true", help="Skip pre-commit hook installation")
     install_p.add_argument("--skip-prompt", action="store_true", help="Skip AI tool prompt installation")
@@ -1711,7 +1942,7 @@ def main():
                 list_str_tools = ["claude"]  # sensible default
                 print("  No AI tool detected — defaulting to Claude Code")
         elif "all" in args.tools:
-            list_str_tools = list(_TOOL_FILES.keys())
+            list_str_tools = list(_TOOL_FILES.keys()) + list(_HOOK_INSTALLERS.keys())
         else:
             list_str_tools = args.tools
 

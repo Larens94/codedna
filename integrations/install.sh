@@ -28,11 +28,15 @@ RAW="https://raw.githubusercontent.com/Larens94/codedna/main/integrations"
 if command -v codedna &>/dev/null; then
     echo "CodeDNA CLI detected — using 'codedna install' (recommended path)"
     echo ""
-    if [[ "$TOOL" == "all" ]]; then
-        codedna install --path "$REPO_ROOT" --tools all
-    else
-        codedna install --path "$REPO_ROOT" --tools "$TOOL"
-    fi
+    # Per le varianti *-hooks, installare anche il prompt base
+    case "$TOOL" in
+        claude-hooks)  codedna install --path "$REPO_ROOT" --tools claude claude-hooks ;;
+        cursor-hooks)  codedna install --path "$REPO_ROOT" --tools cursor cursor-hooks ;;
+        copilot-hooks) codedna install --path "$REPO_ROOT" --tools copilot copilot-hooks ;;
+        cline-hooks)   codedna install --path "$REPO_ROOT" --tools cline cline-hooks ;;
+        all)           codedna install --path "$REPO_ROOT" --tools all ;;
+        *)             codedna install --path "$REPO_ROOT" --tools "$TOOL" ;;
+    esac
     exit $?
 fi
 
