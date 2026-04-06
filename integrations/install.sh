@@ -14,7 +14,7 @@
 #   1. pip install codedna  — CLI tool with multi-language support (11 languages)
 #   2. codedna install      — pre-commit hook + AI tool prompt + .codedna manifest
 #
-# Supported AI tools: claude claude-hooks cursor cursor-hooks copilot copilot-hooks cline cline-hooks windsurf opencode
+# Supported AI tools: claude claude-hooks cursor cursor-hooks copilot copilot-hooks cline cline-hooks windsurf opencode opencode-hooks
 # Supported languages: Python, TypeScript/JS, Go, PHP, Rust, Java, Kotlin, Ruby, C#, Swift
 
 set -euo pipefail
@@ -34,6 +34,7 @@ if command -v codedna &>/dev/null; then
         cursor-hooks)  codedna install --path "$REPO_ROOT" --tools cursor cursor-hooks ;;
         copilot-hooks) codedna install --path "$REPO_ROOT" --tools copilot copilot-hooks ;;
         cline-hooks)   codedna install --path "$REPO_ROOT" --tools cline cline-hooks ;;
+        opencode-hooks) codedna install --path "$REPO_ROOT" --tools opencode opencode-hooks ;;
         all)           codedna install --path "$REPO_ROOT" --tools all ;;
         *)             codedna install --path "$REPO_ROOT" --tools "$TOOL" ;;
     esac
@@ -89,6 +90,8 @@ do_cursor_hooks() {
 do_opencode() {
     curl -fsSL "$RAW/AGENTS.md" > "$REPO_ROOT/AGENTS.md"
     echo "  OK  OpenCode       -> AGENTS.md"
+}
+do_opencode_hooks() {
     mkdir -p "$REPO_ROOT/.opencode/plugins"
     curl -fsSL "$RAW/opencode-plugin/codedna.js" > "$REPO_ROOT/.opencode/plugins/codedna.js"
     echo "  OK  OpenCode Plugin -> .opencode/plugins/codedna.js"
@@ -179,12 +182,13 @@ case "$TOOL" in
     windsurf)       do_windsurf ;;
     agents)         do_agents ;;
     opencode)       do_opencode ;;
-    claude-hooks)   do_claude_hooks ;;
+    claude-hooks)   do_claude; do_claude_hooks ;;
     cline-hooks)    do_cline; do_cline_hooks ;;
     copilot-hooks)  do_copilot; do_copilot_hooks ;;
     cursor-hooks)   do_cursor; do_cursor_hooks ;;
-    all)            do_claude; do_cursor; do_copilot; do_cline; do_windsurf; do_agents; do_opencode; do_claude_hooks; do_cline_hooks; do_copilot_hooks; do_cursor_hooks ;;
-    *) echo "Usage: install.sh [claude|claude-hooks|cursor|cursor-hooks|copilot|copilot-hooks|cline|cline-hooks|windsurf|agents|opencode|all]"; exit 1 ;;
+    opencode-hooks) do_opencode; do_opencode_hooks ;;
+    all)            do_claude; do_cursor; do_copilot; do_cline; do_windsurf; do_agents; do_opencode; do_claude_hooks; do_cline_hooks; do_copilot_hooks; do_cursor_hooks; do_opencode_hooks ;;
+    *) echo "Usage: install.sh [claude|claude-hooks|cursor|cursor-hooks|copilot|copilot-hooks|cline|cline-hooks|windsurf|agents|opencode|opencode-hooks|all]"; exit 1 ;;
 esac
 
 echo ""

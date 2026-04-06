@@ -32,6 +32,7 @@ agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_001 | i
          claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_002 | added --extensions flag, run_lang_files(), multi-language pipeline; updated collect_files, cmd_check
          claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_004 | added cmd_manifest (Level 0 auto-generation); fixed --exclude glob (fnmatch), graceful LLM fallback, __init__ skip in purpose heuristic
          claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | added cmd_install subcommand: pre-commit hook + AI tool prompt + .codedna setup in one command
+         claude-opus-4-6 | anthropic | 2026-04-07 | s_20260407_001 | fixed 3 install bugs: (1) opencode missing JS plugin — added _install_opencode_hooks, (2) -hooks variants not auto-including base prompt — added _HOOKS_BASE_MAP + auto-insert in dispatch, (3) install.sh claude-hooks not calling do_claude
 """
 
 import argparse
@@ -1047,6 +1048,7 @@ _HOOK_TOOLS = {
     "cursor-hooks",
     "copilot-hooks",
     "cline-hooks",
+    "opencode-hooks",
 }
 
 # Maps base tool name to its -hooks variant for auto-detect
@@ -1055,6 +1057,16 @@ _TOOL_HOOKS_MAP = {
     "cursor": "cursor-hooks",
     "copilot": "copilot-hooks",
     "cline": "cline-hooks",
+    "opencode": "opencode-hooks",
+}
+
+# Maps -hooks variant back to its base tool (for auto-including the prompt file)
+_HOOKS_BASE_MAP = {
+    "claude-hooks": "claude",
+    "cursor-hooks": "cursor",
+    "copilot-hooks": "copilot",
+    "cline-hooks": "cline",
+    "opencode-hooks": "opencode",
 }
 
 _PRE_COMMIT_HOOK = r'''#!/usr/bin/env bash
@@ -1343,12 +1355,35 @@ def _install_cline_hooks(repo_root: Path) -> int:
     return int_count
 
 
+def _install_opencode_hooks(repo_root: Path) -> int:
+    """Installa il plugin JS per OpenCode (.opencode/plugins/codedna.js)."""
+    import urllib.request
+
+    str_raw = "https://raw.githubusercontent.com/Larens94/codedna/main/integrations/opencode-plugin"
+    int_count = 0
+
+    path_plugins = repo_root / ".opencode" / "plugins"
+    path_plugins.mkdir(parents=True, exist_ok=True)
+
+    path_dest = path_plugins / "codedna.js"
+    str_url = f"{str_raw}/codedna.js"
+    try:
+        urllib.request.urlretrieve(str_url, str(path_dest))
+        int_count += 1
+        print(f"  OK    OpenCode Plugin -> .opencode/plugins/codedna.js")
+    except Exception as e:
+        print(f"  FAIL  codedna.js — could not fetch: {e}")
+
+    return int_count
+
+
 # Dispatch per hook installers
 _HOOK_INSTALLERS = {
     "claude-hooks": _install_claude_hooks,
     "cursor-hooks": _install_cursor_hooks,
     "copilot-hooks": _install_copilot_hooks,
     "cline-hooks": _install_cline_hooks,
+    "opencode-hooks": _install_opencode_hooks,
 }
 
 
@@ -1841,7 +1876,7 @@ def main():
     )
     install_p.add_argument(
         "--tools", nargs="*", default=None,
-        help="AI tools to install prompts/hooks for: claude cursor copilot cline windsurf opencode claude-hooks cursor-hooks copilot-hooks cline-hooks all (default: auto-detect)",
+        help="AI tools to install prompts/hooks for: claude cursor copilot cline windsurf opencode claude-hooks cursor-hooks copilot-hooks cline-hooks opencode-hooks all (default: auto-detect)",
     )
     install_p.add_argument("--skip-hook", action="store_true", help="Skip pre-commit hook installation")
     install_p.add_argument("--skip-prompt", action="store_true", help="Skip AI tool prompt installation")
@@ -1944,7 +1979,14 @@ def main():
         elif "all" in args.tools:
             list_str_tools = list(_TOOL_FILES.keys()) + list(_HOOK_INSTALLERS.keys())
         else:
-            list_str_tools = args.tools
+            list_str_tools = list(args.tools)
+            # Auto-include base prompt when -hooks variant is requested
+            # e.g. claude-hooks -> also install claude (CLAUDE.md)
+            for tool in args.tools:
+                if tool in _HOOKS_BASE_MAP:
+                    str_base_tool = _HOOKS_BASE_MAP[tool]
+                    if str_base_tool not in list_str_tools:
+                        list_str_tools.insert(list_str_tools.index(tool), str_base_tool)
 
         return cmd_install(
             repo_root=path_repo_root,
