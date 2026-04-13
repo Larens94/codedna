@@ -587,10 +587,36 @@ img { max-width: 100%; height: auto; }
 <div class="section section-alt" id="come-funziona">
   <div class="section-inner">
     <div class="eyebrow" data-i18n="howEyebrow">How It Works</div>
-    <h2 data-i18n="howH2">Three levels. Every snippet is self-contained.</h2>
+    <h2 data-i18n="howH2">Four levels. Every snippet is self-contained.</h2>
     <p class="section-lead" data-i18n="howLead">Like biological DNA: cutting it in half produces two fragments that still carry the complete information. With CodeDNA, 10 random lines from anywhere in a file are enough for the AI to act correctly.</p>
 
     <div class="levels-list">
+      <div class="level-item">
+        <div class="level-meta">
+          <div class="level-num">Level 0</div>
+          <div class="level-name">Project Manifest <code>.codedna</code></div>
+          <div class="level-desc">A single YAML file at the repo root. The agent reads this first — the view from far away. Describes packages, their purposes, inter-package dependencies, and a rolling session log of every agent that has worked on the project.</div>
+        </div>
+        <div class="level-code">
+          <div class="code-block">
+            <div class="code-bar"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#febc2e"></div><div class="dot" style="background:#28c840"></div><span class="code-filename">.codedna</span></div>
+            <pre class="code-pre"><span class="th">project: myapp
+packages:
+  payments/:
+    purpose: "Invoice generation, Stripe integration"
+  analytics/:
+    purpose: "Revenue reports, KPI dashboards"
+    depends_on: [payments/, tenants/]
+
+agent_sessions:
+  - agent: claude-sonnet-4-6
+    date: 2026-03-10
+    task: "Implement monthly revenue aggregation"
+    changed: [analytics/revenue.py]</span></pre>
+          </div>
+        </div>
+      </div>
+
       <div class="level-item">
         <div class="level-meta">
           <div class="level-num" data-i18n="l1Num">Level 1</div>
@@ -674,6 +700,49 @@ data  = get_users()
           </div>
         </div>
       </div>
+    </div>
+  </div>
+</div>
+
+<!-- MESSAGE: FIELD -->
+<div class="section" id="message-field">
+  <div class="section-inner">
+    <div class="eyebrow">v0.8 Feature</div>
+    <h2><code>message:</code> — Agent-to-Agent Chat in Code</h2>
+    <p class="section-lead">The <code>agent:</code> field records what an agent did. The <code>message:</code> sub-field adds a <strong>conversational layer</strong> — soft observations and open questions left directly for the next agent, co-located with the code.</p>
+
+    <div class="levels-list">
+      <div class="level-item">
+        <div class="level-meta">
+          <div class="level-num">Three channels</div>
+          <div class="level-name">rules: / agent: / message:</div>
+          <div class="level-desc">
+            <strong><code>rules:</code></strong> is the law — hard architectural constraints, updated in-place.<br>
+            <strong><code>agent:</code></strong> is the diary — what happened and when.<br>
+            <strong><code>message:</code></strong> is the conversation that precedes the law — observations not yet certain enough to become rules.
+          </div>
+        </div>
+        <div class="level-code">
+          <div class="code-block">
+            <div class="code-bar"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#febc2e"></div><div class="dot" style="background:#28c840"></div><span class="code-filename">revenue.py — message: lifecycle</span></div>
+            <pre class="code-pre"><span class="th">agent:   claude-sonnet-4-6 | 2026-03-10 | Implemented monthly_revenue.
+         message: "rounding edge case in multi-currency
+                  — not yet sure if this should be a rule"
+
+agent:   gemini-2.5-pro | 2026-03-18 | Added annual_summary.
+         message: "@prev: confirmed, promoted to rules:.
+                  New: timezone rollover in January"</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:1.5rem;">
+      <p style="font-size:0.85rem; color:var(--gray-600); line-height:1.7;">
+        <strong>Lifecycle:</strong> a <code>message:</code> is either promoted to <code>rules:</code> (reply <code>@prev: promoted to rules:</code>) or dismissed (<code>@prev: not applicable because...</code>). Always append-only — never deleted.<br><br>
+        <strong>Works at both levels:</strong> Level 1 (module docstring) for agents reading the full file, and Level 2 (function docstring) for agents using a sliding window that never sees the header.<br><br>
+        <strong>Benchmark result:</strong> in the AgentHub multi-agent experiment (DeepSeek R1, 5 agents, 83 minutes), <code>message:</code> was adopted in <strong>54 out of 55 files (98.2%)</strong> — spontaneously, with no mid-session reminders. Agents used it for handoff notes, per-function observations, and cross-file constraint propagation.
+      </p>
     </div>
   </div>
 </div>

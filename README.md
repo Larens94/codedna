@@ -265,7 +265,19 @@ Full data: [`benchmark_agent/runs/`](./benchmark_agent/runs/) · Script: [`bench
 
 ## 🤝 Multi-Agent Team Experiments
 
-Beyond single-agent file navigation, CodeDNA has been tested on **multi-agent team coordination** — measuring whether the protocol helps a team of AI agents divide work without collisions and produce functional software.
+The SWE-bench benchmark above tests single-agent file navigation. Here we test a different question: can CodeDNA help **teams of agents divide work without collisions** and produce integrated software?
+
+Two experiments, both using 5-agent teams orchestrated with [Agno](https://github.com/agno-agi/agno) (`TeamMode.coordinate`). Same task, same model, same tools — only the instructions differ.
+
+| Metric | Exp 1 — RPG (DeepSeek Chat) | Exp 2 — SaaS (DeepSeek R1) |
+|---|---|---|
+| **Duration (A / B)** | 1h 59m / 3h 11m (**1.6x faster**) | 82.6m / 99m (**17% faster**) |
+| **Output quality** | Playable game / static scene | Lower complexity (2.1 vs 3.1) |
+| **Annotation adoption** | 94% | **98.2%** (spontaneous, no reminders) |
+| **`message:` adoption** | 0 (not in prompt) | **54 files** (100%, organic) |
+| **Judge fixes needed** | 8 / 12 | — |
+
+Full reports: [Exp 1 report](./experiments/runs/run_20260329_234232/REPORT.md) · [Exp 2 data](./experiments/runs/run_20260331_002754/)
 
 ### Experiment 1 — 2D RPG Game (run_20260329_234232)
 
@@ -303,33 +315,9 @@ All 8 fixes in condition A were corrections to existing code. Condition B had 12
 
 > **More LOC does not mean more coverage.** B produced 38% more lines (14,096 vs 10,194) but 10% fewer files. Average file size: 313 lines vs 203. More code, less functionality.
 
-### Experiment 2 — AgentHub SaaS webapp (run_20260330_024934)
+Full report: [`experiments/runs/run_20260329_234232/REPORT.md`](./experiments/runs/run_20260329_234232/REPORT.md) · Run data: [`experiments/runs/run_20260329_234232/`](./experiments/runs/run_20260329_234232/)
 
-**Setup:** same 5-agent team building a FastAPI + Agno + SQLite + Stripe SaaS webapp.
-**Key addition:** `message:` field included in prompt (was absent in Experiment 1).
-
-| Metric | Result |
-|---|---|
-| Duration (condition A) | **2h 14m 48s** |
-| Python files | 53 |
-| Annotation coverage | **83%** (44/53) |
-| `message:` entries | **44** — was **0** in Experiment 1 |
-
-#### `message:` field — first non-zero result
-
-Adding the field to the prompt produced **100% adoption** across all annotated files. More importantly, agents used it in three qualitatively distinct ways:
-
-1. **Handoff notes** — each agent writes what it built and what's still missing, creating a distributed technical backlog co-located with the code.
-
-2. **Per-function observations** — BackendEngineer wrote one message per API endpoint describing specific missing behaviours (e.g. `"implement timezone-aware scheduling"`, `"implement soft delete with archive option"`), exactly the intended Level 2 use.
-
-3. **Cross-file constraint propagation** — AgentIntegrator discovered that agent memory needs summarization when context exceeds 80% of the model limit. It encoded this in `memory.py → rules:` (consolidated truth) and in `base.py`, `runner.py`, `studio.py → message:` (flag for callers). This is the **dual-channel pattern the protocol was designed for**, and it emerged **without explicit instruction**.
-
-`rules:` and `message:` channel discipline was maintained across all agents: `rules:` encodes what is true now; `message:` encodes known gaps. No agent mixed the two.
-
-> **Known fix for next run:** agents wrote `2024-01-15` as the date in all entries (model hallucination). Fix: inject `{current_date}` into the prompt template.
-
-### Experiment 3 — AgentHub SaaS webapp A/B test (run_20260331_002754)
+### Experiment 2 — AgentHub SaaS webapp A/B test (run_20260331_002754)
 
 **Setup:** same 5-agent team, same task (build AgentHub — a multi-tenant SaaS platform to rent, configure and deploy AI agents), upgraded model: **DeepSeek R1** (`deepseek-reasoner`). Two conditions run sequentially on the same machine.
 
@@ -446,6 +434,10 @@ A built stronger architecture (ServiceContainer DI, 9 exception types, async SQL
 > N=1 per condition. Results are directional, not statistically powered. The experiment is presented as a qualitative case study to complement the SWE-bench navigation benchmark.
 
 Full run data: [`experiments/runs/run_20260331_002754/`](./experiments/runs/run_20260331_002754/) · Script: [`experiments/run_experiment_webapp2.py`](./experiments/run_experiment_webapp2.py)
+
+#### Limitations
+
+Both multi-agent experiments are N=1 per condition — results are directional, not statistically powered. Experiment 2 used sequential runs on shared hardware (machine state may differ between conditions). Task 13495 shows an unexplained model-dependent anomaly (Flash +22pp, DeepSeek -8pp). Independent replication across different models, team sizes, and project types is needed.
 
 ---
 

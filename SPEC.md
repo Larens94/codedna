@@ -691,9 +691,9 @@ This creates a **knowledge accumulation cycle**: the codebase gets smarter with 
 
 ---
 
-## 5. Level 3 — Semantic Naming
+## 6. Level 3 — Semantic Naming
 
-### 5.1 Motivation
+### 6.1 Motivation
 
 **This is an agent-first convention, not a human style guide.** Traditional naming conventions (PEP 8, clean code) optimise for human readability in an IDE where type hints, hover tooltips, and "Go to Definition" are one click away. LLM agents have none of these — they see raw text in a fixed-size context window.
 
@@ -701,7 +701,7 @@ When an agent reads lines 200–250 of a file, a variable named `data` forces it
 
 This follows the same design logic as Level 2: Level 1 headers may be outside the sliding window → Level 2 repeats context at function scope. Native type hints may be outside the sliding window → Level 3 repeats type information in the variable name.
 
-### 5.2 Convention
+### 6.2 Convention
 
 Format: `<type>_<shape>_<domain>_<origin>` (use relevant parts only)
 
@@ -718,7 +718,7 @@ str_html_dashboard_rendered = render(execute_query)
 int_cents_price_from_request = request.json.get("price")
 ```
 
-### 5.3 When to Apply
+### 6.3 When to Apply
 
 Apply Semantic Naming to variables that:
 - Cross function boundaries (returned or passed as arguments)
@@ -728,7 +728,7 @@ Apply Semantic Naming to variables that:
 
 Purely local computation variables (`i`, `tmp`, `acc`) do not need renaming.
 
-### 5.4 Type Prefix Reference
+### 6.4 Type Prefix Reference
 
 | Prefix | Meaning | Example |
 |---|---|---|
