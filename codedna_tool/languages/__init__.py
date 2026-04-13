@@ -5,10 +5,11 @@ exports: get_adapter(extension) -> Optional[LanguageAdapter]
 used_by: codedna_tool/cli.py -> collect_files, scan_file_lang
 rules:   adapters are stateless; get_adapter returns None for unsupported extensions.
          Never import language-specific deps here — keep this registry lightweight.
-agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_001 | initial multi-language adapter registry
-         claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | added PHP/Laravel, Rust, Java, Kotlin, Ruby, C#, Swift adapters — full 11-language coverage
+         Tree-sitter adapters are preferred when available; regex adapters are the fallback.
+agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | added PHP/Laravel, Rust, Java, Kotlin, Ruby, C#, Swift adapters — full 11-language coverage
          claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | added template engine adapters: Blade, Jinja2/Twig, ERB/EJS, Handlebars, Razor, Vue SFC, Svelte — 17 total extensions
          claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | added .volt (Phalcon Volt engine) via JinjaAdapter — same {# #} comment syntax
+         claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_001 | added tree-sitter adapters for TS/JS and Go with regex fallback
 """
 
 from typing import Optional
@@ -29,14 +30,31 @@ from .swift import SwiftAdapter
 from .typescript import TypeScriptAdapter
 from .vue import VueAdapter, SvelteAdapter
 
+# Try tree-sitter adapters (more accurate AST-based extraction)
+_ts_adapter = None
+_go_ts_adapter = None
+try:
+    from ._ts_typescript import TreeSitterTypeScriptAdapter
+    _ts_adapter = TreeSitterTypeScriptAdapter()
+except ImportError:
+    pass
+try:
+    from ._ts_go import TreeSitterGoAdapter
+    _go_ts_adapter = TreeSitterGoAdapter()
+except ImportError:
+    pass
+
+_ts_or_regex = _ts_adapter or TypeScriptAdapter()
+_go_or_regex = _go_ts_adapter or GoAdapter()
+
 _REGISTRY: dict[str, LanguageAdapter] = {
     # Source code languages
-    ".ts": TypeScriptAdapter(),
-    ".tsx": TypeScriptAdapter(),
-    ".js": TypeScriptAdapter(),
-    ".jsx": TypeScriptAdapter(),
-    ".mjs": TypeScriptAdapter(),
-    ".go": GoAdapter(),
+    ".ts": _ts_or_regex,
+    ".tsx": _ts_or_regex,
+    ".js": _ts_or_regex,
+    ".jsx": _ts_or_regex,
+    ".mjs": _ts_or_regex,
+    ".go": _go_or_regex,
     ".php": PhpAdapter(),
     ".rs": RustAdapter(),
     ".java": JavaAdapter(),
