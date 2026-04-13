@@ -27,7 +27,7 @@
 
 **CodeDNA** is an **inter-agent communication protocol** implemented as in-source annotations. The writing agent embeds architectural context directly into source files; the reading agent decodes it at any point in the file. Like biological DNA — cut a hologram in half and you get two smaller complete images.
 
-**No RAG. No vector DB. No external rules files. Minimal drift (context co-located with code).**
+**No RAG. No vector DB. No external rules files. Minimal drift (context co-located with code). [11 languages supported](#language-support).**
 
 > **🎯 Less Prompt Engineering Needed:** CodeDNA annotations help AI agents navigate the codebase with less manual guidance. Even less-technical users can get better multi-file fixes by describing the problem — the architectural context is already in the code.
 
@@ -45,7 +45,12 @@ CodeDNA embeds this context directly in source files: `used_by:` maps reverse de
 
 This also enables **agent-to-agent communication**: a constraint discovered by Agent A is available to Agent B in a different session or a different model. Knowledge compounds in a versioned, inspectable form.
 
-**Preliminary results are encouraging.** +13pp F1 on Gemini 2.5 Flash and +9pp on DeepSeek Chat on Django tasks — zero-shot, no fine-tuning, just annotations. Results are preliminary and require larger-scale validation.
+**Preliminary results are encouraging:**
+- **SWE-bench (single-agent navigation):** +13pp F1 on Gemini 2.5 Flash (p=0.040), +9pp on DeepSeek Chat — zero-shot, no fine-tuning, just annotations.
+- **Multi-agent team experiments:** 5-agent teams build complete applications 1.6x faster with CodeDNA; `used_by:` contracts prevent integration gaps; the `message:` field (agent-to-agent chat) was adopted spontaneously in 98.2% of files.
+- **Fix quality (Claude Code):** CodeDNA session matched 7/7 files of the official Django patch vs 6/7 for control, with zero failed edits.
+
+Results are preliminary and require larger-scale validation.
 
 ---
 
@@ -606,7 +611,7 @@ packages:
 
 ### Level 1 — Module Header *(The view from close up: ~50 tokens)*
 
-A docstring at the top of every file. Only includes information that **cannot be inferred from the code**: the public API (`exports:`), who depends on this file (`used_by:`), and domain constraints (`rules:`). Import statements already declare dependencies — no need to duplicate them.
+A docstring at the top of every file. Five fields: `exports:` (public API), `used_by:` (reverse dependencies), `rules:` (hard constraints), `agent:` (session log), and `message:` (agent-to-agent chat). Only includes information that **cannot be inferred from the code**.
 
 ```python
 """orders/orders.py — Order lifecycle management.
@@ -615,12 +620,14 @@ exports: get_active_orders() -> list[dict] | create_order(user_id, items) -> Non
 used_by: analytics/revenue.py → get_revenue_rows
 rules:   User system uses soft delete — NEVER return orders for users
          where users.deleted_at IS NOT NULL. Always JOIN on users.
+agent:   claude-sonnet-4-6 | 2026-03-10 | Implemented order lifecycle.
+         message: "bulk delete not tested with >1000 orders — verify before release"
 """
 ```
 
 ### Level 2 — Function-Level Rules *(The view from very close)*
 
-`Rules:` docstrings on critical functions, written **organically** by agents as they discover constraints. Each agent that fixes a bug or learns something important leaves a `Rules:` for the next agent — knowledge accumulates over time.
+`Rules:` and `message:` docstrings on critical functions, written **organically** by agents as they discover constraints. Each agent that fixes a bug or learns something important leaves a `Rules:` for the next agent — knowledge accumulates over time. `message:` carries open observations not yet confirmed as rules.
 
 ```python
 def get_active_orders() -> list[dict]:
@@ -628,12 +635,16 @@ def get_active_orders() -> list[dict]:
 
     Rules:   MUST JOIN users and filter deleted_at before returning results.
              Failure to filter inflates revenue reports with deleted-user orders.
+    message: claude-sonnet-4-6 | 2026-03-10 | pagination not implemented —
+             will OOM on tenants with >50k orders
     """
 ```
 
 ### Level 3 — Semantic Naming *(Cognitive compression)*
 
-Variable names encode type, shape, domain, and origin. Any 10-line extract is self-documenting.
+**This is an agent-first convention, not a human style guide.** Traditional naming optimises for human readability in an IDE with type hints, hover tooltips, and "Go to Definition". LLM agents have none of these — they see raw text in a fixed-size context window. A variable named `data` forces the agent to trace backwards; `list_dict_users_from_db` is self-documenting in any 10-line window.
+
+As AI agents write more of the code, the primary reader of source files shifts from human to machine. Semantic naming is designed for that present — and accelerating — reality.
 
 ```python
 # ❌ Standard — agent must trace the entire call chain
@@ -678,7 +689,7 @@ Agent B reads Rules: → avoids the same bug without re-discovering it
 Agent C discovers an edge case → extends the Rules:
 ```
 
-Unlike docs (which go stale), `Rules:` annotations are co-located with the code — read every time the function is edited.
+Unlike external docs (which go stale), `Rules:` annotations are co-located with the code — read every time the function is edited. The maintenance cost is real but proportional: in a traditional codebase, a human developer maintains this knowledge manually across sessions. With CodeDNA, agents maintain annotations as a side effect of normal work — the same budget that would pay a developer to document constraints now pays for agent sessions that both fix bugs *and* leave annotations for the next agent. Verification agents (see [SPEC.md §8.6](./SPEC.md)) can audit annotation accuracy automatically, which is not possible with free-form comments.
 
 Current benchmark results are **zero-shot** — no fine-tuning on the protocol. Models follow `used_by:` and `rules:` by general language understanding alone. A fine-tuned model could potentially treat these as native structured signals, which might reduce variance further — this remains to be tested.
 
