@@ -1,0 +1,28 @@
+{
+  "name": "codedna",
+  "owner": {
+    "name": "Fabrizio Corpora",
+    "email": "codedna@silicoreautomation.space"
+  },
+  "metadata": {
+    "description": "CodeDNA — An In-Source Communication Protocol for AI Coding Agents. Annotations that make any codebase AI-navigable.",
+    "version": "1.0.0"
+  },
+  "plugins": [
+    {
+      "name": "codedna",
+      "source": "./codedna-plugin",
+      "description": "CodeDNA v0.8 protocol enforcement — adds /codedna:init, /codedna:check, /codedna:manifest, /codedna:impact skills + automatic annotation validation on every file write",
+      "version": "1.0.0",
+      "author": {
+        "name": "Fabrizio Corpora"
+      },
+      "homepage": "https://github.com/Larens94/codedna",
+      "repository": "https://github.com/Larens94/codedna",
+      "license": "MIT",
+      "keywords": ["codedna", "annotations", "protocol", "ai-agents", "inter-agent", "context", "navigation"],
+      "category": "code-quality",
+      "tags": ["python", "typescript", "go", "php", "rust", "java", "multi-language"]
+    }
+  ]
+}

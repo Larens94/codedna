@@ -194,17 +194,18 @@ Supported models via `--model`:
 
 ---
 
-### Option 3 — Claude Code Plugin *(coming soon)*
+### Option 3 — Claude Code Plugin
 
-> **Status:** accepted by Anthropic, currently **under review** — not yet available in the public directory. Use Option 1 or 2 in the meantime.
-
-Once available:
+Install via the independent marketplace (available now):
 
 ```bash
-claude plugin install codedna
+claude plugin marketplace add Larens94/codedna
+claude plugin install codedna@codedna
 ```
 
-No API key. No extra cost. Uses your existing Claude subscription. Adds `/codedna:init`, `/codedna:check`, `/codedna:manifest`, `/codedna:impact` commands + four enforcement hooks.
+No API key. No extra cost. Uses your existing Claude subscription. Adds `/codedna:init`, `/codedna:check`, `/codedna:manifest`, `/codedna:impact` skills + automatic annotation validation on every file write.
+
+> **Official Anthropic directory:** the plugin has been submitted and is currently **under review**. Once approved, installation will simplify to `claude plugin install codedna`.
 
 ---
 
