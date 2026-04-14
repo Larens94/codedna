@@ -7,6 +7,7 @@ rules:   regex-based only — no .NET SDK dependency required.
          Namespace-qualified exports: Class::Method for public members.
          Attributes ([Attribute]) before declarations are ignored.
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | initial C# adapter
+         claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed class detection inside namespace blocks: allow indented class/interface/enum/struct/record
 """
 
 from __future__ import annotations
@@ -17,7 +18,7 @@ from pathlib import Path
 from .base import LanguageAdapter, LangFileInfo
 
 _CLASS_RE  = re.compile(
-    r"^(?:public\s+)?(?:abstract\s+|sealed\s+|static\s+|partial\s+)*"
+    r"^\s*(?:public\s+)?(?:abstract\s+|sealed\s+|static\s+|partial\s+)*"
     r"(?:class|interface|enum|struct|record)\s+(\w+)",
     re.MULTILINE,
 )
