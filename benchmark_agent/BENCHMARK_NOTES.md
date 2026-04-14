@@ -112,18 +112,51 @@ We use the **Wilcoxon signed-rank test** (one-tailed, H1: annotated condition > 
 
 ## Running the Benchmark
 
+### Quick Start (from repo root)
+
 ```bash
-# 1. Set up agent-annotated variants (one-time)
-GEMINI_API_KEY=... python swebench/setup_agent_annotated.py
+cd benchmark_agent/swebench
 
-# 2. Run benchmark (3 runs per task, temperature=0.1)
-GEMINI_API_KEY=... python swebench/run_agent_multi.py \
-  --model gemini-2.5-flash --runs 3 --temperature 0.1
+# 1. List available tasks
+python3 setup_benchmark.py --list --repo django/django
 
-# 3. Analyse results
-python swebench/analyze_multi.py
-python swebench/analyze_multi.py --qualitative       # which rules guided the agent
-python swebench/analyze_multi.py --annotation-cost   # auto-annotation overhead
+# 2. Download 50 Django tasks (multi-file first)
+python3 setup_benchmark.py --repo django/django --n-tasks 50 --multi-file-first
+
+# 3. Annotate with CodeDNA (structural only, free)
+python3 setup_benchmark.py --repo django/django --annotate --no-llm
+
+# 4. Annotate with LLM for rules: (optional, better quality)
+python3 setup_benchmark.py --repo django/django --annotate --model ollama/llama3
+
+# 5. Run benchmark
+python3 run_agent_multi.py --model deepseek-chat --runs 3 --temperature 0.1
+
+# 6. Analyse results
+python3 analyze_multi.py
+python3 analyze_multi.py --qualitative       # which rules guided the agent
+python3 analyze_multi.py --annotation-cost   # auto-annotation overhead
+```
+
+### Script Reference
+
+| Script | Purpose |
+|---|---|
+| `setup_benchmark.py` | Download repos from SWE-bench Verified, prepare control/ + codedna/ |
+| `run_agent_multi.py` | Run agent on tasks (17 models, 4 providers, local via Ollama) |
+| `analyze_multi.py` | Analyse results, Wilcoxon test, per-task breakdown |
+| `setup_agent_annotated.py` | Create agent_annotated/ variant (auto-generated annotations) |
+| `annotator.py` | Manual annotation with Gemini |
+
+### setup_benchmark.py Options
+
+```bash
+python3 setup_benchmark.py --list --repo django/django          # list tasks + status
+python3 setup_benchmark.py --repo django/django --n-tasks 50    # download 50 tasks
+python3 setup_benchmark.py --repo django/django --multi-file-first  # prioritize 2+ file tasks
+python3 setup_benchmark.py --all                                 # all 500 Verified tasks (12 repos)
+python3 setup_benchmark.py --repo django/django --annotate --no-llm  # annotate without LLM
+python3 setup_benchmark.py --repo django/django --force          # re-download everything
 ```
 
 ---
@@ -209,18 +242,23 @@ benchmark_agent/
 ├── BENCHMARK_NOTES.md                  ← this file
 ├── benchmark_server.py                 ← HTTP server + dashboard
 ├── benchmark_ui.html                   ← web dashboard
-├── projects_swebench/                  ← Django repos (3 variants per task)
+├── _repo_cache/                        ← bare git clones (cached, 1 per repo)
+├── projects_swebench/                  ← task repos (3 variants per task)
 │   └── django__django-XXXXX/
-│       ├── control/                    ← vanilla codebase
-│       ├── codedna/                    ← curated CodeDNA annotations
-│       └── agent_annotated/            ← auto-generated annotations
-│           └── .annotation_cost.json  ← cost metadata
+│       ├── control/                    ← vanilla codebase at base_commit
+│       ├── codedna/                    ← control + CodeDNA annotations
+│       ├── agent_annotated/            ← control + auto-generated annotations
+│       ├── problem_statement.txt       ← GitHub issue description
+│       └── files_in_patch.json         ← ground truth file list
 ├── runs/                               ← results per model
-│   └── <model>/results.json
+│   └── <model>/
+│       ├── results.json
+│       └── session_traces/             ← per-run tool call traces
 └── swebench/
-    ├── run_agent_multi.py              ← agent runner (3 conditions)
+    ├── setup_benchmark.py              ← download + prepare SWE-bench Verified tasks
+    ├── run_agent_multi.py              ← agent runner (17 models, 4 providers)
     ├── analyze_multi.py                ← results + Wilcoxon + qualitative
     ├── setup_agent_annotated.py        ← creates agent_annotated/ variants
-    ├── tasks.json                      ← task definitions
-    └── annotator.py                    ← CodeDNA annotation generator (manual)
+    ├── annotator.py                    ← CodeDNA annotation generator (Gemini)
+    └── tasks.json                      ← task definitions
 ```
