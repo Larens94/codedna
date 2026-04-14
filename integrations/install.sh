@@ -126,25 +126,21 @@ do_claude_hooks() {
         "matcher": "Write|Edit",
         "hooks": [{
           "type": "command",
-          "command": "f=$(jq -r '.tool_input.file_path // empty'); [[ \"$f\" == *.py ]] && echo '{\"hookSpecificOutput\":{\"hookEventName\":\"PreToolUse\",\"additionalContext\":\"[CodeDNA] Python file. Before editing: (1) read the docstring, (2) verify exports/used_by/rules/agent, (3) plan agent: update with the current session.\"}}' || true",
+          "command": "f=$(python3 -c \"import json,sys;print(json.load(sys.stdin).get('tool_input',{}).get('file_path',''))\" 2>/dev/null || true); case \"$f\" in *.py|*.ts|*.tsx|*.js|*.jsx|*.mjs|*.go|*.rs|*.java|*.kt|*.kts|*.swift|*.rb|*.cs|*.php) [[ -f \"$f\" ]] && head -15 \"$f\" | grep -q 'exports:' && echo \"{\\\"hookSpecificOutput\\\":{\\\"hookEventName\\\":\\\"PreToolUse\\\",\\\"additionalContext\\\":\\\"[CodeDNA] Source file. Before editing: (1) read the docstring, (2) verify exports/used_by/rules/agent, (3) plan agent: update with the current session.\\\"}}\" ;; esac; true",
           "timeout": 5
         }]
       }
     ],
     "PostToolUse": [
       {
-        "matcher": "Write",
-        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_codedna.sh", "timeout": 10, "statusMessage": "CodeDNA v0.8 — validating annotations..." }]
-      },
-      {
-        "matcher": "Edit",
+        "matcher": "Write|Edit",
         "hooks": [{ "type": "command", "command": "bash tools/claude_hook_codedna.sh", "timeout": 10, "statusMessage": "CodeDNA v0.8 — validating annotations..." }]
       },
       {
         "matcher": "Write|Edit",
         "hooks": [{
           "type": "command",
-          "command": "f=$(jq -r '.tool_input.file_path // empty'); [[ \"$f\" == *.py ]] && [[ -f \"$f\" ]] && { today=$(date +%Y-%m-%d); header=$(head -30 \"$f\"); issues=(); echo \"$header\" | grep -q 'exports:' || issues+=(\"missing exports:\"); echo \"$header\" | grep -q 'used_by:' || issues+=(\"missing used_by:\"); echo \"$header\" | grep -q 'rules:' || issues+=(\"missing rules:\"); echo \"$header\" | grep -q 'agent:' || issues+=(\"missing agent:\"); echo \"$header\" | grep -q \"$today\" || issues+=(\"agent: not updated to $today\"); if [[ ${#issues[@]} -gt 0 ]]; then msg=$(IFS=', '; echo \"${issues[*]}\"); echo \"{\\\"hookSpecificOutput\\\":{\\\"hookEventName\\\":\\\"PostToolUse\\\",\\\"additionalContext\\\":\\\"[CodeDNA] $f — $msg\\\"}}\"; fi; } || true",
+          "command": "f=$(python3 -c \"import json,sys;print(json.load(sys.stdin).get('tool_input',{}).get('file_path',''))\" 2>/dev/null || true); case \"$f\" in *.py|*.ts|*.tsx|*.js|*.jsx|*.mjs|*.go|*.rs|*.java|*.kt|*.kts|*.swift|*.rb|*.cs|*.php) [[ -f \"$f\" ]] && { today=$(date +%Y-%m-%d); header=$(head -30 \"$f\"); issues=(); echo \"$header\" | grep -q 'exports:' || issues+=(\"missing exports:\"); echo \"$header\" | grep -q 'used_by:' || issues+=(\"missing used_by:\"); echo \"$header\" | grep -q 'rules:' || issues+=(\"missing rules:\"); echo \"$header\" | grep -q 'agent:' || issues+=(\"missing agent:\"); echo \"$header\" | grep -q \"$today\" || issues+=(\"agent: not updated to $today\"); if [[ ${#issues[@]} -gt 0 ]]; then msg=$(IFS=', '; echo \"${issues[*]}\"); echo \"{\\\"hookSpecificOutput\\\":{\\\"hookEventName\\\":\\\"PostToolUse\\\",\\\"additionalContext\\\":\\\"[CodeDNA] $f — $msg\\\"}}\"; fi; } ;; esac; true",
           "timeout": 5
         }]
       }

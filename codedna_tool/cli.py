@@ -575,7 +575,13 @@ def collect_files(target: Path, exclude: list[str], extensions: Optional[list[st
         extensions = [".py"]
     if target.is_file():
         return [target] if _get_extension(target) in extensions else []
-    skip = {"__pycache__", ".git", "venv", ".venv", "node_modules", "migrations"}
+    skip = {
+        "__pycache__", ".git", ".hg", ".svn",
+        "venv", ".venv", "env", ".env",
+        "node_modules", "vendor", "bower_components",
+        "dist", "build", ".tox", ".mypy_cache", ".ruff_cache",
+        "migrations", "__pypackages__",
+    }
     files = []
     for f in sorted(target.rglob("*")):
         if not f.is_file():
