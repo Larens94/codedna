@@ -7,6 +7,7 @@ rules:   Never modify existing control/ or codedna/ directories unless --force i
          Annotation uses codedna CLI (codedna init) — not the Gemini annotator.
          Repo clones are cached in _repo_cache/ — never delete during a run.
 agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_003 | initial benchmark setup script
+         claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_004 | moved to labs/benchmark/, updated paths
 
 USAGE:
     # Step 1: List available tasks
@@ -38,8 +39,8 @@ import sys
 import time
 from pathlib import Path
 
-PROJECTS_DIR = Path(__file__).parent.parent / "projects_swebench"
-REPO_CACHE   = Path(__file__).parent.parent / "_repo_cache"
+PROJECTS_DIR = Path(__file__).parent / "projects"
+REPO_CACHE   = Path(__file__).parent / "_repo_cache"
 TASKS_FILE   = Path(__file__).parent / "tasks.json"
 
 
