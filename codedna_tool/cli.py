@@ -28,11 +28,11 @@ used_by: none — CLI entrypoint, called via `codedna` console script
 rules:   L2 (function Rules:) applies Python AST only; language adapters are L1-only.
          LLM calls are capped at 2 per Python file; --no-llm skips all LLM calls.
          _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
-agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_001 | initial CodeDNA annotation pass; fixed cross-package used_by graph
-         claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_002 | added --extensions flag, run_lang_files(), multi-language pipeline; updated collect_files, cmd_check
+agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_002 | added --extensions flag, run_lang_files(), multi-language pipeline; updated collect_files, cmd_check
          claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_004 | added cmd_manifest (Level 0 auto-generation); fixed --exclude glob (fnmatch), graceful LLM fallback, __init__ skip in purpose heuristic
          claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | added cmd_install subcommand: pre-commit hook + AI tool prompt + .codedna setup in one command
-         claude-opus-4-6 | anthropic | 2026-04-07 | s_20260407_001 | fixed 3 install bugs: (1) opencode missing JS plugin — added _install_opencode_hooks, (2) -hooks variants not auto-including base prompt — added _HOOKS_BASE_MAP + auto-insert in dispatch, (3) install.sh claude-hooks not calling do_claude
+         claude-opus-4-6 | anthropic | 2026-04-07 | s_20260407_001 | fixed 3 install bugs: opencode JS plugin, -hooks base prompt, install.sh claude-hooks
+         claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | fixed --no-llm writing haiku model_id in agent: field — now writes "codedna-cli (no-llm)"
 """
 
 import argparse
@@ -692,8 +692,9 @@ def run_lang_files(
             except Exception:
                 rules_str = "none"
 
+        agent_id = "codedna-cli (no-llm)" if no_llm else model
         new_source = adapter.inject_header(
-            source, info.rel, exports_str, used_by_str, rules_str, model, today
+            source, info.rel, exports_str, used_by_str, rules_str, agent_id, today
         )
 
         if new_source != source:
@@ -840,7 +841,8 @@ def run(
                     llm_calls += 1
 
                 ub = ub_graph.get(rel, {})
-                docstring = build_module_docstring(info, ub, rules, model)
+                agent_id = "codedna-cli (no-llm)" if no_llm else model
+                docstring = build_module_docstring(info, ub, rules, agent_id)
                 modified = inject_module_docstring(modified, docstring)
                 l1_count += 1
                 file_changed = True

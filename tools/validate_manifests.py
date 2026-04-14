@@ -7,10 +7,10 @@ used_by: none — standalone CLI tool
 rules:   validates v0.8 format only (exports:/used_by:/rules:/agent: in module docstring).
          Python uses AST; other languages use regex on first 40 lines.
          read-only — never modifies files.
-agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_001 | rewritten from v0.3 to v0.8
-         claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | added template engine extensions to COMMENT_PREFIX, added _get_ext for .blade.php, fixed validate_directory to use _get_ext, added _INNER_PREFIXES for block-comment parsing
-         claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | fixed _extract_python: return (None, {}) instead of (None, None) for valid Python without docstring, so validate_file shows "No module docstring found" instead of "Cannot parse file"
+agent:   claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | added template engine extensions to COMMENT_PREFIX, added _get_ext for .blade.php, fixed validate_directory to use _get_ext, added _INNER_PREFIXES for block-comment parsing
+         claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | fixed _extract_python: return (None, {}) for valid Python without docstring
          claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | added .volt to COMMENT_PREFIX for Phalcon Volt template validation
+         claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | added .php, .cs, .mjs, .kts to COMMENT_PREFIX — validator now covers all 11 languages
 
 Usage:
     python tools/validate_manifests.py [path] [-v] [--extensions py ts go]
@@ -37,8 +37,9 @@ SKIP_DIRS = {"__pycache__", ".git", "venv", ".venv", "node_modules", "dist", "bu
 
 # Comment style by extension (for non-Python languages)
 COMMENT_PREFIX = {
-    ".js": "//", ".ts": "//", ".jsx": "//", ".tsx": "//",
-    ".go": "//", ".rs": "//", ".java": "//", ".kt": "//", ".swift": "//",
+    ".js": "//", ".ts": "//", ".jsx": "//", ".tsx": "//", ".mjs": "//",
+    ".go": "//", ".rs": "//", ".java": "//", ".kt": "//", ".kts": "//",
+    ".swift": "//", ".cs": "//", ".php": "//",
     ".rb": "#", ".sh": "#",
     # Template engines — use block comment openers as prefix for field detection
     ".blade.php": "{{--", ".j2": "{#", ".jinja2": "{#", ".twig": "{#", ".volt": "{#",
@@ -255,7 +256,7 @@ def validate_file(path: Path) -> ValidationResult:
     elif ext in COMMENT_PREFIX:
         _, fields = _extract_other(path, COMMENT_PREFIX[ext])
         if fields is None:
-            result.warn(f"No CodeDNA comment block found in {ext} file — skipping")
+            result.err(f"No CodeDNA comment block found — add a CodeDNA v0.8 header ({ext} file)")
             return result
     else:
         result.warn(f"Extension {ext!r} not supported — skipping")

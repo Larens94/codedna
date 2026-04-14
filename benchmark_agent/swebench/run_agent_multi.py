@@ -1,32 +1,32 @@
-"""
-swebench/run_agent_multi.py — Runs CodeDNA benchmark on multiple LLM providers.
+"""run_agent_multi.py — Runs CodeDNA benchmark on multiple LLM providers.
 
-deps:    google-genai, anthropic, openai — install with: pip install anthropic openai
-exports: results_<model>/results.json per model
-         runs/<model>/session_traces/<session_id>.json per run (v0.8)
+exports: runs/<model>/results.json per model
+         runs/<model>/session_traces/<session_id>.json per run
+used_by: labs/benchmark/ → research group workflow
+         benchmark_agent/BENCHMARK_NOTES.md → documentation
 rules:   Same system prompt, same tools, same tasks for all models.
          Only the LLM client changes — comparison is clean.
          Two conditions: control (no annotations), codedna (curated).
          trace: is ordered and timestamped — DO NOT sort or reorder entries.
          session_id format: bench_<model>_<task_short>_<condition>_<YYYYMMDD_HHMMSS>
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-20 | s_20260320_003 | added session trace logging
+         claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | added --local-model and --base-url for Ollama/vLLM support
          message: "reasoning still not captured — trace has tool sequence + timestamps but not
-                  model chain-of-thought. Models with extended thinking (claude-opus-4-6 budget_tokens)
-                  could expose thinking blocks — worth capturing separately in a future pass"
+                  model chain-of-thought. Worth capturing in a future pass."
 
 Usage:
-  # Test all configured models
-  GEMINI_API_KEY=... ANTHROPIC_API_KEY=... OPENAI_API_KEY=... python run_agent_multi.py
+  # Test a specific model (API)
+  python3 run_agent_multi.py --model gemini-2.5-flash
+  python3 run_agent_multi.py --model deepseek-chat --runs 3 --temperature 0.1
 
-  # Test a specific model
-  python run_agent_multi.py --model gemini-2.5-flash
-  python run_agent_multi.py --model claude-sonnet-4-6
+  # Test a local model via Ollama
+  python3 run_agent_multi.py --local-model qwen2.5:32b
 
-  # Multi-run for statistical significance
-  python run_agent_multi.py --model gemini-2.5-flash --runs 3 --temperature 0.1
+  # Local model with custom URL (vLLM)
+  python3 run_agent_multi.py --local-model my-model --base-url http://localhost:8000/v1
 
-  # Run only specific condition (faster)
-  python run_agent_multi.py --model gemini-2.5-flash --condition codedna
+  # Run only specific condition
+  python3 run_agent_multi.py --model gemini-2.5-flash --condition codedna
 """
 
 import argparse
@@ -476,12 +476,13 @@ def run_openai_compat(problem: str, repo_root: Path, model_id: str,
     except ImportError:
         print("ERROR: pip install openai"); sys.exit(1)
 
-    if "deepseek" in model_id.lower():
+    if base_url and ("localhost" in base_url or "127.0.0.1" in base_url):
+        api_key = "local"  # local models don't need a real key
+    elif "deepseek" in model_id.lower():
         api_key = os.getenv("DEEPSEEK_API_KEY", "")
         base_url = base_url or "https://api.deepseek.com/v1"
     else:
         api_key = os.getenv("OPENAI_API_KEY", "")
-        base_url = base_url
 
     if not api_key:
         print(f"ERROR: set API key for {model_id}"); sys.exit(1)
@@ -681,7 +682,7 @@ def dispatch(problem, repo_root, cfg, max_turns=15, temperature=0, system_prompt
     elif p == "anthropic":
         return run_anthropic(problem, repo_root, m, max_turns, temperature=temperature, system_prompt=system_prompt)
     elif p == "openai":
-        return run_openai_compat(problem, repo_root, m, max_turns=max_turns, temperature=temperature, system_prompt=system_prompt)
+        return run_openai_compat(problem, repo_root, m, base_url=cfg.get("base_url"), max_turns=max_turns, temperature=temperature, system_prompt=system_prompt)
     elif p == "codex":
         return run_openai_responses(problem, repo_root, m, max_turns, temperature=temperature, system_prompt=system_prompt)
     else:
@@ -706,10 +707,24 @@ def main():
                         help="Which condition(s) to run (default: all)")
     parser.add_argument("--task", nargs="+",
                         help="Run only specific task IDs, e.g. --task 14480 13495")
+    parser.add_argument("--local-model",
+                        help="Local model via Ollama/vLLM (e.g. qwen2.5:32b, llama3.1:70b)")
+    parser.add_argument("--base-url", default=None,
+                        help="Base URL for local models (default: http://localhost:11434/v1 for Ollama)")
     args = parser.parse_args()
 
     if args.temperature is None:
         args.temperature = 0.1 if args.runs > 1 else 0.0
+
+    # Register local model on-the-fly
+    if args.local_model:
+        local_name = f"local-{args.local_model.replace(':', '-').replace('/', '-')}"
+        MODELS[local_name] = {
+            "provider": "openai",
+            "model_id": args.local_model,
+            "base_url": args.base_url or "http://localhost:11434/v1",
+        }
+        args.model = local_name
 
     models_to_run = [args.model] if args.model else list(MODELS.keys())
 

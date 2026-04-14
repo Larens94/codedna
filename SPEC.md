@@ -392,7 +392,8 @@ The Module Header is written as a **Python module docstring** (triple-quoted str
 exports: <symbol(signature)> → <return_type> | none
 used_by: <file> → <symbol> | none
 rules:   <hard constraints for AI agents; what to do and what to avoid> | none
-agent:   <model-id> | <YYYY-MM-DD> | <what I did and what I noticed — one or two lines>
+agent:   <model-id> | <provider> | <YYYY-MM-DD> | <session_id> | <what I did and what I noticed>
+         message: "<open hypothesis or observation for the next agent>"
 """
 ```
 
@@ -408,7 +409,7 @@ The `agent:` field is **multi-entry with a rolling window** — each agent sessi
 | `exports` | ✅ | Public API with signatures |
 | `used_by` | ✅ | Inverse of deps; who calls this file's exports. Optional `[cascade]` tag marks targets that **MUST** be updated when exports change. |
 | `rules` | ✅ | **Architectural truth channel.** Hard constraints, domain knowledge, what to do and what to avoid. Updated in-place — always reflects the current correct state. |
-| `agent` | ✅ | **Session narrative channel.** Rolling window of the last 5 agent entries. Format: `model-id \| YYYY-MM-DD \| message`. Drop the oldest when adding a 6th. Full history in git and `.codedna`. |
+| `agent` | ✅ | **Session narrative channel.** Rolling window of the last 5 agent entries. Format: `model-id \| provider \| YYYY-MM-DD \| session_id \| narrative`. Drop the oldest when adding a 6th. Full history in git and `.codedna`. |
 
 ### 4.4 `rules:` Field — The Inter-Agent Communication Channel
 

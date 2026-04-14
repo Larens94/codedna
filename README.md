@@ -121,8 +121,8 @@ While binary is the lowest layer for execution, structured source + annotations 
 
 Setting up CodeDNA is two steps:
 
-1. **Install the integration for your AI tool** — tells the agent how to follow the protocol (Option 1 below)
-2. **Annotate your existing codebase** — adds CodeDNA headers to files already in your repo (Option 2 below)
+1. **Install the integration for your AI tool** — tells the agent how to follow the protocol
+2. **Annotate your existing codebase** — adds CodeDNA headers to files already in your repo
 
 For a **new project**, step 1 is enough — the agent annotates files as it creates and edits them.
 For an **existing codebase**, run both: step 1 first, then step 2 to bulk-annotate what's already there.
@@ -131,7 +131,29 @@ For an **existing codebase**, run both: step 1 first, then step 2 to bulk-annota
 
 ---
 
-### Option 1 — AI Tool Integration (Claude Code, Cursor, Copilot, Windsurf, OpenCode)
+### Option 1 — Claude Code Plugin (recommended)
+
+One command, everything included — 4 hooks (SessionStart, PreToolUse, PostToolUse, Stop) + 4 skills:
+
+```bash
+claude plugin marketplace add Larens94/codedna
+claude plugin install codedna@codedna
+```
+
+**What you get:**
+- `/codedna:init` — annotate files from the prompt
+- `/codedna:check` — coverage report
+- `/codedna:manifest` — view `.codedna`
+- `/codedna:impact` — show files impacted by changes
+- **Automatic enforcement** — validates annotations on every file write/edit, reminds agent to read `.codedna` at session start, reminds to update session log at stop
+
+No API key. No extra cost. Uses your existing Claude subscription.
+
+> **Official Anthropic directory:** the plugin has been submitted and is currently **under review**. Once approved, installation will simplify to `claude plugin install codedna`.
+
+---
+
+### Option 2 — Other AI Tools (Cursor, Copilot, Cline, OpenCode, Windsurf)
 
 Run one command for your tool:
 
@@ -139,36 +161,31 @@ Run one command for your tool:
 bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) <tool>
 ```
 
-| Tool | Option | Enforcement |
+| Tool | Command | Enforcement |
 |---|---|---|
-| **Claude Code** | **`claude-hooks`** | ✅ Active — 4 hooks + `.claude/settings.local.json` |
 | **Cursor** | **`cursor-hooks`** | ✅ Active — hook scripts in `.cursor/hooks/` (v1.7+) |
 | **GitHub Copilot** | **`copilot-hooks`** | ✅ Active — `.github/hooks/hooks.json` + scripts |
 | **Cline** | **`cline-hooks`** | ✅ Active — hook scripts in `.clinerules/hooks/` (v3.36+) |
 | **OpenCode** | **`opencode`** | ✅ Active — JS plugin in `.opencode/plugins/` |
 | Windsurf | `windsurf` | ⚠️ Instructions only |
 | Antigravity / custom agents | `agents` | ⚠️ Instructions only |
-| Aider | `claude` | ⚠️ Instructions only |
+| Claude Code (manual) | `claude-hooks` | ✅ Active — alternative to Option 1 if plugin marketplace is unavailable |
 
-> **Active enforcement** = hooks validate annotations on every file write/edit automatically, regardless of session length or task complexity. Full reference: [`integrations/README.md`](./integrations/README.md#install-for-your-tool).
-
-> **`all`** installs everything at once — only useful for teams where each developer uses a different tool.
-
-**Done. Your AI tool now follows the CodeDNA protocol.** If you have existing files to annotate, continue with Option 2.
+> **Active enforcement** = hooks validate annotations on every file write/edit automatically. Full reference: [`integrations/README.md`](./integrations/README.md#install-for-your-tool).
 
 ---
 
-### Option 2 — CLI: annotate an existing codebase
+### Option 3 — CLI: annotate an existing codebase
 
 Annotate an entire project from the terminal. Supports local models via Ollama at zero cost:
 
 ```bash
 pip install git+https://github.com/Larens94/codedna.git
 
-# Free — structural only, no AI
+# Free — structural only, no AI (exports + used_by via AST)
 codedna init /path/to/project --no-llm
 
-# Free — local model via Ollama
+# Free — local model via Ollama (adds rules: field)
 codedna init /path/to/project --model ollama/llama3
 
 # Paid — Anthropic Haiku (~$1-3 for a Django project)
@@ -191,21 +208,6 @@ Supported models via `--model`:
 | OpenAI | `openai/gpt-4o-mini` | Low |
 | Google | `gemini/gemini-2.0-flash` | Low |
 | None | `--no-llm` | Free |
-
----
-
-### Option 3 — Claude Code Plugin
-
-Install via the independent marketplace (available now):
-
-```bash
-claude plugin marketplace add Larens94/codedna
-claude plugin install codedna@codedna
-```
-
-No API key. No extra cost. Uses your existing Claude subscription. Adds `/codedna:init`, `/codedna:check`, `/codedna:manifest`, `/codedna:impact` skills + automatic annotation validation on every file write.
-
-> **Official Anthropic directory:** the plugin has been submitted and is currently **under review**. Once approved, installation will simplify to `claude plugin install codedna`.
 
 ---
 

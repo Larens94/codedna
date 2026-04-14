@@ -232,6 +232,7 @@ All 3 models complete. Gemini 2.5 Pro ctrl=60% — identical to Flash, not highe
 3. **Rules authorship (agent_annotated)**: fully automatic — no human involvement after setup. Represents the realistic adoption path for new codebases.
 4. **Annotation effort**: Annotation cost (chars generated, time) is measured and reported for the `agent_annotated` condition. Curated `codedna` annotation cost is not measured but is a real consideration for adoption.
 5. **Single domain**: All tasks are from Django (Python web framework). Generalisation to other languages/frameworks is not tested in this benchmark.
+6. **Dataset note**: The 5 tasks in this benchmark are from **SWE-bench Full** (2,294 tasks), not SWE-bench Verified (500 tasks). The Verified subset — the gold standard used in publications — does not include these 5 tasks. An expanded benchmark on SWE-bench Verified is in progress in `labs/benchmark/`.
 
 ---
 

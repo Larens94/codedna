@@ -26,7 +26,7 @@ fi
 
 # Skip non-source files
 case "$FILE" in
-  *.py|*.ts|*.tsx|*.js|*.mjs|*.go|*.rs|*.java) ;;
+  *.py|*.ts|*.tsx|*.js|*.jsx|*.mjs|*.go|*.rs|*.java|*.kt|*.kts|*.swift|*.rb|*.cs|*.php) ;;
   *) exit 0 ;;
 esac
 

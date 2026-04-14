@@ -1,27 +1,57 @@
-.DS_Store
+# Python
 __pycache__/
 *.pyc
 *.pyo
+*.pyd
 *.egg-info/
 *.egg
 dist/
 build/
+*.whl
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Virtual environments
+venv/
+.venv/
+benchmark_agent/venv/
+
+# Environment
 .env
 .env.*
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
 *.log
-benchmark_agent/venv/
+
+# Node
+**/node_modules/
+
+# Benchmark — generated data (large)
 benchmark_agent/_repo_cache/
+labs/benchmark/_repo_cache/
+labs/benchmark/projects/
 projects_swebench/
-note_dev_2
-.claude/agents/ai-benchmark-validator.md
-.claude/scheduled_tasks.lock
-nlnet_application_draft_en.md
-nlnet_application_draft_it_2.md
-nlnet_publish.md
-paper/zenodo/codedna_paper_licenza1.pdf
+
+# Experiments — run outputs (large)
+experiments/runs/run_20260329_163535
+
+# Claude Code — local settings
 CLAUDE.md
+.claude/agents/ai-benchmark-validator.md
 .claude/agents/codedna-protocol-enforcer.md
 .claude/agent-memory/
-experiments/runs/run_20260329_163535
-**/node_modules
+.claude/scheduled_tasks.lock
+.claude/settings.json
+
+# Drafts — not for repo
+note_dev_2
+nlnet_application_draft_en.md
+nlnet_application_draft_it_2.md
 nlnet_application_draft_en_1_1.md
+nlnet_publish.md
+paper/zenodo/codedna_paper_licenza1.pdf
