@@ -10,7 +10,8 @@ rules:   All adapters must be stateless (no instance state).
          _build_header_lines() MUST emit agent: with 5 fields: model-id | provider | YYYY-MM-DD | session_id | narrative.
          Never change the field order in _build_header_lines() — downstream validators parse by position.
 agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_001 | initial base adapter for multi-language support
-         claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_002 | CodeDNA v0.8 compliance pass: fixed used_by separator to →, added [cascade] tags, added session_id to agent: field, added Rules: to _build_header_lines, fixed generated agent: line to emit 5 fields
+         claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_002 | v0.8 compliance: fixed used_by →, [cascade] tags, 5-field agent: line
+         claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | fixed has_codedna_header to detect headers in any comment format (// # * /** {{-- {# <%#), prevents duplicate headers on re-run
          message: "_build_header_lines currently hard-codes provider as unknown and session_id as unknown — callers should pass these explicitly; consider updating inject_header signature in a future pass"
 """
 
@@ -55,11 +56,20 @@ class LanguageAdapter(ABC):
         """Prepend (or replace) a CodeDNA comment block in source. Return new source."""
 
     def has_codedna_header(self, source: str) -> bool:
-        """Quick check: does source already contain a CodeDNA block?"""
+        """Quick check: does source already contain a CodeDNA block in any comment format?
+
+        Rules:   Must detect headers in // comments, # comments, /** */ blocks,
+                 and {# #} / {{-- --}} template blocks. Prevents duplicate headers
+                 when re-running codedna init on already-annotated files.
+        """
         for line in source.splitlines()[:30]:
+            # Strip all common comment prefixes: //, #, *, {{--, {#, <%#, @*, <!--
             stripped = line.strip()
-            content = stripped[len(self.comment_prefix):].strip() if stripped.startswith(self.comment_prefix) else stripped
-            if content.startswith("exports:") or content.startswith("used_by:"):
+            for prefix in (self.comment_prefix, "//", "#", "*", "{{--", "{#", "<%#", "@*", "<!--"):
+                if stripped.startswith(prefix):
+                    stripped = stripped[len(prefix):].strip()
+                    break
+            if stripped.startswith("exports:") or stripped.startswith("used_by:"):
                 return True
         return False
 
