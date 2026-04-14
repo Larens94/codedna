@@ -54,15 +54,37 @@ Field guide:
 
 ## Writing critical functions
 
-For functions with non-obvious domain constraints, add a `Rules:` docstring:
+Every public function **must** have a `Rules:` docstring:
 
 ```python
 def my_function(arg: type) -> return_type:
     """Short description.
 
     Rules:   What the agent MUST or MUST NOT do here.
+    message: model-id | YYYY-MM-DD | observation for next agent
     """
 ```
+
+## Inline annotations on complex logic
+
+When writing or editing code blocks with non-obvious logic (complex conditions, algorithms, loops with business rules, edge cases), add a `# Rules:` or `# message:` comment **above** the block:
+
+```python
+# Rules: skip cancelled orders — status=4 means cancelled in legacy DB
+active = [o for o in orders if o.status != 4]
+
+for order in active:
+    # message: exchange rate conversion uses daily rate, not real-time
+    amount = order.amount * get_exchange_rate(order.currency)
+
+    if amount > config.threshold:
+        # Rules: threshold check MUST happen before tax — tax is on gross amount
+        apply_tax(order)
+```
+
+**When to add:** business-rule conditionals, loops with filtering/transformation, algorithm steps where order matters, edge cases or workarounds.
+
+**When NOT to add:** simple getters, obvious control flow, standard library usage.
 
 ## Editing files
 

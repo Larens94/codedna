@@ -18,15 +18,33 @@ agent:   <model-id> | <YYYY-MM-DD> | <what you did and what you noticed>
 """
 ```
 
-## Function-level Rules (for critical functions)
+## Writing critical functions
+
+Every public function **must** have a `Rules:` docstring:
 
 ```python
 def critical_function(arg: type) -> return_type:
     """Short description.
 
     Rules:   What MUST or MUST NOT happen here.
+    message: model-id | YYYY-MM-DD | observation for next agent
     """
 ```
+
+## Inline annotations on complex logic
+
+When writing or editing code blocks with non-obvious logic, add a `# Rules:` or `# message:` comment above the block:
+
+```python
+# Rules: skip cancelled orders — status=4 means cancelled in legacy DB
+active = [o for o in orders if o.status != 4]
+
+# message: exchange rate uses daily rate, not real-time
+amount = order.amount * get_exchange_rate(order.currency)
+```
+
+When to add: business-rule conditionals, loops with filtering, algorithm steps where order matters, edge cases.
+When NOT to add: simple getters, obvious control flow, standard library usage.
 
 ## On session start
 
@@ -43,7 +61,7 @@ Read `.codedna` at repo root — project structure and last 3-5 `agent_sessions:
 ## On generate: always do these
 
 1. Write module docstring before imports (with `exports:`, `used_by:`, `rules:`, `agent:`)
-2. Add `Rules:` docstring to functions with non-obvious domain constraints
+2. Every public function **must** have a `Rules:` docstring
 3. Use semantic names: `list_dict_orders_from_db = query(sql)` not `data = query(sql)`
 
 ## `message:` — Agent Chat Layer (v0.8)

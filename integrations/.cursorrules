@@ -28,10 +28,12 @@ agent:   <model-id> | <provider> | <YYYY-MM-DD> | <session_id> | <what you did a
 ## Rules on generate
 
 - Write the module docstring before any imports
-- For critical functions, add a `Rules:` docstring
+- Every public function **must** have a `Rules:` docstring
 - Use semantic variable names: `list_dict_users_from_db = get_users()`
 
-## Function-level annotations (sliding-window safety)
+## Writing critical functions
+
+Every public function **must** have a `Rules:` docstring:
 
 ```python
 def process(arg: type) -> return_type:
@@ -41,6 +43,21 @@ def process(arg: type) -> return_type:
     message: <model-id> | <date> | open observation for next agent (optional)
     """
 ```
+
+## Inline annotations on complex logic
+
+When writing or editing code blocks with non-obvious logic, add a `# Rules:` or `# message:` comment above the block:
+
+```python
+# Rules: skip cancelled orders — status=4 means cancelled in legacy DB
+active = [o for o in orders if o.status != 4]
+
+# message: exchange rate uses daily rate, not real-time
+amount = order.amount * get_exchange_rate(order.currency)
+```
+
+When to add: business-rule conditionals, loops with filtering, algorithm steps where order matters, edge cases.
+When NOT to add: simple getters, obvious control flow, standard library usage.
 
 ## `message:` — Agent Chat Layer (v0.8)
 
