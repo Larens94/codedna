@@ -75,4 +75,39 @@ if echo "$OUTPUT" | grep -q "^FAIL "; then
     exit 0
 fi
 
+# L2 check: public functions without Rules: docstring (Python only)
+if [[ "$FILE_PATH" == *.py ]]; then
+    L2_ISSUES=$(python3 -c "
+import ast, sys
+try:
+    with open(sys.argv[1], 'r', encoding='utf-8', errors='ignore') as f:
+        tree = ast.parse(f.read())
+    for node in ast.walk(tree):
+        if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+            if node.name.startswith('_'):
+                continue
+            doc = ast.get_docstring(node) or ''
+            if 'Rules:' not in doc:
+                print(f'  L2: {node.name}() (line {node.lineno}) — missing Rules: docstring')
+except Exception:
+    pass
+" "$FILE_PATH" 2>/dev/null || true)
+
+    if [[ -n "$L2_ISSUES" ]]; then
+        echo ""
+        echo "━━━ CodeDNA v0.8 — L2 function annotations ━━━"
+        echo "File: $FILE_PATH"
+        echo "$L2_ISSUES"
+        echo ""
+        echo "Add Rules: and message: to public function docstrings:"
+        echo '  def my_function():'
+        echo '      """Short description.'
+        echo ''
+        echo '      Rules:   constraint the agent must respect'
+        echo '      message: model-id | YYYY-MM-DD | observation for next agent'
+        echo '      """'
+        echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    fi
+fi
+
 exit 0

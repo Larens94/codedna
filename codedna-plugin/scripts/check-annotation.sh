@@ -1,14 +1,14 @@
 #!/usr/bin/env bash
 # CodeDNA post-write annotation checker.
 # Receives PostToolUse event JSON on stdin.
-# Outputs a warning to stdout if the written file lacks a CodeDNA module annotation.
+# Checks L1 (module header) and L2 (function Rules:/message:) annotations.
 
 set -euo pipefail
 
 # Read event JSON from stdin
 EVENT=$(cat)
 
-# Extract file path (Write uses file_path, Edit uses file_path)
+# Extract file path
 FILE=$(echo "$EVENT" | python3 -c "
 import sys, json
 try:
@@ -35,8 +35,8 @@ if [[ ! -f "$FILE" ]]; then
   exit 0
 fi
 
-# Check for CodeDNA annotation
-HAS_ANNOTATION=$(python3 - "$FILE" <<'PYEOF'
+# Check L1 (module header) and L2 (function docstrings) annotations
+python3 - "$FILE" <<'PYEOF'
 import sys, ast
 
 filepath = sys.argv[1]
@@ -47,7 +47,9 @@ try:
 except Exception:
     sys.exit(0)
 
-# Python: check module docstring
+notices = []
+
+# ── L1: Module header ──
 if filepath.endswith('.py'):
     try:
         tree = ast.parse(src)
@@ -56,27 +58,51 @@ if filepath.endswith('.py'):
                 and isinstance(tree.body[0].value, ast.Constant)
                 and isinstance(tree.body[0].value.value, str)):
             doc = tree.body[0].value.value
-            if 'exports:' in doc and 'used_by:' in doc:
-                sys.exit(0)
+            if 'exports:' not in doc or 'used_by:' not in doc:
+                notices.append("L1: module docstring missing exports: or used_by:")
+        else:
+            notices.append("L1: no module docstring — add CodeDNA header")
+    except SyntaxError:
+        sys.exit(0)
+
+    # ── L2: Function-level Rules: and message: ──
+    try:
+        for node in ast.walk(tree):
+            if isinstance(node, (ast.FunctionDef, ast.AsyncFunctionDef)):
+                # Skip private/dunder methods
+                if node.name.startswith('_'):
+                    continue
+                # Get docstring
+                func_doc = ast.get_docstring(node) or ""
+                if 'Rules:' not in func_doc:
+                    notices.append(f"L2: {node.name}() (line {node.lineno}) — missing Rules: docstring")
     except Exception:
         pass
-    sys.exit(1)
 
-# Other languages: check first comment block (first 20 lines)
-lines = src.splitlines()[:20]
-block = '\n'.join(lines)
-if 'exports:' in block and 'used_by:' in block:
-    sys.exit(0)
-sys.exit(1)
+else:
+    # Non-Python: check first 20 lines for L1
+    lines = src.splitlines()[:20]
+    block = '\n'.join(lines)
+    if 'exports:' not in block or 'used_by:' not in block:
+        notices.append("L1: no CodeDNA comment block found")
+
+if notices:
+    print("")
+    print("CODEDNA NOTICE: " + filepath)
+    for n in notices:
+        print("  " + n)
+    if any("L2:" in n for n in notices):
+        print("")
+        print("  Add a Rules: docstring to public functions:")
+        print('    def my_function():')
+        print('        """Short description.')
+        print('')
+        print('        Rules:   constraint the agent must respect')
+        print('        message: model-id | YYYY-MM-DD | observation for next agent')
+        print('        """')
+    print("")
+
+sys.exit(0)
 PYEOF
-)
-STATUS=$?
-
-if [[ $STATUS -ne 0 ]]; then
-  echo ""
-  echo "CODEDNA NOTICE: $FILE is missing a CodeDNA module annotation."
-  echo "Add a module docstring with exports:, used_by:, and rules: fields before the next commit."
-  echo "See: https://github.com/Larens94/codedna#writing-new-files"
-fi
 
 exit 0
