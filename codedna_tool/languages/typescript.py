@@ -7,6 +7,7 @@ rules:   regex-based only — never parse TS/JS AST (no Node.js dependency).
          Import resolution is path-only (relative imports starting with '.' or './').
 agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_001 | initial TS/JS adapter with regex-based extraction
          claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_002 | CodeDNA v0.8 compliance pass: added session_id to agent: field, added Rules: docstrings to extract_info and inject_header
+         claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed _resolve_import: check is_file() not exists() to avoid resolving directories as files
 """
 
 from __future__ import annotations
@@ -103,12 +104,18 @@ class TypeScriptAdapter(LanguageAdapter):
     def _resolve_import(current_file: Path, import_path: str, repo_root: Path) -> str | None:
         """Resolve a relative TS/JS import to a repo-relative path."""
         base = current_file.parent / import_path
-        # Try common extensions
-        for suffix in ["", ".ts", ".tsx", ".js", ".jsx", "/index.ts", "/index.js"]:
+        # Try common extensions — file extensions first, then index files
+        for suffix in [".ts", ".tsx", ".js", ".jsx", "/index.ts", "/index.js"]:
             candidate = Path(str(base) + suffix)
-            if candidate.exists():
+            if candidate.is_file():
                 try:
                     return str(candidate.relative_to(repo_root))
                 except ValueError:
                     return None
+        # Exact match only if it's a file (not a directory)
+        if base.is_file():
+            try:
+                return str(base.relative_to(repo_root))
+            except ValueError:
+                return None
         return None

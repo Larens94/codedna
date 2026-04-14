@@ -7,6 +7,7 @@ rules:   regex-based only — no Ruby interpreter dependency required.
          attr_accessor/attr_reader/attr_writer are captured as exports.
          Rails-aware: before_action, scope, has_many captured as metadata (not exports).
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | initial Ruby adapter
+         claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed nested class/module detection: allow indented class/module, method prefix uses innermost class not first module
 """
 
 from __future__ import annotations
@@ -16,8 +17,8 @@ from pathlib import Path
 
 from .base import LanguageAdapter, LangFileInfo
 
-_MODULE_RE   = re.compile(r"^module\s+(\w+)", re.MULTILINE)
-_CLASS_RE    = re.compile(r"^class\s+(\w+)", re.MULTILINE)
+_MODULE_RE   = re.compile(r"^\s*module\s+(\w+)", re.MULTILINE)
+_CLASS_RE    = re.compile(r"^\s*class\s+(\w+)", re.MULTILINE)
 _DEF_RE      = re.compile(r"^\s+def\s+(self\.)?(\w+)", re.MULTILINE)
 _ATTR_RE     = re.compile(r"^\s+attr_(?:accessor|reader|writer)\s+:(\w+)", re.MULTILINE)
 _REQUIRE_RE  = re.compile(r"^require(?:_relative)?\s+['\"]([^'\"]+)['\"]", re.MULTILINE)
@@ -72,7 +73,10 @@ class RubyAdapter(LanguageAdapter):
         private_offset = private_match.start() if private_match else len(source)
 
         # Public methods (before private boundary)
-        cls_prefix = cls_names[0] + "#" if cls_names else ""
+        # Use the last class name as prefix (innermost class for nested definitions)
+        class_only = [n for n in cls_names if n not in [m.group(1) for m in _MODULE_RE.finditer(source)]]
+        method_owner = class_only[-1] if class_only else (cls_names[-1] if cls_names else "")
+        cls_prefix = method_owner + "#" if method_owner else ""
         for m in _DEF_RE.finditer(source):
             if m.start() >= private_offset:
                 break
@@ -80,7 +84,7 @@ class RubyAdapter(LanguageAdapter):
             name = m.group(2)
             if name in ("initialize",):
                 continue
-            prefix = (cls_names[0] + "." if cls_names else "") if is_class_method else cls_prefix
+            prefix = (method_owner + "." if method_owner else "") if is_class_method else cls_prefix
             entry = f"{prefix}{name}"
             if entry not in list_str_exports:
                 list_str_exports.append(entry)
