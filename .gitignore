@@ -41,7 +41,6 @@ projects_swebench/
 experiments/runs/run_20260329_163535
 
 # Claude Code — local settings
-CLAUDE.md
 .claude/agents/ai-benchmark-validator.md
 .claude/agents/codedna-protocol-enforcer.md
 .claude/agent-memory/
