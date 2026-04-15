@@ -28,11 +28,11 @@ used_by: none — CLI entrypoint, called via `codedna` console script
 rules:   L2 (function Rules:) applies Python AST only; language adapters are L1-only.
          LLM calls are capped at 2 per Python file; --no-llm skips all LLM calls.
          _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
-agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_002 | added --extensions flag, run_lang_files(), multi-language pipeline; updated collect_files, cmd_check
-         claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_004 | added cmd_manifest (Level 0 auto-generation); fixed --exclude glob (fnmatch), graceful LLM fallback, __init__ skip in purpose heuristic
+agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_004 | added cmd_manifest (Level 0 auto-generation); fixed --exclude glob (fnmatch), graceful LLM fallback, __init__ skip in purpose heuristic
          claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | added cmd_install subcommand: pre-commit hook + AI tool prompt + .codedna setup in one command
          claude-opus-4-6 | anthropic | 2026-04-07 | s_20260407_001 | fixed 3 install bugs: opencode JS plugin, -hooks base prompt, install.sh claude-hooks
          claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | fixed --no-llm writing haiku model_id in agent: field — now writes "codedna-cli (no-llm)"
+         claude-sonnet-4-6 | anthropic | 2026-04-15 | s_20260415_002 | made auto-detect default: init/check auto-detect when --extensions not given; updated Next steps output
 """
 
 import argparse
@@ -1731,8 +1731,8 @@ def cmd_install(repo_root: Path, tools: list[str], skip_hook: bool = False,
 
     print()
     print("Next steps:")
-    print("  codedna init .                  # annotate existing source files")
-    print("  codedna init . --no-llm         # fast mode (no AI, structural only)")
+    print("  codedna init .                  # annotate all detected languages (auto-detect)")
+    print("  codedna init . --no-llm         # free — structural only, no API key needed")
     print("  codedna check .                 # verify coverage")
     return 0
 
@@ -2310,11 +2310,11 @@ def main():
             print(f"Error: {target} does not exist", file=sys.stderr)
             return 1
         repo_root = args.repo_root.resolve() if args.repo_root else None
-        if getattr(args, "auto", False):
+        if not getattr(args, "extensions", None):
             exts = _auto_detect_extensions(target)
             print(f"Auto-detected: {', '.join(exts)}")
         else:
-            exts = _normalize_extensions(getattr(args, "extensions", None))
+            exts = _normalize_extensions(args.extensions)
         return cmd_check(target, repo_root, list(args.exclude), args.verbose, extensions=exts)
 
     # init / update share the same run() — only difference is force flag
@@ -2325,11 +2325,11 @@ def main():
 
     force = getattr(args, "force", False)  # update never forces
     repo_root = args.repo_root.resolve() if args.repo_root else None
-    if getattr(args, "auto", False):
+    if not getattr(args, "extensions", None):
         exts = _auto_detect_extensions(target)
         print(f"Auto-detected: {', '.join(exts)}")
     else:
-        exts = _normalize_extensions(getattr(args, "extensions", None))
+        exts = _normalize_extensions(args.extensions)
 
     run(
         target=target,

@@ -169,13 +169,41 @@ Without these notes, the next agent opens `auth_service.py` and has no idea refr
 | **Windsurf** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) windsurf` |
 | **Other** | [QUICKSTART.md](./QUICKSTART.md) |
 
-Then annotate existing code:
+Then annotate existing code (works for all 11 languages):
 
 ```bash
+# requires Python 3.11+ (CLI only — no Python needed in your project)
 pip install git+https://github.com/Larens94/codedna.git
-codedna init . --no-llm               # free — exports + used_by via AST
-codedna init . --model ollama/llama3   # free — local LLM adds rules:
 ```
+
+**Option 1 — Free, no API key.** Structural annotations only (`exports:`, `used_by:`). No `rules:`.
+
+```bash
+codedna init . --no-llm
+```
+
+**Option 2 — With LLM.** Adds `rules:` annotations. Default model: Claude Haiku.
+
+```bash
+pip install 'codedna[anthropic]'        # Anthropic (Claude)
+export ANTHROPIC_API_KEY=sk-...
+codedna init .
+```
+
+**Option 3 — Local LLM (free, no API key).** Uses Ollama or any other provider.
+
+```bash
+pip install 'codedna[litellm]'          # all providers + local models
+codedna init . --model ollama/llama3        # local, free
+codedna init . --model gpt-4o-mini          # OpenAI
+codedna init . --model gemini/gemini-2.0-flash  # Google
+```
+
+> Language auto-detected from your project — PHP, TypeScript, Go, Rust, Java, Kotlin, C#, Swift, Ruby all work out of the box.
+> To annotate specific extensions only: `codedna init . --extensions php`.
+> Annotation format adapts to the language — PHP uses `//`, Python uses docstrings. See [docs/languages.md](docs/languages.md).
+
+> **Language support status:** Python is the most thoroughly tested language. The adapters for PHP, TypeScript, Go, and the other supported languages are functional but have seen less real-world usage. If you use CodeDNA with a non-Python project and find something off — wrong exports extracted, header format issue, edge case — a [pull request](https://github.com/Larens94/codedna/pulls) or [issue](https://github.com/Larens94/codedna/issues) is very welcome. That's how we make support solid for every language.
 
 ---
 
@@ -215,8 +243,9 @@ Four levels, like a zoom lens:
 > See also: [message lifecycle diagram](docs/diagrams/codedna_message_lifecycle.svg)
 
 **Header by language:**
-- **Python, Ruby** — full: `exports:` + `used_by:` + `rules:` + `agent:` + `message:`
-- **All others** — reduced: `rules:` + `agent:` + `message:` (LLMs infer the rest from the language)
+- **All languages** — full L1 header: `exports:` + `used_by:` + `rules:` + `agent:` + `message:`
+- **Python, Ruby** — also get L2: function-level `Rules:` docstrings
+- **All others** — L1 only (no function-level annotations; LLMs infer structure from the language)
 
 ### Modes
 

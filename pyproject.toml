@@ -13,11 +13,11 @@ dependencies = []
 anthropic   = ["anthropic>=0.20"]
 litellm     = ["litellm>=1.0"]
 treesitter  = [
-    "tree-sitter>=0.23",
+    "tree-sitter>=0.25",
     "tree-sitter-typescript>=0.23",
     "tree-sitter-go>=0.23",
 ]
-all         = ["anthropic>=0.20", "litellm>=1.0", "tree-sitter>=0.23", "tree-sitter-typescript>=0.23", "tree-sitter-go>=0.23"]
+all         = ["anthropic>=0.20", "litellm>=1.0", "tree-sitter>=0.25", "tree-sitter-typescript>=0.23", "tree-sitter-go>=0.23"]
 
 [project.scripts]
 codedna = "codedna_tool.cli:main"

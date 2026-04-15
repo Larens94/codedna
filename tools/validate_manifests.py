@@ -7,10 +7,10 @@ used_by: none — standalone CLI tool
 rules:   validates v0.8 format only (exports:/used_by:/rules:/agent: in module docstring).
          Python uses AST; other languages use regex on first 40 lines.
          read-only — never modifies files.
-agent:   claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | added template engine extensions to COMMENT_PREFIX, added _get_ext for .blade.php, fixed validate_directory to use _get_ext, added _INNER_PREFIXES for block-comment parsing
-         claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | fixed _extract_python: return (None, {}) for valid Python without docstring
+agent:   claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | fixed _extract_python: return (None, {}) for valid Python without docstring
          claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | added .volt to COMMENT_PREFIX for Phalcon Volt template validation
          claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | added .php, .cs, .mjs, .kts to COMMENT_PREFIX — validator now covers all 11 languages
+         claude-sonnet-4-6 | anthropic | 2026-04-15 | s_20260415_002 | all languages now require full 4-field header (exports/used_by/rules/agent) — REQUIRED_FIELDS_REDUCED = REQUIRED_FIELDS_FULL, _REDUCED_HEADER_EXTS cleared
 
 Usage:
     python tools/validate_manifests.py [path] [-v] [--extensions py ts go]
@@ -31,13 +31,10 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
-REQUIRED_FIELDS_FULL = {"exports", "used_by", "rules", "agent"}  # Python, Ruby
-REQUIRED_FIELDS_REDUCED = {"rules", "agent"}                     # all other languages
-# Languages where LLMs infer exports/used_by from native visibility/namespace
-_REDUCED_HEADER_EXTS = {
-    ".ts", ".tsx", ".js", ".jsx", ".mjs", ".go", ".rs", ".java",
-    ".kt", ".kts", ".swift", ".cs", ".php",
-}
+REQUIRED_FIELDS_FULL = {"exports", "used_by", "rules", "agent"}  # all languages
+REQUIRED_FIELDS_REDUCED = REQUIRED_FIELDS_FULL                   # kept for backward compat
+# All languages now emit the full 4-field header — _build_header_lines was updated 2026-04-15
+_REDUCED_HEADER_EXTS: set[str] = set()
 REQUIRED_FIELDS = REQUIRED_FIELDS_FULL  # default for backward compat
 
 SKIP_DIRS = {"__pycache__", ".git", "venv", ".venv", "node_modules", "dist", "build", "migrations"}
@@ -211,11 +208,11 @@ def _validate_agent(result: ValidationResult, agent_text: str) -> None:
 def _validate_fields(result: ValidationResult, fields: dict[str, str], ext: str = ".py") -> None:
     """Check all required fields are present and non-empty.
 
-    Rules:   Python/Ruby use full headers (exports/used_by/rules/agent).
-             Other languages use reduced headers (rules/agent only) because
-             LLMs infer exports and reverse deps from native visibility/namespace.
+    Rules:   All languages require the full 4-field header: exports, used_by, rules, agent.
+             'none' is a valid value for exports: and used_by: — it signals the field was
+             considered and confirmed empty, not accidentally omitted.
     """
-    required = REQUIRED_FIELDS_REDUCED if ext in _REDUCED_HEADER_EXTS else REQUIRED_FIELDS_FULL
+    required = REQUIRED_FIELDS_FULL
     for key in required:
         if key not in fields:
             result.err(f"Missing required field: {key}:")
