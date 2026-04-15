@@ -65,7 +65,7 @@ Module docstring format:
 exports: fn(args) -> type
 used_by: consumer.py → fn
 rules:   <hard constraint>
-agent:   <model-id> | <YYYY-MM-DD> | <what you did and noticed>
+agent:   <model-id> | <provider> | <YYYY-MM-DD> | <session_id> | <what you did and noticed>
          message: "<open hypothesis>"
 """
 ```

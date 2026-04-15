@@ -37,7 +37,8 @@ Every new Python source file must start with:
 exports: public_function(arg) -> return_type
 used_by: consumer_file.py → consumer_function
 rules:   <hard constraint agents must never violate>
-agent:   <model-id> | <YYYY-MM-DD> | <what you implemented and what you noticed>
+agent:   <model-id> | <provider> | <YYYY-MM-DD> | <session_id> | <what you implemented and what you noticed>
+         message: "<open hypothesis or observation for the next agent>"
 """
 ```
 

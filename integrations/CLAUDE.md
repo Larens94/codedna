@@ -93,7 +93,7 @@ for order in active:
 3. After editing, check `used_by:` targets (especially `[cascade]`-tagged ones).
 4. Never remove `exports:` symbols — they are contracts used by other files.
 5. If you discover a constraint or fix a bug, **update `rules:` for the next agent** (architectural channel).
-6. **Append a new `agent:` line** to the module docstring after editing: `model-id | YYYY-MM-DD | what you did and what you noticed`. Keep only the last 5 entries — drop the oldest if adding a 6th. Full history is in git and `.codedna`.
+6. **Append a new `agent:` line** to the module docstring after editing: `model-id | provider | YYYY-MM-DD | session_id | what you did and what you noticed`. Keep only the last 5 entries — drop the oldest if adding a 6th. Full history is in git and `.codedna`.
 
 ## Session end protocol
 

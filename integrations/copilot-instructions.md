@@ -14,7 +14,7 @@ Every file must begin with a module docstring:
 exports: public_function(arg) -> return_type
 used_by: consumer_file.py → consumer_function
 rules:   <hard constraint agents must never violate>
-agent:   <model-id> | <YYYY-MM-DD> | <what you did and what you noticed>
+agent:   <model-id> | <provider> | <YYYY-MM-DD> | <session_id> | <what you did and what you noticed>
 """
 ```
 
@@ -69,7 +69,7 @@ Read `.codedna` at repo root — project structure and last 3-5 `agent_sessions:
 Use `message:` for observations not yet certain enough to become `rules:`:
 
 ```python
-agent:   <model-id> | <YYYY-MM-DD> | Implemented X.
+agent:   <model-id> | <provider> | <YYYY-MM-DD> | <session_id> | Implemented X.
          message: "noticed Y behaviour — not yet sure if this should be a rule"
 ```
 
