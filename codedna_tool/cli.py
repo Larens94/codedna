@@ -6,11 +6,11 @@ used_by: none — CLI entrypoint, called via `codedna` console script
 rules:   L2 (function Rules:) applies Python AST only; language adapters are L1-only.
          LLM calls are capped at 2 per Python file; --no-llm skips all LLM calls.
          _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
-agent:   claude-opus-4-6 | anthropic | 2026-04-07 | s_20260407_001 | fixed 3 install bugs: opencode JS plugin, -hooks base prompt, install.sh claude-hooks
-         claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | fixed --no-llm writing haiku model_id in agent: field — now writes "codedna-cli (no-llm)"
+agent:   claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | fixed --no-llm writing haiku model_id in agent: field — now writes "codedna-cli (no-llm)"
          claude-sonnet-4-6 | anthropic | 2026-04-15 | s_20260415_002 | made auto-detect default: init/check auto-detect when --extensions not given; updated Next steps output
          claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | fix build_module_docstring: Python agent: line now emits 5 fields (model|provider|date|session|narrative) matching spec
          claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_003 | add DeepSeek to _detect_provider and env_map so --api-key works with deepseek/ model prefix
+         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | fix L2 batch overflow: _L2_BATCH_SIZE=12, dynamic max_tokens, _parse_json_response with truncation recovery
 
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
@@ -422,33 +422,85 @@ class LLM:
         )
         return resp.strip().rstrip(".") if resp else f"{pkg_name} package"
 
+    # Rules: never send more than _L2_BATCH_SIZE functions per call —
+    #        large files (e.g. 38-fn app.py) overflow max_tokens and produce truncated JSON.
+    _L2_BATCH_SIZE = 12
+
     def function_rules_batch(self, rel: str, funcs: list[FuncInfo]) -> dict[str, str]:
-        """1 call per file → {func_name: 'constraint' or 'SKIP'}"""
+        """N calls per file (batched) → {func_name: 'constraint' or 'SKIP'}.
+
+        Rules:   Batches of _L2_BATCH_SIZE to keep prompt + response within token limits.
+                 max_tokens scales with batch size (50 tokens per function).
+                 _parse_json_response() attempts partial extraction before giving up.
+        """
         if not funcs:
             return {}
+        result: dict[str, str] = {}
+        for i in range(0, len(funcs), self._L2_BATCH_SIZE):
+            batch = funcs[i : i + self._L2_BATCH_SIZE]
+            result.update(self._function_rules_single_batch(rel, batch))
+        return result
+
+    def _function_rules_single_batch(self, rel: str, funcs: list[FuncInfo]) -> dict[str, str]:
+        """1 LLM call for a batch of ≤ _L2_BATCH_SIZE functions."""
         blocks = "\n\n".join(f"### {f.name}\n```python\n{f.source}\n```" for f in funcs)
+        # Scale max_tokens with batch size — 50 tokens per function is a safe upper bound
+        max_tok = max(400, len(funcs) * 50)
         resp = self._call(
             f"File: {rel}\n\n"
             "For each function, does it have NON-OBVIOUS domain constraints a future developer MUST know?\n"
             "YES → brief constraint (1-2 lines). NO → SKIP.\n\n"
             f"{blocks}\n\n"
             f'Return ONLY valid JSON: {{"func_name": "constraint or SKIP", ...}}',
-            max_tokens=500,
+            max_tokens=max_tok,
         )
+        parsed = self._parse_json_response(resp)
+        if parsed is None:
+            print(f"    WARNING: LLM returned invalid JSON for function rules in {rel} — skipping batch")
+            return {}
+        return parsed
+
+    @staticmethod
+    def _parse_json_response(resp: str) -> Optional[dict]:
+        """Extract a JSON object from an LLM response, tolerating markdown fences and truncation.
+
+        Rules:   Tries three strategies in order:
+                 1. Strip fences, parse directly.
+                 2. Find the last complete key-value pair before a truncation point and close the object.
+                 3. Return None — caller emits WARNING and skips the batch.
+        """
+        if not resp:
+            return None
+        clean = resp.strip()
+        # Strip markdown code fences
+        if clean.startswith("```"):
+            parts = clean.split("```")
+            clean = parts[1] if len(parts) > 1 else clean
+            if clean.startswith("json"):
+                clean = clean[4:]
+        clean = clean.strip()
+
+        # Strategy 1: direct parse
         try:
-            # Strip markdown code fences if present
-            clean = resp.strip()
-            if clean.startswith("```"):
-                clean = clean.split("```")[1]
-                if clean.startswith("json"):
-                    clean = clean[4:]
-            return json.loads(clean.strip())
-        except (json.JSONDecodeError, ValueError) as e:
-            print(f"    WARNING: LLM returned invalid JSON for function rules in {rel} — skipping L2")
-            return {}
-        except Exception as e:
-            print(f"    WARNING: LLM error for function rules in {rel}: {e} — skipping L2")
-            return {}
+            return json.loads(clean)
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+        # Strategy 2: truncated JSON — find last complete "key": "value" pair and close the object
+        # Handles the case where max_tokens cut the response mid-object.
+        try:
+            # Find the rightmost complete "key": "value" entry
+            last_comma = clean.rfind('",')
+            if last_comma > 0:
+                candidate = clean[: last_comma + 1].rstrip().rstrip(",") + "\n}"
+                # Ensure it starts with {
+                brace = candidate.find("{")
+                if brace >= 0:
+                    return json.loads(candidate[brace:])
+        except (json.JSONDecodeError, ValueError):
+            pass
+
+        return None
 
 
 # ── Docstring builders ────────────────────────────────────────────────────────
