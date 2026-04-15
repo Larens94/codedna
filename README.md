@@ -32,12 +32,11 @@ An in-source communication protocol where AI agents embed architectural context 
 
 No infrastructure. No retrieval pipeline. No external memory. The code carries its own context.
 
-```
-  +13pp F1         7/7 patch        1.6x faster       98.2% adoption
-  navigation       fix quality      team speed         spontaneous
-  ───────────      ───────────      ───────────        ───────────
-  SWE-bench        Django #13495    5-agent team       message: field
-  3 models         Claude Sonnet    DeepSeek R1        no instruction
+```diff
++  NAVIGATION ACCURACY    ████████████░░░░   +13pp F1     SWE-bench · 3 models
++  FIX QUALITY            ████████████████   7 / 7        Django #13495 · Claude Sonnet
++  TEAM VELOCITY          █████████████░░░   1.6×         5-agent team · DeepSeek R1
++  PROTOCOL ADOPTION      ███████████████░   98.2%        multi-agent SaaS · no instruction
 ```
 
 ---
