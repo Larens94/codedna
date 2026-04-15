@@ -12,6 +12,9 @@ set -euo pipefail
 REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null || echo "$(pwd)")"
 VALIDATOR="$REPO_ROOT/tools/validate_manifests.py"
 
+# Read CodeDNA mode from .codedna (default: semi)
+CODEDNA_MODE=$(grep '^mode:' "$REPO_ROOT/.codedna" 2>/dev/null | head -1 | awk '{print $2}' || echo "semi")
+
 # Read JSON from stdin
 INPUT=$(cat)
 
@@ -76,6 +79,10 @@ if echo "$OUTPUT" | grep -q "^FAIL "; then
 fi
 
 # L2 check: public functions without Rules: docstring (Python only)
+# In human mode, skip L2 enforcement (only critical functions need Rules:)
+if [[ "$CODEDNA_MODE" == "human" ]]; then
+    exit 0
+fi
 if [[ "$FILE_PATH" == *.py ]]; then
     L2_ISSUES=$(python3 -c "
 import ast, sys
@@ -107,6 +114,22 @@ except Exception:
         echo '      message: model-id | YYYY-MM-DD | observation for next agent'
         echo '      """'
         echo "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━"
+    fi
+fi
+
+# Reminder: if logic was changed, consider updating rules: and message:
+if echo "$FILE_PATH" | grep -qE '\.(py|ts|tsx|js|go|rs|java|kt|php|rb|cs|swift)$'; then
+    echo ""
+    if [[ "$CODEDNA_MODE" == "agent" ]]; then
+        echo "[CodeDNA:agent] You MUST:"
+        echo "  - Update rules: in the module header if you discovered a new constraint"
+        echo "  - Add message: if you noticed something the next agent should verify"
+        echo "  - Add # Rules: or # message: inline above all non-trivial logic blocks"
+        echo "  - Rename ambiguous variables to type_shape_domain_origin convention"
+    else
+        echo "[CodeDNA:$CODEDNA_MODE] If you changed business logic, constraints, or edge cases:"
+        echo "  - Update rules: in the module header if you discovered a new constraint"
+        echo "  - Add message: if you noticed something the next agent should verify"
     fi
 fi
 

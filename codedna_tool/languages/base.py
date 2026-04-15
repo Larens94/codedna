@@ -61,6 +61,7 @@ class LanguageAdapter(ABC):
         Rules:   Must detect headers in // comments, # comments, /** */ blocks,
                  and {# #} / {{-- --}} template blocks. Prevents duplicate headers
                  when re-running codedna init on already-annotated files.
+                 Detects both full headers (exports:/used_by:) and reduced headers (rules:/agent:).
         """
         for line in source.splitlines()[:30]:
             # Strip all common comment prefixes: //, #, *, {{--, {#, <%#, @*, <!--
@@ -69,20 +70,19 @@ class LanguageAdapter(ABC):
                 if stripped.startswith(prefix):
                     stripped = stripped[len(prefix):].strip()
                     break
-            if stripped.startswith("exports:") or stripped.startswith("used_by:"):
+            if stripped.startswith(("exports:", "used_by:", "rules:", "agent:")):
                 return True
         return False
 
     def _build_header_lines(self, rel: str, exports: str, used_by: str,
                             rules: str, model_id: str, today: str,
                             provider: str = "unknown", session_id: str = "unknown") -> list[str]:
-        """Build the standard CodeDNA v0.8 comment block lines.
+        """Build a reduced CodeDNA v0.8 comment block for non-Python languages.
 
-        Rules:   agent: line MUST have exactly 5 pipe-separated fields:
-                 model-id | provider | YYYY-MM-DD | session_id | narrative.
-                 Do NOT collapse or reorder fields — downstream validators parse by position.
-                 provider and session_id default to 'unknown' when callers omit them; callers
-                 should pass real values whenever available.
+        Rules:   Non-Python languages use a reduced header: rules + agent only.
+                 exports: and used_by: are omitted — LLMs infer them from
+                 the language's native visibility/namespace system.
+                 agent: line MUST have exactly 5 pipe-separated fields.
         """
         p = self.comment_prefix
         filename = Path(rel).name
@@ -91,8 +91,6 @@ class LanguageAdapter(ABC):
         return [
             f"{p} {filename} — {purpose}.",
             f"{p}",
-            f"{p} exports: {exports}",
-            f"{p} used_by: {used_by}",
             f"{p} rules:   {rules}",
             f"{p} agent:   {model_id} | {provider} | {today} | {session_id} | initial CodeDNA annotation pass",
         ]

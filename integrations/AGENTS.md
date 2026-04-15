@@ -52,6 +52,24 @@ Field guide:
 | `agent:` | ✅ | Session narrative — rolling window of last 5 entries; drop the oldest when adding a 6th |
 | `message:` | ⬜ | Inter-agent channel — open hypotheses, unverified observations (v0.8) |
 
+## Writing good `rules:`
+
+`rules:` must be **specific and actionable** — never vague.
+
+```python
+# ✅ Good rules:
+rules:   get_invoices() returns ALL tenants — caller MUST filter is_suspended() before aggregating
+rules:   amount is in cents not euros — divide by 100 before display
+rules:   soft-delete via deleted_at — NEVER use DELETE, always SET deleted_at = NOW()
+
+# ❌ Bad rules:
+rules:   handle errors gracefully
+rules:   follow best practices
+rules:   none  ← when there ARE constraints but nobody wrote them
+```
+
+Update rules: every time you discover a constraint, fix a bug, or notice a non-obvious behavior.
+
 ## Writing critical functions
 
 Every public function **must** have a `Rules:` docstring:

@@ -118,7 +118,43 @@ Level 2 exists because the channel must work even when the receiver sees only a 
 
 ---
 
-## 2.4 Annotation Design Principle: Architecture, Not Answers
+## 2.4 Modes
+
+CodeDNA supports three enforcement modes, configured via `mode:` in `.codedna`:
+
+| Mode | Semantic naming | L2 Rules: | Inline annotations | Header type |
+|---|---|---|---|---|
+| **human** | Off | Critical functions only | Optional | Reduced for non-Python |
+| **semi** (default) | New code only | All public functions | Recommended | Reduced for non-Python |
+| **agent** | Enforced everywhere | All functions + rename vars | Required | Full everywhere |
+
+### Header variants by language
+
+**Full header** (Python, Ruby) — these languages lack predictable namespace-to-file mapping:
+```python
+"""filename.py — purpose.
+exports: function(arg) -> type
+used_by: caller.py → function
+rules:   constraint
+agent:   model | provider | date | session | narrative
+         message: "observation"
+"""
+```
+
+**Reduced header** (PHP, Java, Go, Rust, TypeScript, C#, Swift, Kotlin) — LLMs infer exports and reverse dependencies from the language's native visibility and namespace system:
+```php
+// filename.php — purpose.
+//
+// rules:   constraint
+// agent:   model | provider | date | session | narrative
+//          message: "observation"
+```
+
+The reduced header saves ~60% of annotation tokens for languages where `exports:` and `used_by:` provide no information the LLM cannot already infer.
+
+---
+
+## 2.5 Annotation Design Principle: Architecture, Not Answers
 
 The `rules:` field must describe **architectural mechanisms and relationships** — never the solution to a specific task. This distinction is critical for benchmark validity and for real-world usefulness.
 

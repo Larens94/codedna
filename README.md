@@ -74,7 +74,7 @@ claude plugin marketplace add Larens94/codedna
 claude plugin install codedna@codedna
 ```
 
-Includes 4 hooks (SessionStart, PreToolUse, PostToolUse, Stop) + 4 skills (`/codedna:init`, `/codedna:check`, `/codedna:manifest`, `/codedna:impact`). Automatic enforcement on every file write across all 11 languages.
+Includes 4 hooks + 4 skills. On first session, the agent will ask you to choose a mode.
 
 ### Option 2 — Other AI Tools
 
@@ -102,6 +102,31 @@ codedna init /path/to/project --no-llm     # Free — structural only (exports +
 codedna init /path/to/project --model ollama/llama3   # Free — local LLM adds rules:
 codedna check /path/to/project              # Coverage report
 ```
+
+---
+
+## Modes
+
+Configure how strict CodeDNA is, based on who writes the code:
+
+| Mode | Who writes code | Semantic naming | L2 Rules: | Inline annotations | Header type |
+|---|---|---|---|---|---|
+| **human** | Mostly human | Off | Critical functions only | Optional | Reduced for non-Python |
+| **semi** | Human + AI together | New code only | All public functions | Recommended | Reduced for non-Python |
+| **agent** | Mostly AI agents | Enforced everywhere | All functions + rename vars | Required | Full everywhere |
+
+Set in `.codedna` at project root:
+
+```yaml
+project: myapp
+mode: semi    # human | semi | agent
+```
+
+On first session, the agent will ask which mode to use. Default: `semi`.
+
+**Header types by language:**
+- **Python, Ruby**: full header (`exports:`, `used_by:`, `rules:`, `agent:`, `message:`)
+- **All other languages**: reduced header (`rules:`, `agent:`, `message:`) — LLMs infer exports and reverse dependencies from the language's native visibility/namespace system
 
 ---
 

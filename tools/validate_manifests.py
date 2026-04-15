@@ -31,7 +31,14 @@ from dataclasses import dataclass, field
 from pathlib import Path
 from typing import Optional
 
-REQUIRED_FIELDS = {"exports", "used_by", "rules", "agent"}
+REQUIRED_FIELDS_FULL = {"exports", "used_by", "rules", "agent"}  # Python, Ruby
+REQUIRED_FIELDS_REDUCED = {"rules", "agent"}                     # all other languages
+# Languages where LLMs infer exports/used_by from native visibility/namespace
+_REDUCED_HEADER_EXTS = {
+    ".ts", ".tsx", ".js", ".jsx", ".mjs", ".go", ".rs", ".java",
+    ".kt", ".kts", ".swift", ".cs", ".php",
+}
+REQUIRED_FIELDS = REQUIRED_FIELDS_FULL  # default for backward compat
 
 SKIP_DIRS = {"__pycache__", ".git", "venv", ".venv", "node_modules", "dist", "build", "migrations"}
 
@@ -201,9 +208,15 @@ def _validate_agent(result: ValidationResult, agent_text: str) -> None:
             result.err(f"agent: entry missing YYYY-MM-DD date: {entry!r}")
 
 
-def _validate_fields(result: ValidationResult, fields: dict[str, str]) -> None:
-    """Check all required fields are present and non-empty."""
-    for key in REQUIRED_FIELDS:
+def _validate_fields(result: ValidationResult, fields: dict[str, str], ext: str = ".py") -> None:
+    """Check all required fields are present and non-empty.
+
+    Rules:   Python/Ruby use full headers (exports/used_by/rules/agent).
+             Other languages use reduced headers (rules/agent only) because
+             LLMs infer exports and reverse deps from native visibility/namespace.
+    """
+    required = REQUIRED_FIELDS_REDUCED if ext in _REDUCED_HEADER_EXTS else REQUIRED_FIELDS_FULL
+    for key in required:
         if key not in fields:
             result.err(f"Missing required field: {key}:")
         else:
@@ -263,7 +276,7 @@ def validate_file(path: Path) -> ValidationResult:
         return result
 
     result.fields_found = set(fields.keys())
-    _validate_fields(result, fields)
+    _validate_fields(result, fields, ext=ext)
     return result
 
 

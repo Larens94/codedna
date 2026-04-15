@@ -80,11 +80,11 @@ if filepath.endswith('.py'):
         pass
 
 else:
-    # Non-Python: check first 20 lines for L1
+    # Non-Python: reduced header (rules: + agent: only, no exports:/used_by:)
     lines = src.splitlines()[:20]
     block = '\n'.join(lines)
-    if 'exports:' not in block or 'used_by:' not in block:
-        notices.append("L1: no CodeDNA comment block found")
+    if 'rules:' not in block and 'agent:' not in block:
+        notices.append("L1: no CodeDNA comment block found (need at least rules: and agent:)")
 
 if notices:
     print("")
@@ -104,5 +104,12 @@ if notices:
 
 sys.exit(0)
 PYEOF
+
+# Reminder: update rules:/message: if logic changed
+echo ""
+echo "[CodeDNA] If you changed business logic, constraints, or edge cases:"
+echo "  - Update rules: in the module header if you discovered a new constraint"
+echo "  - Add message: if you noticed something the next agent should verify"
+echo "  - Add # Rules: or # message: inline above complex logic blocks"
 
 exit 0

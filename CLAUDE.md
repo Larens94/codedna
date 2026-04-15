@@ -35,9 +35,32 @@ Field guide:
 | First line | ✅ | `filename.py — <purpose ≤15 words>` |
 | `exports:` | ✅ | Public API with return type |
 | `used_by:` | ✅ | Who calls this file's exports |
-| `rules:` | ✅ | Architectural truth — hard constraints, updated in-place |
+| `rules:` | ✅ | Architectural truth — specific, actionable constraints (see examples below) |
 | `agent:` | ✅ | Session narrative — rolling window of last 5 entries; drop the oldest when adding a 6th |
 | `message:` | ⬜ | Inter-agent channel — open hypotheses, unverified observations (v0.8) |
+
+## Writing good `rules:`
+
+`rules:` must be **specific and actionable** — an agent reading it should know exactly what to do or not do. Never write vague rules.
+
+```python
+# ✅ Good rules: — specific, actionable, explains WHY
+rules:   get_invoices() returns ALL tenants — caller MUST filter is_suspended() before aggregating
+rules:   amount is in cents not euros — divide by 100 before display
+rules:   this endpoint requires admin role — auth middleware is in routes.py, not here
+rules:   soft-delete via deleted_at — NEVER use DELETE, always SET deleted_at = NOW()
+rules:   SQLite has no ALTER COLUMN — schema changes must recreate the table
+
+# ❌ Bad rules: — vague, not actionable
+rules:   handle errors gracefully
+rules:   follow best practices
+rules:   be careful with this code
+rules:   none  ← when there ARE constraints but nobody wrote them
+```
+
+**When to update rules:** every time you discover a constraint, fix a bug, or notice a non-obvious behavior — add it to `rules:` immediately. This is how you communicate with the next agent.
+
+**`rules: none` is acceptable** only when a file truly has no domain constraints (e.g., a simple utility with no side effects). If you see `rules: none` on a file with business logic, add the missing constraints.
 
 ## Writing critical functions
 

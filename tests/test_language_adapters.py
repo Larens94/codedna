@@ -100,7 +100,7 @@ export class Server {}
         r1 = ts.inject_header(source, "foo.ts", "foo()", "none", "none", "test", "2026-04-14")
         r2 = ts.inject_header(r1, "foo.ts", "foo()", "none", "none", "test", "2026-04-14")
         assert r1 == r2
-        assert "exports: foo()" in r1
+        assert "rules:" in r1  # reduced header — no exports:/used_by:
         assert "export function foo()" in r1
 
 

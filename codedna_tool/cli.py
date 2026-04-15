@@ -183,12 +183,30 @@ def scan_file(path: Path, repo_root: Path) -> FileInfo:
 
     # Deps: internal imports only
     deps: dict[str, list[str]] = {}
+    file_dir = path.parent
     for node in ast.walk(tree):
-        if isinstance(node, ast.ImportFrom) and node.module:
-            key = _resolve_dep(node.module, repo_root, top_pkg)
-            if key:
-                syms = [a.name for a in node.names if a.name != "*"]
-                deps.setdefault(key, []).extend(syms)
+        if isinstance(node, ast.ImportFrom):
+            if node.level > 0 and node.module:
+                # Relative import: from .foo import bar → resolve relative to current file
+                parent = file_dir
+                for _ in range(node.level - 1):
+                    parent = parent.parent
+                rel_target = parent / node.module.replace(".", "/")
+                for suffix in [".py", "/__init__.py"]:
+                    candidate = Path(str(rel_target) + suffix)
+                    if candidate.exists():
+                        try:
+                            key = str(candidate.relative_to(repo_root))
+                            syms = [a.name for a in node.names if a.name != "*"]
+                            deps.setdefault(key, []).extend(syms)
+                        except ValueError:
+                            pass
+                        break
+            elif node.module:
+                key = _resolve_dep(node.module, repo_root, top_pkg)
+                if key:
+                    syms = [a.name for a in node.names if a.name != "*"]
+                    deps.setdefault(key, []).extend(syms)
         elif isinstance(node, ast.Import):
             for alias in node.names:
                 key = _resolve_dep(alias.name, repo_root, top_pkg)
@@ -382,7 +400,10 @@ class LLM:
             "If no meaningful constraints exist, return exactly: none",
             max_tokens=150,
         )
-        return resp if resp else "none"
+        if not resp or not resp.strip():
+            print(f"    WARNING: LLM returned empty rules for {rel} — using 'none'")
+            return "none"
+        return resp
 
     def package_purpose(self, pkg_name: str, key_files: list[str], exports_sample: str) -> str:
         """1 call → purpose: description for a package (≤15 words)."""
@@ -419,7 +440,11 @@ class LLM:
                 if clean.startswith("json"):
                     clean = clean[4:]
             return json.loads(clean.strip())
-        except (json.JSONDecodeError, Exception):
+        except (json.JSONDecodeError, ValueError) as e:
+            print(f"    WARNING: LLM returned invalid JSON for function rules in {rel} — skipping L2")
+            return {}
+        except Exception as e:
+            print(f"    WARNING: LLM error for function rules in {rel}: {e} — skipping L2")
             return {}
 
 
@@ -891,6 +916,158 @@ def run(
         print("Dry run — no files written.")
 
 
+# ── Refresh command ───────────────────────────────────────────────────────────
+
+
+def _parse_existing_docstring(docstring: str) -> dict[str, str]:
+    """Parse a CodeDNA docstring into field dict, preserving raw values.
+
+    Rules:   Must preserve multi-line field values (rules: with continuations).
+             Returns dict with keys: first_line, exports, used_by, rules, agent (+ any message: lines).
+    """
+    fields: dict[str, str] = {}
+    current_field = None
+    current_lines: list[str] = []
+
+    for i, line in enumerate(docstring.splitlines()):
+        stripped = line.strip()
+        if i == 0:
+            fields["first_line"] = stripped
+            continue
+
+        # Check if line starts a new field
+        for field_name in ("exports:", "used_by:", "rules:", "agent:"):
+            if stripped.startswith(field_name):
+                if current_field:
+                    fields[current_field] = "\n".join(current_lines)
+                current_field = field_name.rstrip(":")
+                current_lines = [stripped]
+                break
+        else:
+            # Continuation line (indented) or blank
+            if current_field and stripped:
+                current_lines.append(stripped)
+
+    if current_field:
+        fields[current_field] = "\n".join(current_lines)
+
+    return fields
+
+
+def _rebuild_docstring(fields: dict[str, str], new_exports: str, new_used_by: str) -> str:
+    """Rebuild a CodeDNA docstring with updated exports/used_by, preserving rules/agent/message.
+
+    Rules:   Must preserve the exact rules: and agent: (including message: sub-fields).
+             Only exports: and used_by: are replaced.
+    """
+    first_line = fields.get("first_line", "module — unknown.")
+    rules = fields.get("rules", "rules:   none")
+    agent = fields.get("agent", "agent:   unknown")
+
+    lines = [
+        f'"""{first_line}',
+        "",
+        f"exports: {new_exports}",
+        f"used_by: {new_used_by}",
+        rules,
+        agent,
+        '"""',
+    ]
+    return "\n".join(lines) + "\n"
+
+
+def cmd_refresh(target: Path, repo_root: Optional[Path], exclude: list[str],
+                dry_run: bool, verbose: bool):
+    """Refresh exports: and used_by: via AST. Zero LLM cost.
+
+    Rules:   Only updates files that already have CodeDNA headers.
+             Only changes exports: and used_by: — preserves rules:, agent:, message:.
+             Scans the ENTIRE project to build the used_by graph, even if target is a single file.
+    """
+    if repo_root is None:
+        repo_root = target if target.is_dir() else target.parent
+
+    # Scan all Python files in project for complete dependency graph
+    all_py = collect_files(repo_root, exclude, extensions=[".py"])
+
+    print("CodeDNA Refresh v0.8")
+    print(f"Target      {target}")
+    print(f"Mode        {'DRY RUN' if dry_run else 'WRITE'}")
+    print(f"Python      {len(all_py)} files scanned for dependency graph")
+    print()
+
+    # Pass 1: scan all files
+    infos: dict[str, FileInfo] = {}
+    for f in all_py:
+        info = scan_file(f, repo_root)
+        if info.parseable:
+            infos[info.rel] = info
+
+    # Pass 2: build used_by graph from ALL files
+    ub_graph = build_used_by(infos)
+
+    # Pass 3: determine which files to refresh
+    if target.is_file():
+        targets = {str(target.relative_to(repo_root)): infos.get(str(target.relative_to(repo_root)))}
+    else:
+        targets = infos
+
+    updated = 0
+    skipped = 0
+
+    for rel, info in targets.items():
+        if info is None or not info.has_codedna:
+            skipped += 1
+            if verbose:
+                print(f"  skip (no header)   {rel}")
+            continue
+
+        # Parse existing docstring
+        if not info.docstring:
+            skipped += 1
+            continue
+
+        old_fields = _parse_existing_docstring(info.docstring)
+        new_exports = _fmt_exports(info.exports)
+        new_used_by = _fmt_used_by(ub_graph.get(rel, {}))
+
+        # Check if anything changed
+        old_exports_raw = old_fields.get("exports", "")
+        old_used_by_raw = old_fields.get("used_by", "")
+
+        # Normalize for comparison
+        old_exp_val = old_exports_raw.replace("exports:", "").strip() if old_exports_raw else ""
+        old_ub_val = old_used_by_raw.replace("used_by:", "").strip() if old_used_by_raw else ""
+
+        if old_exp_val == new_exports and old_ub_val == new_used_by:
+            if verbose:
+                print(f"  unchanged          {rel}")
+            continue
+
+        # Rebuild docstring
+        new_docstring = _rebuild_docstring(old_fields, new_exports, new_used_by)
+
+        # Replace in source
+        source = info.path.read_text(encoding="utf-8", errors="replace")
+        new_source = inject_module_docstring(source, new_docstring)
+
+        if not dry_run:
+            info.path.write_text(new_source, encoding="utf-8")
+
+        updated += 1
+        if verbose or True:  # always show updates
+            changes = []
+            if old_exp_val != new_exports:
+                changes.append("exports")
+            if old_ub_val != new_used_by:
+                changes.append("used_by")
+            print(f"  {'DRY ' if dry_run else ''}updated  {rel}  ({', '.join(changes)})")
+
+    print()
+    print(f"Refreshed {updated} files ({skipped} skipped, {len(targets)} total)")
+    return 0
+
+
 # ── Check command ─────────────────────────────────────────────────────────────
 
 
@@ -1047,6 +1224,7 @@ _TOOL_FILES = {
     "cline":    (".clinerules",  ".clinerules"),
     "windsurf": (".windsurfrules", ".windsurfrules"),
     "opencode": ("AGENTS.md",   "AGENTS.md"),
+    "agents":   (".agents/workflows/codedna.md", ".agents/workflows/codedna.md"),
 }
 
 # Hook-based integrations: tool name -> (list of (remote_path, local_path), settings_template)
@@ -1180,6 +1358,7 @@ exit 0
 _CODEDNA_TEMPLATE = """# .codedna — CodeDNA project manifest
 project: {project_name}
 description: "{project_name} project"
+mode: semi    # human | semi | agent
 
 packages: {{}}
 
@@ -1301,21 +1480,28 @@ def _install_cursor_hooks(repo_root: Path) -> int:
 
 def _install_copilot_hooks(repo_root: Path) -> int:
     """Installa hook scripts per GitHub Copilot."""
+    import stat
     import urllib.request
 
     str_raw = "https://raw.githubusercontent.com/Larens94/codedna/main/integrations/copilot-hooks"
+    str_tools_raw = "https://raw.githubusercontent.com/Larens94/codedna/main/tools"
     int_count = 0
 
     path_hooks = repo_root / ".github" / "hooks"
     path_hooks.mkdir(parents=True, exist_ok=True)
+    path_tools = repo_root / "tools"
+    path_tools.mkdir(parents=True, exist_ok=True)
 
     files = [
         (f"{str_raw}/hooks.json", path_hooks / "hooks.json"),
         (f"{str_raw}/codedna.sh", path_hooks / "codedna.sh"),
+        (f"{str_tools_raw}/validate_manifests.py", path_tools / "validate_manifests.py"),
     ]
     for url, dest in files:
         try:
             urllib.request.urlretrieve(url, str(dest))
+            if dest.suffix == ".sh":
+                dest.chmod(dest.stat().st_mode | stat.S_IEXEC)
             int_count += 1
         except Exception as e:
             print(f"  FAIL  {dest.name} — could not fetch: {e}")
@@ -1485,9 +1671,17 @@ def cmd_install(repo_root: Path, tools: list[str], skip_hook: bool = False,
                 print("  OK    pre-commit hook installed")
                 int_count_installed += 1
 
-    # 2. AI tool prompt files
+    # 2. AI tool prompt files + hooks
     if not skip_prompt:
+        # Auto-include hooks for base tools (e.g. "opencode" → also install "opencode-hooks")
+        expanded_tools = list(tools)
         for tool in tools:
+            if tool in _TOOL_HOOKS_MAP:
+                hooks_variant = _TOOL_HOOKS_MAP[tool]
+                if hooks_variant not in expanded_tools:
+                    expanded_tools.append(hooks_variant)
+
+        for tool in expanded_tools:
             # Gestione hook-based tools (claude-hooks, cursor-hooks, etc.)
             if tool in _HOOK_INSTALLERS:
                 int_count_installed += _HOOK_INSTALLERS[tool](repo_root)
@@ -1905,6 +2099,27 @@ def main():
     _add_common_args(init_p)
     init_p.add_argument("--force", action="store_true", help="Re-annotate files that already have CodeDNA headers")
 
+    # ── mode ──────────────────────────────────────────────────────────────────
+    mode_p = subs.add_parser(
+        "mode",
+        help="Get or set the CodeDNA mode (human, semi, agent)",
+        description=(
+            "Modes control how strict CodeDNA enforcement is:\n"
+            "  human  — minimal: L1 headers, Rules: on critical functions only, no semantic naming\n"
+            "  semi   — balanced: L1+L2 on new code, semantic naming on new vars (default)\n"
+            "  agent  — full: all functions annotated, semantic naming enforced, rename vars\n\n"
+            "Examples:\n"
+            "  codedna mode              # show current mode\n"
+            "  codedna mode semi         # set mode to semi\n"
+            "  codedna mode agent        # set mode to agent"
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    mode_p.add_argument("value", nargs="?", choices=["human", "semi", "agent"],
+                        help="Mode to set (omit to show current)")
+    mode_p.add_argument("--path", type=Path, default=Path("."),
+                        help="Project root (default: current directory)")
+
     # ── update ────────────────────────────────────────────────────────────────
     update_p = subs.add_parser(
         "update",
@@ -1937,7 +2152,29 @@ def main():
     )
     check_p.add_argument("-v", "--verbose", action="store_true", help="List specific files missing annotations")
 
-    # ── manifest ───────────────────────────────────────────────��──────────────
+
+    # ── refresh ──────────────────────────────────────────────────────────────
+    refresh_p = subs.add_parser(
+        "refresh",
+        help="Refresh exports: and used_by: via AST (zero LLM cost, preserves rules:/agent:/message:)",
+        description=(
+            "Re-scans the project and updates ONLY the structural fields:\n"
+            "  - exports: recalculated from AST\n"
+            "  - used_by: recalculated from import graph\n\n"
+            "Preserves: rules:, agent:, message: (untouched)\n"
+            "Skips: files without existing CodeDNA headers\n\n"
+            "Use after refactoring, adding/removing files, or when used_by: is stale.\n"
+            "Zero LLM cost — pure AST analysis."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    refresh_p.add_argument("path", type=Path, help="File or directory to refresh")
+    refresh_p.add_argument("--repo-root", type=Path, default=None)
+    refresh_p.add_argument("--exclude", nargs="*", default=[])
+    refresh_p.add_argument("--dry-run", action="store_true", help="Preview changes without writing")
+    refresh_p.add_argument("-v", "--verbose", action="store_true")
+
+    # ── manifest ─────────────────────────────────────────────────────────────
     manifest_p = subs.add_parser(
         "manifest",
         help="Generate or update .codedna Level 0 manifest from codebase structure",
@@ -1972,6 +2209,44 @@ def main():
     args = p.parse_args()
 
     # ── dispatch ──────────────────────────────────────────────────────────────
+    if args.command == "mode":
+        codedna_path = (args.path / ".codedna").resolve()
+        if not codedna_path.exists():
+            if args.value:
+                # Create .codedna with mode
+                codedna_path.write_text(
+                    _CODEDNA_TEMPLATE.format(project_name=args.path.resolve().name).replace(
+                        "mode: semi", f"mode: {args.value}"
+                    ),
+                    encoding="utf-8",
+                )
+                print(f"Created .codedna with mode: {args.value}")
+            else:
+                print("No .codedna found. Run: codedna install")
+            return 0
+
+        content = codedna_path.read_text(encoding="utf-8")
+        if args.value:
+            # Set mode
+            import re
+            if re.search(r"^mode:\s*\w+", content, re.MULTILINE):
+                content = re.sub(r"^mode:\s*\w+.*$", f"mode: {args.value}", content, count=1, flags=re.MULTILINE)
+            else:
+                # Add mode after description line
+                content = content.replace("\n\npackages:", f"\nmode: {args.value}\n\npackages:")
+            codedna_path.write_text(content, encoding="utf-8")
+            print(f"Mode set to: {args.value}")
+        else:
+            # Show current mode
+            import re
+            m = re.search(r"^mode:\s*(\w+)", content, re.MULTILINE)
+            if m:
+                print(f"Current mode: {m.group(1)}")
+            else:
+                print("Mode not set. Default: semi")
+                print("Set with: codedna mode <human|semi|agent>")
+        return 0
+
     if args.command == "install":
         path_repo_root = args.path.resolve()
         if not path_repo_root.exists():
@@ -2020,6 +2295,14 @@ def main():
             extensions=exts,
             exclude=list(args.exclude),
         )
+
+    if args.command == "refresh":
+        target = args.path.resolve()
+        if not target.exists():
+            print(f"Error: {target} does not exist", file=sys.stderr)
+            return 1
+        repo_root = args.repo_root.resolve() if args.repo_root else None
+        return cmd_refresh(target, repo_root, list(args.exclude), args.dry_run, args.verbose)
 
     if args.command == "check":
         target = args.path.resolve()

@@ -36,6 +36,17 @@ fi
 
 echo "CodeDNA v0.8 — validating staged files..."
 
+# Auto-refresh exports: and used_by: via AST (zero LLM cost)
+PY_STAGED=$(echo "$STAGED" | grep '\.py$' || true)
+if [[ -n "$PY_STAGED" ]]; then
+    "$CODEDNA" refresh "$REPO_ROOT" --exclude "venv/*" ".venv/*" "node_modules/*" 2>/dev/null || true
+    # Re-stage files that were refreshed
+    for FILE in $PY_STAGED; do
+        FULL="$REPO_ROOT/$FILE"
+        [[ -f "$FULL" ]] && git add "$FULL" 2>/dev/null || true
+    done
+fi
+
 # Detect extensions in use
 EXTS=""
 for f in $STAGED; do
