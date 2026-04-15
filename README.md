@@ -21,6 +21,7 @@
   <a href="#the-problem">Problem</a> · 
   <a href="#the-solution">Solution</a> · 
   <a href="#evidence">Evidence</a> · 
+  <a href="#live-demo--flask-annotated-in-3-seconds">Live demo</a> · 
   <a href="#install">Install</a> · 
   <a href="#how-it-works">How it works</a> · 
   <a href="#docs">Docs</a>

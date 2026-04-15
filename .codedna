@@ -551,3 +551,44 @@ agent_sessions:
       C# expression-bodied properties (Count =>) correctly parse as property_declaration.
       Ruby attr_reader is a call node NOT captured by tree-sitter (regex adapter does).
       All 46 integration tests pass; 126 total.
+
+  - agent: claude-sonnet-4-6
+    provider: anthropic
+    date: 2026-04-16
+    session_id: s_20260416_004
+    task: "fix L2 batch overflow and add DeepSeek provider support"
+    changed:
+      - codedna_tool/cli.py
+      - codedna_tool/languages/base.py
+      - README.md
+    visited:
+      - codedna_tool/cli.py
+      - codedna_tool/languages/base.py
+      - README.md
+    message: >
+      L2 batch overflow: app.py (38 fns) sent as one LLM call — max_tokens=500 truncated JSON.
+      Fix: batch into chunks of 12, scale max_tokens to 50*batch_size, _parse_json_response()
+      recovers from truncated JSON. DeepSeek added to _detect_provider() and env_map.
+      Flask demo: 24 files, 88 functions annotated, 0 warnings (was 78 with 2 warnings).
+
+  - agent: claude-sonnet-4-6
+    provider: anthropic
+    date: 2026-04-16
+    session_id: s_20260416_005
+    task: "fix 6 multi-language annotation bugs; Go/Ruby/PHP demo with DeepSeek"
+    changed:
+      - codedna_tool/cli.py
+      - codedna_tool/languages/base.py
+      - README.md
+    visited:
+      - codedna_tool/cli.py
+      - codedna_tool/languages/base.py
+      - codedna_tool/languages/php.py
+      - codedna_tool/languages/go.py
+      - codedna_tool/languages/ruby.py
+    message: >
+      Non-Python LLM path was silently broken since day 1: module_rules() tried Python AST
+      on PHP/Go files, threw SyntaxError, caught by except Exception, fell back to none.
+      Added module_rules_raw() using raw source snippet. Also: skip *_test.go, cap exports
+      at 20, fix provider always "unknown", normalize multi-line rules with comment prefix.
+      Tested on gin (59 files, 56 LLM calls) and sinatra (7 files, 6 LLM calls).
