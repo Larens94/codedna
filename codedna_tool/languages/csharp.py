@@ -6,8 +6,8 @@ rules:   regex-based only — no .NET SDK dependency required.
          Detects public class/interface/enum/struct/record and public methods.
          Namespace-qualified exports: Class::Method for public members.
          Attributes ([Attribute]) before declarations are ignored.
-agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | initial C# adapter
-         claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed class detection inside namespace blocks: allow indented class/interface/enum/struct/record
+agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed class detection inside namespace blocks: allow indented class/interface/enum/struct/record
+         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | fixed inject_header: header now inserted before namespace declaration, not between 'namespace Foo' and its '{'; also fixed leading blank line
 """
 
 from __future__ import annotations
@@ -104,12 +104,13 @@ class CSharpAdapter(LanguageAdapter):
 
     def inject_header(self, source: str, rel: str, exports: str, used_by: str,
                       rules: str, model_id: str, today: str) -> str:
-        """Prepend a CodeDNA // comment block after namespace/using declarations.
+        """Prepend a CodeDNA // comment block between using directives and namespace.
 
         Rules:   Must be idempotent.
-                 using directives and namespace declaration must be preserved at top.
-                 CodeDNA block inserted after the first namespace { line if present,
-                 otherwise at file top.
+                 using directives are preserved at file top.
+                 CodeDNA block is inserted BEFORE the namespace declaration —
+                 never between 'namespace Foo' and its opening '{'.
+                 If no using/namespace, inserts at file top.
         """
         if self.has_codedna_header(source):
             return source
@@ -121,13 +122,17 @@ class CSharpAdapter(LanguageAdapter):
         insert_idx = 0
         for i, line in enumerate(lines):
             stripped = line.strip()
-            if stripped.startswith("using ") or stripped.startswith("namespace ") or not stripped:
+            if stripped.startswith("using ") or not stripped:
                 insert_idx = i + 1
             elif stripped.startswith("[") or stripped.startswith("//"):
                 continue
             else:
-                break
+                break  # stop before namespace / class / anything else
 
         before = "".join(lines[:insert_idx])
         after = "".join(lines[insert_idx:])
-        return before + "\n" + header + "\n" + after
+        # Normalize to exactly one blank line between sections
+        before_norm = before.rstrip("\n")
+        after_norm = after.lstrip("\n")
+        separator = "\n\n" if before_norm else ""
+        return before_norm + separator + header + "\n" + after_norm

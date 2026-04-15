@@ -3,12 +3,18 @@
 exports: TreeSitterAdapter(LanguageAdapter)
 used_by: languages/_ts_typescript.py → TreeSitterTypeScriptAdapter [cascade]
          languages/_ts_go.py → TreeSitterGoAdapter [cascade]
+         languages/_ts_php.py → TreeSitterPhpAdapter [cascade]
+         languages/_ts_java.py → TreeSitterJavaAdapter [cascade]
+         languages/_ts_rust.py → TreeSitterRustAdapter [cascade]
+         languages/_ts_csharp.py → TreeSitterCSharpAdapter [cascade]
+         languages/_ts_ruby.py → TreeSitterRubyAdapter [cascade]
+         languages/_ts_kotlin.py → TreeSitterKotlinAdapter [cascade]
 rules:   tree-sitter is an optional dependency — import errors must be caught by callers.
          All adapters inherit inject_header() from the regex adapter; only extract_info() changes.
          extract_info() must never raise — return LangFileInfo(parseable=False) on failure.
          tree-sitter 0.25+ API: Query(lang, pattern) → QueryCursor(query) → cursor.captures(node).
-agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_001 | initial tree-sitter base adapter
-         claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed API for tree-sitter 0.25: Query.captures → QueryCursor.captures
+agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed API for tree-sitter 0.25: Query.captures → QueryCursor.captures
+         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | extended used_by to all 6 new tree-sitter adapters (PHP, Java, Rust, C#, Ruby, Kotlin)
 """
 
 from __future__ import annotations

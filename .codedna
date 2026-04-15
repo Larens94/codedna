@@ -478,3 +478,44 @@ agent_sessions:
       README expanded PHP+Phalcon section: added framework-awareness column to language
       table, added Volt template engine table, added Laravel and Phalcon annotation
       examples with comments explaining auto-detection (routes, DI services, public methods).
+
+  - agent: claude-sonnet-4-6
+    provider: anthropic
+    date: 2026-04-16
+    session_id: s_20260416_001
+    task: "replace regex with tree-sitter adapters for PHP, Java, Rust, C#, Ruby, Kotlin"
+    changed:
+      - codedna_tool/languages/_ts_php.py
+      - codedna_tool/languages/_ts_java.py
+      - codedna_tool/languages/_ts_rust.py
+      - codedna_tool/languages/_ts_csharp.py
+      - codedna_tool/languages/_ts_ruby.py
+      - codedna_tool/languages/_ts_kotlin.py
+      - codedna_tool/languages/__init__.py
+      - codedna_tool/languages/_treesitter.py
+      - codedna_tool/languages/csharp.py
+      - codedna_tool/languages/java.py
+      - codedna_tool/languages/ruby.py
+      - pyproject.toml
+    visited:
+      - codedna_tool/languages/_treesitter.py
+      - codedna_tool/languages/__init__.py
+      - codedna_tool/languages/base.py
+      - codedna_tool/languages/csharp.py
+      - codedna_tool/languages/java.py
+      - codedna_tool/languages/ruby.py
+      - codedna_tool/languages/rust.py
+      - codedna_tool/languages/php.py
+      - codedna_tool/languages/_ts_typescript.py
+      - codedna_tool/languages/_ts_go.py
+      - pyproject.toml
+      - .codedna
+    message: >
+      Created AST-powered tree-sitter adapters for all 6 remaining source languages
+      (PHP, Java, Rust, C#, Ruby, Kotlin). All 9 source languages now use tree-sitter
+      with regex fallback via try/except ImportError. Critical fix: Rust regex adapter
+      missed all pub fn inside impl blocks — tree-sitter adapter explicitly traverses
+      impl_item nodes. PHP uses language_php() not language(). Ruby private boundary
+      detected via b"private" identifier node in body_statement. Kotlin class-level fns
+      excluded via parent.type == "source_file" check. C# and Java header injection
+      double-blank-line bugs fixed. tree-sitter moved to core dependencies in pyproject.toml.

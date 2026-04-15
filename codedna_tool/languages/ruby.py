@@ -6,8 +6,8 @@ rules:   regex-based only — no Ruby interpreter dependency required.
          Detects module/class definitions and public def methods.
          attr_accessor/attr_reader/attr_writer are captured as exports.
          Rails-aware: before_action, scope, has_many captured as metadata (not exports).
-agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | initial Ruby adapter
-         claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed nested class/module detection: allow indented class/module, method prefix uses innermost class not first module
+agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed nested class/module detection: allow indented class/module, method prefix uses innermost class not first module
+         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | fixed inject_header: no leading blank line when file has no shebang/frozen_string_literal (prefix only added when before is non-empty)
 """
 
 from __future__ import annotations
@@ -146,4 +146,5 @@ class RubyAdapter(LanguageAdapter):
 
         before = "".join(lines[:insert_idx])
         after = "".join(lines[insert_idx:])
-        return before + "\n" + header + "\n" + after
+        prefix = "\n" if before else ""
+        return before + prefix + header + "\n" + after

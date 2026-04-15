@@ -7,6 +7,7 @@ rules:   regex-based only — no JVM dependency required.
          Kotlin: detects class/object/fun/val/const at top level and public members.
          Annotations (@Override, @SpringBootApplication etc.) are not captured as exports.
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | initial Java + Kotlin adapters
+         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | fixed double blank line: strip leading newlines from after before reassembling, both JavaAdapter and KotlinAdapter
 """
 
 from __future__ import annotations
@@ -117,7 +118,7 @@ class JavaAdapter(LanguageAdapter):
                 break
 
         before = "".join(lines[:insert_idx])
-        after = "".join(lines[insert_idx:])
+        after = "".join(lines[insert_idx:]).lstrip("\n")
         return before + "\n" + header + "\n" + after
 
 
@@ -178,5 +179,5 @@ class KotlinAdapter(LanguageAdapter):
                 break
 
         before = "".join(lines[:insert_idx])
-        after = "".join(lines[insert_idx:])
+        after = "".join(lines[insert_idx:]).lstrip("\n")
         return before + "\n" + header + "\n" + after
