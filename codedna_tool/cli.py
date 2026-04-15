@@ -6,11 +6,11 @@ used_by: none — CLI entrypoint, called via `codedna` console script
 rules:   L2 (function Rules:) applies Python AST only; language adapters are L1-only.
          LLM calls are capped at 2 per Python file; --no-llm skips all LLM calls.
          _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
-agent:   claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | added cmd_install subcommand: pre-commit hook + AI tool prompt + .codedna setup in one command
-         claude-opus-4-6 | anthropic | 2026-04-07 | s_20260407_001 | fixed 3 install bugs: opencode JS plugin, -hooks base prompt, install.sh claude-hooks
+agent:   claude-opus-4-6 | anthropic | 2026-04-07 | s_20260407_001 | fixed 3 install bugs: opencode JS plugin, -hooks base prompt, install.sh claude-hooks
          claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | fixed --no-llm writing haiku model_id in agent: field — now writes "codedna-cli (no-llm)"
          claude-sonnet-4-6 | anthropic | 2026-04-15 | s_20260415_002 | made auto-detect default: init/check auto-detect when --extensions not given; updated Next steps output
          claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | fix build_module_docstring: Python agent: line now emits 5 fields (model|provider|date|session|narrative) matching spec
+         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_003 | add DeepSeek to _detect_provider and env_map so --api-key works with deepseek/ model prefix
 
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
@@ -337,6 +337,7 @@ class LLM:
                     "anthropic": "ANTHROPIC_API_KEY",
                     "openai": "OPENAI_API_KEY",
                     "gemini": "GEMINI_API_KEY",
+                    "deepseek": "DEEPSEEK_API_KEY",
                     "mistral": "MISTRAL_API_KEY",
                     "cohere": "COHERE_API_KEY",
                 }
@@ -364,6 +365,8 @@ class LLM:
             return "openai"
         if m.startswith("gemini/") or m.startswith("google/"):
             return "gemini"
+        if m.startswith("deepseek/") or m.startswith("deepseek-"):
+            return "deepseek"
         if m.startswith("mistral/"):
             return "mistral"
         if m.startswith("cohere/"):

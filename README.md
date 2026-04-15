@@ -259,7 +259,55 @@ agent:   codedna-cli (no-llm) | codedna-cli | 2026-04-16 | codedna-cli | initial
 | "What does `sessions.py` expose?" | 5 classes — `SessionMixin`, `SecureCookieSession`, `NullSession`, `SessionInterface`, `SecureCookieSessionInterface` |
 | "What imports `Flask` directly?" | `__init__`, `cli`, `ctx`, `globals`, `sessions`, `testing` |
 
-Add `--model claude-haiku-3-5` to generate `rules:` fields too — each function gets a docstring constraint written by the model based on what it reads in the code.
+**With any LLM — add `rules:` to every function in one command:**
+
+```bash
+pip install 'codedna[litellm]'
+export DEEPSEEK_API_KEY=sk-...
+codedna init flask/src/flask --model deepseek/deepseek-chat
+```
+
+```
+Pass 3/3  Annotating...
+
+L1 modules   Annotated 0 files      ← already done, skipped
+L2 functions Added Rules: to 78 functions
+LLM calls    19
+```
+
+19 API calls. 78 functions annotated. Every hidden constraint surfaced:
+
+```python
+# ctx.py — push() and pop()
+def push(self) -> None:
+    """...
+    Rules:   Can be pushed multiple times (streaming/testing),
+             but matching/signals only trigger on first push.
+    """
+
+def pop(self, exc: BaseException | None = _sentinel) -> None:
+    """...
+    Rules:   MUST be popped exactly as many times as pushed;
+             otherwise RuntimeError or premature cleanup.
+    """
+
+# config.py — from_object()
+def from_object(self, obj: object | str) -> None:
+    """...
+    Rules:   String argument must be importable module path;
+             only UPPERCASE attributes are loaded (dicts won't work).
+    """
+
+# cli.py — find_best_app()
+def find_best_app(module: ModuleType) -> Flask:
+    """...
+    Rules:   Module must have exactly one Flask instance if common
+             names ('app', 'application') aren't found;
+             multiple Flask instances raise exception.
+    """
+```
+
+An agent reading this project tomorrow skips the source. It reads the headers, knows the constraints, and acts correctly.
 
 ---
 
