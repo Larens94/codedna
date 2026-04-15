@@ -156,6 +156,113 @@ Without these notes, the next agent opens `auth_service.py` and has no idea refr
 
 ---
 
+## Live demo — Flask annotated in 3 seconds
+
+> **Zero API key. Zero config. A real open-source project.**
+
+```bash
+git clone --depth=1 https://github.com/pallets/flask.git
+codedna init flask/src/flask --no-llm
+codedna refresh flask/src/flask
+codedna check flask/src/flask
+```
+
+```
+Pass 1/3  Scanning...        24 parsed  (0 skipped)
+Pass 2/3  Building graph...  111 edges across 21 files
+Pass 3/3  Annotating...
+
+L1 modules   Annotated 24 files
+L2 functions Added Rules: to 0 functions   ← requires --llm for semantic rules
+LLM calls    0
+
+L1 (module headers)   24/24  ✓ 100%
+```
+
+Every file now carries its own architectural context — no external database, no config, no server:
+
+<details>
+<summary><strong>globals.py</strong> — most-imported module (12 callers)</summary>
+
+```python
+"""globals.py — globals module.
+
+exports: none
+used_by: __init__.py → current_app, g, request, session
+         app.py → _cv_app, app_ctx, g, request, session
+         blueprints.py → current_app
+         cli.py → current_app
+         ctx.py → _cv_app
+         debughelpers.py → _cv_app
+         helpers.py → _cv_app, app_ctx, current_app, request, session
+         json/__init__.py → current_app
+         logging.py → request
+         templating.py → app_ctx
+         views.py → current_app, request
+         wrappers.py → current_app
+rules:   none
+agent:   codedna-cli (no-llm) | codedna-cli | 2026-04-16 | codedna-cli | initial CodeDNA annotation pass
+"""
+```
+
+</details>
+
+<details>
+<summary><strong>app.py</strong> — the Flask class, 6 dependents</summary>
+
+```python
+"""app.py — app module.
+
+exports: F | remove_ctx(f) | add_ctx(f) | class Flask
+used_by: __init__.py → Flask
+         cli.py → Flask
+         ctx.py → Flask
+         globals.py → Flask
+         sessions.py → Flask
+         testing.py → Flask
+rules:   none
+agent:   codedna-cli (no-llm) | codedna-cli | 2026-04-16 | codedna-cli | initial CodeDNA annotation pass
+"""
+```
+
+</details>
+
+<details>
+<summary><strong>signals.py</strong> — 5 callers, every signal mapped to its subscriber</summary>
+
+```python
+"""signals.py — signals module.
+
+exports: none
+used_by: __init__.py → appcontext_popped, appcontext_pushed, appcontext_tearing_down,
+                        before_render_template, got_request_exception, message_flashed,
+                        request_finished, request_started, request_tearing_down, template_rendered
+         app.py → appcontext_tearing_down, got_request_exception, request_finished,
+                  request_started, request_tearing_down
+         ctx.py → appcontext_popped, appcontext_pushed
+         helpers.py → message_flashed
+         templating.py → before_render_template, template_rendered
+rules:   none
+agent:   codedna-cli (no-llm) | codedna-cli | 2026-04-16 | codedna-cli | initial CodeDNA annotation pass
+"""
+```
+
+</details>
+
+**What an AI agent now knows without reading any code:**
+
+| Question | Answer — from headers alone |
+|---|---|
+| "What does `globals.py` export?" | `current_app`, `g`, `request`, `session`, `_cv_app`, `app_ctx` |
+| "If I change `globals.py`, what breaks?" | 12 files — listed by name and symbol |
+| "Who subscribes to `appcontext_pushed`?" | `__init__.py`, `ctx.py` |
+| "What does `sessions.py` expose?" | 5 classes — `SessionMixin`, `SecureCookieSession`, `NullSession`, `SessionInterface`, `SecureCookieSessionInterface` |
+| "What imports `Flask` directly?" | `__init__`, `cli`, `ctx`, `globals`, `sessions`, `testing` |
+
+Add `--model claude-haiku-3-5` to generate `rules:` fields too — each function gets a docstring constraint written by the model based on what it reads in the code.
+
+---
+
 ## Install
 
 | Agent | Command |
