@@ -1,36 +1,30 @@
 #!/usr/bin/env python3
 """cli.py — CodeDNA v0.8 annotation tool: init, update, check, install.
 
-exports: main() -> int | run(...) | cmd_check(...) -> int | cmd_install(...) -> int | collect_files(...) -> list[Path]
-used_by: none — CLI entrypoint, called via `codedna` console script
+exports: class FuncInfo | class FileInfo | scan_file(path, repo_root) | build_used_by(infos) | build_ast_skeleton(source, rel) | class LLM | _EXPORTS_CAP | build_module_docstring(info, ub, rules, model_id) | inject_module_docstring(source, docstring) | inject_function_rules(source, func, rules_text) | collect_files(target, exclude, extensions) | run_lang_files(target, extensions, repo_root, exclude, model, dry_run, force, no_llm, verbose, api_key) | run(target, levels, model, dry_run, exclude, force, no_llm, only_public, verbose, api_key, repo_root, extensions) | cmd_refresh(target, repo_root, exclude, dry_run, verbose) | cmd_check(target, repo_root, exclude, verbose, extensions) | _TOOL_FILES | _HOOK_TOOLS | _TOOL_HOOKS_MAP | _HOOKS_BASE_MAP | _PRE_COMMIT_HOOK | (+7 more)
+used_by: tests/test_cli.py → FileInfo, build_module_docstring
 rules:   L2 (function Rules:) applies Python AST only; language adapters are L1-only.
-         LLM calls are capped at 2 per Python file; --no-llm skips all LLM calls.
-         _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
+LLM calls are capped at 2 per Python file; --no-llm skips all LLM calls.
+_resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
 agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | fix build_module_docstring: Python agent: line now emits 5 fields (model|provider|date|session|narrative) matching spec
-         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_003 | add DeepSeek to _detect_provider and env_map so --api-key works with deepseek/ model prefix
-         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | fix L2 batch overflow: _L2_BATCH_SIZE=12, dynamic max_tokens, _parse_json_response with truncation recovery
-         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | skip *_test.go; cap exports@20; fix non-Python path (raw join→_fmt_exports, module_rules→module_rules_raw, provider detection)
-         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_005 | run_lang_files returns (annotated, llm_calls) tuple; run() aggregates lang llm_calls into summary counter
-
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_003 | add DeepSeek to _detect_provider and env_map so --api-key works with deepseek/ model prefix
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | fix L2 batch overflow: _L2_BATCH_SIZE=12, dynamic max_tokens, _parse_json_response with truncation recovery
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | skip *_test.go; cap exports@20; fix non-Python path (raw join→_fmt_exports, module_rules→module_rules_raw, provider detection)
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_005 | run_lang_files returns (annotated, llm_calls) tuple; run() aggregates lang llm_calls into summary counter
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
-
 Commands:
-  install        Setup CodeDNA in a project (pre-commit hook + AI tool prompt + .codedna)
-  init   PATH    First-time annotation of every source file under PATH
-  update PATH    Annotate only files missing CodeDNA headers (incremental)
-  check  PATH    Report annotation coverage without modifying files
-
+install        Setup CodeDNA in a project (pre-commit hook + AI tool prompt + .codedna)
+init   PATH    First-time annotation of every source file under PATH
+update PATH    Annotate only files missing CodeDNA headers (incremental)
+check  PATH    Report annotation coverage without modifying files
 LLM calls: max 2 per Python file (1 module skeleton rules + 1 function batch).
-           0 calls if file already annotated (skipped by init/update).
-           Non-Python files: 1 LLM call per file for rules: (or none with --no-llm).
-
+0 calls if file already annotated (skipped by init/update).
+Non-Python files: 1 LLM call per file for rules: (or none with --no-llm).
 Requires: ANTHROPIC_API_KEY env var (or --api-key) for Anthropic models.
-          No API key needed for local models via Ollama (pip install 'codedna[litellm]').
-
+No API key needed for local models via Ollama (pip install 'codedna[litellm]').
 Provider priority: litellm (all providers) > anthropic (fallback, Claude only).
-
 Multi-language: pass --extensions ts go php rs java kt rb cs swift (or with dots).
 Supported: .ts .tsx .js .jsx .mjs | .go | .php | .rs | .java | .kt .kts | .rb | .cs | .swift
 """
@@ -1524,12 +1518,12 @@ def _install_claude_hooks(repo_root: Path) -> int:
     # Crea o avvisa per settings.local.json
     path_settings = repo_root / ".claude" / "settings.local.json"
     if path_settings.exists():
-        print(f"  !!    .claude/settings.local.json already exists — merge hooks manually")
-        print(f"        See: https://github.com/Larens94/codedna#claude-code-hooks")
+        print("  !!    .claude/settings.local.json already exists — merge hooks manually")
+        print("        See: https://github.com/Larens94/codedna#claude-code-hooks")
     else:
         path_settings.parent.mkdir(parents=True, exist_ok=True)
         path_settings.write_text(_CLAUDE_HOOKS_SETTINGS, encoding="utf-8")
-        print(f"  OK    .claude/settings.local.json (hooks configured)")
+        print("  OK    .claude/settings.local.json (hooks configured)")
         int_count += 1
 
     return int_count
@@ -1654,7 +1648,7 @@ def _install_opencode_hooks(repo_root: Path) -> int:
     try:
         urllib.request.urlretrieve(str_url, str(path_dest))
         int_count += 1
-        print(f"  OK    OpenCode Plugin -> .opencode/plugins/codedna.js")
+        print("  OK    OpenCode Plugin -> .opencode/plugins/codedna.js")
     except Exception as e:
         print(f"  FAIL  codedna.js — could not fetch: {e}")
 
@@ -1802,14 +1796,14 @@ def cmd_install(repo_root: Path, tools: list[str], skip_hook: bool = False,
     # 3. .codedna manifest
     path_codedna = repo_root / ".codedna"
     if path_codedna.exists():
-        print(f"  SKIP  .codedna (already exists)")
+        print("  SKIP  .codedna (already exists)")
     else:
         str_project_name = repo_root.name
         path_codedna.write_text(
             _CODEDNA_TEMPLATE.format(project_name=str_project_name),
             encoding="utf-8",
         )
-        print(f"  OK    .codedna created")
+        print("  OK    .codedna created")
         int_count_installed += 1
 
     # Summary

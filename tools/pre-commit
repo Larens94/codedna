@@ -93,11 +93,12 @@ for FILE in $STAGED; do
 
     OUTPUT=$("$CODEDNA" check "$FULL" $ARGS 2>&1) || true
 
-    if echo "$OUTPUT" | grep -q "INCOMPLETE"; then
+    # Block only on L1 (module header) missing — L2 (function Rules:) is enforced incrementally
+    if echo "$OUTPUT" | grep -qE "L1 \(module headers\)[[:space:]]+0/"; then
         ERRORS=$((ERRORS + 1))
         echo ""
         echo "FAIL  $FILE"
-        echo "      Missing CodeDNA v0.8 header"
+        echo "      Missing CodeDNA v0.8 module header"
     fi
 done
 

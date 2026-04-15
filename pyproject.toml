@@ -24,6 +24,7 @@ anthropic  = ["anthropic>=0.20"]
 litellm    = ["litellm>=1.0"]
 treesitter = []  # kept for backward compat — tree-sitter is now a core dependency
 all        = ["anthropic>=0.20", "litellm>=1.0"]
+dev        = ["ruff>=0.4", "pytest>=8.0"]
 
 [project.scripts]
 codedna = "codedna_tool.cli:main"
@@ -36,6 +37,15 @@ testpaths = ["tests"]
 python_files = "test_*.py"
 python_classes = "Test*"
 python_functions = "test_*"
+
+[tool.ruff]
+line-length = 120
+target-version = "py311"
+exclude = [".git", ".venv", "venv", "__pycache__", "benchmark", "benchmark_agent", "docs", "tests/fixtures"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W"]
+ignore = ["E501"]  # line length handled by formatter
 
 [tool.black]
 line-length = 120

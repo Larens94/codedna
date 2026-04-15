@@ -1,19 +1,40 @@
 """base.py — Abstract base class for CodeDNA v0.8 language adapters.
 
-exports: class LanguageAdapter
-used_by: languages/__init__.py → LanguageAdapter
-         languages/typescript.py → TypeScriptAdapter [cascade]
-         languages/go.py → GoAdapter [cascade]
+exports: class LangFileInfo | class LanguageAdapter
+used_by: codedna_tool/languages/__init__.py → LanguageAdapter
+         codedna_tool/languages/_treesitter.py → LanguageAdapter
+         codedna_tool/languages/_ts_csharp.py → LangFileInfo
+         codedna_tool/languages/_ts_go.py → LangFileInfo
+         codedna_tool/languages/_ts_java.py → LangFileInfo
+         codedna_tool/languages/_ts_kotlin.py → LangFileInfo
+         codedna_tool/languages/_ts_php.py → LangFileInfo
+         codedna_tool/languages/_ts_ruby.py → LangFileInfo
+         codedna_tool/languages/_ts_rust.py → LangFileInfo
+         codedna_tool/languages/_ts_typescript.py → LangFileInfo
+         codedna_tool/languages/blade.py → LangFileInfo, LanguageAdapter
+         codedna_tool/languages/csharp.py → LangFileInfo, LanguageAdapter
+         codedna_tool/languages/erb.py → LangFileInfo, LanguageAdapter
+         codedna_tool/languages/go.py → LangFileInfo, LanguageAdapter
+         codedna_tool/languages/handlebars.py → LangFileInfo, LanguageAdapter
+         codedna_tool/languages/java.py → LangFileInfo, LanguageAdapter
+         codedna_tool/languages/jinja.py → LangFileInfo, LanguageAdapter
+         codedna_tool/languages/php.py → LangFileInfo, LanguageAdapter
+         codedna_tool/languages/razor.py → LangFileInfo, LanguageAdapter
+         codedna_tool/languages/ruby.py → LangFileInfo, LanguageAdapter
+         codedna_tool/languages/rust.py → LangFileInfo, LanguageAdapter
+         codedna_tool/languages/swift.py → LangFileInfo, LanguageAdapter
+         codedna_tool/languages/typescript.py → LangFileInfo, LanguageAdapter
+         codedna_tool/languages/vue.py → LangFileInfo, LanguageAdapter
 rules:   All adapters must be stateless (no instance state).
-         extract_info() must never raise — return empty defaults on failure.
-         inject_header() must be idempotent: if header already present, return source unchanged.
-         _build_header_lines() MUST emit agent: with 5 fields: model-id | provider | YYYY-MM-DD | session_id | narrative.
-         Never change the field order in _build_header_lines() — downstream validators parse by position.
+extract_info() must never raise — return empty defaults on failure.
+inject_header() must be idempotent: if header already present, return source unchanged.
+_build_header_lines() MUST emit agent: with 5 fields: model-id | provider | YYYY-MM-DD | session_id | narrative.
+Never change the field order in _build_header_lines() — downstream validators parse by position.
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_002 | v0.8 compliance: fixed used_by →, [cascade] tags, 5-field agent: line
-         claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | fixed has_codedna_header to detect headers in any comment format (// # * /** {{-- {# <%#), prevents duplicate headers on re-run
-         claude-sonnet-4-6 | anthropic | 2026-04-15 | s_20260415_002 | emit full 4-field header (exports/used_by/rules/agent) for all non-Python languages — adapters already extract them, _build_header_lines was discarding them
-         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | fix provider/session_id always "unknown" — added _detect_provider() in base, derives from model_id; removed caller-supplied provider param
-         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_005 | fix multi-line rules from LLM: normalize newlines in _build_header_lines, each continuation carries comment prefix
+claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | fixed has_codedna_header to detect headers in any comment format (// # * /** {{-- {# <%#), prevents duplicate headers on re-run
+claude-sonnet-4-6 | anthropic | 2026-04-15 | s_20260415_002 | emit full 4-field header (exports/used_by/rules/agent) for all non-Python languages — adapters already extract them, _build_header_lines was discarding them
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | fix provider/session_id always "unknown" — added _detect_provider() in base, derives from model_id; removed caller-supplied provider param
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_005 | fix multi-line rules normalization; ruff cleanup: ambiguous var l→line, removed unused Optional import
 """
 
 from __future__ import annotations
@@ -21,7 +42,6 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
-from typing import Optional
 
 
 @dataclass
@@ -111,7 +131,7 @@ class LanguageAdapter(ABC):
 
         # Normalize multi-line rules: each continuation line must carry the comment prefix.
         # LLMs sometimes return numbered lists with embedded newlines — join them with a separator.
-        rules_lines = [l.strip() for l in rules.splitlines() if l.strip()]
+        rules_lines = [line.strip() for line in rules.splitlines() if line.strip()]
         if len(rules_lines) > 1:
             rules_normalized = f"\n{p}          ".join(rules_lines)
         else:

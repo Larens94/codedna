@@ -1,15 +1,17 @@
 """php.py — CodeDNA v0.8 adapter for PHP source files (Laravel + Phalcon).
 
-exports: class PhpAdapter
-used_by: languages/__init__.py -> _REGISTRY
+exports: _CLASS_RE | _INTERFACE_RE | _TRAIT_RE | _ENUM_RE | _FUNC_RE | _PUBLIC_METHOD_RE | _ROUTE_RE | _NAMESPACE_RE | _USE_RE | _PHALCON_EXTENDS_RE | _PHALCON_ROUTER_RE | _PHALCON_DI_RE | class PhpAdapter
+used_by: codedna_tool/languages/__init__.py → PhpAdapter
+         codedna_tool/languages/_ts_php.py → PhpAdapter
 rules:   regex-based only — no PHP interpreter dependency required.
-         Detects exports: public functions/methods, classes, interfaces, traits, enums.
-         Laravel-aware: detects Route facades, controller methods, Eloquent model fillable.
-         Phalcon-aware: detects extends Controller/Model, $router->add, $di->set/setShared.
-         PHP uses block comments (/** ... */ or /* ... */); single-line uses //.
-         inject_header uses single-line // comments to avoid conflict with PHPDoc blocks.
+Detects exports: public functions/methods, classes, interfaces, traits, enums.
+Laravel-aware: detects Route facades, controller methods, Eloquent model fillable.
+Phalcon-aware: detects extends Controller/Model, $router->add, $di->set/setShared.
+PHP uses block comments (/** ... */ or /* ... */); single-line uses //.
+inject_header uses single-line // comments to avoid conflict with PHPDoc blocks.
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | initial PHP/Laravel adapter
-         claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | added Phalcon framework awareness: Controller/Model/DI/Router patterns
+claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | added Phalcon framework awareness: Controller/Model/DI/Router patterns
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_005 | remove unused ns_prefix/namespace dead code (ruff F841)
 """
 
 from __future__ import annotations
@@ -154,9 +156,6 @@ class PhpAdapter(LanguageAdapter):
 
         # Deps: use statements → attempt to resolve to repo-relative paths
         list_str_deps: list[str] = []
-        namespace = (_NAMESPACE_RE.search(source) or None)
-        ns_prefix = namespace.group(1).replace("\\", "/") if namespace else ""
-
         for m in _USE_RE.finditer(source):
             fqcn = m.group(1)  # e.g. App\Models\User
             rel_path = self._resolve_use(fqcn, repo_root)

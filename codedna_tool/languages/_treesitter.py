@@ -1,32 +1,31 @@
 """_treesitter.py — Base class for tree-sitter-powered CodeDNA adapters.
 
-exports: TreeSitterAdapter(LanguageAdapter)
-used_by: languages/_ts_typescript.py → TreeSitterTypeScriptAdapter [cascade]
-         languages/_ts_go.py → TreeSitterGoAdapter [cascade]
-         languages/_ts_php.py → TreeSitterPhpAdapter [cascade]
-         languages/_ts_java.py → TreeSitterJavaAdapter [cascade]
-         languages/_ts_rust.py → TreeSitterRustAdapter [cascade]
-         languages/_ts_csharp.py → TreeSitterCSharpAdapter [cascade]
-         languages/_ts_ruby.py → TreeSitterRubyAdapter [cascade]
-         languages/_ts_kotlin.py → TreeSitterKotlinAdapter [cascade]
+exports: class TreeSitterAdapter
+used_by: codedna_tool/languages/_ts_csharp.py → TreeSitterAdapter
+         codedna_tool/languages/_ts_go.py → TreeSitterAdapter
+         codedna_tool/languages/_ts_java.py → TreeSitterAdapter
+         codedna_tool/languages/_ts_kotlin.py → TreeSitterAdapter
+         codedna_tool/languages/_ts_php.py → TreeSitterAdapter
+         codedna_tool/languages/_ts_ruby.py → TreeSitterAdapter
+         codedna_tool/languages/_ts_rust.py → TreeSitterAdapter
+         codedna_tool/languages/_ts_typescript.py → TreeSitterAdapter
 rules:   tree-sitter is an optional dependency — import errors must be caught by callers.
-         All adapters inherit inject_header() from the regex adapter; only extract_info() changes.
-         extract_info() must never raise — return LangFileInfo(parseable=False) on failure.
-         tree-sitter 0.25+ API: Query(lang, pattern) → QueryCursor(query) → cursor.captures(node).
-         _parse_cached() uses identity (is) check — callers must reuse the same bytes object
-         within a single extract_info() call to get cache hits; re-parse on different object.
+All adapters inherit inject_header() from the regex adapter; only extract_info() changes.
+extract_info() must never raise — return LangFileInfo(parseable=False) on failure.
+tree-sitter 0.25+ API: Query(lang, pattern) → QueryCursor(query) → cursor.captures(node).
+_parse_cached() uses identity (is) check — callers must reuse the same bytes object
+within a single extract_info() call to get cache hits; re-parse on different object.
 agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed API for tree-sitter 0.25: Query.captures → QueryCursor.captures
-         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | extended used_by to all 6 new tree-sitter adapters (PHP, Java, Rust, C#, Ruby, Kotlin)
-         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | add _parse_cached() 1-entry cache — prevents parsing same bytes N times per extract_info() call
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | extended used_by to all 6 new tree-sitter adapters (PHP, Java, Rust, C#, Ruby, Kotlin)
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | add _parse_cached() 1-entry cache — prevents parsing same bytes N times per extract_info() call
 """
 
 from __future__ import annotations
 
-from pathlib import Path
 
 from tree_sitter import Language, Parser, Query, QueryCursor
 
-from .base import LanguageAdapter, LangFileInfo
+from .base import LanguageAdapter
 
 
 class TreeSitterAdapter(LanguageAdapter):
