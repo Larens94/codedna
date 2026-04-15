@@ -22,30 +22,144 @@
 
 ---
 
-**CodeDNA** embeds architectural context directly in source files as structured annotations. AI agents read `used_by:` (who depends on me), `rules:` (hard constraints), and `message:` (agent-to-agent chat) — no RAG, no vector DB, no external rules files. [11 languages supported](docs/languages.md).
-
-**Preliminary results:**
-- **SWE-bench:** +13pp F1 on Gemini 2.5 Flash (p=0.040), +9pp on DeepSeek Chat — zero-shot, no fine-tuning
-- **Multi-agent teams:** 5-agent teams build applications 1.6x faster; `message:` field adopted spontaneously in 98.2% of files
-- **Fix quality:** CodeDNA session matched 7/7 files of the official Django patch vs 6/7 for control
-
-> [Full benchmark results](docs/benchmark.md) · [Multi-agent experiments](docs/experiments.md)
+**CodeDNA** embeds architectural context directly in source files. AI agents read it, follow it, and leave knowledge for the next agent. No RAG, no vector DB, no external rules files. [11 languages supported](docs/languages.md).
 
 ![CodeDNA Logo](./docs/logo.png)
 
 ---
 
-## The Problem
+## What happens without CodeDNA
 
-AI coding agents waste context exploring irrelevant files, missing cross-file constraints and reverse dependencies. The result: incomplete patches, higher token costs, and models that repeat the same mistakes across sessions.
+Agent opens `utils.py`, fixes a bug. Doesn't know 18 other files import from it. Ships a breaking change.
 
-The root cause is structural. Information like reverse dependencies and domain constraints cannot be inferred from a single file — they require reading the whole codebase. Without a way to persist that knowledge, every agent starts from scratch.
+Next agent opens the same file a week later. Discovers the same constraint the first agent already found. Wastes 20 minutes re-learning what was already known.
 
-CodeDNA embeds this context directly in source files: `used_by:` maps reverse dependencies, `rules:` encodes domain constraints, and `agent:` / `message:` accumulate knowledge across sessions.
+Third agent adds a feature. Calls `get_invoices()` without filtering suspended tenants. The filter requirement was in another file — never seen, never followed.
+
+**Every agent starts from scratch. Knowledge is lost between sessions.**
+
+```mermaid
+graph TB
+    subgraph WITHOUT["Without CodeDNA"]
+        W1["Agent opens utils.py"] --> W2["Grep for callers..."]
+        W2 --> W3["Open 12 files randomly"]
+        W3 --> W4["Miss 6 critical files"]
+        W4 --> W5["Ship broken change"]
+    end
+    
+    subgraph WITH["With CodeDNA"]
+        C1["Agent opens utils.py"] --> C2["Read used_by: 3 callers"]
+        C2 --> C3["Open 3 files directly"]
+        C3 --> C4["Read rules: filter required"]
+        C4 --> C5["Ship correct fix"]
+    end
+
+    style WITHOUT fill:#fef2f2,stroke:#dc2626
+    style WITH fill:#f0fdf4,stroke:#16a34a
+```
+
+## What happens with CodeDNA
+
+```python
+"""billing/revenue.py — Monthly revenue aggregation from paid invoices.
+
+exports: monthly_revenue(year, month) -> dict
+used_by: api/reports.py → revenue_route | api/serializers.py → RevenueSchema [cascade]
+rules:   get_invoices() returns ALL tenants — caller MUST filter is_suspended() BEFORE aggregating
+agent:   claude-sonnet-4-6 | 2026-03-10 | Implemented monthly_revenue.
+         message: "rounding edge case in multi-currency — investigate before next release"
+agent:   gemini-2.5-pro | 2026-03-18 | Added annual_summary.
+         message: "@prev: confirmed, promoted to rules:. New: timezone rollover in January"
+"""
+```
+
+One read. The agent knows:
+- **`used_by:`** — 2 files depend on me, one is `[cascade]` (must update if I change)
+- **`rules:`** — there's a suspended-tenant trap in the upstream function
+- **`message:`** — the previous agent found a rounding bug and the one after confirmed it
+
+No grep. No reading 18 files. No re-discovering constraints. **The file tells you everything.**
+
+---
+
+## Real results from real experiments
+
+### `used_by:` — Agents find the right files
+
+SWE-bench, 5 Django tasks, 3 models. Same prompt, same tools. Only difference: CodeDNA annotations.
+
+| Model | Without | With CodeDNA | Improvement |
+|---|---|---|---|
+| Gemini 2.5 Flash | 60% F1 | **72% F1** | **+13pp** (p=0.040) |
+| DeepSeek Chat | 50% F1 | **60% F1** | **+9pp** |
+| Gemini 2.5 Pro | 60% F1 | **69% F1** | **+9pp** |
+
+### `rules:` — Agents fix the right pattern
+
+Django bug #13495. Same model (Claude Sonnet), same prompt, same bug.
+
+| | Without | With CodeDNA |
+|---|---|---|
+| Files matching official Django patch | 6/7 | **7/7** |
+| `time_trunc_sql` fixed (same pattern, line below the bug) | Missed | **Fixed** |
+| Failed edits | 5 | **0** |
+
+**What made the difference:** one `Rules:` annotation that said "timezone conversion must happen BEFORE datetime functions." The control agent saw the same code on the line below the bug — and didn't touch it.
+
+### `message:` — Agents talk to each other
+
+5-agent team builds a SaaS webapp. 83 minutes, DeepSeek R1. **No agent was told to use `message:`.**
+
+Result: **53 notes left across 54 files.** Three patterns emerged:
+
+```python
+# Pattern 1: "I built this, here's what's missing next"
+agent:   AgentIntegrator | implemented memory with similarity search
+         message: "implement memory summarization for long conversations"
+
+# Pattern 2: "I noticed a risk but couldn't verify it"
+agent:   Product Architect | created auth service skeleton
+         message: "verify that refresh token rotation prevents replay attacks"
+
+# Pattern 3: "Consider this architectural improvement"
+agent:   DataEngineer | created billing models
+         message: "ensure credit balance calculation uses materialized view for performance"
+```
+
+**Without `message:`, none of these notes exist.** The next agent opens `auth_service.py` and has no idea that refresh token rotation needs verification. The agent that opens `memory_manager.py` doesn't know summarization is needed. Every agent starts from scratch.
+
+**With `message:`, the codebase knows what it's missing.** That's the difference between a prototype and a product.
+
+```mermaid
+graph LR
+    A["Agent A writes code"] -->|"leaves"| M["message: rounding edge case"]
+    M -->|"next session"| B["Agent B reads it"]
+    B --> D{"confirmed?"}
+    D -->|"yes"| P["promoted to rules:"]
+    D -->|"no"| X["dismissed with reason"]
+    
+    style M fill:#fffbeb,stroke:#d97706
+    style P fill:#f0fdf4,stroke:#16a34a
+    style X fill:#fef2f2,stroke:#dc2626
+```
+
+> [Full benchmark](docs/benchmark.md) · [Experiment details](docs/experiments.md) · [Raw data](benchmark_agent/runs/)
 
 ---
 
 ## How it works
+
+```mermaid
+graph TB
+    L0[".codedna — project map<br>packages, purposes, sessions"] -->|"zoom in"| L1["Level 1 — module header<br>exports · used_by · rules · agent · message"]
+    L1 -->|"zoom in"| L2["Level 2 — function Rules:<br>constraints + message: per function"]
+    L2 -->|"zoom in"| L3["Level 3 — inline # Rules:<br>above complex logic blocks"]
+    
+    style L0 fill:#f5f5f5,stroke:#999
+    style L1 fill:#e8e8e8,stroke:#555
+    style L2 fill:#dbeafe,stroke:#3b82f6
+    style L3 fill:#fef3c7,stroke:#d97706
+```
 
 ![CodeDNA Navigation Demo](./docs/codedna_viz.gif)
 
