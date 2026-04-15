@@ -6,11 +6,11 @@ used_by: none — CLI entrypoint, called via `codedna` console script
 rules:   L2 (function Rules:) applies Python AST only; language adapters are L1-only.
          LLM calls are capped at 2 per Python file; --no-llm skips all LLM calls.
          _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
-agent:   claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | fixed --no-llm writing haiku model_id in agent: field — now writes "codedna-cli (no-llm)"
-         claude-sonnet-4-6 | anthropic | 2026-04-15 | s_20260415_002 | made auto-detect default: init/check auto-detect when --extensions not given; updated Next steps output
-         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | fix build_module_docstring: Python agent: line now emits 5 fields (model|provider|date|session|narrative) matching spec
+agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | fix build_module_docstring: Python agent: line now emits 5 fields (model|provider|date|session|narrative) matching spec
          claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_003 | add DeepSeek to _detect_provider and env_map so --api-key works with deepseek/ model prefix
          claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | fix L2 batch overflow: _L2_BATCH_SIZE=12, dynamic max_tokens, _parse_json_response with truncation recovery
+         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | skip *_test.go; cap exports@20; fix non-Python path (raw join→_fmt_exports, module_rules→module_rules_raw, provider detection)
+         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_005 | run_lang_files returns (annotated, llm_calls) tuple; run() aggregates lang llm_calls into summary counter
 
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
@@ -390,13 +390,24 @@ class LLM:
         return r.content[0].text.strip()
 
     def module_rules(self, rel: str, source: str) -> str:
-        """1 call → rules: content for the module."""
+        """1 call → rules: content for a Python module (uses AST skeleton)."""
         skeleton = build_ast_skeleton(source, rel)
+        return self._module_rules_from_context(rel, f"```\n{skeleton}\n```")
+
+    def module_rules_raw(self, rel: str, source_snippet: str) -> str:
+        """1 call → rules: content for a non-Python module (uses raw source snippet).
+
+        Rules:   Use this for PHP/Go/TS/Ruby/etc — build_ast_skeleton() is Python-only.
+                 source_snippet should be the first 2000 chars of the file.
+        """
+        return self._module_rules_from_context(rel, f"```\n{source_snippet}\n```")
+
+    def _module_rules_from_context(self, rel: str, context_block: str) -> str:
+        """Shared prompt builder for module_rules and module_rules_raw."""
         resp = self._call(
-            "You are generating the `rules:` field for a CodeDNA v0.8 module docstring.\n\n"
-            "Below is a structural skeleton of the file (every class and method signature "
-            "with its first body line). Use this to understand the full architecture.\n\n"
-            f"File: {rel}\n```\n{skeleton}\n```\n\n"
+            "You are generating the `rules:` field for a CodeDNA v0.8 module header.\n\n"
+            "Below is the source context of the file.\n\n"
+            f"File: {rel}\n{context_block}\n\n"
             "Write 1-3 lines of hard architectural constraints a future agent MUST know before editing.\n"
             "Focus on constraints that apply to the whole module, not individual functions.\n"
             "Do NOT hint at specific bugs. Return only the constraint text.\n"
@@ -506,8 +517,14 @@ class LLM:
 # ── Docstring builders ────────────────────────────────────────────────────────
 
 
+_EXPORTS_CAP = 20  # max entries before truncation — prevents unreadable walls of text in large files
+
 def _fmt_exports(exports: list[str]) -> str:
-    return " | ".join(exports) if exports else "none"
+    if not exports:
+        return "none"
+    if len(exports) <= _EXPORTS_CAP:
+        return " | ".join(exports)
+    return " | ".join(exports[:_EXPORTS_CAP]) + f" | (+{len(exports) - _EXPORTS_CAP} more)"
 
 
 def _fmt_used_by(ub: dict[str, list[str]]) -> str:
@@ -680,6 +697,9 @@ def collect_files(target: Path, exclude: list[str], extensions: Optional[list[st
             continue
         if _get_extension(f) not in extensions:
             continue
+        # Skip Go test files (*_test.go) — test infrastructure, not project source
+        if f.suffix == ".go" and f.stem.endswith("_test"):
+            continue
         rel_str = str(f.relative_to(target))
         if any(fnmatch.fnmatch(rel_str, p) or f.match(p) for p in exclude):
             continue
@@ -733,20 +753,21 @@ def run_lang_files(
     no_llm: bool,
     verbose: bool,
     api_key: Optional[str],
-) -> int:
+) -> tuple[int, int]:
     """Annotate non-Python source files using language adapters (L1 module header only).
 
-    Rules:   Only runs for extensions that have a registered adapter.
+    Rules:   Returns (annotated_count, llm_call_count) — caller adds llm_call_count to its own counter.
+             Only runs for extensions that have a registered adapter.
              L2 (function Rules:) is Python-only; language adapters do L1 only.
-             Returns count of files annotated.
+             Only runs for extensions that have a registered adapter.
     """
     lang_exts = [e for e in extensions if e != ".py" and get_adapter(e) is not None]
     if not lang_exts:
-        return 0
+        return 0, 0
 
     lang_files = collect_files(target, exclude, extensions=lang_exts)
     if not lang_files:
-        return 0
+        return 0, 0
 
     print(f"\nMulti-language pass ({', '.join(lang_exts)})  {len(lang_files)} files")
 
@@ -759,6 +780,7 @@ def run_lang_files(
 
     today = date.today().isoformat()
     annotated = 0
+    llm_calls = 0
 
     for path in lang_files:
         adapter = get_adapter(_get_extension(path))
@@ -777,14 +799,16 @@ def run_lang_files(
             continue
 
         source = path.read_text(encoding="utf-8", errors="replace")
-        exports_str = " | ".join(info.exports) if info.exports else "none"
+        exports_str = _fmt_exports(info.exports)
         used_by_str = "none"  # cross-file graph not available for non-Python files yet
 
         rules_str = "none"
         if llm and info.exports:
             try:
                 snippet = source[:2000]
-                rules_str = llm.module_rules(info.rel, snippet)
+                # Rules: use module_rules_raw for non-Python — module_rules() uses Python AST skeleton
+                rules_str = llm.module_rules_raw(info.rel, snippet)
+                llm_calls += 1
             except Exception:
                 rules_str = "none"
 
@@ -801,7 +825,7 @@ def run_lang_files(
                 print(f"  L1  {info.rel}  exports: {exports_str[:60]}")
 
     print(f"  Annotated {annotated} non-Python files")
-    return annotated
+    return annotated, llm_calls
 
 
 def run(
@@ -953,7 +977,7 @@ def run(
 
     # Non-Python languages
     if any(e != ".py" for e in all_exts):
-        run_lang_files(
+        _, lang_llm_calls = run_lang_files(
             target=target,
             extensions=all_exts,
             repo_root=repo_root,
@@ -965,6 +989,7 @@ def run(
             verbose=verbose,
             api_key=api_key,
         )
+        llm_calls += lang_llm_calls
 
     # Summary
     print()

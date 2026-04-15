@@ -12,6 +12,8 @@ rules:   All adapters must be stateless (no instance state).
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_002 | v0.8 compliance: fixed used_by →, [cascade] tags, 5-field agent: line
          claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | fixed has_codedna_header to detect headers in any comment format (// # * /** {{-- {# <%#), prevents duplicate headers on re-run
          claude-sonnet-4-6 | anthropic | 2026-04-15 | s_20260415_002 | emit full 4-field header (exports/used_by/rules/agent) for all non-Python languages — adapters already extract them, _build_header_lines was discarding them
+         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | fix provider/session_id always "unknown" — added _detect_provider() in base, derives from model_id; removed caller-supplied provider param
+         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_005 | fix multi-line rules from LLM: normalize newlines in _build_header_lines, each continuation carries comment prefix
 """
 
 from __future__ import annotations
@@ -73,25 +75,53 @@ class LanguageAdapter(ABC):
                 return True
         return False
 
+    @staticmethod
+    def _detect_provider(model_id: str) -> str:
+        """Derive provider string from model_id without importing cli.py (avoids circular import)."""
+        m = model_id.lower()
+        if m == "codedna-cli (no-llm)":
+            return "codedna-cli"
+        if m.startswith("deepseek/") or m.startswith("deepseek-"):
+            return "deepseek"
+        if m.startswith("ollama/") or m.startswith("ollama_chat/"):
+            return "ollama"
+        if m.startswith("openai/") or m.startswith("gpt"):
+            return "openai"
+        if m.startswith("gemini/") or m.startswith("google/"):
+            return "gemini"
+        if m.startswith("anthropic/") or "claude" in m:
+            return "anthropic"
+        return "unknown"
+
     def _build_header_lines(self, rel: str, exports: str, used_by: str,
-                            rules: str, model_id: str, today: str,
-                            provider: str = "unknown", session_id: str = "unknown") -> list[str]:
+                            rules: str, model_id: str, today: str) -> list[str]:
         """Build a full CodeDNA v0.8 comment block for non-Python languages.
 
         Rules:   All languages emit the full 4-field header: exports, used_by, rules, agent.
                  exports: and used_by: are written as 'none' when not available — explicit
                  'none' lets the next agent verify the value rather than assume the field is missing.
                  agent: line MUST have exactly 5 pipe-separated fields.
+                 provider is derived from model_id — callers must NOT pass it separately.
         """
         p = self.comment_prefix
         filename = Path(rel).name
         stem = Path(rel).stem
         purpose = f"{stem} module"
+        provider = self._detect_provider(model_id)
+
+        # Normalize multi-line rules: each continuation line must carry the comment prefix.
+        # LLMs sometimes return numbered lists with embedded newlines — join them with a separator.
+        rules_lines = [l.strip() for l in rules.splitlines() if l.strip()]
+        if len(rules_lines) > 1:
+            rules_normalized = f"\n{p}          ".join(rules_lines)
+        else:
+            rules_normalized = rules_lines[0] if rules_lines else "none"
+
         return [
             f"{p} {filename} — {purpose}.",
             f"{p}",
             f"{p} exports: {exports}",
             f"{p} used_by: {used_by}",
-            f"{p} rules:   {rules}",
-            f"{p} agent:   {model_id} | {provider} | {today} | {session_id} | initial CodeDNA annotation pass",
+            f"{p} rules:   {rules_normalized}",
+            f"{p} agent:   {model_id} | {provider} | {today} | codedna-cli | initial CodeDNA annotation pass",
         ]
