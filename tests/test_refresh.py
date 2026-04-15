@@ -5,6 +5,7 @@ used_by: CI pipeline, pytest
 rules:   Tests verify that refresh updates exports/used_by without touching rules/agent/message.
          Tests also verify Python relative imports (from .module) are resolved correctly.
 agent:   claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_003 | initial refresh + relative import tests
+         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | updated TestReducedHeader: all languages now emit full headers (exports+used_by+rules+agent); updated validator test to require full PHP header
 """
 
 from __future__ import annotations
@@ -123,8 +124,8 @@ class TestRelativeImports:
 
 
 class TestReducedHeader:
-    def test_non_python_has_reduced_header(self, tmp_path):
-        """Non-Python files should get reduced header (rules + agent, no exports/used_by)."""
+    def test_non_python_has_full_header(self, tmp_path):
+        """Non-Python files should get full header (exports + used_by + rules + agent)."""
         from codedna_tool.languages import get_adapter
 
         for ext, code in [
@@ -136,10 +137,10 @@ class TestReducedHeader:
         ]:
             adapter = get_adapter(ext)
             result = adapter.inject_header(code, f"test{ext}", "Hello", "none", "none", "test", "2026-04-15")
+            assert "exports:" in result, f"{ext} missing exports:"
+            assert "used_by:" in result, f"{ext} missing used_by:"
             assert "rules:" in result, f"{ext} missing rules:"
             assert "agent:" in result, f"{ext} missing agent:"
-            assert "exports:" not in result, f"{ext} should NOT have exports: (reduced header)"
-            assert "used_by:" not in result, f"{ext} should NOT have used_by: (reduced header)"
 
     def test_python_has_full_header(self, tmp_path):
         """Python files must keep full header with exports and used_by."""
@@ -152,14 +153,23 @@ class TestReducedHeader:
         assert "used_by:" in content
         assert "rules:" in content
 
-    def test_validator_accepts_reduced_php(self, tmp_path):
-        """Validator should accept PHP with reduced header (rules + agent only)."""
+    def test_validator_accepts_full_php(self, tmp_path):
+        """Validator should accept PHP with full header (exports + used_by + rules + agent)."""
         import sys; sys.path.insert(0, str(Path(__file__).parent.parent / "tools"))
         import validate_manifests as vm
         p = tmp_path / "Foo.php"
-        p.write_text("<?php\n// Foo.php — test.\n//\n// rules: admin only\n// agent: test | 2026-04-15 | test\n\nclass Foo {}\n")
+        p.write_text(
+            "<?php\n"
+            "// Foo.php — test.\n"
+            "//\n"
+            "// exports: Foo\n"
+            "// used_by: none\n"
+            "// rules:   admin only\n"
+            "// agent:   test | anthropic | 2026-04-16 | s_001 | test\n"
+            "\nclass Foo {}\n"
+        )
         r = vm.validate_file(p)
-        assert r.valid, f"Reduced PHP header should pass: {r.errors}"
+        assert r.valid, f"Full PHP header should pass: {r.errors}"
 
     def test_validator_rejects_python_without_exports(self, tmp_path):
         """Validator should reject Python with only rules + agent (missing exports/used_by)."""

@@ -4,10 +4,12 @@ exports: TreeSitterKotlinAdapter
 used_by: languages/__init__.py → _REGISTRY
 rules:   Requires tree-sitter>=0.25 and tree-sitter-kotlin>=1.1.
          Top-level class_declaration, function_declaration, and const property_declaration captured.
-         Class-level function_declaration excluded (parent is class_body, not source_file).
+         object_declaration captured with its functions as ObjectName.fn (idiomatic Kotlin singleton).
+         companion_object functions captured as ClassName.fn using grandparent class_declaration name.
          import qualified_identifier captured as dependency string.
          inject_header() delegated to KotlinAdapter (// comment after package declaration).
 agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | initial tree-sitter Kotlin adapter
+         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | add object_declaration and companion_object function capture
 """
 
 from __future__ import annotations
@@ -58,6 +60,18 @@ class TreeSitterKotlinAdapter(TreeSitterAdapter):
         exports: list[str] = []
         deps: list[str] = []
 
+        def _capture_fns_in_body(body_node, prefix: str) -> None:
+            """Capture function_declarations inside a class_body as prefix.fn."""
+            for child in body_node.named_children:
+                if child.type == "function_declaration":
+                    id_node = next(
+                        (c for c in child.named_children if c.type == "identifier"), None
+                    )
+                    if id_node:
+                        entry = f"{prefix}.{_t(id_node)}" if prefix else _t(id_node)
+                        if entry not in exports:
+                            exports.append(entry)
+
         def walk(node) -> None:
             if node.type == "class_declaration":
                 id_node = next(
@@ -68,8 +82,39 @@ class TreeSitterKotlinAdapter(TreeSitterAdapter):
                     if n not in exports:
                         exports.append(n)
 
+            elif node.type == "object_declaration":
+                # Kotlin singleton object — capture name and its methods as ObjectName.fn
+                id_node = next(
+                    (c for c in node.named_children if c.type == "identifier"), None
+                )
+                obj_name = _t(id_node) if id_node else ""
+                if obj_name and obj_name not in exports:
+                    exports.append(obj_name)
+                body = next(
+                    (c for c in node.named_children if c.type == "class_body"), None
+                )
+                if body:
+                    _capture_fns_in_body(body, obj_name)
+                return  # body already handled — don't recurse into class_body
+
+            elif node.type == "companion_object":
+                # companion object — capture methods as ClassName.fn using grandparent class name
+                cls_decl = node.parent and node.parent.parent
+                cls_name = ""
+                if cls_decl and cls_decl.type == "class_declaration":
+                    id_node = next(
+                        (c for c in cls_decl.named_children if c.type == "identifier"), None
+                    )
+                    cls_name = _t(id_node) if id_node else ""
+                body = next(
+                    (c for c in node.named_children if c.type == "class_body"), None
+                )
+                if body:
+                    _capture_fns_in_body(body, cls_name)
+                return  # body already handled
+
             elif node.type == "function_declaration":
-                # Top-level only — exclude class/object body functions
+                # Top-level only (source_file direct child)
                 if node.parent and node.parent.type == "source_file":
                     id_node = next(
                         (c for c in node.named_children if c.type == "identifier"), None

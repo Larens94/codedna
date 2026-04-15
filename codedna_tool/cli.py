@@ -1,6 +1,17 @@
 #!/usr/bin/env python3
 """cli.py — CodeDNA v0.8 annotation tool: init, update, check, install.
 
+exports: main() -> int | run(...) | cmd_check(...) -> int | cmd_install(...) -> int | collect_files(...) -> list[Path]
+used_by: none — CLI entrypoint, called via `codedna` console script
+rules:   L2 (function Rules:) applies Python AST only; language adapters are L1-only.
+         LLM calls are capped at 2 per Python file; --no-llm skips all LLM calls.
+         _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
+agent:   claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | added cmd_install subcommand: pre-commit hook + AI tool prompt + .codedna setup in one command
+         claude-opus-4-6 | anthropic | 2026-04-07 | s_20260407_001 | fixed 3 install bugs: opencode JS plugin, -hooks base prompt, install.sh claude-hooks
+         claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | fixed --no-llm writing haiku model_id in agent: field — now writes "codedna-cli (no-llm)"
+         claude-sonnet-4-6 | anthropic | 2026-04-15 | s_20260415_002 | made auto-detect default: init/check auto-detect when --extensions not given; updated Next steps output
+         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | fix build_module_docstring: Python agent: line now emits 5 fields (model|provider|date|session|narrative) matching spec
+
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -22,17 +33,6 @@ Provider priority: litellm (all providers) > anthropic (fallback, Claude only).
 
 Multi-language: pass --extensions ts go php rs java kt rb cs swift (or with dots).
 Supported: .ts .tsx .js .jsx .mjs | .go | .php | .rs | .java | .kt .kts | .rb | .cs | .swift
-
-exports: main() -> int | run(...) | cmd_check(...) -> int | cmd_install(...) -> int | collect_files(...) -> list[Path]
-used_by: none — CLI entrypoint, called via `codedna` console script
-rules:   L2 (function Rules:) applies Python AST only; language adapters are L1-only.
-         LLM calls are capped at 2 per Python file; --no-llm skips all LLM calls.
-         _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
-agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_004 | added cmd_manifest (Level 0 auto-generation); fixed --exclude glob (fnmatch), graceful LLM fallback, __init__ skip in purpose heuristic
-         claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | added cmd_install subcommand: pre-commit hook + AI tool prompt + .codedna setup in one command
-         claude-opus-4-6 | anthropic | 2026-04-07 | s_20260407_001 | fixed 3 install bugs: opencode JS plugin, -hooks base prompt, install.sh claude-hooks
-         claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | fixed --no-llm writing haiku model_id in agent: field — now writes "codedna-cli (no-llm)"
-         claude-sonnet-4-6 | anthropic | 2026-04-15 | s_20260415_002 | made auto-detect default: init/check auto-detect when --extensions not given; updated Next steps output
 """
 
 import argparse
@@ -483,13 +483,18 @@ def _purpose(rel: str, existing: Optional[str]) -> str:
 
 def build_module_docstring(info: FileInfo, ub: dict, rules: str, model_id: str) -> str:
     today = date.today().isoformat()
+    provider = (
+        "codedna-cli"
+        if model_id == "codedna-cli (no-llm)"
+        else LLM._detect_provider(model_id)
+    )
     lines = [
         f'"""{info.rel} — {_purpose(info.rel, info.docstring)}.',
         "",
         f"exports: {_fmt_exports(info.exports)}",
         f"used_by: {_fmt_used_by(ub)}",
         f"rules:   {rules}",
-        f"agent:   {model_id} | {today} | initial CodeDNA annotation pass",
+        f"agent:   {model_id} | {provider} | {today} | codedna-cli | initial CodeDNA annotation pass",
         '"""',
     ]
     return "\n".join(lines) + "\n"
@@ -499,7 +504,12 @@ def build_module_docstring(info: FileInfo, ub: dict, rules: str, model_id: str) 
 
 
 def inject_module_docstring(source: str, docstring: str) -> str:
-    """Replace or prepend module docstring."""
+    """Replace or prepend module docstring.
+
+    Rules:   Normalize \r\n and bare \r to \n before splitting — .split('\n') on
+             CRLF input leaves \r at line endings which corrupts the written file.
+    """
+    source = source.replace("\r\n", "\n").replace("\r", "\n")
     lines = source.split("\n")
     start = 0
     if lines and lines[0].startswith("#!"):
@@ -1395,10 +1405,10 @@ def _detect_ai_tools(repo_root: Path) -> list[str]:
 
 
 def _install_claude_hooks(repo_root: Path) -> int:
-    """Installa hook scripts e settings.local.json per Claude Code.
+    """Install hook scripts and settings.local.json for Claude Code.
 
-    Rules:   Non sovrascrivere settings.local.json se esiste — mostra istruzioni merge.
-             Gli script vanno in tools/ con chmod +x.
+    Rules:   Do not overwrite settings.local.json if it exists — show merge instructions.
+             Scripts go in tools/ with chmod +x.
     """
     import stat
     import urllib.request
@@ -1406,11 +1416,11 @@ def _install_claude_hooks(repo_root: Path) -> int:
     str_tools_raw = "https://raw.githubusercontent.com/Larens94/codedna/main/tools"
     int_count = 0
 
-    # Crea directory tools/
+    # Create tools/ directory
     path_tools = repo_root / "tools"
     path_tools.mkdir(exist_ok=True)
 
-    # Scarica hook scripts
+    # Download hook scripts
     hooks = {
         "claude_hook_codedna.sh": "PostToolUse validation script",
         "claude_hook_stop.sh": "Stop session-end protocol",
@@ -1519,10 +1529,10 @@ def _install_cline_hooks(repo_root: Path) -> int:
     str_raw = "https://raw.githubusercontent.com/Larens94/codedna/main/integrations/cline-hooks"
     int_count = 0
 
-    # .clinerules potrebbe essere un file (prompt) — serve come directory per hooks
+    # .clinerules may be a flat file (prompt) — hooks require it to be a directory
     path_clinerules = repo_root / ".clinerules"
     if path_clinerules.exists() and path_clinerules.is_file():
-        # Rinomina il file prompt, poi crea la directory con il file dentro
+        # Move existing prompt file inside the new directory as rules.md
         str_content = path_clinerules.read_text(encoding="utf-8", errors="replace")
         path_clinerules.unlink()
         path_clinerules.mkdir(parents=True, exist_ok=True)
@@ -1878,18 +1888,10 @@ def _write_codedna(
     lines = [
         "# .codedna — CodeDNA project manifest (auto-generated by codedna manifest)",
         f"project: {project}",
-        f'description: "{description}"' if description else f"project: {project}",
-        "",
-        "packages:",
     ]
-    # Fix duplicate if no description
-    if not description:
-        lines = [
-            "# .codedna — CodeDNA project manifest (auto-generated by codedna manifest)",
-            f"project: {project}",
-            "",
-            "packages:",
-        ]
+    if description:
+        lines.append(f'description: "{description}"')
+    lines += ["", "packages:"]
 
     for pkg_name, data in sorted(packages.items()):
         display = (pkg_name + "/") if pkg_name else "(root)"

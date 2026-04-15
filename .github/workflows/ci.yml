@@ -23,6 +23,12 @@ jobs:
       - name: Install dependencies
         run: |
           pip install ruff
+          pip install -e ".[all]"
+          pip install pytest
+
+      - name: Run tests
+        run: |
+          pytest tests/ -q --tb=short
 
       - name: Lint Python (ruff)
         run: |

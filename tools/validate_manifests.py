@@ -8,9 +8,9 @@ rules:   validates v0.8 format only (exports:/used_by:/rules:/agent: in module d
          Python uses AST; other languages use regex on first 40 lines.
          read-only — never modifies files.
 agent:   claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | fixed _extract_python: return (None, {}) for valid Python without docstring
-         claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | added .volt to COMMENT_PREFIX for Phalcon Volt template validation
          claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | added .php, .cs, .mjs, .kts to COMMENT_PREFIX — validator now covers all 11 languages
          claude-sonnet-4-6 | anthropic | 2026-04-15 | s_20260415_002 | all languages now require full 4-field header (exports/used_by/rules/agent) — REQUIRED_FIELDS_REDUCED = REQUIRED_FIELDS_FULL, _REDUCED_HEADER_EXTS cleared
+         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | removed dead REQUIRED_FIELDS_REDUCED and _REDUCED_HEADER_EXTS variables
 
 Usage:
     python tools/validate_manifests.py [path] [-v] [--extensions py ts go]
@@ -32,10 +32,7 @@ from pathlib import Path
 from typing import Optional
 
 REQUIRED_FIELDS_FULL = {"exports", "used_by", "rules", "agent"}  # all languages
-REQUIRED_FIELDS_REDUCED = REQUIRED_FIELDS_FULL                   # kept for backward compat
-# All languages now emit the full 4-field header — _build_header_lines was updated 2026-04-15
-_REDUCED_HEADER_EXTS: set[str] = set()
-REQUIRED_FIELDS = REQUIRED_FIELDS_FULL  # default for backward compat
+REQUIRED_FIELDS = REQUIRED_FIELDS_FULL
 
 SKIP_DIRS = {"__pycache__", ".git", "venv", ".venv", "node_modules", "dist", "build", "migrations"}
 

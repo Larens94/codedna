@@ -6,7 +6,10 @@ rules:   Requires tree-sitter>=0.25 and tree-sitter-c-sharp>=0.23.
          Only public types and public methods/properties captured (modifier == b'public').
          using directives captured as dependency strings (not resolved to file paths).
          inject_header() delegated to CSharpAdapter (// block between using and namespace).
+         MUST use child_by_field_name('name') for methods/properties — named_children[identifier]
+         returns the return type first, not the method name.
 agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | initial tree-sitter C# adapter
+         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | fix: use child_by_field_name('name') — first identifier in named_children is the return type not the method name
 """
 
 from __future__ import annotations
@@ -68,9 +71,7 @@ class TreeSitterCSharpAdapter(TreeSitterAdapter):
             if node.type in ("class_declaration", "interface_declaration",
                              "struct_declaration", "enum_declaration", "record_declaration"):
                 if _is_public(node):
-                    id_node = next(
-                        (c for c in node.named_children if c.type == "identifier"), None
-                    )
+                    id_node = node.child_by_field_name("name")
                     if id_node:
                         n = _t(id_node)
                         if n not in exports:
@@ -78,9 +79,9 @@ class TreeSitterCSharpAdapter(TreeSitterAdapter):
 
             elif node.type in ("method_declaration", "property_declaration"):
                 if _is_public(node):
-                    id_node = next(
-                        (c for c in node.named_children if c.type == "identifier"), None
-                    )
+                    # Rules: MUST use child_by_field_name('name') — the first identifier in
+                    # named_children is the return type, not the method name.
+                    id_node = node.child_by_field_name("name")
                     if id_node:
                         n = _t(id_node)
                         if n not in _SKIP_NAMES:
