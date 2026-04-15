@@ -311,6 +311,54 @@ An agent reading this project tomorrow skips the source. It reads the headers, k
 
 ---
 
+## Multi-language — Go, Ruby, PHP, and more
+
+The same command works on all 11 supported languages. DeepSeek generates `rules:` for each file from the source — no language-specific config needed.
+
+```bash
+# Go (gin framework — 59 files, 0 test files, 56 LLM calls)
+codedna init gin/ --extensions go --model deepseek/deepseek-chat
+```
+
+```go
+// auth.go — auth module.
+//
+// exports: BasicAuthForRealm | BasicAuthForProxy | BasicAuth | Accounts | AuthUserKey | AuthProxyUserKey
+// used_by: none
+// rules:   The authentication system uses constant-time comparison for credentials
+//          and requires all authorization logic to maintain this security property.
+// agent:   deepseek/deepseek-chat | deepseek | 2026-04-16 | codedna-cli | initial CodeDNA annotation pass
+
+// context.go — context module.
+//
+// exports: Cookie | FileAttachment | HTML | ... | (+135 more)
+// used_by: none
+// rules:   1. Context struct fields must maintain compatibility with gin's middleware chaining and abort mechanism.
+//          2. The mu mutex must be locked before accessing Keys map to ensure thread safety across concurrent requests.
+//          3. Changes to exported constants must preserve backward compatibility as they are part of the public API.
+// agent:   deepseek/deepseek-chat | deepseek | 2026-04-16 | codedna-cli | initial CodeDNA annotation pass
+```
+
+```bash
+# Ruby (Sinatra — 7 files, 6 LLM calls)
+codedna init sinatra/lib --extensions rb --model deepseek/deepseek-chat
+```
+
+```ruby
+# base.rb — base module.
+#
+# exports: Sinatra | Request | Request#accept | ... | (+89 more)
+# used_by: none
+# rules:   The module must maintain compatibility with Rack's request interface
+#          and Sinatra's internal middleware dependencies.
+# agent:   deepseek/deepseek-chat | deepseek | 2026-04-16 | codedna-cli | initial CodeDNA annotation pass
+```
+
+> `*_test.go` files are automatically excluded. Exports are capped at 20 entries for readability.
+> Large files with many exports still show the full count: `(+135 more)`.
+
+---
+
 ## Install
 
 | Agent | Command |
