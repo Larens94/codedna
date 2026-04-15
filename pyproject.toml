@@ -25,6 +25,12 @@ codedna = "codedna_tool.cli:main"
 [tool.setuptools.packages.find]
 include = ["codedna_tool*"]
 
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+python_files = "test_*.py"
+python_classes = "Test*"
+python_functions = "test_*"
+
 [tool.black]
 line-length = 120
 target-version = ["py311"]
