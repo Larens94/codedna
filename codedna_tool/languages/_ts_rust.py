@@ -5,8 +5,10 @@ used_by: languages/__init__.py → _REGISTRY
 rules:   Requires tree-sitter>=0.25 and tree-sitter-rust>=0.24.
          Only pub items captured (visibility_modifier present).
          impl blocks traversed explicitly — pub fn inside impl formatted as Type::method.
+         const_item: identifier node holds name. type_item: type_identifier node holds name.
          inject_header() delegated to RustAdapter (// comment at file top).
 agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | initial tree-sitter Rust adapter; fixes critical gap in regex adapter (impl methods not captured)
+         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | add const_item and type_item capture (pub const / pub type were silently missing)
 """
 
 from __future__ import annotations
@@ -83,6 +85,26 @@ class TreeSitterRustAdapter(TreeSitterAdapter):
                 return  # don't recurse into impl — already handled
 
             elif node.type in ("struct_item", "enum_item", "trait_item"):
+                if _is_pub(node):
+                    name_node = next(
+                        (c for c in node.named_children if c.type == "type_identifier"), None
+                    )
+                    if name_node:
+                        n = _t(name_node)
+                        if n not in exports:
+                            exports.append(n)
+
+            elif node.type == "const_item":
+                if _is_pub(node):
+                    name_node = next(
+                        (c for c in node.named_children if c.type == "identifier"), None
+                    )
+                    if name_node:
+                        n = _t(name_node)
+                        if n not in exports:
+                            exports.append(n)
+
+            elif node.type == "type_item":
                 if _is_pub(node):
                     name_node = next(
                         (c for c in node.named_children if c.type == "type_identifier"), None

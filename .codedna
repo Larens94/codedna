@@ -519,3 +519,35 @@ agent_sessions:
       detected via b"private" identifier node in body_statement. Kotlin class-level fns
       excluded via parent.type == "source_file" check. C# and Java header injection
       double-blank-line bugs fixed. tree-sitter moved to core dependencies in pyproject.toml.
+
+  - agent: claude-sonnet-4-6
+    provider: anthropic
+    date: 2026-04-16
+    session_id: s_20260416_003
+    task: "add integration tests for 8 languages with realistic fixtures"
+    changed:
+      - tests/test_integration_langs.py
+      - tests/fixtures/UserService.ts
+      - tests/fixtures/user_service.go
+      - tests/fixtures/UserController.php
+      - tests/fixtures/UserService.java
+      - tests/fixtures/user_service.rs
+      - tests/fixtures/UserService.cs
+      - tests/fixtures/user_service.rb
+      - tests/fixtures/UserService.kt
+      - codedna_tool/languages/_ts_rust.py
+    visited:
+      - codedna_tool/languages/_ts_rust.py
+      - codedna_tool/languages/_ts_kotlin.py
+      - codedna_tool/languages/_ts_csharp.py
+      - codedna_tool/languages/_ts_ruby.py
+      - codedna_tool/languages/_ts_java.py
+      - codedna_tool/languages/_ts_php.py
+      - codedna_tool/languages/_ts_go.py
+      - codedna_tool/languages/_ts_typescript.py
+    message: >
+      Rust tree-sitter adapter was missing pub const and pub type captures —
+      found by integration test. Fixed by adding const_item and type_item handling.
+      C# expression-bodied properties (Count =>) correctly parse as property_declaration.
+      Ruby attr_reader is a call node NOT captured by tree-sitter (regex adapter does).
+      All 46 integration tests pass; 126 total.

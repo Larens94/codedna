@@ -28,6 +28,7 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 # Collect staged source files (new, modified, copied)
 STAGED=$(git diff --cached --name-only --diff-filter=ACM \
     | grep -E '\.(py|ts|tsx|js|jsx|mjs|go|php|rs|java|kt|kts|rb|cs|swift|blade\.php|j2|jinja2|twig|erb|ejs|hbs|mustache|cshtml|razor|vue|svelte)$' \
+    | grep -v '^tests/fixtures/' \
     || true)
 
 if [[ -z "$STAGED" ]]; then
