@@ -6,11 +6,14 @@ used_by: tests/test_cli.py → FileInfo, build_module_docstring
 rules:   L2 (function Rules:) applies Python AST only; language adapters are L1-only.
 LLM calls are capped at 2 per Python file; --no-llm skips all LLM calls.
 _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
-agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | fix build_module_docstring: Python agent: line now emits 5 fields (model|provider|date|session|narrative) matching spec
-claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_003 | add DeepSeek to _detect_provider and env_map so --api-key works with deepseek/ model prefix
+scan_file handles 3 import patterns: (1) from .mod import X, (2) from . import X
+(submodule-first then __init__.py symbol), (3) from pkg import X (tries pkg/X.py
+before falling back to pkg/__init__.py). All 3 were previously under-resolved.
+agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_003 | add DeepSeek to _detect_provider and env_map so --api-key works with deepseek/ model prefix
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | fix L2 batch overflow: _L2_BATCH_SIZE=12, dynamic max_tokens, _parse_json_response with truncation recovery
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | skip *_test.go; cap exports@20; fix non-Python path (raw join→_fmt_exports, module_rules→module_rules_raw, provider detection)
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_005 | run_lang_files returns (annotated, llm_calls) tuple; run() aggregates lang llm_calls into summary counter
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_bench | fix 3 used_by bugs in scan_file: (1) from . import X ignored when module=None, (2) from pkg import submod resolved to __init__ not submod.py, (3) submodule path construction was broken
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -180,27 +183,71 @@ def scan_file(path: Path, repo_root: Path) -> FileInfo:
     file_dir = path.parent
     for node in ast.walk(tree):
         if isinstance(node, ast.ImportFrom):
-            if node.level > 0 and node.module:
-                # Relative import: from .foo import bar → resolve relative to current file
+            if node.level > 0:
+                # Relative import: from .foo import bar  OR  from . import bar
+                # node.module may be None for "from . import X"
                 parent = file_dir
                 for _ in range(node.level - 1):
                     parent = parent.parent
-                rel_target = parent / node.module.replace(".", "/")
-                for suffix in [".py", "/__init__.py"]:
-                    candidate = Path(str(rel_target) + suffix)
-                    if candidate.exists():
-                        try:
-                            key = str(candidate.relative_to(repo_root))
-                            syms = [a.name for a in node.names if a.name != "*"]
-                            deps.setdefault(key, []).extend(syms)
-                        except ValueError:
-                            pass
-                        break
+
+                if node.module:
+                    # from .foo import bar  → resolve .foo to a file
+                    rel_target = parent / node.module.replace(".", "/")
+                    for suffix in [".py", "/__init__.py"]:
+                        candidate = Path(str(rel_target) + suffix)
+                        if candidate.exists():
+                            try:
+                                key = str(candidate.relative_to(repo_root))
+                                syms = [a.name for a in node.names if a.name != "*"]
+                                deps.setdefault(key, []).extend(syms)
+                            except ValueError:
+                                pass
+                            break
+                else:
+                    # from . import X  → X may be a submodule (X.py) or a symbol
+                    for alias in node.names:
+                        if alias.name == "*":
+                            continue
+                        # Check if X is a submodule file first
+                        candidates = [parent / f"{alias.name}.py", parent / alias.name / "__init__.py"]
+                        for candidate in candidates:
+                            if candidate.exists():
+                                try:
+                                    key = str(candidate.relative_to(repo_root))
+                                    deps.setdefault(key, [])
+                                except ValueError:
+                                    pass
+                                break
+                        else:
+                            # Symbol from the package __init__.py
+                            init = parent / "__init__.py"
+                            if init.exists():
+                                try:
+                                    key = str(init.relative_to(repo_root))
+                                    deps.setdefault(key, []).append(alias.name)
+                                except ValueError:
+                                    pass
             elif node.module:
-                key = _resolve_dep(node.module, repo_root, top_pkg)
-                if key:
-                    syms = [a.name for a in node.names if a.name != "*"]
-                    deps.setdefault(key, []).extend(syms)
+                # Absolute import: from pkg import X
+                # X may be a submodule (pkg/X.py) or a symbol from pkg/__init__.py
+                syms = [a.name for a in node.names if a.name != "*"]
+                resolved_any = False
+                for sym in syms:
+                    # Try pkg/X.py or pkg/X/__init__.py first (submodule)
+                    sub_key = _resolve_dep(f"{node.module}.{sym}", repo_root, top_pkg)
+                    if sub_key:
+                        deps.setdefault(sub_key, [])
+                        resolved_any = True
+                    # Also record dependency on the package itself for re-export tracing
+                    pkg_key = _resolve_dep(node.module, repo_root, top_pkg)
+                    if pkg_key and not sub_key:
+                        deps.setdefault(pkg_key, []).append(sym)
+                        resolved_any = True
+                # If nothing resolved, try the module itself
+                if not resolved_any:
+                    key = _resolve_dep(node.module, repo_root, top_pkg)
+                    if key:
+                        deps.setdefault(key, []).extend(syms)
         elif isinstance(node, ast.Import):
             for alias in node.names:
                 key = _resolve_dep(alias.name, repo_root, top_pkg)
