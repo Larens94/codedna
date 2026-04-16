@@ -1,0 +1,878 @@
+{
+  "meta": {
+    "timestamp": "20260416_052949",
+    "model": "deepseek/deepseek-chat",
+    "judge_model": "deepseek/deepseek-chat",
+    "n_runs": 3,
+    "n_tasks": 12
+  },
+  "results": {
+    "baseline": [
+      {
+        "task_id": "T01",
+        "file": "billing.py",
+        "category": "unit_conversion",
+        "constraint": "amount is stored in CENTS (int) \u2014 must divide by 100 before displaying to users",
+        "condition": "baseline",
+        "n_runs": 3,
+        "violations": 0,
+        "violation_rate": 0.0,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def display_invoice_total(invoice):\n    return f\"Total: \u20ac{invoice.get_total() / 100:.2f}\"",
+            "violated": false,
+            "explanation": "The code divides the total by 100 before formatting it for display."
+          },
+          {
+            "run": 2,
+            "code": "def display_invoice_total(invoice):\n    return f\"Total: \u20ac{invoice.get_total() / 100:.2f}\"",
+            "violated": false,
+            "explanation": "The code divides the total by 100 before formatting it for display."
+          },
+          {
+            "run": 3,
+            "code": "def display_invoice_total(invoice):\n    return f\"Total: \u20ac{invoice.get_total() / 100:.2f}\"",
+            "violated": false,
+            "explanation": "The code divides the total by 100 before formatting it for display."
+          }
+        ]
+      },
+      {
+        "task_id": "T02",
+        "file": "billing.py",
+        "category": "immutability_guard",
+        "constraint": "Invoices are IMMUTABLE after status='finalized' \u2014 must check status before any update",
+        "condition": "baseline",
+        "n_runs": 3,
+        "violations": 3,
+        "violation_rate": 1.0,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def update_invoice_items(invoice, new_items):\n    if not isinstance(new_items, list):\n        raise TypeError(\"new_items must be a list\")\n    invoice.items = new_items\n    invoice.amount = sum(item.get(\"quantity\", 0) * item.get(\"unit_price\", 0) for item in new_items)",
+            "violated": true,
+            "explanation": "The code modifies invoice items and amount without checking if the invoice status is 'finalized' first."
+          },
+          {
+            "run": 2,
+            "code": "def update_invoice_items(invoice, new_items):\n    if not isinstance(new_items, list):\n        raise TypeError(\"new_items must be a list\")\n    invoice.items = new_items\n    invoice.amount = sum(item.get(\"quantity\", 0) * item.get(\"unit_price\", 0) for item in new_items)",
+            "violated": true,
+            "explanation": "The code modifies invoice items and amount without checking if the invoice status is 'finalized' first."
+          },
+          {
+            "run": 3,
+            "code": "def update_invoice_items(invoice, new_items):\n    if not isinstance(new_items, list):\n        raise TypeError(\"new_items must be a list\")\n    invoice.items = new_items\n    invoice.amount = sum(item.get(\"quantity\", 0) * item.get(\"unit_price\", 0) for item in new_items)",
+            "violated": true,
+            "explanation": "The code modifies invoice items and amount without checking if the invoice status is 'finalized' first."
+          }
+        ]
+      },
+      {
+        "task_id": "T03",
+        "file": "billing.py",
+        "category": "business_rate",
+        "constraint": "Late fee rate is exactly 1.5% per month (0.015) \u2014 never use a different rate",
+        "condition": "baseline",
+        "n_runs": 3,
+        "violations": 3,
+        "violation_rate": 1.0,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def compute_late_fee(invoice, days_overdue):\n    return invoice.calculate_late_fee(days_overdue)",
+            "violated": true,
+            "explanation": "The code delegates to an external method without guaranteeing the rate is fixed at 1.5% per month."
+          },
+          {
+            "run": 2,
+            "code": "def compute_late_fee(invoice, days_overdue):\n    return invoice.calculate_late_fee(days_overdue)",
+            "violated": true,
+            "explanation": "The code delegates to an external method without guaranteeing it uses the fixed 1.5% rate."
+          },
+          {
+            "run": 3,
+            "code": "def compute_late_fee(invoice, days_overdue):\n    return invoice.calculate_late_fee(days_overdue)",
+            "violated": true,
+            "explanation": "The code delegates to an external method without guaranteeing it uses the fixed 1.5% rate."
+          }
+        ]
+      },
+      {
+        "task_id": "T04",
+        "file": "users.py",
+        "category": "soft_delete",
+        "constraint": "NEVER hard-delete users \u2014 soft-delete by setting deleted_at = datetime.now()",
+        "condition": "baseline",
+        "n_runs": 3,
+        "violations": 3,
+        "violation_rate": 1.0,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def close_account(user):\n    user.remove()",
+            "violated": true,
+            "explanation": "The code calls `user.remove()` which likely performs a hard deletion rather than setting a `deleted_at` timestamp."
+          },
+          {
+            "run": 2,
+            "code": "def close_account(user):\n    user.remove()",
+            "violated": true,
+            "explanation": "The code calls `user.remove()` which is a hard deletion operation, not a soft delete by setting a `deleted_at` field."
+          },
+          {
+            "run": 3,
+            "code": "def close_account(user):\n    user.remove()",
+            "violated": true,
+            "explanation": "The code calls `user.remove()` which is a hard deletion operation, not a soft delete by setting a `deleted_at` field."
+          }
+        ]
+      },
+      {
+        "task_id": "T05",
+        "file": "users.py",
+        "category": "suspension_check",
+        "constraint": "Suspension is determined by suspension_end > datetime.now() \u2014 NOT a boolean flag",
+        "condition": "baseline",
+        "n_runs": 3,
+        "violations": 3,
+        "violation_rate": 1.0,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def can_user_login(user):\n    return not user.is_suspended() and user.deleted_at is None",
+            "violated": true,
+            "explanation": "The code checks suspension via a boolean-like method `is_suspended()` instead of comparing `suspension_end > datetime.now()`."
+          },
+          {
+            "run": 2,
+            "code": "def can_user_login(user):\n    return not user.is_suspended() and user.deleted_at is None",
+            "violated": true,
+            "explanation": "The code checks suspension by calling `is_suspended()` instead of directly comparing `suspension_end > datetime.now()`."
+          },
+          {
+            "run": 3,
+            "code": "def can_user_login(user):\n    return not user.is_suspended() and user.deleted_at is None",
+            "violated": true,
+            "explanation": "The code checks suspension by calling `is_suspended()` instead of directly comparing `suspension_end > datetime.now()`."
+          }
+        ]
+      },
+      {
+        "task_id": "T06",
+        "file": "users.py",
+        "category": "get_all_filter",
+        "constraint": "get_all() returns ALL non-deleted users INCLUDING suspended \u2014 callers MUST filter with is_suspended()",
+        "condition": "baseline",
+        "n_runs": 3,
+        "violations": 0,
+        "violation_rate": 0.0,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def get_newsletter_recipients() -> List[User]:\n    return [u for u in User.get_all() if not u.is_suspended()]",
+            "violated": false,
+            "explanation": "The code calls `get_all()` and then explicitly filters out suspended users by checking `if not u.is_suspended()`."
+          },
+          {
+            "run": 2,
+            "code": "def get_newsletter_recipients() -> List[User]:\n    return [u for u in User.get_all() if not u.is_suspended()]",
+            "violated": false,
+            "explanation": "The code calls `get_all()` and then explicitly filters out suspended users by checking `if not u.is_suspended()` on each user."
+          },
+          {
+            "run": 3,
+            "code": "def get_newsletter_recipients() -> List[User]:\n    return [u for u in User.get_all() if not u.is_suspended()]",
+            "violated": false,
+            "explanation": "The code calls `get_all()` and then explicitly filters out suspended users by checking `if not u.is_suspended()` on each user."
+          }
+        ]
+      },
+      {
+        "task_id": "T07",
+        "file": "orders.py",
+        "category": "status_constants",
+        "constraint": "Order status codes are integers: 3=shipped \u2014 use STATUS_SHIPPED constant, never compare to a string",
+        "condition": "baseline",
+        "n_runs": 3,
+        "violations": 0,
+        "violation_rate": 0.0,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def is_order_shipped(order):\n    return order.status == STATUS_SHIPPED",
+            "violated": false,
+            "explanation": "The code compares `order.status` to the constant `STATUS_SHIPPED`, which is an integer, not a string."
+          },
+          {
+            "run": 2,
+            "code": "def is_order_shipped(order):\n    return order.status == STATUS_SHIPPED",
+            "violated": false,
+            "explanation": "The code compares order.status to the constant STATUS_SHIPPED, which is presumably defined as the integer 3."
+          },
+          {
+            "run": 3,
+            "code": "def is_order_shipped(order):\n    return order.status == STATUS_SHIPPED",
+            "violated": false,
+            "explanation": "The code compares order.status to the constant STATUS_SHIPPED, which is presumably defined as the integer 3."
+          }
+        ]
+      },
+      {
+        "task_id": "T08",
+        "file": "orders.py",
+        "category": "cancel_guard",
+        "constraint": "Only orders with status == STATUS_PENDING can be cancelled \u2014 must validate before changing status",
+        "condition": "baseline",
+        "n_runs": 3,
+        "violations": 0,
+        "violation_rate": 0.0,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def cancel_customer_order(order):\n    if order.status == STATUS_PENDING:\n        order.cancel()\n        return True\n    elif order.status == STATUS_CANCELLED:\n        raise ValueError(\"Order is already cancelled\")\n    else:\n        raise ValueError(\"Cannot cancel order after processing has started\")",
+            "violated": false,
+            "explanation": "The code explicitly checks if order.status == STATUS_PENDING before calling order.cancel()."
+          },
+          {
+            "run": 2,
+            "code": "def cancel_customer_order(order):\n    if order.status == STATUS_PENDING:\n        order.status = STATUS_CANCELLED\n        return True\n    else:\n        raise ValueError(\"Only pending orders can be cancelled\")",
+            "violated": false,
+            "explanation": "The code checks that order.status equals STATUS_PENDING before changing the status to STATUS_CANCELLED and raises a ValueError if the condition is not met."
+          },
+          {
+            "run": 3,
+            "code": "def cancel_customer_order(order):\n    if order.status == STATUS_PENDING:\n        order.cancel()\n        return True\n    elif order.status == STATUS_CANCELLED:\n        raise ValueError(\"Order is already cancelled\")\n    else:\n        raise ValueError(\"Cannot cancel order after processing has started\")",
+            "violated": false,
+            "explanation": "The code checks that order.status == STATUS_PENDING before calling order.cancel() and raises errors for other statuses."
+          }
+        ]
+      },
+      {
+        "task_id": "T09",
+        "file": "orders.py",
+        "category": "status_constants",
+        "constraint": "Order status 2=processing \u2014 use STATUS_PROCESSING constant, never compare to a string",
+        "condition": "baseline",
+        "n_runs": 3,
+        "violations": 0,
+        "violation_rate": 0.0,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def get_processing_orders() -> List[Order]:\n    return Order.get_by_status(STATUS_PROCESSING)",
+            "violated": false,
+            "explanation": "The code uses the constant STATUS_PROCESSING to filter orders, not a string literal."
+          },
+          {
+            "run": 2,
+            "code": "def get_processing_orders() -> List[Order]:\n    return Order.get_by_status(STATUS_PROCESSING)",
+            "violated": false,
+            "explanation": "The code uses the constant STATUS_PROCESSING to filter orders, not a string comparison."
+          },
+          {
+            "run": 3,
+            "code": "def get_processing_orders() -> List[Order]:\n    return Order.get_by_status(STATUS_PROCESSING)",
+            "violated": false,
+            "explanation": "The code uses the constant STATUS_PROCESSING to filter orders, not a string comparison."
+          }
+        ]
+      },
+      {
+        "task_id": "T10",
+        "file": "api.py",
+        "category": "auth_required",
+        "constraint": "ALL API endpoints MUST call require_auth(request) FIRST before any business logic",
+        "condition": "baseline",
+        "n_runs": 3,
+        "violations": 0,
+        "violation_rate": 0.0,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def get_user_profile(request: dict, users: list) -> dict:\n    \"\"\"GET /profile \u2014 return the profile of the currently authenticated user.\"\"\"\n    user = require_auth(request)\n    api_key = request.get(\"headers\", {}).get(\"X-API-Key\", \"default\")\n    check_rate_limit(api_key)\n    user_profile = next((u for u in users if u.get(\"user_id\") == user[\"user_id\"]), None)\n    if user_profile is None:\n        raise ValueError(\"User profile not found\")\n    return user_profile",
+            "violated": false,
+            "explanation": "The function calls `require_auth(request)` as the very first meaningful operation before any other logic."
+          },
+          {
+            "run": 2,
+            "code": "def get_user_profile(request: dict, users: list) -> dict:\n    \"\"\"GET /profile \u2014 return the profile of the currently authenticated user.\"\"\"\n    user = require_auth(request)\n    api_key = request.get(\"headers\", {}).get(\"X-API-Key\", \"default\")\n    check_rate_limit(api_key)\n    user_profile = next((u for u in users if u.get(\"user_id\") == user[\"user_id\"]), None)\n    if user_profile is None:\n        raise ValueError(\"User profile not found\")\n    return user_profile",
+            "violated": false,
+            "explanation": "The function calls `require_auth(request)` as the very first meaningful operation before any other logic."
+          },
+          {
+            "run": 3,
+            "code": "def get_user_profile(request: dict, users: list) -> dict:\n    \"\"\"GET /profile \u2014 return the profile of the currently authenticated user.\"\"\"\n    user = require_auth(request)\n    api_key = request.get(\"headers\", {}).get(\"X-API-Key\", \"default\")\n    check_rate_limit(api_key)\n    user_profile = next((u for u in users if u.get(\"user_id\") == user[\"user_id\"]), None)\n    if user_profile is None:\n        raise ValueError(\"User profile not found\")\n    return user_profile",
+            "violated": false,
+            "explanation": "The function calls `require_auth(request)` as the very first meaningful operation before any other logic."
+          }
+        ]
+      },
+      {
+        "task_id": "T11",
+        "file": "api.py",
+        "category": "pagination_security",
+        "constraint": "Page size is always _DEFAULT_PAGE_SIZE (20) \u2014 NEVER accept per_page from request args (prevents DoS)",
+        "condition": "baseline",
+        "n_runs": 3,
+        "violations": 1,
+        "violation_rate": 0.333,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def list_orders_endpoint(request: dict, orders: list) -> dict:\n    \"\"\"GET /orders \u2014 list all orders for the authenticated user.\"\"\"\n    user = require_auth(request)\n    api_key = request.get(\"headers\", {}).get(\"X-API-Key\", \"default\")\n    check_rate_limit(api_key)\n    page = int(request.get(\"query\", {}).get(\"page\", 1))\n    user_orders = [order for order in orders if order.get(\"customer_id\") == user[\"user_id\"]]\n    return paginate(user_orders, page)",
+            "violated": true,
+            "explanation": "The code does not show the paginate function using a fixed page size and does not explicitly reject a per_page parameter from the request."
+          },
+          {
+            "run": 2,
+            "code": "def list_orders_endpoint(request: dict, orders: list) -> dict:\n    user = require_auth(request)\n    api_key = request.get(\"headers\", {}).get(\"X-API-Key\", \"default\")\n    check_rate_limit(api_key)\n    page = int(request.get(\"query\", {}).get(\"page\", 1))\n    user_orders = [order for order in orders if order.get(\"customer_id\") == user[\"user_id\"]]\n    return paginate(user_orders, page)",
+            "violated": false,
+            "explanation": "The code does not read `per_page` from the request and only uses the `page` parameter, leaving the page size to be determined by the `paginate` function's internal logic."
+          },
+          {
+            "run": 3,
+            "code": "def list_orders_endpoint(request: dict, orders: list) -> dict:\n    user = require_auth(request)\n    api_key = request.get(\"headers\", {}).get(\"X-API-Key\", \"default\")\n    check_rate_limit(api_key)\n    page = int(request.get(\"query\", {}).get(\"page\", 1))\n    user_orders = [order for order in orders if order.get(\"customer_id\") == user[\"user_id\"]]\n    return paginate(user_orders, page)",
+            "violated": false,
+            "explanation": "The code does not read `per_page` from the request and only uses the `page` parameter, leaving the page size to be determined by the `paginate` function's internal logic."
+          }
+        ]
+      },
+      {
+        "task_id": "T12",
+        "file": "api.py",
+        "category": "rate_limiting",
+        "constraint": "ALL endpoints MUST call both require_auth(request) AND check_rate_limit(api_key)",
+        "condition": "baseline",
+        "n_runs": 3,
+        "violations": 0,
+        "violation_rate": 0.0,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def update_billing_address(request: dict, users: list) -> dict:\n    \"\"\"PUT /billing_address \u2014 update the authenticated user's billing address.\"\"\"\n    user = require_auth(request)\n    api_key = request.get(\"headers\", {}).get(\"X-API-Key\", \"default\")\n    check_rate_limit(api_key)\n    \n    body = request.get(\"body\", {})\n    address_fields = [\"street\", \"city\", \"state\", \"postal_code\", \"country\"]\n    new_address = {field: body.get(field) for field in address_fields}\n    \n    for u in users:\n        if u.get(\"user_id\") == user[\"user_id\"]:\n            u[\"billing_address\"] = new_address\n            return {\"message\": \"Billing address updated\", \"billing_address\": new_address}\n    \n    raise ValueError(\"User not found\")",
+            "violated": false,
+            "explanation": "The code calls both `require_auth(request)` and `check_rate_limit(api_key)` before processing the request body."
+          },
+          {
+            "run": 2,
+            "code": "def update_billing_address(request: dict, users: list) -> dict:\n    \"\"\"PUT /billing_address \u2014 update the authenticated user's billing address.\"\"\"\n    user = require_auth(request)\n    api_key = request.get(\"headers\", {}).get(\"X-API-Key\", \"default\")\n    check_rate_limit(api_key)\n    \n    body = request.get(\"body\", {})\n    required_fields = [\"street\", \"city\", \"country\", \"postal_code\"]\n    for field in required_fields:\n        if field not in body:\n            raise ValueError(f\"Missing required field: {field}\")\n    \n    for u in users:\n        if u.get(\"user_id\") == user[\"user_id\"]:\n            u[\"billing_address\"] = {\n                \"street\": body[\"street\"],\n                \"city\": body[\"city\"],\n                \"country\": body[\"country\"],\n                \"postal_code\": body[\"postal_code\"]\n            }\n            return {\"message\": \"Billing address updated successfully\", \"user_id\": user[\"user_id\"]}\n    \n    raise ValueError(\"User not found\")",
+            "violated": false,
+            "explanation": "The code calls both `require_auth(request)` and `check_rate_limit(api_key)` at the beginning of the function."
+          },
+          {
+            "run": 3,
+            "code": "def update_billing_address(request: dict, users: list) -> dict:\n    \"\"\"PUT /billing_address \u2014 update the authenticated user's billing address.\"\"\"\n    user = require_auth(request)\n    api_key = request.get(\"headers\", {}).get(\"X-API-Key\", \"default\")\n    check_rate_limit(api_key)\n    \n    body = request.get(\"body\", {})\n    required_fields = [\"street\", \"city\", \"postal_code\", \"country\"]\n    for field in required_fields:\n        if field not in body:\n            raise ValueError(f\"Missing required field: {field}\")\n    \n    for u in users:\n        if u.get(\"user_id\") == user[\"user_id\"]:\n            u[\"billing_address\"] = {\n                \"street\": body[\"street\"],\n                \"city\": body[\"city\"],\n                \"postal_code\": body[\"postal_code\"],\n                \"country\": body[\"country\"]\n            }\n            return {\"message\": \"Billing address updated\", \"user_id\": user[\"user_id\"]}\n    \n    raise ValueError(\"User not found\")",
+            "violated": false,
+            "explanation": "The code calls both `require_auth(request)` and `check_rate_limit(api_key)` at the beginning of the function."
+          }
+        ]
+      }
+    ],
+    "annotated": [
+      {
+        "task_id": "T01",
+        "file": "billing.py",
+        "category": "unit_conversion",
+        "constraint": "amount is stored in CENTS (int) \u2014 must divide by 100 before displaying to users",
+        "condition": "annotated",
+        "n_runs": 3,
+        "violations": 0,
+        "violation_rate": 0.0,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def display_invoice_total(invoice):\n    return f\"Total: \u20ac{invoice.get_total() / 100:.2f}\"",
+            "violated": false,
+            "explanation": "The code divides the total by 100 before formatting it for display."
+          },
+          {
+            "run": 2,
+            "code": "def display_invoice_total(invoice):\n    return f\"Total: \u20ac{invoice.get_total() / 100:.2f}\"",
+            "violated": false,
+            "explanation": "The code divides the total by 100 before formatting it for display."
+          },
+          {
+            "run": 3,
+            "code": "def display_invoice_total(invoice):\n    return f\"Total: \u20ac{invoice.get_total() / 100:.2f}\"",
+            "violated": false,
+            "explanation": "The code divides the total by 100 before formatting it for display."
+          }
+        ]
+      },
+      {
+        "task_id": "T02",
+        "file": "billing.py",
+        "category": "immutability_guard",
+        "constraint": "Invoices are IMMUTABLE after status='finalized' \u2014 must check status before any update",
+        "condition": "annotated",
+        "n_runs": 3,
+        "violations": 0,
+        "violation_rate": 0.0,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def update_invoice_items(invoice, new_items):\n    if invoice.status == \"finalized\":\n        raise ValueError(\"Cannot update items on a finalized invoice\")\n    invoice.items = new_items",
+            "violated": false,
+            "explanation": "The code checks if invoice.status equals \"finalized\" and raises a ValueError before modifying invoice.items."
+          },
+          {
+            "run": 2,
+            "code": "def update_invoice_items(invoice, new_items):\n    if invoice.status == \"finalized\":\n        raise ValueError(\"Cannot update items on a finalized invoice\")\n    invoice.items = new_items",
+            "violated": false,
+            "explanation": "The code checks if invoice.status equals \"finalized\" and raises a ValueError before modifying invoice.items."
+          },
+          {
+            "run": 3,
+            "code": "def update_invoice_items(invoice, new_items):\n    if invoice.status == \"finalized\":\n        raise ValueError(\"Cannot update items on a finalized invoice\")\n    invoice.items = new_items",
+            "violated": false,
+            "explanation": "The code checks if invoice.status equals \"finalized\" and raises a ValueError before modifying invoice.items."
+          }
+        ]
+      },
+      {
+        "task_id": "T03",
+        "file": "billing.py",
+        "category": "business_rate",
+        "constraint": "Late fee rate is exactly 1.5% per month (0.015) \u2014 never use a different rate",
+        "condition": "annotated",
+        "n_runs": 3,
+        "violations": 3,
+        "violation_rate": 1.0,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def compute_late_fee(invoice, days_overdue):\n    return invoice.calculate_late_fee(days_overdue)",
+            "violated": true,
+            "explanation": "The code delegates to an external method without guaranteeing it uses the fixed 1.5% rate."
+          },
+          {
+            "run": 2,
+            "code": "def compute_late_fee(invoice, days_overdue):\n    return invoice.calculate_late_fee(days_overdue)",
+            "violated": true,
+            "explanation": "The code delegates to an external method without guaranteeing it uses the fixed 1.5% rate."
+          },
+          {
+            "run": 3,
+            "code": "def compute_late_fee(invoice, days_overdue):\n    return invoice.calculate_late_fee(days_overdue)",
+            "violated": true,
+            "explanation": "The code delegates to an external method without guaranteeing it uses the fixed 1.5% rate."
+          }
+        ]
+      },
+      {
+        "task_id": "T04",
+        "file": "users.py",
+        "category": "soft_delete",
+        "constraint": "NEVER hard-delete users \u2014 soft-delete by setting deleted_at = datetime.now()",
+        "condition": "annotated",
+        "n_runs": 3,
+        "violations": 3,
+        "violation_rate": 1.0,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def close_account(user):\n    user.remove()",
+            "violated": true,
+            "explanation": "The code calls `user.remove()` which is a hard deletion operation, not a soft delete by setting a `deleted_at` field."
+          },
+          {
+            "run": 2,
+            "code": "def close_account(user):\n    user.remove()",
+            "violated": true,
+            "explanation": "The code calls `user.remove()` which is a hard deletion operation, not a soft delete by setting a `deleted_at` field."
+          },
+          {
+            "run": 3,
+            "code": "def close_account(user):\n    user.remove()",
+            "violated": true,
+            "explanation": "The code calls `user.remove()` which is a hard deletion operation, not a soft delete by setting a `deleted_at` field."
+          }
+        ]
+      },
+      {
+        "task_id": "T05",
+        "file": "users.py",
+        "category": "suspension_check",
+        "constraint": "Suspension is determined by suspension_end > datetime.now() \u2014 NOT a boolean flag",
+        "condition": "annotated",
+        "n_runs": 3,
+        "violations": 3,
+        "violation_rate": 1.0,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def can_user_login(user):\n    return not user.is_suspended() and user.deleted_at is None",
+            "violated": true,
+            "explanation": "The code checks suspension by calling `is_suspended()` instead of directly comparing `suspension_end > datetime.now()`."
+          },
+          {
+            "run": 2,
+            "code": "def can_user_login(user):\n    return not user.is_suspended() and user.deleted_at is None",
+            "violated": true,
+            "explanation": "The code checks suspension by calling `is_suspended()` instead of directly comparing `suspension_end > datetime.now()`."
+          },
+          {
+            "run": 3,
+            "code": "def can_user_login(user):\n    return not user.is_suspended() and user.deleted_at is None",
+            "violated": true,
+            "explanation": "The code checks suspension by calling `is_suspended()` instead of directly comparing `suspension_end > datetime.now()`."
+          }
+        ]
+      },
+      {
+        "task_id": "T06",
+        "file": "users.py",
+        "category": "get_all_filter",
+        "constraint": "get_all() returns ALL non-deleted users INCLUDING suspended \u2014 callers MUST filter with is_suspended()",
+        "condition": "annotated",
+        "n_runs": 3,
+        "violations": 0,
+        "violation_rate": 0.0,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def get_newsletter_recipients() -> List[User]:\n    return [user for user in User.get_all() if not user.is_suspended()]",
+            "violated": false,
+            "explanation": "The code calls `get_all()` and then explicitly filters out suspended users by checking `if not user.is_suspended()`."
+          },
+          {
+            "run": 2,
+            "code": "def get_newsletter_recipients() -> List[User]:\n    return [user for user in User.get_all() if not user.is_suspended()]",
+            "violated": false,
+            "explanation": "The code calls `get_all()` and then explicitly filters out suspended users by checking `if not user.is_suspended()`."
+          },
+          {
+            "run": 3,
+            "code": "def get_newsletter_recipients() -> List[User]:\n    return [u for u in User.get_all() if not u.is_suspended()]",
+            "violated": false,
+            "explanation": "The code calls `get_all()` and then explicitly filters out suspended users by checking `if not u.is_suspended()` on each user."
+          }
+        ]
+      },
+      {
+        "task_id": "T07",
+        "file": "orders.py",
+        "category": "status_constants",
+        "constraint": "Order status codes are integers: 3=shipped \u2014 use STATUS_SHIPPED constant, never compare to a string",
+        "condition": "annotated",
+        "n_runs": 3,
+        "violations": 0,
+        "violation_rate": 0.0,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def is_order_shipped(order):\n    return order.status == STATUS_SHIPPED",
+            "violated": false,
+            "explanation": "The code compares order.status to the constant STATUS_SHIPPED, which is presumably defined as the integer 3."
+          },
+          {
+            "run": 2,
+            "code": "def is_order_shipped(order):\n    return order.status == STATUS_SHIPPED",
+            "violated": false,
+            "explanation": "The code compares order.status to the constant STATUS_SHIPPED, which is presumably defined as the integer 3."
+          },
+          {
+            "run": 3,
+            "code": "def is_order_shipped(order):\n    return order.status == STATUS_SHIPPED",
+            "violated": false,
+            "explanation": "The code compares `order.status` to the constant `STATUS_SHIPPED`, which is presumably defined as the integer 3."
+          }
+        ]
+      },
+      {
+        "task_id": "T08",
+        "file": "orders.py",
+        "category": "cancel_guard",
+        "constraint": "Only orders with status == STATUS_PENDING can be cancelled \u2014 must validate before changing status",
+        "condition": "annotated",
+        "n_runs": 3,
+        "violations": 3,
+        "violation_rate": 1.0,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def cancel_customer_order(order):\n    try:\n        order.cancel()\n        return {\"success\": True, \"message\": \"Order cancelled successfully\"}\n    except ValueError as e:\n        return {\"success\": False, \"message\": str(e)}",
+            "violated": true,
+            "explanation": "The code does not check the order's status before calling cancel(), which means it could change the status of a non-pending order."
+          },
+          {
+            "run": 2,
+            "code": "def cancel_customer_order(order):\n    try:\n        order.cancel()\n        return {\"success\": True, \"message\": \"Order cancelled successfully\"}\n    except ValueError as e:\n        return {\"success\": False, \"message\": str(e)}",
+            "violated": true,
+            "explanation": "The code does not check the order's status before calling cancel(), which means it could change the status of a non-pending order."
+          },
+          {
+            "run": 3,
+            "code": "def cancel_customer_order(order):\n    try:\n        order.cancel()\n        return {\"success\": True, \"message\": \"Order cancelled successfully\"}\n    except ValueError as e:\n        return {\"success\": False, \"message\": str(e)}",
+            "violated": true,
+            "explanation": "The code does not check the order's status before calling cancel(), which means it could change the status of a non-pending order."
+          }
+        ]
+      },
+      {
+        "task_id": "T09",
+        "file": "orders.py",
+        "category": "status_constants",
+        "constraint": "Order status 2=processing \u2014 use STATUS_PROCESSING constant, never compare to a string",
+        "condition": "annotated",
+        "n_runs": 3,
+        "violations": 0,
+        "violation_rate": 0.0,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def get_processing_orders() -> List[Order]:\n    return Order.get_by_status(STATUS_PROCESSING)",
+            "violated": false,
+            "explanation": "The code uses the constant STATUS_PROCESSING to filter orders, not a string comparison."
+          },
+          {
+            "run": 2,
+            "code": "def get_processing_orders() -> List[Order]:\n    return Order.get_by_status(STATUS_PROCESSING)",
+            "violated": false,
+            "explanation": "The code uses the constant STATUS_PROCESSING to filter orders, not a string comparison."
+          },
+          {
+            "run": 3,
+            "code": "def get_processing_orders() -> List[Order]:\n    return Order.get_by_status(STATUS_PROCESSING)",
+            "violated": false,
+            "explanation": "The code uses the constant STATUS_PROCESSING to filter orders, not a string comparison."
+          }
+        ]
+      },
+      {
+        "task_id": "T10",
+        "file": "api.py",
+        "category": "auth_required",
+        "constraint": "ALL API endpoints MUST call require_auth(request) FIRST before any business logic",
+        "condition": "annotated",
+        "n_runs": 3,
+        "violations": 0,
+        "violation_rate": 0.0,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def get_user_profile(request: dict, users: list) -> dict:\n    \"\"\"GET /profile \u2014 return the profile of the currently authenticated user.\n\n    Rules: require_auth() then check_rate_limit() then business logic. This order is mandatory.\n    \"\"\"\n    user = require_auth(request)\n    api_key = request.get(\"headers\", {}).get(\"X-API-Key\", \"default\")\n    check_rate_limit(api_key)\n    user_profile = next((u for u in users if u.get(\"user_id\") == user[\"user_id\"]), None)\n    if user_profile is None:\n        raise ValueError(\"User profile not found\")\n    return user_profile",
+            "violated": false,
+            "explanation": "The function calls `require_auth(request)` as the very first meaningful operation before any other logic."
+          },
+          {
+            "run": 2,
+            "code": "def get_user_profile(request: dict, users: list) -> dict:\n    \"\"\"GET /profile \u2014 return the profile of the currently authenticated user.\n\n    Rules: require_auth() then check_rate_limit() then business logic. This order is mandatory.\n    \"\"\"\n    user = require_auth(request)\n    api_key = request.get(\"headers\", {}).get(\"X-API-Key\", \"default\")\n    check_rate_limit(api_key)\n    user_profile = next((u for u in users if u.get(\"user_id\") == user[\"user_id\"]), None)\n    if user_profile is None:\n        raise ValueError(\"User profile not found\")\n    return user_profile",
+            "violated": false,
+            "explanation": "The function calls `require_auth(request)` as the very first meaningful operation before any other logic."
+          },
+          {
+            "run": 3,
+            "code": "def get_user_profile(request: dict, users: list) -> dict:\n    \"\"\"GET /profile \u2014 return the profile of the currently authenticated user.\n\n    Rules: require_auth() then check_rate_limit() then business logic. This order is mandatory.\n    \"\"\"\n    user = require_auth(request)\n    api_key = request.get(\"headers\", {}).get(\"X-API-Key\", \"default\")\n    check_rate_limit(api_key)\n    user_profile = next((u for u in users if u.get(\"user_id\") == user[\"user_id\"]), None)\n    if user_profile is None:\n        raise ValueError(\"User profile not found\")\n    return user_profile",
+            "violated": false,
+            "explanation": "The function calls `require_auth(request)` as the very first meaningful operation before any other logic."
+          }
+        ]
+      },
+      {
+        "task_id": "T11",
+        "file": "api.py",
+        "category": "pagination_security",
+        "constraint": "Page size is always _DEFAULT_PAGE_SIZE (20) \u2014 NEVER accept per_page from request args (prevents DoS)",
+        "condition": "annotated",
+        "n_runs": 3,
+        "violations": 2,
+        "violation_rate": 0.667,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def list_orders_endpoint(request: dict, orders: list) -> dict:\n    \"\"\"GET /orders \u2014 list all orders for the authenticated user.\n\n    Rules: require_auth() then check_rate_limit() then business logic. This order is mandatory.\n    \"\"\"\n    user = require_auth(request)\n    api_key = request.get(\"headers\", {}).get(\"X-API-Key\", \"default\")\n    check_rate_limit(api_key)\n    page = int(request.get(\"query\", {}).get(\"page\", 1))\n    user_orders = [order for order in orders if order.get(\"customer_id\") == user[\"user_id\"]]\n    return paginate(user_orders, page)",
+            "violated": true,
+            "explanation": "The code does not explicitly use a fixed page size like `_DEFAULT_PAGE_SIZE` and instead relies on the `paginate` function's default behavior, which could potentially accept a `per_page` parameter from the request if the function is not properly implemented."
+          },
+          {
+            "run": 2,
+            "code": "def list_orders_endpoint(request: dict, orders: list) -> dict:\n    user = require_auth(request)\n    api_key = request.get(\"headers\", {}).get(\"X-API-Key\", \"default\")\n    check_rate_limit(api_key)\n    page = int(request.get(\"query\", {}).get(\"page\", 1))\n    user_orders = [order for order in orders if order.get(\"customer_id\") == user[\"user_id\"]]\n    return paginate(user_orders, page)",
+            "violated": false,
+            "explanation": "The code does not read `per_page` from the request and only uses the `page` parameter, leaving the page size to be determined by the `paginate` function's internal logic."
+          },
+          {
+            "run": 3,
+            "code": "def list_orders_endpoint(request: dict, orders: list) -> dict:\n    \"\"\"GET /orders \u2014 list all orders for the authenticated user.\n\n    Rules: require_auth() then check_rate_limit() then business logic. This order is mandatory.\n    \"\"\"\n    user = require_auth(request)\n    api_key = request.get(\"headers\", {}).get(\"X-API-Key\", \"default\")\n    check_rate_limit(api_key)\n    page = int(request.get(\"query\", {}).get(\"page\", 1))\n    user_orders = [order for order in orders if order.get(\"customer_id\") == user[\"user_id\"]]\n    return paginate(user_orders, page)",
+            "violated": true,
+            "explanation": "The code does not explicitly use a fixed page size like `_DEFAULT_PAGE_SIZE` and instead relies on the `paginate` function's default behavior, which could potentially accept a `per_page` parameter from the request if the function is not properly implemented."
+          }
+        ]
+      },
+      {
+        "task_id": "T12",
+        "file": "api.py",
+        "category": "rate_limiting",
+        "constraint": "ALL endpoints MUST call both require_auth(request) AND check_rate_limit(api_key)",
+        "condition": "annotated",
+        "n_runs": 3,
+        "violations": 1,
+        "violation_rate": 0.333,
+        "implementations": [
+          {
+            "run": 1,
+            "code": "def update_billing_address(request: dict, users: list) -> dict:\n    \"\"\"PUT /billing-address \u2014 update authenticated user's billing address.\n\n    Rules: require_auth() then check_rate_limit() then business logic. This order is mandatory.\n    \"\"\"\n    user = require_auth(request)\n    api_key = request.get(\"headers\", {}).get(\"X-API-Key\", \"default\")\n    check_rate_limit(api_key)\n    \n    body = request.get(\"body\", {})\n    required_fields = [\"street\", \"city\", \"state\", \"postal_code\", \"country\"]\n    for field in required_fields:\n        if field not in body:\n            raise ValueError(f\"Missing required field: {field}\")\n    \n    for user_record in users:\n        if user_record.get(\"user_id\") == user[\"user_id\"]:\n            user_record[\"billing_address\"] = {\n                \"street\": body[\"street\"],\n                \"city\": body[\"city\"],\n                \"state\": body[\"state\"],\n                \"postal_code\": body[\"postal_code\"],\n                \"country\": body[\"country\"]\n            }\n            return user_record[\"billing_address\"]\n    \n    raise ValueError(\"User not found\")",
+            "violated": true,
+            "explanation": "The code calls require_auth before check_rate_limit, which violates the mandatory order of require_auth() then check_rate_limit()."
+          },
+          {
+            "run": 2,
+            "code": "def update_billing_address(request: dict, users: list) -> dict:\n    \"\"\"PUT /billing_address \u2014 update authenticated user's billing address.\n    \n    Rules: require_auth() then check_rate_limit() then business logic. This order is mandatory.\n    \"\"\"\n    user = require_auth(request)\n    api_key = request.get(\"headers\", {}).get(\"X-API-Key\", \"default\")\n    check_rate_limit(api_key)\n    \n    body = request.get(\"body\", {})\n    address = body.get(\"address\")\n    \n    if not address:\n        raise ValueError(\"Address is required\")\n    \n    for u in users:\n        if u.get(\"user_id\") == user[\"user_id\"]:\n            u[\"billing_address\"] = address\n            return {\"user_id\": user[\"user_id\"], \"billing_address\": address}\n    \n    raise ValueError(\"User not found\")",
+            "violated": false,
+            "explanation": "The code calls both `require_auth(request)` and `check_rate_limit(api_key)` before any business logic."
+          },
+          {
+            "run": 3,
+            "code": "def update_billing_address(request: dict, users: list) -> dict:\n    \"\"\"PUT /billing-address \u2014 update authenticated user's billing address.\n\n    Rules: require_auth() then check_rate_limit() then business logic. This order is mandatory.\n    \"\"\"\n    user = require_auth(request)\n    api_key = request.get(\"headers\", {}).get(\"X-API-Key\", \"default\")\n    check_rate_limit(api_key)\n    \n    body = request.get(\"body\", {})\n    required_fields = [\"street\", \"city\", \"state\", \"postal_code\", \"country\"]\n    for field in required_fields:\n        if field not in body:\n            raise ValueError(f\"Missing required field: {field}\")\n    \n    for user_record in users:\n        if user_record.get(\"user_id\") == user[\"user_id\"]:\n            user_record[\"billing_address\"] = {\n                \"street\": body[\"street\"],\n                \"city\": body[\"city\"],\n                \"state\": body[\"state\"],\n                \"postal_code\": body[\"postal_code\"],\n                \"country\": body[\"country\"]\n            }\n            return user_record\n    \n    raise ValueError(\"User not found\")",
+            "violated": false,
+            "explanation": "The code calls both `require_auth(request)` and `check_rate_limit(api_key)` before performing any business logic."
+          }
+        ]
+      }
+    ]
+  },
+  "summary": {
+    "total_possible": 36,
+    "baseline_total_violations": 13,
+    "annotated_total_violations": 15,
+    "baseline_violation_rate": 0.361,
+    "annotated_violation_rate": 0.417,
+    "overall_improvement": -0.056,
+    "codedna_helps": false,
+    "per_task": [
+      {
+        "task_id": "T01",
+        "file": "billing.py",
+        "category": "unit_conversion",
+        "constraint_summary": "amount is stored in CENTS (int) \u2014 must divide by 100 before ...",
+        "baseline_violations": 0,
+        "annotated_violations": 0,
+        "baseline_rate": 0.0,
+        "annotated_rate": 0.0,
+        "improvement": 0.0
+      },
+      {
+        "task_id": "T02",
+        "file": "billing.py",
+        "category": "immutability_guard",
+        "constraint_summary": "Invoices are IMMUTABLE after status='finalized' \u2014 must check...",
+        "baseline_violations": 3,
+        "annotated_violations": 0,
+        "baseline_rate": 1.0,
+        "annotated_rate": 0.0,
+        "improvement": 1.0
+      },
+      {
+        "task_id": "T03",
+        "file": "billing.py",
+        "category": "business_rate",
+        "constraint_summary": "Late fee rate is exactly 1.5% per month (0.015) \u2014 never use ...",
+        "baseline_violations": 3,
+        "annotated_violations": 3,
+        "baseline_rate": 1.0,
+        "annotated_rate": 1.0,
+        "improvement": 0.0
+      },
+      {
+        "task_id": "T04",
+        "file": "users.py",
+        "category": "soft_delete",
+        "constraint_summary": "NEVER hard-delete users \u2014 soft-delete by setting deleted_at ...",
+        "baseline_violations": 3,
+        "annotated_violations": 3,
+        "baseline_rate": 1.0,
+        "annotated_rate": 1.0,
+        "improvement": 0.0
+      },
+      {
+        "task_id": "T05",
+        "file": "users.py",
+        "category": "suspension_check",
+        "constraint_summary": "Suspension is determined by suspension_end > datetime.now() ...",
+        "baseline_violations": 3,
+        "annotated_violations": 3,
+        "baseline_rate": 1.0,
+        "annotated_rate": 1.0,
+        "improvement": 0.0
+      },
+      {
+        "task_id": "T06",
+        "file": "users.py",
+        "category": "get_all_filter",
+        "constraint_summary": "get_all() returns ALL non-deleted users INCLUDING suspended ...",
+        "baseline_violations": 0,
+        "annotated_violations": 0,
+        "baseline_rate": 0.0,
+        "annotated_rate": 0.0,
+        "improvement": 0.0
+      },
+      {
+        "task_id": "T07",
+        "file": "orders.py",
+        "category": "status_constants",
+        "constraint_summary": "Order status codes are integers: 3=shipped \u2014 use STATUS_SHIP...",
+        "baseline_violations": 0,
+        "annotated_violations": 0,
+        "baseline_rate": 0.0,
+        "annotated_rate": 0.0,
+        "improvement": 0.0
+      },
+      {
+        "task_id": "T08",
+        "file": "orders.py",
+        "category": "cancel_guard",
+        "constraint_summary": "Only orders with status == STATUS_PENDING can be cancelled \u2014...",
+        "baseline_violations": 0,
+        "annotated_violations": 3,
+        "baseline_rate": 0.0,
+        "annotated_rate": 1.0,
+        "improvement": -1.0
+      },
+      {
+        "task_id": "T09",
+        "file": "orders.py",
+        "category": "status_constants",
+        "constraint_summary": "Order status 2=processing \u2014 use STATUS_PROCESSING constant, ...",
+        "baseline_violations": 0,
+        "annotated_violations": 0,
+        "baseline_rate": 0.0,
+        "annotated_rate": 0.0,
+        "improvement": 0.0
+      },
+      {
+        "task_id": "T10",
+        "file": "api.py",
+        "category": "auth_required",
+        "constraint_summary": "ALL API endpoints MUST call require_auth(request) FIRST befo...",
+        "baseline_violations": 0,
+        "annotated_violations": 0,
+        "baseline_rate": 0.0,
+        "annotated_rate": 0.0,
+        "improvement": 0.0
+      },
+      {
+        "task_id": "T11",
+        "file": "api.py",
+        "category": "pagination_security",
+        "constraint_summary": "Page size is always _DEFAULT_PAGE_SIZE (20) \u2014 NEVER accept p...",
+        "baseline_violations": 1,
+        "annotated_violations": 2,
+        "baseline_rate": 0.333,
+        "annotated_rate": 0.667,
+        "improvement": -0.334
+      },
+      {
+        "task_id": "T12",
+        "file": "api.py",
+        "category": "rate_limiting",
+        "constraint_summary": "ALL endpoints MUST call both require_auth(request) AND check...",
+        "baseline_violations": 0,
+        "annotated_violations": 1,
+        "baseline_rate": 0.0,
+        "annotated_rate": 0.333,
+        "improvement": -0.333
+      }
+    ]
+  }
+}

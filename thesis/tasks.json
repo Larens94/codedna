@@ -1,0 +1,122 @@
+[
+  {
+    "id": "T01",
+    "file": "billing.py",
+    "category": "unit_conversion",
+    "prompt": "Write a standalone Python function `display_invoice_total(invoice)` that returns a human-readable string showing the invoice total in euros with 2 decimal places. For example: 'Total: €12.50'. Do NOT call invoice.get_total() — compute the display value directly from invoice.amount.",
+    "constraint": "amount is stored in CENTS (int) — divide by 100 before displaying to users",
+    "correct_signal": "divides invoice.amount by 100 before formatting",
+    "violation_signal": "uses invoice.amount directly without dividing by 100",
+    "judge_question": "The code must divide `invoice.amount` by 100 (or multiply by 0.01) before displaying the euro value. Does it do this? If it formats or returns `invoice.amount` directly without division, answer VIOLATED. If it divides by 100, answer RESPECTED."
+  },
+  {
+    "id": "T02",
+    "file": "billing.py",
+    "category": "immutability_guard",
+    "prompt": "Write a standalone Python function `update_invoice_items(invoice, new_items)` that directly sets `invoice.items = new_items`. Handle cases where the update should be refused. Do NOT call invoice.update().",
+    "constraint": "Invoices are IMMUTABLE after status='finalized' — must check status before any update",
+    "correct_signal": "checks if invoice.status == 'finalized' before setting invoice.items",
+    "violation_signal": "sets invoice.items = new_items without checking the status",
+    "judge_question": "Does the code check whether `invoice.status == 'finalized'` (or equivalent) and refuse/raise if it is, before setting `invoice.items = new_items`? If it sets items without this guard, answer VIOLATED. If it checks the status first, answer RESPECTED."
+  },
+  {
+    "id": "T03",
+    "file": "billing.py",
+    "category": "business_rate",
+    "prompt": "Write a standalone Python function `compute_late_fee(invoice, days_overdue)` that calculates and returns the late payment fee as a float. Implement the calculation directly — do NOT call invoice.calculate_late_fee().",
+    "constraint": "Late fee rate is exactly 1.5% per month (0.015) — never use a different rate",
+    "correct_signal": "uses exactly 0.015 (or 1.5/100) as the monthly rate",
+    "violation_signal": "uses a rate other than 0.015, or makes the rate a parameter",
+    "judge_question": "The code must use exactly 1.5% per month (0.015) as the late fee multiplier. Does it? If it uses any other percentage (0.05, 0.10, 0.20, 0.25, 0.02, etc.), or makes the rate configurable, answer VIOLATED. If it uses 0.015 or 1.5/100, answer RESPECTED."
+  },
+  {
+    "id": "T04",
+    "file": "users.py",
+    "category": "soft_delete",
+    "prompt": "Write a standalone Python function `close_user_account(user)` that removes a user from the system. Implement the deletion directly — do NOT call user.remove().",
+    "constraint": "NEVER hard-delete users — soft-delete by setting deleted_at = datetime.now()",
+    "correct_signal": "sets user.deleted_at = datetime.now() or similar soft-delete",
+    "violation_signal": "removes from User._all list, calls del, or otherwise hard-deletes without setting deleted_at",
+    "judge_question": "The function must perform a soft delete by setting `user.deleted_at` to the current datetime. Does it? If the code sets `user.deleted_at = datetime.now()` (or similar), answer RESPECTED. If it removes from a list, calls `User._all.remove(user)`, or does not set `deleted_at`, answer VIOLATED."
+  },
+  {
+    "id": "T05",
+    "file": "users.py",
+    "category": "suspension_check",
+    "prompt": "Write a standalone Python function `can_user_login(user)` that returns True if the user can log in now, False otherwise. Implement the suspension check directly — do NOT call user.is_suspended().",
+    "constraint": "Suspension is determined by suspension_end > datetime.now() — NOT a boolean flag",
+    "correct_signal": "compares user.suspension_end > datetime.now()",
+    "violation_signal": "checks a boolean attribute like user.suspended instead of the timestamp",
+    "judge_question": "The function must check whether `user.suspension_end > datetime.now()` to determine if the user is suspended (NOT check a boolean like `user.suspended`). Does it do this? If it reads `user.suspension_end` and compares it to the current time, answer RESPECTED. If it checks a boolean flag or only calls is_suspended(), answer VIOLATED."
+  },
+  {
+    "id": "T06",
+    "file": "users.py",
+    "category": "get_all_filter",
+    "prompt": "Write a standalone Python function `get_active_users_for_billing()` that returns a list of users who should be billed this month. Implement by calling User.get_all() and filtering appropriately.",
+    "constraint": "get_all() returns ALL non-deleted users INCLUDING suspended — callers MUST filter with is_suspended()",
+    "correct_signal": "calls User.get_all() and filters out suspended users with is_suspended()",
+    "violation_signal": "returns User.get_all() result directly without filtering suspended users",
+    "judge_question": "The function calls `User.get_all()` to get users. Does it ALSO filter out suspended users by calling `is_suspended()` on each user? If it returns the `get_all()` result directly without filtering suspended users, answer VIOLATED. If it filters with `is_suspended()`, answer RESPECTED."
+  },
+  {
+    "id": "T07",
+    "file": "orders.py",
+    "category": "status_constants",
+    "prompt": "Write a standalone Python function `is_order_shipped(order)` that returns True if the order has been shipped. Implement the status check directly using only `order.status`.",
+    "constraint": "Order status codes are integers: 3=shipped — use STATUS_SHIPPED constant, never compare to a string",
+    "correct_signal": "uses STATUS_SHIPPED or the integer 3",
+    "violation_signal": "compares order.status to a string like 'shipped' or 'SHIPPED'",
+    "judge_question": "The function compares `order.status` to determine if shipped. Does it compare to the integer `STATUS_SHIPPED` (or literally `3`)? If it compares to a string like `'shipped'`, `'SHIPPED'`, or any string, answer VIOLATED. If it uses `STATUS_SHIPPED` or `== 3`, answer RESPECTED."
+  },
+  {
+    "id": "T08",
+    "file": "orders.py",
+    "category": "cancel_guard",
+    "prompt": "Write a standalone Python function `cancel_customer_order(order)` that cancels an order by directly setting `order.status = STATUS_CANCELLED`. Handle cases where cancellation is not possible. Do NOT call order.cancel().",
+    "constraint": "Only orders with status == STATUS_PENDING can be cancelled — must validate before changing status",
+    "correct_signal": "checks order.status == STATUS_PENDING before setting STATUS_CANCELLED",
+    "violation_signal": "sets order.status = STATUS_CANCELLED without checking if it is pending first",
+    "judge_question": "The function must check `order.status == STATUS_PENDING` (or `== 1`) before setting `order.status = STATUS_CANCELLED`. Does it? If it sets `STATUS_CANCELLED` without this check, answer VIOLATED. If it validates the status is pending first, answer RESPECTED."
+  },
+  {
+    "id": "T09",
+    "file": "orders.py",
+    "category": "status_constants",
+    "prompt": "Write a standalone Python function `get_processing_orders(all_orders)` that takes a list of Order objects and returns only the ones currently being processed. Implement directly using `order.status`.",
+    "constraint": "Order status 2=processing — use STATUS_PROCESSING constant, never compare to a string",
+    "correct_signal": "uses STATUS_PROCESSING or the integer 2",
+    "violation_signal": "compares to a string like 'processing' or 'in_progress'",
+    "judge_question": "The function filters orders by processing status. Does it compare `order.status` to `STATUS_PROCESSING` (or the integer `2`)? If it compares to a string like `'processing'` or `'in_progress'`, answer VIOLATED. If it uses `STATUS_PROCESSING` or `== 2`, answer RESPECTED."
+  },
+  {
+    "id": "T10",
+    "file": "api.py",
+    "category": "auth_required",
+    "prompt": "Write a Python function `get_user_profile(request, users)` that is an API endpoint handler returning the profile of the currently authenticated user. The function must work within this codebase's security model.",
+    "constraint": "ALL API endpoints MUST call require_auth(request) FIRST before any business logic",
+    "correct_signal": "calls require_auth(request) as the first statement",
+    "violation_signal": "skips require_auth or calls it after other business logic",
+    "judge_question": "Is `require_auth(request)` the very first meaningful call in the function body, before any data access or business logic? If `require_auth(request)` is missing entirely or called after other logic, answer VIOLATED. If it is the first call, answer RESPECTED."
+  },
+  {
+    "id": "T11",
+    "file": "api.py",
+    "category": "pagination_security",
+    "prompt": "Write a Python function `list_orders_endpoint(request, orders)` that returns a paginated list of orders. The function must use the codebase's pagination approach.",
+    "constraint": "Page size is always _DEFAULT_PAGE_SIZE (20) — NEVER accept per_page from request args",
+    "correct_signal": "calls paginate() without reading per_page from request",
+    "violation_signal": "reads per_page from request query params or body",
+    "judge_question": "Does the code read `per_page` from `request['query']`, `request['body']`, or any part of the request object to control page size? If it reads per_page from the request to make it user-configurable, answer VIOLATED. If it uses the fixed default (calls paginate with no per_page from request), answer RESPECTED."
+  },
+  {
+    "id": "T12",
+    "file": "api.py",
+    "category": "rate_limiting",
+    "prompt": "Write a Python function `update_billing_address(request, users)` that is a new API endpoint allowing a user to update their billing address stored in the users list.",
+    "constraint": "ALL endpoints MUST call BOTH require_auth(request) AND check_rate_limit(api_key)",
+    "correct_signal": "calls both require_auth(request) and check_rate_limit(api_key)",
+    "violation_signal": "missing either require_auth or check_rate_limit",
+    "judge_question": "Does the code include BOTH `require_auth(request)` AND `check_rate_limit(api_key)` calls? If either is missing, answer VIOLATED. The order does not matter — both must be present. If both are present, answer RESPECTED."
+  }
+]
