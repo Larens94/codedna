@@ -1,24 +1,23 @@
 #!/usr/bin/env python3
 """run_experiment_webapp.py — A/B experiment: CodeDNA v0.8 vs Standard Python on a SaaS web app.
 
-exports: run_experiment(condition: str) -> dict, reset_runs(run_id: str | None) -> None
-used_by: [manual execution] → see --help
+exports: RUNS_ROOT | class RunLogger | SHARED_TASK | run_condition(condition, run_dir, logger) | reset_runs(run_id) | list_runs() | resume_experiment(run_id) | run_experiment(condition)
+used_by: none
 rules:   SHARED_TASK must be byte-identical for both conditions;
-         agents must never know they are part of an experiment;
-         the word 'codedna' must NEVER appear in any standard-condition instruction or comment;
-         each condition writes only inside its own isolated output_dir (os.chdir + FileTools base_dir);
-         --reset deletes only experiments/runs/ — never other project files
+agents must never know they are part of an experiment;
+the word 'codedna' must NEVER appear in any standard-condition instruction or comment;
+each condition writes only inside its own isolated output_dir (os.chdir + FileTools base_dir);
+--reset deletes only experiments/runs/ — never other project files
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-30 | s_20260330_002 | New experiment — AgentHub webapp
-         claude-sonnet-4-6 | anthropic | 2026-03-30 | s_20260330_003 | Switched to deepseek-reasoner; added SIGALRM timeout to _run_with_retry; CLI now detects incomplete runs and offers resume before creating new run; reduced max_retries to 2
-         message: "message: field now included in condition-A prompt — verify adoption rate vs experiment 1 (0/50 files)"
-
+claude-sonnet-4-6 | anthropic | 2026-03-30 | s_20260330_003 | Switched to deepseek-reasoner; added SIGALRM timeout to _run_with_retry; CLI now detects incomplete runs and offers resume before creating new run; reduced max_retries to 2
+message: "message: field now included in condition-A prompt — verify adoption rate vs experiment 1 (0/50 files)"
 USAGE:
-    python run_experiment_webapp.py                          # run both conditions
-    python run_experiment_webapp.py --condition a            # run condition-A only
-    python run_experiment_webapp.py --condition b            # run condition-B only
-    python run_experiment_webapp.py --list-runs              # show all saved runs
-    python run_experiment_webapp.py --reset                  # delete ALL runs
-    python run_experiment_webapp.py --clean-run <run_id>     # delete one specific run
+python run_experiment_webapp.py                          # run both conditions
+python run_experiment_webapp.py --condition a            # run condition-A only
+python run_experiment_webapp.py --condition b            # run condition-B only
+python run_experiment_webapp.py --list-runs              # show all saved runs
+python run_experiment_webapp.py --reset                  # delete ALL runs
+python run_experiment_webapp.py --clean-run <run_id>     # delete one specific run
 """
 
 import argparse

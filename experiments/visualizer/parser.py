@@ -1,11 +1,11 @@
 """parser.py — Extract CodeDNA annotations and session events from live run directories.
 
-exports: scan_run(run_dir: Path) -> RunSnapshot, parse_file(path: Path) -> FileAnnotation
-used_by: dashboard.py → render loop
+exports: class AgentEntry | class FunctionAnnotation | class FileAnnotation | class SessionEvent | class ConditionSnapshot | class RunSnapshot | _RE_EXPORTS | _RE_USED_BY | _RE_RULES | _RE_AGENT | _RE_MESSAGE_INLINE | _RE_FUNC_DEF | _RE_FN_RULES | _RE_FN_MESSAGE | parse_file(path, base_dir) | _CONDITION_LABELS | scan_condition(condition_dir, condition) | scan_run(run_dir) | find_latest_run(runs_root)
+used_by: none
 rules:   read-only — never writes or modifies any file;
-         parse only the first 40 lines of each Python file for the module header;
-         full file body is scanned only for function-level Rules:/message: docstrings;
-         polling interval is the caller's responsibility
+parse only the first 40 lines of each Python file for the module header;
+full file body is scanned only for function-level Rules:/message: docstrings;
+polling interval is the caller's responsibility
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-29 | s_20260329_002 | Initial design
 """
 

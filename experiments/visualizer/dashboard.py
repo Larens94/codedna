@@ -1,28 +1,23 @@
 """dashboard.py — Real-time TUI dashboard for the controlled experiment.
 
-exports: run_dashboard(run_dir: Path, interval: float) -> None
-used_by: [manual execution] → python visualizer/dashboard.py [--run <id>] [--interval 2]
+exports: _HERE | RUNS_ROOT | COLOUR_A | COLOUR_B | COLOUR_OK | COLOUR_ERR | COLOUR_DIM | run_dashboard(run_dir, interval)
+used_by: none
 rules:   read-only — never writes any file;
-         polls the run directory every <interval> seconds;
-         gracefully handles missing directories (run not started yet);
-         requires: rich>=13.0
+polls the run directory every <interval> seconds;
+gracefully handles missing directories (run not started yet);
+requires: rich>=13.0
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-29 | s_20260329_002 | Initial design
-         claude-sonnet-4-6 | anthropic | 2026-03-30 | s_20260330_001 | Added interactive run picker (_pick_run); added --latest flag; imported rich.prompt.Prompt
-
+claude-sonnet-4-6 | anthropic | 2026-03-30 | s_20260330_001 | Added interactive run picker (_pick_run); added --latest flag; imported rich.prompt.Prompt
 USAGE:
-    # Interactive run picker (default):
-    python visualizer/dashboard.py
-
-    # Watch a specific run directly:
-    python visualizer/dashboard.py --run run_20260329_153000
-
-    # Auto-select latest run (skip picker):
-    python visualizer/dashboard.py --latest
-
-    # Change poll interval (default 2s):
-    python visualizer/dashboard.py --interval 3
-
-    # Exit: Ctrl-C
+# Interactive run picker (default):
+python visualizer/dashboard.py
+# Watch a specific run directly:
+python visualizer/dashboard.py --run run_20260329_153000
+# Auto-select latest run (skip picker):
+python visualizer/dashboard.py --latest
+# Change poll interval (default 2s):
+python visualizer/dashboard.py --interval 3
+# Exit: Ctrl-C
 """
 
 from __future__ import annotations

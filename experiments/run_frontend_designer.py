@@ -1,8 +1,8 @@
 #!/usr/bin/env python3
 """run_frontend_designer.py — Runs FrontendDesigner agent to complete AgentHub frontend.
 
-exports: main() -> None
-used_by: [manual execution]
+exports: FRONTEND_DIR | INSTRUCTIONS | main()
+used_by: none
 rules:   writes only inside frontend/ directory; never touches backend files
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-31 | s_20260331_001 | created to complete missing frontend pages
 """

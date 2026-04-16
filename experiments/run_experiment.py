@@ -1,23 +1,22 @@
 #!/usr/bin/env python3
 """run_experiment.py — Blind controlled experiment: same 5-agent team, two annotation styles.
 
-exports: run_experiment(condition: str) -> dict, reset_runs(run_id: str | None) -> None
-used_by: [manual execution] → see --help
+exports: RUNS_ROOT | class RunLogger | SHARED_TASK | run_condition(condition, run_dir, logger) | reset_runs(run_id) | list_runs() | resume_experiment(run_id) | run_experiment(condition)
+used_by: none
 rules:   SHARED_TASK must be byte-identical for both conditions;
-         agents must never know they are part of an experiment;
-         the word 'codedna' must NEVER appear in any traditional-condition instruction or comment;
-         each condition writes only inside its own isolated output_dir (os.chdir + FileTools base_dir);
-         --reset deletes only experiments/runs/ — never other project files
+agents must never know they are part of an experiment;
+the word 'codedna' must NEVER appear in any traditional-condition instruction or comment;
+each condition writes only inside its own isolated output_dir (os.chdir + FileTools base_dir);
+--reset deletes only experiments/runs/ — never other project files
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-29 | s_20260329_002 | Initial design
-         claude-sonnet-4-6 | anthropic | 2026-03-29 | s_20260329_003 | Fixed silent-failure bug: RunErrorEvent no longer masked as success; added file-count guard on success flag; resume now requires file_count>0; added max_iterations=100 to Team (agno 2.5.11 default=10 causes premature RunCancelledEvent)
-
+claude-sonnet-4-6 | anthropic | 2026-03-29 | s_20260329_003 | Fixed silent-failure bug: RunErrorEvent no longer masked as success; added file-count guard on success flag; resume now requires file_count>0; added max_iterations=100 to Team (agno 2.5.11 default=10 causes premature RunCancelledEvent)
 USAGE:
-    python run_experiment.py                          # run both conditions
-    python run_experiment.py --condition a            # run condition-A only
-    python run_experiment.py --condition b            # run condition-B only
-    python run_experiment.py --list-runs              # show all saved runs
-    python run_experiment.py --reset                  # delete ALL runs (asks for confirmation)
-    python run_experiment.py --clean-run <run_id>     # delete one specific run
+python run_experiment.py                          # run both conditions
+python run_experiment.py --condition a            # run condition-A only
+python run_experiment.py --condition b            # run condition-B only
+python run_experiment.py --list-runs              # show all saved runs
+python run_experiment.py --reset                  # delete ALL runs (asks for confirmation)
+python run_experiment.py --clean-run <run_id>     # delete one specific run
 """
 
 import argparse
