@@ -13,7 +13,7 @@ agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_003 | add DeepS
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | fix L2 batch overflow: _L2_BATCH_SIZE=12, dynamic max_tokens, _parse_json_response with truncation recovery
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | skip *_test.go; cap exports@20; fix non-Python path (raw join→_fmt_exports, module_rules→module_rules_raw, provider detection)
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_005 | run_lang_files returns (annotated, llm_calls) tuple; run() aggregates lang llm_calls into summary counter
-claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_bench | fix 3 used_by bugs in scan_file: (1) from . import X ignored when module=None, (2) from pkg import submod resolved to __init__ not submod.py, (3) submodule path construction was broken
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_bench | fix 3 used_by bugs in scan_file; fix LLM gating: run() checked HAS_ANTHROPIC instead of HAS_LITELLM|HAS_ANTHROPIC — litellm (DeepSeek/GPT) was silently falling back to --no-llm
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -933,8 +933,9 @@ def run(
 
     llm: Optional[LLM] = None
     if not no_llm:
-        if not HAS_ANTHROPIC:
-            print("  Warning: anthropic not installed. Run: pip install anthropic")
+        if not HAS_LITELLM and not HAS_ANTHROPIC:
+            print("  Warning: no LLM backend found.")
+            print("           Run: pip install 'codedna[litellm]'  (all providers)")
             print("           Falling back to --no-llm (rules: none)")
         else:
             try:
