@@ -1,13 +1,13 @@
 """test_integration_langs.py — Integration tests for all 8 non-Python language adapters.
 
-exports: none (test module)
-used_by: CI pipeline, pytest
+exports: FIXTURES_DIR | PYTHON | TODAY | MODEL | run_codedna() | class TestTypeScriptIntegration | class TestGoIntegration | class TestPHPIntegration | class TestJavaIntegration | class TestRustIntegration | class TestCSharpIntegration | class TestRubyIntegration | class TestKotlinIntegration | class TestCLIMultiLang
+used_by: none
 rules:   Tests use realistic fixture files from tests/fixtures/ — not toy examples.
-         Each language verifies: named exports, inject_header fields, idempotency,
-         validator acceptance, and CLI round-trip via subprocess.
-         Fixtures represent real-world patterns (Laravel controller, Spring service, etc.).
-         Adapter-specific symbols (tree-sitter impl methods) are checked with any() to
-         pass regardless of whether tree-sitter or regex adapter is active.
+Each language verifies: named exports, inject_header fields, idempotency,
+validator acceptance, and CLI round-trip via subprocess.
+Fixtures represent real-world patterns (Laravel controller, Spring service, etc.).
+Adapter-specific symbols (tree-sitter impl methods) are checked with any() to
+pass regardless of whether tree-sitter or regex adapter is active.
 agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | initial integration tests for 8 languages with realistic fixtures
 """
 

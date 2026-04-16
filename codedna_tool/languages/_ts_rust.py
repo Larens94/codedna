@@ -1,14 +1,14 @@
 """_ts_rust.py — Tree-sitter-powered CodeDNA adapter for Rust source files.
 
-exports: TreeSitterRustAdapter
-used_by: languages/__init__.py → _REGISTRY
+exports: _RUST_LANG | class TreeSitterRustAdapter
+used_by: codedna_tool/languages/__init__.py → TreeSitterRustAdapter
 rules:   Requires tree-sitter>=0.25 and tree-sitter-rust>=0.24.
-         Only pub items captured (visibility_modifier present).
-         impl blocks traversed explicitly — pub fn inside impl formatted as Type::method.
-         const_item: identifier node holds name. type_item: type_identifier node holds name.
-         inject_header() delegated to RustAdapter (// comment at file top).
+Only pub items captured (visibility_modifier present).
+impl blocks traversed explicitly — pub fn inside impl formatted as Type::method.
+const_item: identifier node holds name. type_item: type_identifier node holds name.
+inject_header() delegated to RustAdapter (// comment at file top).
 agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | initial tree-sitter Rust adapter; fixes critical gap in regex adapter (impl methods not captured)
-         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | add const_item and type_item capture (pub const / pub type were silently missing)
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | add const_item and type_item capture (pub const / pub type were silently missing)
 """
 
 from __future__ import annotations

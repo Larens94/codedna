@@ -1,11 +1,11 @@
 """blade.py — CodeDNA v0.8 adapter for Laravel Blade templates.
 
-exports: class BladeAdapter
-used_by: languages/__init__.py -> _REGISTRY
+exports: _EXTENDS_RE | _INCLUDE_RE | _COMPONENT_RE | _LIVEWIRE_RE | _SECTION_RE | _SLOT_RE | class BladeAdapter
+used_by: codedna_tool/languages/__init__.py → BladeAdapter
 rules:   regex-based only — no PHP interpreter required.
-         Uses {{-- --}} block comment for the CodeDNA header.
-         Detects @extends, @include, @component, @livewire as deps.
-         Detects @section, @slot, @yield as exports.
+Uses {{-- --}} block comment for the CodeDNA header.
+Detects @extends, @include, @component, @livewire as deps.
+Detects @section, @slot, @yield as exports.
 agent:   claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | initial Blade template adapter
 """
 

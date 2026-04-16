@@ -1,12 +1,12 @@
 """_ts_ruby.py — Tree-sitter-powered CodeDNA adapter for Ruby source files.
 
-exports: TreeSitterRubyAdapter
-used_by: languages/__init__.py → _REGISTRY
+exports: _RUBY_LANG | class TreeSitterRubyAdapter
+used_by: codedna_tool/languages/__init__.py → TreeSitterRubyAdapter
 rules:   Requires tree-sitter>=0.25 and tree-sitter-ruby>=0.23.
-         Private boundary detected by 'private'/'protected' identifier node in body_statement.
-         Methods after the boundary are excluded from exports.
-         require_relative resolved to repo-relative paths; require kept as-is.
-         inject_header() delegated to RubyAdapter (# comment, shebang/frozen preserved).
+Private boundary detected by 'private'/'protected' identifier node in body_statement.
+Methods after the boundary are excluded from exports.
+require_relative resolved to repo-relative paths; require kept as-is.
+inject_header() delegated to RubyAdapter (# comment, shebang/frozen preserved).
 agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | initial tree-sitter Ruby adapter
 """
 

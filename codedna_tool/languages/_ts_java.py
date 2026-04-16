@@ -1,11 +1,11 @@
 """_ts_java.py — Tree-sitter-powered CodeDNA adapter for Java source files.
 
-exports: TreeSitterJavaAdapter
-used_by: languages/__init__.py → _REGISTRY
+exports: _JAVA_LANG | _SKIP_NAMES | class TreeSitterJavaAdapter
+used_by: codedna_tool/languages/__init__.py → TreeSitterJavaAdapter
 rules:   Requires tree-sitter>=0.25 and tree-sitter-java>=0.23.
-         Only public types and public methods captured (modifiers contains 'public').
-         Import paths captured as strings — not resolved to file paths (requires project structure).
-         inject_header() delegated to JavaAdapter (// comment after package declaration).
+Only public types and public methods captured (modifiers contains 'public').
+Import paths captured as strings — not resolved to file paths (requires project structure).
+inject_header() delegated to JavaAdapter (// comment after package declaration).
 agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | initial tree-sitter Java adapter
 """
 

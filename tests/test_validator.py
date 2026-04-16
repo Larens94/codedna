@@ -1,9 +1,9 @@
 """test_validator.py — Tests for validate_manifests.py.
 
-exports: none (test module)
-used_by: CI pipeline, pytest
+exports: class TestPythonValidation | class TestPHPValidation | class TestGoValidation | class TestTypeScriptValidation | class TestCSharpValidation | class TestRubyValidation | class TestUnsupported | class TestDirectoryValidation | class TestCodeDNAManifest
+used_by: none
 rules:   Tests cover Python, PHP, Go, TS, C#, Ruby — all must FAIL without header.
-         Validator is imported directly, not via subprocess.
+Validator is imported directly, not via subprocess.
 agent:   claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_002 | initial validator test suite
 """
 

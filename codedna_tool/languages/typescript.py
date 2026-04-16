@@ -1,13 +1,14 @@
 """typescript.py — CodeDNA v0.8 adapter for TypeScript and JavaScript files.
 
-exports: class TypeScriptAdapter
-used_by: languages/__init__.py -> _REGISTRY
+exports: _EXPORT_PATTERNS | _IMPORT_RE | class TypeScriptAdapter
+used_by: codedna_tool/languages/__init__.py → TypeScriptAdapter
+         codedna_tool/languages/_ts_typescript.py → TypeScriptAdapter
 rules:   regex-based only — never parse TS/JS AST (no Node.js dependency).
-         Detects exports via 'export function', 'export class', 'export const', 'export default'.
-         Import resolution is path-only (relative imports starting with '.' or './').
+Detects exports via 'export function', 'export class', 'export const', 'export default'.
+Import resolution is path-only (relative imports starting with '.' or './').
 agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_001 | initial TS/JS adapter with regex-based extraction
-         claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_002 | CodeDNA v0.8 compliance pass: added session_id to agent: field, added Rules: docstrings to extract_info and inject_header
-         claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed _resolve_import: check is_file() not exists() to avoid resolving directories as files
+claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_002 | CodeDNA v0.8 compliance pass: added session_id to agent: field, added Rules: docstrings to extract_info and inject_header
+claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed _resolve_import: check is_file() not exists() to avoid resolving directories as files
 """
 
 from __future__ import annotations

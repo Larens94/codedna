@@ -1,13 +1,14 @@
 """csharp.py — CodeDNA v0.8 adapter for C# source files.
 
-exports: class CSharpAdapter
-used_by: languages/__init__.py -> _REGISTRY
+exports: _CLASS_RE | _METHOD_RE | _PROP_RE | _USING_RE | _NS_RE | class CSharpAdapter
+used_by: codedna_tool/languages/__init__.py → CSharpAdapter
+         codedna_tool/languages/_ts_csharp.py → CSharpAdapter
 rules:   regex-based only — no .NET SDK dependency required.
-         Detects public class/interface/enum/struct/record and public methods.
-         Namespace-qualified exports: Class::Method for public members.
-         Attributes ([Attribute]) before declarations are ignored.
+Detects public class/interface/enum/struct/record and public methods.
+Namespace-qualified exports: Class::Method for public members.
+Attributes ([Attribute]) before declarations are ignored.
 agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed class detection inside namespace blocks: allow indented class/interface/enum/struct/record
-         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | fixed inject_header: header now inserted before namespace declaration, not between 'namespace Foo' and its '{'; also fixed leading blank line
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | fixed inject_header: header now inserted before namespace declaration, not between 'namespace Foo' and its '{'; also fixed leading blank line
 """
 
 from __future__ import annotations

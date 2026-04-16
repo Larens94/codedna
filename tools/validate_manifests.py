@@ -1,26 +1,23 @@
 #!/usr/bin/env python3
 """validate_manifests.py — Validate CodeDNA v0.8 annotations across a codebase.
 
-exports: validate_file(path) -> ValidationResult
-         validate_directory(root, extensions) -> list[ValidationResult]
-used_by: none — standalone CLI tool
+exports: REQUIRED_FIELDS_FULL | REQUIRED_FIELDS | SKIP_DIRS | COMMENT_PREFIX | _DATE_RE | _PURPOSE_MAX_WORDS | _AGENT_MAX_ENTRIES | class ValidationResult | validate_file(path) | validate_directory(root, extensions) | print_results(results, verbose) | main()
+used_by: none
 rules:   validates v0.8 format only (exports:/used_by:/rules:/agent: in module docstring).
-         Python uses AST; other languages use regex on first 40 lines.
-         read-only — never modifies files.
+Python uses AST; other languages use regex on first 40 lines.
+read-only — never modifies files.
 agent:   claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | fixed _extract_python: return (None, {}) for valid Python without docstring
-         claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | added .php, .cs, .mjs, .kts to COMMENT_PREFIX — validator now covers all 11 languages
-         claude-sonnet-4-6 | anthropic | 2026-04-15 | s_20260415_002 | all languages now require full 4-field header (exports/used_by/rules/agent) — REQUIRED_FIELDS_REDUCED = REQUIRED_FIELDS_FULL, _REDUCED_HEADER_EXTS cleared
-         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | removed dead REQUIRED_FIELDS_REDUCED and _REDUCED_HEADER_EXTS variables
-
+claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | added .php, .cs, .mjs, .kts to COMMENT_PREFIX — validator now covers all 11 languages
+claude-sonnet-4-6 | anthropic | 2026-04-15 | s_20260415_002 | all languages now require full 4-field header (exports/used_by/rules/agent) — REQUIRED_FIELDS_REDUCED = REQUIRED_FIELDS_FULL, _REDUCED_HEADER_EXTS cleared
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | removed dead REQUIRED_FIELDS_REDUCED and _REDUCED_HEADER_EXTS variables
 Usage:
-    python tools/validate_manifests.py [path] [-v] [--extensions py ts go]
-    python tools/validate_manifests.py .             # validate current dir (Python only)
-    python tools/validate_manifests.py src/myapp -v  # verbose: show valid files too
-    python tools/validate_manifests.py myfile.py     # single file
-
+python tools/validate_manifests.py [path] [-v] [--extensions py ts go]
+python tools/validate_manifests.py .             # validate current dir (Python only)
+python tools/validate_manifests.py src/myapp -v  # verbose: show valid files too
+python tools/validate_manifests.py myfile.py     # single file
 Exit codes:
-    0 — all files valid
-    1 — one or more validation errors
+0 — all files valid
+1 — one or more validation errors
 """
 
 import argparse

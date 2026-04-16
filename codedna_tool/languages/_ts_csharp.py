@@ -1,15 +1,15 @@
 """_ts_csharp.py — Tree-sitter-powered CodeDNA adapter for C# source files.
 
-exports: TreeSitterCSharpAdapter
-used_by: languages/__init__.py → _REGISTRY
+exports: _CS_LANG | _SKIP_NAMES | class TreeSitterCSharpAdapter
+used_by: codedna_tool/languages/__init__.py → TreeSitterCSharpAdapter
 rules:   Requires tree-sitter>=0.25 and tree-sitter-c-sharp>=0.23.
-         Only public types and public methods/properties captured (modifier == b'public').
-         using directives captured as dependency strings (not resolved to file paths).
-         inject_header() delegated to CSharpAdapter (// block between using and namespace).
-         MUST use child_by_field_name('name') for methods/properties — named_children[identifier]
-         returns the return type first, not the method name.
+Only public types and public methods/properties captured (modifier == b'public').
+using directives captured as dependency strings (not resolved to file paths).
+inject_header() delegated to CSharpAdapter (// block between using and namespace).
+MUST use child_by_field_name('name') for methods/properties — named_children[identifier]
+returns the return type first, not the method name.
 agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | initial tree-sitter C# adapter
-         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | fix: use child_by_field_name('name') — first identifier in named_children is the return type not the method name
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | fix: use child_by_field_name('name') — first identifier in named_children is the return type not the method name
 """
 
 from __future__ import annotations

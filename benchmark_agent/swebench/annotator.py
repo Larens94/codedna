@@ -1,11 +1,11 @@
-"""
-swebench/annotator.py — Genera annotazioni CodeDNA v0.7 per i file rilevanti.
+"""swebench/annotator.py — Genera annotazioni CodeDNA v0.7 per i file rilevanti.
 
-deps:    google-genai (google.genai), tasks.json, projects_swebench/*/codedna/
-exports: annotated Python files with module docstrings in codedna/ dirs
+exports: TASKS_FILE | PROJECTS_DIR | API_KEY | ANNOTATION_PROMPT | get_python_files(directory) | already_annotated(content) | annotate_file(filepath, repo_root, client, model_id) | main()
+used_by: none
 rules:   NEVER include hints about specific bugs in the annotations.
-         Annotations describe ARCHITECTURE ONLY (deps, exports, contracts).
-         Run this BEFORE knowing which specific task will be tested.
+Annotations describe ARCHITECTURE ONLY (deps, exports, contracts).
+Run this BEFORE knowing which specific task will be tested.
+agent:   unknown
 """
 
 import argparse

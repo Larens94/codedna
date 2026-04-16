@@ -1,10 +1,10 @@
 """test_language_adapters.py — Test suite for CodeDNA language adapters.
 
-exports: none (test module)
-used_by: CI pipeline, pytest
+exports: project(tmp_path) | write_file(project, name, content) | class TestTypeScript | class TestGo | class TestRuby | class TestCSharp | class TestPHP | class TestRust | class TestJava | class TestSwift | class TestKotlin | class TestFallback | class TestErrorHandling
+used_by: none
 rules:   Each language adapter must pass: export detection, private exclusion,
-         header injection, and injection idempotency.
-         tree-sitter tests are skipped if tree-sitter is not installed.
+header injection, and injection idempotency.
+tree-sitter tests are skipped if tree-sitter is not installed.
 agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | initial test suite for all 9 language adapters
 """
 

@@ -1,12 +1,12 @@
 """_ts_php.py — Tree-sitter-powered CodeDNA adapter for PHP source files.
 
-exports: TreeSitterPhpAdapter
-used_by: languages/__init__.py → _REGISTRY
+exports: _PHP_LANG | _ROUTE_RE | class TreeSitterPhpAdapter
+used_by: codedna_tool/languages/__init__.py → TreeSitterPhpAdapter
 rules:   Requires tree-sitter>=0.25 and tree-sitter-php>=0.24.
-         language_php() is used — includes full PHP syntax (<?php tag etc.).
-         Only public methods are captured (visibility_modifier == b'public').
-         Laravel routes extracted via regex (Route:: calls are nested expressions).
-         inject_header() delegated to PhpAdapter (// comment format, <?php preserved).
+language_php() is used — includes full PHP syntax (<?php tag etc.).
+Only public methods are captured (visibility_modifier == b'public').
+Laravel routes extracted via regex (Route:: calls are nested expressions).
+inject_header() delegated to PhpAdapter (// comment format, <?php preserved).
 agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | initial tree-sitter PHP adapter
 """
 

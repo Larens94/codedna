@@ -1,11 +1,11 @@
 """erb.py — CodeDNA v0.8 adapter for ERB and EJS templates.
 
-exports: class ErbAdapter
-used_by: languages/__init__.py -> _REGISTRY
+exports: _RENDER_RE | _INCLUDE_RE | _CONTENT_FOR_RE | _YIELD_RE | class ErbAdapter
+used_by: codedna_tool/languages/__init__.py → ErbAdapter
 rules:   regex-based only — no Ruby/Node.js interpreter required.
-         Uses <%# %> comment syntax for the CodeDNA header.
-         Covers both ERB (.erb) and EJS (.ejs) — same comment syntax.
-         Detects render/partial calls as deps.
+Uses <%# %> comment syntax for the CodeDNA header.
+Covers both ERB (.erb) and EJS (.ejs) — same comment syntax.
+Detects render/partial calls as deps.
 agent:   claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | initial ERB/EJS template adapter
 """
 

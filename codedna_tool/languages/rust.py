@@ -1,10 +1,11 @@
 """rust.py — CodeDNA v0.8 adapter for Rust source files.
 
-exports: class RustAdapter
-used_by: languages/__init__.py -> _REGISTRY
+exports: _PUB_FN_RE | _PUB_STRUCT_RE | _PUB_ENUM_RE | _PUB_TRAIT_RE | _PUB_TYPE_RE | _PUB_CONST_RE | _MOD_RE | _USE_RE | class RustAdapter
+used_by: codedna_tool/languages/__init__.py → RustAdapter
+         codedna_tool/languages/_ts_rust.py → RustAdapter
 rules:   regex-based only — no cargo/rustc dependency required.
-         Detects pub fn, pub struct, pub enum, pub trait, pub type, pub const/static.
-         impl blocks are not traversed — only top-level pub items are captured.
+Detects pub fn, pub struct, pub enum, pub trait, pub type, pub const/static.
+impl blocks are not traversed — only top-level pub items are captured.
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | initial Rust adapter
 """
 

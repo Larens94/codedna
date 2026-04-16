@@ -1,10 +1,10 @@
 """_ts_typescript.py — Tree-sitter-powered CodeDNA adapter for TypeScript/JavaScript.
 
-exports: TreeSitterTypeScriptAdapter(TreeSitterAdapter)
-used_by: languages/__init__.py → _REGISTRY
+exports: _TS_LANG | _EXPORT_QUERY | _IMPORT_QUERY | class TreeSitterTypeScriptAdapter
+used_by: codedna_tool/languages/__init__.py → TreeSitterTypeScriptAdapter
 rules:   Requires tree-sitter and tree-sitter-typescript installed.
-         Falls back to regex TypeScriptAdapter for inject_header().
-         Only relative imports (starting with '.') are resolved to file paths.
+Falls back to regex TypeScriptAdapter for inject_header().
+Only relative imports (starting with '.') are resolved to file paths.
 agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_001 | initial tree-sitter TS/JS adapter
 """
 

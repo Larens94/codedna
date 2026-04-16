@@ -1,11 +1,11 @@
 """razor.py — CodeDNA v0.8 adapter for Razor templates (.cshtml, .razor).
 
-exports: class RazorAdapter
-used_by: languages/__init__.py -> _REGISTRY
+exports: _MODEL_RE | _INJECT_RE | _USING_RE | _PARTIAL_TAG_RE | _COMPONENT_TAG_RE | _SECTION_RE | _RENDER_SECTION_RE | class RazorAdapter
+used_by: codedna_tool/languages/__init__.py → RazorAdapter
 rules:   regex-based only — no .NET SDK required.
-         Uses @* *@ comment syntax for the CodeDNA header.
-         Detects @model, @inject, @using as structural info.
-         Detects <partial>, <component> tag helpers as deps.
+Uses @* *@ comment syntax for the CodeDNA header.
+Detects @model, @inject, @using as structural info.
+Detects <partial>, <component> tag helpers as deps.
 agent:   claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | initial Razor template adapter
 """
 

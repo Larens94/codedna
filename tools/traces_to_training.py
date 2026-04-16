@@ -1,26 +1,24 @@
-"""
-tools/traces_to_training.py — Converts benchmark results to LLM training formats.
+"""tools/traces_to_training.py — Converts benchmark results to LLM training formats.
 
-exports: main() → writes sft.jsonl, dpo.jsonl, prm.jsonl
-used_by: none — standalone CLI tool
+exports: RUNS_DIR | PROJECTS_DIR | TASKS_FILE | CONTENT_LIMIT | DPO_MIN_DELTA | SFT_MIN_F1 | class RunRecord | load_all_runs() | build_sft(list_run, float_min_f1) | build_dpo(list_run, float_min_delta) | build_prm(list_run) | print_stats(list_run, list_sft, list_dpo, list_prm) | main()
+used_by: none
 rules:   reads from runs/*/results.json and projects_swebench/ — never modifies them.
-         supports both old format (files_read list) and new format (trace field).
-         tool result content is truncated to CONTENT_LIMIT chars to keep examples manageable.
-         DPO pairs require F1 delta >= DPO_MIN_DELTA — do not lower without good reason.
+supports both old format (files_read list) and new format (trace field).
+tool result content is truncated to CONTENT_LIMIT chars to keep examples manageable.
+DPO pairs require F1 delta >= DPO_MIN_DELTA — do not lower without good reason.
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-20 | s_20260320_004 | created
-         message: "reasoning_log field found in existing results — contains intermediate model
-                  outputs, not chain-of-thought. Not usable as thinking trace for PRM.
-                  When extended thinking is captured, add trace[n].thinking field and
-                  include in prm.jsonl as thinking_before_step"
-
+message: "reasoning_log field found in existing results — contains intermediate model
+outputs, not chain-of-thought. Not usable as thinking trace for PRM.
+When extended thinking is captured, add trace[n].thinking field and
+include in prm.jsonl as thinking_before_step"
 Usage:
-    python tools/traces_to_training.py                        # all formats, default output
-    python tools/traces_to_training.py --format sft           # only SFT
-    python tools/traces_to_training.py --format dpo           # only DPO
-    python tools/traces_to_training.py --format prm           # only PRM
-    python tools/traces_to_training.py --f1-threshold 0.7     # stricter SFT quality gate
-    python tools/traces_to_training.py --output-dir ./training_data
-    python tools/traces_to_training.py --stats                # show dataset statistics only
+python tools/traces_to_training.py                        # all formats, default output
+python tools/traces_to_training.py --format sft           # only SFT
+python tools/traces_to_training.py --format dpo           # only DPO
+python tools/traces_to_training.py --format prm           # only PRM
+python tools/traces_to_training.py --f1-threshold 0.7     # stricter SFT quality gate
+python tools/traces_to_training.py --output-dir ./training_data
+python tools/traces_to_training.py --stats                # show dataset statistics only
 """
 
 import json

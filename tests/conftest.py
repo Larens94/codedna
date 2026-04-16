@@ -1,7 +1,7 @@
 """conftest.py — Shared fixtures for CodeDNA test suite.
 
-exports: mini_project, mini_project_annotated
-used_by: tests/test_cli.py, tests/test_validator.py, tests/test_language_adapters.py
+exports: mini_project(tmp_path) | mini_project_annotated(tmp_path) | mini_codedna(tmp_path)
+used_by: none
 rules:   All fixtures create temporary directories that are cleaned up automatically.
 agent:   claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_002 | initial conftest with shared fixtures
 """

@@ -1,11 +1,11 @@
 """test_refresh.py — Tests for codedna refresh command and relative import resolution.
 
-exports: none (test module)
-used_by: CI pipeline, pytest
+exports: PYTHON | run_codedna() | class TestRefresh | class TestRelativeImports | class TestReducedHeader | class TestHasCodednaHeader
+used_by: none
 rules:   Tests verify that refresh updates exports/used_by without touching rules/agent/message.
-         Tests also verify Python relative imports (from .module) are resolved correctly.
+Tests also verify Python relative imports (from .module) are resolved correctly.
 agent:   claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_003 | initial refresh + relative import tests
-         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | updated TestReducedHeader: all languages now emit full headers (exports+used_by+rules+agent); updated validator test to require full PHP header
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | updated TestReducedHeader: all languages now emit full headers (exports+used_by+rules+agent); updated validator test to require full PHP header
 """
 
 from __future__ import annotations

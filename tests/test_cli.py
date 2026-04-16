@@ -1,9 +1,9 @@
 """test_cli.py — Tests for codedna CLI commands (init, check, update).
 
-exports: none (test module)
-used_by: CI pipeline, pytest
+exports: PYTHON | run_codedna() | class TestInit | class TestCheck | class TestRoundTrip | class TestBuildDocstring
+used_by: none
 rules:   Tests run codedna CLI as subprocess to verify end-to-end behavior.
-         Each test uses tmp_path for isolation — never touches real project files.
+Each test uses tmp_path for isolation — never touches real project files.
 agent:   claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_002 | initial CLI test suite
 """
 

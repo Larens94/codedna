@@ -1,15 +1,17 @@
 """languages/__init__.py — Language adapter registry for CodeDNA v0.8.
 
-exports: get_adapter(extension) -> Optional[LanguageAdapter]
-         SUPPORTED_EXTENSIONS
-used_by: codedna_tool/cli.py -> collect_files, scan_file_lang
+exports: SUPPORTED_EXTENSIONS | get_adapter(extension)
+used_by: codedna_tool/cli.py → SUPPORTED_EXTENSIONS, get_adapter
+         tests/test_integration_langs.py → get_adapter
+         tests/test_language_adapters.py → get_adapter
+         tests/test_refresh.py → get_adapter
 rules:   adapters are stateless; get_adapter returns None for unsupported extensions.
-         Never import language-specific deps here — keep this registry lightweight.
-         Tree-sitter adapters are preferred when available; regex adapters are the fallback.
+Never import language-specific deps here — keep this registry lightweight.
+Tree-sitter adapters are preferred when available; regex adapters are the fallback.
 agent:   claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | added template engine adapters: Blade, Jinja2/Twig, ERB/EJS, Handlebars, Razor, Vue SFC, Svelte — 17 total extensions
-         claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | added .volt (Phalcon Volt engine) via JinjaAdapter — same {# #} comment syntax
-         claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_001 | added tree-sitter adapters for TS/JS and Go with regex fallback
-         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | added tree-sitter adapters for PHP, Java, Rust, C#, Ruby, Kotlin — all 9 source languages now AST-powered with regex fallback
+claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | added .volt (Phalcon Volt engine) via JinjaAdapter — same {# #} comment syntax
+claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_001 | added tree-sitter adapters for TS/JS and Go with regex fallback
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | added tree-sitter adapters for PHP, Java, Rust, C#, Ruby, Kotlin — all 9 source languages now AST-powered with regex fallback
 """
 
 from typing import Optional

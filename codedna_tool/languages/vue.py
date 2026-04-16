@@ -1,13 +1,12 @@
 """vue.py — CodeDNA v0.8 adapter for Vue SFC and Svelte components.
 
-exports: class VueAdapter
-         class SvelteAdapter
-used_by: languages/__init__.py -> _REGISTRY
+exports: _DEFINE_PROPS_RE | _DEFINE_EMITS_RE | _DEFINE_EXPOSE_RE | _PROPS_RE | _IMPORT_RE | _COMPONENTS_RE | _SVELTE_EXPORT_RE | _SVELTE_SLOT_RE | class VueAdapter | class SvelteAdapter
+used_by: codedna_tool/languages/__init__.py → SvelteAdapter, VueAdapter
 rules:   regex-based only — no Node.js required.
-         Uses <!-- --> HTML comment syntax for the CodeDNA header.
-         Vue SFC: detects defineProps, defineEmits, import statements.
-         Svelte: detects export let, import statements.
-         Header is placed BEFORE the first <template>/<script>/<style> tag.
+Uses <!-- --> HTML comment syntax for the CodeDNA header.
+Vue SFC: detects defineProps, defineEmits, import statements.
+Svelte: detects export let, import statements.
+Header is placed BEFORE the first <template>/<script>/<style> tag.
 agent:   claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | initial Vue SFC and Svelte adapter
 """
 

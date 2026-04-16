@@ -1,22 +1,20 @@
-"""
-tools/agent_history.py — Reads AI agent session history from git trailers.
+"""tools/agent_history.py — Reads AI agent session history from git trailers.
 
-exports: main() → prints agent timeline, messages, file maps
-used_by: none — standalone CLI tool
+exports: R | G | Y | B | M | C | W | DIM | D | PROVIDER_COLOURS | class AgentSession | view_timeline(list_session) | view_messages(list_session) | view_file_map(list_session) | view_model_stats(list_session) | view_missing_data() | main()
+used_by: none
 rules:   reads git log only — never modifies repo state.
-         reasoning is NOT available in git trailers (not captured at v0.7/v0.8).
-         AI-Visited: lists files read, not the reasoning behind navigation choices.
+reasoning is NOT available in git trailers (not captured at v0.7/v0.8).
+AI-Visited: lists files read, not the reasoning behind navigation choices.
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-20 | s_20260320_002 | created
-         message: "reasoning data missing — see --missing-data flag for full picture
-                  of what would make this tool more useful for model training"
-
+message: "reasoning data missing — see --missing-data flag for full picture
+of what would make this tool more useful for model training"
 Usage:
-    python tools/agent_history.py                   # full timeline
-    python tools/agent_history.py --sessions        # one line per session
-    python tools/agent_history.py --messages        # only sessions with AI-Message:
-    python tools/agent_history.py --file README.md  # sessions that touched a file
-    python tools/agent_history.py --model claude    # filter by model
-    python tools/agent_history.py --missing-data    # show what data is NOT captured
+python tools/agent_history.py                   # full timeline
+python tools/agent_history.py --sessions        # one line per session
+python tools/agent_history.py --messages        # only sessions with AI-Message:
+python tools/agent_history.py --file README.md  # sessions that touched a file
+python tools/agent_history.py --model claude    # filter by model
+python tools/agent_history.py --missing-data    # show what data is NOT captured
 """
 
 import subprocess

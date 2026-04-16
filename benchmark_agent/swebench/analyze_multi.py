@@ -1,16 +1,15 @@
-"""
-swebench/analyze_multi.py — Compare CodeDNA benchmark results across models and conditions.
+"""swebench/analyze_multi.py — Compare CodeDNA benchmark results across models and conditions.
 
-deps:    runs/*/results.json (output of run_agent_multi.py)
-exports: comparative table, Wilcoxon signed-rank test, annotation cost, qualitative rules report
+exports: RESULTS_DIR | PROJECTS_DIR | wilcoxon_signed_rank(pairs) | extract_rules_from_file(filepath) | qualitative_rules_report(results, condition) | annotation_cost_report(results) | summarize(results) | load_model_results(model_name) | pct(v) | main()
+used_by: none
 rules:   Report results honestly — include ALL tasks and ALL models.
-         Wilcoxon requires N≥3 non-zero differences; flag when sample is too small.
-
+Wilcoxon requires N≥3 non-zero differences; flag when sample is too small.
 Usage:
-  python analyze_multi.py                          # all result files found
-  python analyze_multi.py --model gemini-2.5-flash
-  python analyze_multi.py --qualitative            # show which rules the agent read
-  python analyze_multi.py --annotation-cost        # show auto-annotation cost
+python analyze_multi.py                          # all result files found
+python analyze_multi.py --model gemini-2.5-flash
+python analyze_multi.py --qualitative            # show which rules the agent read
+python analyze_multi.py --annotation-cost        # show auto-annotation cost
+agent:   unknown
 """
 
 import argparse

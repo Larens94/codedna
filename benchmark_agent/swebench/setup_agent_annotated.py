@@ -1,16 +1,14 @@
-"""
-swebench/setup_agent_annotated.py — Creates agent_annotated/ dirs for all tasks.
+"""swebench/setup_agent_annotated.py — Creates agent_annotated/ dirs for all tasks.
 
-deps:    annotator.py, tasks.json, projects_swebench/*/control/
-exports: projects_swebench/*/agent_annotated/ with auto-generated CodeDNA headers
-         projects_swebench/*/agent_annotated/.annotation_cost.json
+exports: TASKS_FILE | PROJECTS_DIR | API_KEY | ANNOTATION_PROMPT | get_python_files(directory) | already_annotated(content) | annotate_file(filepath, repo_root, client, model_id) | setup_task(task, model_id, client, force) | main()
+used_by: none
 rules:   agent_annotated/ is a copy of control/ + LLM-generated annotations only.
-         No human knowledge is injected. This tests the protocol end-to-end.
-
+No human knowledge is injected. This tests the protocol end-to-end.
 Usage:
-  GEMINI_API_KEY=... python setup_agent_annotated.py
-  GEMINI_API_KEY=... python setup_agent_annotated.py --task django__django-14480
-  GEMINI_API_KEY=... python setup_agent_annotated.py --model gemini-2.5-flash
+GEMINI_API_KEY=... python setup_agent_annotated.py
+GEMINI_API_KEY=... python setup_agent_annotated.py --task django__django-14480
+GEMINI_API_KEY=... python setup_agent_annotated.py --model gemini-2.5-flash
+agent:   unknown
 """
 
 import argparse

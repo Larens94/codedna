@@ -1,11 +1,11 @@
 """_ts_go.py — Tree-sitter-powered CodeDNA adapter for Go source files.
 
-exports: TreeSitterGoAdapter(TreeSitterAdapter)
-used_by: languages/__init__.py → _REGISTRY
+exports: _GO_LANG | _FUNC_QUERY | _METHOD_QUERY | _TYPE_QUERY | _CONST_QUERY | _VAR_QUERY | _IMPORT_QUERY | class TreeSitterGoAdapter
+used_by: codedna_tool/languages/__init__.py → TreeSitterGoAdapter
 rules:   Requires tree-sitter and tree-sitter-go installed.
-         Falls back to regex GoAdapter for inject_header().
-         Export detection: only capitalized identifiers (Go convention).
-         Import paths are captured but not resolved to file paths (requires go.mod parsing).
+Falls back to regex GoAdapter for inject_header().
+Export detection: only capitalized identifiers (Go convention).
+Import paths are captured but not resolved to file paths (requires go.mod parsing).
 agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_001 | initial tree-sitter Go adapter
 """
 

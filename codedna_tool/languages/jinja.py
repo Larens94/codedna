@@ -1,12 +1,12 @@
 """jinja.py — CodeDNA v0.8 adapter for Jinja2 and Twig templates.
 
-exports: class JinjaAdapter
-used_by: languages/__init__.py -> _REGISTRY
+exports: _EXTENDS_RE | _INCLUDE_RE | _IMPORT_RE | _BLOCK_RE | _MACRO_RE | class JinjaAdapter
+used_by: codedna_tool/languages/__init__.py → JinjaAdapter
 rules:   regex-based only — no Python/PHP interpreter required.
-         Uses {# #} block comment for the CodeDNA header.
-         Covers both Jinja2 (.j2, .jinja2) and Twig (.twig) — same comment syntax.
-         Detects {% extends %}, {% include %}, {% import %}, {% from %} as deps.
-         Detects {% block %} and {% macro %} as exports.
+Uses {# #} block comment for the CodeDNA header.
+Covers both Jinja2 (.j2, .jinja2) and Twig (.twig) — same comment syntax.
+Detects {% extends %}, {% include %}, {% import %}, {% from %} as deps.
+Detects {% block %} and {% macro %} as exports.
 agent:   claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | initial Jinja2/Twig template adapter
 """
 

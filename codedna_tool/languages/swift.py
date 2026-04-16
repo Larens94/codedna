@@ -1,10 +1,10 @@
 """swift.py — CodeDNA v0.8 adapter for Swift source files.
 
-exports: class SwiftAdapter
-used_by: languages/__init__.py -> _REGISTRY
+exports: _PUB | _FUNC_RE | _CLASS_RE | _STRUCT_RE | _ENUM_RE | _PROTOCOL_RE | _TYPEALIAS_RE | _VAR_RE | _IMPORT_RE | class SwiftAdapter
+used_by: codedna_tool/languages/__init__.py → SwiftAdapter
 rules:   regex-based only — no Swift compiler dependency required.
-         Detects public/open func, class, struct, enum, protocol, typealias.
-         Internal (no modifier) and private/fileprivate symbols are excluded.
+Detects public/open func, class, struct, enum, protocol, typealias.
+Internal (no modifier) and private/fileprivate symbols are excluded.
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | initial Swift adapter
 """
 

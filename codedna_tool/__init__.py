@@ -1,10 +1,10 @@
 """codedna_tool — CodeDNA v0.8 in-source annotation protocol for AI agents.
 
-exports: __version__
-used_by: none — package init
+exports: none
+used_by: none
 rules:   __version__ is sourced from package metadata (pyproject.toml is the single source of truth).
-         importlib.metadata.version() raises PackageNotFoundError if the package is not installed
-         (e.g. during bare pytest runs) — fallback to "0.0.0.dev" in that case.
+importlib.metadata.version() raises PackageNotFoundError if the package is not installed
+(e.g. during bare pytest runs) — fallback to "0.0.0.dev" in that case.
 agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | initial __version__ via importlib.metadata
 """
 

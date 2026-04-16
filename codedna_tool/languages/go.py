@@ -1,13 +1,15 @@
 """go.py — CodeDNA v0.8 adapter for Go source files.
 
-exports: class GoAdapter
-used_by: languages/__init__.py -> _REGISTRY
+exports: _FUNC_RE | _TYPE_RE | _VAR_RE | _IMPORT_SINGLE_RE | _IMPORT_BLOCK_RE | class GoAdapter
+used_by: codedna_tool/languages/__init__.py → GoAdapter
+         codedna_tool/languages/_ts_go.py → GoAdapter
+         tests/test_refresh.py → GoAdapter
 rules:   regex-based only — no go toolchain dependency required.
-         Detects exports via capitalized top-level func/type/var/const identifiers.
-         Import paths from 'import' blocks are captured but not resolved to file paths
-         (Go module paths don't map 1:1 to repo file paths without go.mod parsing).
+Detects exports via capitalized top-level func/type/var/const identifiers.
+Import paths from 'import' blocks are captured but not resolved to file paths
+(Go module paths don't map 1:1 to repo file paths without go.mod parsing).
 agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_001 | initial Go adapter with regex-based extraction
-         claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_002 | CodeDNA v0.8 compliance pass: added session_id to agent: field, added Rules: docstrings to extract_info and inject_header
+claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_002 | CodeDNA v0.8 compliance pass: added session_id to agent: field, added Rules: docstrings to extract_info and inject_header
 """
 
 from __future__ import annotations

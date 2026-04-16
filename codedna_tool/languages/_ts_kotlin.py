@@ -1,15 +1,15 @@
 """_ts_kotlin.py — Tree-sitter-powered CodeDNA adapter for Kotlin source files.
 
-exports: TreeSitterKotlinAdapter
-used_by: languages/__init__.py → _REGISTRY
+exports: _KOTLIN_LANG | class TreeSitterKotlinAdapter
+used_by: codedna_tool/languages/__init__.py → TreeSitterKotlinAdapter
 rules:   Requires tree-sitter>=0.25 and tree-sitter-kotlin>=1.1.
-         Top-level class_declaration, function_declaration, and const property_declaration captured.
-         object_declaration captured with its functions as ObjectName.fn (idiomatic Kotlin singleton).
-         companion_object functions captured as ClassName.fn using grandparent class_declaration name.
-         import qualified_identifier captured as dependency string.
-         inject_header() delegated to KotlinAdapter (// comment after package declaration).
+Top-level class_declaration, function_declaration, and const property_declaration captured.
+object_declaration captured with its functions as ObjectName.fn (idiomatic Kotlin singleton).
+companion_object functions captured as ClassName.fn using grandparent class_declaration name.
+import qualified_identifier captured as dependency string.
+inject_header() delegated to KotlinAdapter (// comment after package declaration).
 agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | initial tree-sitter Kotlin adapter
-         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | add object_declaration and companion_object function capture
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | add object_declaration and companion_object function capture
 """
 
 from __future__ import annotations

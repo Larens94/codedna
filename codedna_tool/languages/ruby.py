@@ -1,13 +1,14 @@
 """ruby.py — CodeDNA v0.8 adapter for Ruby source files.
 
-exports: class RubyAdapter
-used_by: languages/__init__.py -> _REGISTRY
+exports: _MODULE_RE | _CLASS_RE | _DEF_RE | _ATTR_RE | _REQUIRE_RE | _PRIVATE_RE | class RubyAdapter
+used_by: codedna_tool/languages/__init__.py → RubyAdapter
+         codedna_tool/languages/_ts_ruby.py → RubyAdapter
 rules:   regex-based only — no Ruby interpreter dependency required.
-         Detects module/class definitions and public def methods.
-         attr_accessor/attr_reader/attr_writer are captured as exports.
-         Rails-aware: before_action, scope, has_many captured as metadata (not exports).
+Detects module/class definitions and public def methods.
+attr_accessor/attr_reader/attr_writer are captured as exports.
+Rails-aware: before_action, scope, has_many captured as metadata (not exports).
 agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed nested class/module detection: allow indented class/module, method prefix uses innermost class not first module
-         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | fixed inject_header: no leading blank line when file has no shebang/frozen_string_literal (prefix only added when before is non-empty)
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | fixed inject_header: no leading blank line when file has no shebang/frozen_string_literal (prefix only added when before is non-empty)
 """
 
 from __future__ import annotations

@@ -1,13 +1,15 @@
 """java.py — CodeDNA v0.8 adapter for Java and Kotlin source files.
 
-exports: class JavaAdapter | class KotlinAdapter
-used_by: languages/__init__.py -> _REGISTRY
+exports: _JAVA_CLASS_RE | _JAVA_METHOD_RE | _JAVA_IMPORT_RE | _KT_CLASS_RE | _KT_FUN_RE | _KT_CONST_RE | _KT_IMPORT_RE | class JavaAdapter | class KotlinAdapter
+used_by: codedna_tool/languages/__init__.py → JavaAdapter, KotlinAdapter
+         codedna_tool/languages/_ts_java.py → JavaAdapter
+         codedna_tool/languages/_ts_kotlin.py → KotlinAdapter
 rules:   regex-based only — no JVM dependency required.
-         Java: detects public class/interface/enum/record and public methods.
-         Kotlin: detects class/object/fun/val/const at top level and public members.
-         Annotations (@Override, @SpringBootApplication etc.) are not captured as exports.
+Java: detects public class/interface/enum/record and public methods.
+Kotlin: detects class/object/fun/val/const at top level and public members.
+Annotations (@Override, @SpringBootApplication etc.) are not captured as exports.
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | initial Java + Kotlin adapters
-         claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | fixed double blank line: strip leading newlines from after before reassembling, both JavaAdapter and KotlinAdapter
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | fixed double blank line: strip leading newlines from after before reassembling, both JavaAdapter and KotlinAdapter
 """
 
 from __future__ import annotations
