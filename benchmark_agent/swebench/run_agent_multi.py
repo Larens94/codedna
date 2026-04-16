@@ -1,32 +1,29 @@
 """run_agent_multi.py — Runs CodeDNA benchmark on multiple LLM providers.
 
-exports: runs/<model>/results.json per model
-         runs/<model>/session_traces/<session_id>.json per run
-used_by: labs/benchmark/ → research group workflow
-         benchmark_agent/BENCHMARK_NOTES.md → documentation
+exports: TASKS_FILE | PROJECTS_DIR | RUNS_DIR | READ_FILE_LIMIT | GREP_LIMIT | SYSTEM_PROMPT | CODEDNA_PROMPT | make_fns(repo_root) | extract_proposed_files(text) | file_metrics(files, ground_truth) | build_result(log, final_text, ground_truth, session_id, model, provider, task, condition) | call_with_retry(fn) | FORCE_FINAL_PROMPT | build_initial_message(problem, repo_root) | run_gemini(problem, repo_root, model_id, max_turns, temperature, system_prompt) | _ANTHROPIC_COSTS | _ANTHROPIC_HISTORY_WINDOW | run_anthropic(problem, repo_root, model_id, max_turns, temperature, system_prompt) | run_openai_compat(problem, repo_root, model_id, base_url, max_turns, temperature, system_prompt) | run_openai_responses(problem, repo_root, model_id, max_turns, temperature, system_prompt) | (+3 more)
+used_by: none
 rules:   Same system prompt, same tools, same tasks for all models.
-         Only the LLM client changes — comparison is clean.
-         Two conditions: control (no annotations), codedna (curated).
-         trace: is ordered and timestamped — DO NOT sort or reorder entries.
-         session_id format: bench_<model>_<task_short>_<condition>_<YYYYMMDD_HHMMSS>
+Only the LLM client changes — comparison is clean.
+Two conditions: control (no annotations), codedna (curated).
+trace: is ordered and timestamped — DO NOT sort or reorder entries.
+session_id format: bench_<model>_<task_short>_<condition>_<YYYYMMDD_HHMMSS>
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-20 | s_20260320_003 | added session trace logging
-         claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | added --local-model and --base-url for Ollama/vLLM support
-         message: "reasoning still not captured — trace has tool sequence + timestamps but not
-                  model chain-of-thought. Worth capturing in a future pass."
-
+claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | added --local-model and --base-url for Ollama/vLLM support
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_bench | fix token tracking in run_openai_compat (DeepSeek/GPT); smarter extract_proposed_files with proposal markers; add redundant_reads/nav_efficiency/tokens_per_gt_file/first_hit metrics to build_result; add --projects-dir and --tasks-file CLI args so labs/benchmark/projects can be used directly
+message: "reasoning still not captured — trace has tool sequence + timestamps but not
+model chain-of-thought. Worth capturing in a future pass."
 Usage:
-  # Test a specific model (API)
-  python3 run_agent_multi.py --model gemini-2.5-flash
-  python3 run_agent_multi.py --model deepseek-chat --runs 3 --temperature 0.1
-
-  # Test a local model via Ollama
-  python3 run_agent_multi.py --local-model qwen2.5:32b
-
-  # Local model with custom URL (vLLM)
-  python3 run_agent_multi.py --local-model my-model --base-url http://localhost:8000/v1
-
-  # Run only specific condition
-  python3 run_agent_multi.py --model gemini-2.5-flash --condition codedna
+# Test a specific model (API)
+python3 run_agent_multi.py --model gemini-2.5-flash
+python3 run_agent_multi.py --model deepseek-chat --runs 3 --temperature 0.1
+# Test a local model via Ollama
+python3 run_agent_multi.py --local-model qwen2.5:32b
+# Local model with custom URL (vLLM)
+python3 run_agent_multi.py --local-model my-model --base-url http://localhost:8000/v1
+# Run only specific condition
+python3 run_agent_multi.py --model gemini-2.5-flash --condition codedna
+# Use labs/benchmark tasks (22 Django tasks already prepared)
+python3 run_agent_multi.py --model deepseek-chat --runs 3 --projects-dir ../../labs/benchmark/projects --tasks-file ../../labs/benchmark/tasks.json
 """
 
 import argparse
@@ -186,10 +183,31 @@ def make_fns(repo_root: Path):
 
 
 def extract_proposed_files(text: str) -> set:
-    """Extract proposed .py file paths from the tail of the agent's response."""
-    tail = text[-3000:] if len(text) > 3000 else text
-    raw = set(re.findall(r'[\w./]+\.py', tail))
-    return {p.lstrip('./') for p in raw if '/' in p.lstrip('./')}
+    """Extract proposed .py file paths from the agent's final response.
+
+    Rules:   Search the last 4000 chars where the agent typically lists conclusions.
+             Prefer lines near modification markers to reduce false positives.
+             Paths without a directory component (no '/') are ignored.
+    """
+    tail = text[-4000:] if len(text) > 4000 else text
+    # Lines that explicitly propose a file (markers the agent commonly uses)
+    proposal_markers = re.compile(
+        r"(?:modif|chang|updat|fix|patch|edit|need|requir|should|must)\w*[:\s]+[`'\"]?([\w./]+\.py)[`'\"]?",
+        re.IGNORECASE,
+    )
+    proposed: set[str] = set()
+    for m in proposal_markers.finditer(tail):
+        p = m.group(1).lstrip("./")
+        if "/" in p:
+            proposed.add(p)
+    # Fall back to any path-like .py reference in the tail if proposal markers found nothing
+    if not proposed:
+        raw = re.findall(r'[\w./]+\.py', tail)
+        for p in raw:
+            p = p.lstrip("./")
+            if "/" in p:
+                proposed.add(p)
+    return proposed
 
 
 def file_metrics(files: set, ground_truth: list) -> dict:
@@ -208,6 +226,27 @@ def build_result(log: dict, final_text: str, ground_truth: list,
                  task: str = "", condition: str = "") -> dict:
     read_set = set(log["files_read"])
     proposed = extract_proposed_files(final_text)
+    truth = set(ground_truth)
+    total_tokens = log["input_tokens"] + log["output_tokens"]
+
+    # ── Efficiency metrics ────────────────────────────────────────────────
+    # Redundant reads: total reads minus unique reads (re-reads of same file)
+    redundant_reads = len(log["files_read"]) - len(read_set)
+
+    # Navigation efficiency: fraction of files read that were ground-truth
+    nav_efficiency = round(len(read_set & truth) / len(read_set), 3) if read_set else 0.0
+
+    # Token cost per ground-truth file correctly identified in read set
+    gt_found = len(read_set & truth)
+    tokens_per_gt_file = round(total_tokens / max(1, gt_found), 1) if total_tokens > 0 else None
+
+    # First-hit rate: was a ground-truth file among the first 3 read_file calls?
+    first_reads = [
+        e["args"].get("path", "") for e in log["trace"]
+        if e.get("tool") == "read_file"
+    ][:3]
+    first_hit = any(p in truth for p in first_reads)
+
     return {
         "session_id":           session_id,
         "model":                model,
@@ -221,6 +260,10 @@ def build_result(log: dict, final_text: str, ground_truth: list,
         "files_read":           log["files_read"],
         "files_read_unique":    list(read_set),
         "n_files_read":         len(read_set),
+        "redundant_reads":      redundant_reads,
+        "nav_efficiency":       nav_efficiency,
+        "tokens_per_gt_file":   tokens_per_gt_file,
+        "first_hit":            first_hit,
         "greps":                log["greps"],
         "total_chars_consumed": log["total_chars_consumed"],
         "input_tokens":         log["input_tokens"],
@@ -228,7 +271,7 @@ def build_result(log: dict, final_text: str, ground_truth: list,
         "final_response":       final_text,
         "metrics_read":         file_metrics(read_set, ground_truth),
         "metrics_proposed":     file_metrics(proposed, ground_truth),
-        "trace":                log["trace"],   # ordered tool call sequence with timestamps
+        "trace":                log["trace"],
     }
 
 
@@ -521,6 +564,10 @@ def run_openai_compat(problem: str, repo_root: Path, model_id: str,
             create_kwargs["temperature"] = temperature
 
         resp = call_with_retry(client.chat.completions.create, **create_kwargs)
+        # Track tokens — usage is always present in non-streaming OpenAI responses
+        if resp.usage:
+            log["input_tokens"]  += resp.usage.prompt_tokens
+            log["output_tokens"] += resp.usage.completion_tokens
         msg = resp.choices[0].message
         messages.append(msg)
 
@@ -546,6 +593,9 @@ def run_openai_compat(problem: str, repo_root: Path, model_id: str,
         if not any(x in model_id for x in ("o1", "o3")):
             create_kwargs["temperature"] = temperature
         resp = call_with_retry(client.chat.completions.create, **create_kwargs)
+        if resp.usage:
+            log["input_tokens"]  += resp.usage.prompt_tokens
+            log["output_tokens"] += resp.usage.completion_tokens
         final_text = resp.choices[0].message.content or ""
 
     return log, final_text
@@ -711,7 +761,18 @@ def main():
                         help="Local model via Ollama/vLLM (e.g. qwen2.5:32b, llama3.1:70b)")
     parser.add_argument("--base-url", default=None,
                         help="Base URL for local models (default: http://localhost:11434/v1 for Ollama)")
+    parser.add_argument("--projects-dir", default=None,
+                        help="Path to projects directory (default: ../projects_swebench)")
+    parser.add_argument("--tasks-file", default=None,
+                        help="Path to tasks.json (default: ./tasks.json)")
     args = parser.parse_args()
+
+    # Allow overriding module-level paths via CLI
+    global TASKS_FILE, PROJECTS_DIR
+    if args.tasks_file:
+        TASKS_FILE = Path(args.tasks_file).resolve()
+    if args.projects_dir:
+        PROJECTS_DIR = Path(args.projects_dir).resolve()
 
     if args.temperature is None:
         args.temperature = 0.1 if args.runs > 1 else 0.0

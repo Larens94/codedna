@@ -1,33 +1,29 @@
 """setup_benchmark.py — Download and prepare SWE-bench tasks for CodeDNA benchmark.
 
-exports: main() -> None
-used_by: [manual execution] → see --help
+exports: PROJECTS_DIR | REPO_CACHE | TASKS_FILE | load_swebench_tasks(repo_filter, n_tasks, multi_file_first) | clone_repo(repo) | checkout_task(task, bare_repo, force) | annotate_task(task, model, no_llm) | update_tasks_json(tasks) | main()
+used_by: none
 rules:   Never modify existing control/ or codedna/ directories unless --force is passed.
-         Each task must have: control/ (vanilla repo at base_commit) + codedna/ (annotated).
-         Annotation uses codedna CLI (codedna init) — not the Gemini annotator.
-         Repo clones are cached in _repo_cache/ — never delete during a run.
+Each task must have: control/ (vanilla repo at base_commit) + codedna/ (annotated).
+Annotation uses codedna CLI (codedna init) — not the Gemini annotator.
+Repo clones use --filter=blob:none (blobless) — blobs fetched on demand by git archive.
+clone_repo() returns None on failure — main() must check and skip the repo.
 agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_003 | initial benchmark setup script
-         claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_004 | moved to labs/benchmark/, updated paths
-
+claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_004 | moved to labs/benchmark/, updated paths
+claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_bench | fix annotate_task: remove partial codedna/ on timeout/CalledProcessError; switch clone to --filter=blob:none + broken-cache detection; clone_repo now returns None on failure
 USAGE:
-    # Step 1: List available tasks
-    python setup_benchmark.py --list --repo django/django
-
-    # Step 2: Download and prepare 50 Django tasks
-    python setup_benchmark.py --repo django/django --n-tasks 50
-
-    # Step 3: Prepare all 500 SWE-bench Verified tasks (all 12 repos)
-    python setup_benchmark.py --all
-
-    # Step 4: Annotate with CodeDNA (requires LLM or --no-llm)
-    python setup_benchmark.py --annotate --no-llm
-    python setup_benchmark.py --annotate --model ollama/llama3
-
-    # Resume interrupted setup (skips already-prepared tasks)
-    python setup_benchmark.py --repo django/django --n-tasks 50
-
-    # Force re-download and re-annotate
-    python setup_benchmark.py --repo django/django --n-tasks 50 --force
+# Step 1: List available tasks
+python setup_benchmark.py --list --repo django/django
+# Step 2: Download and prepare 50 Django tasks
+python setup_benchmark.py --repo django/django --n-tasks 50
+# Step 3: Prepare all 500 SWE-bench Verified tasks (all 12 repos)
+python setup_benchmark.py --all
+# Step 4: Annotate with CodeDNA (requires LLM or --no-llm)
+python setup_benchmark.py --annotate --no-llm
+python setup_benchmark.py --annotate --model ollama/llama3
+# Resume interrupted setup (skips already-prepared tasks)
+python setup_benchmark.py --repo django/django --n-tasks 50
+# Force re-download and re-annotate
+python setup_benchmark.py --repo django/django --n-tasks 50 --force
 """
 
 import argparse
@@ -95,20 +91,37 @@ def load_swebench_tasks(repo_filter=None, n_tasks=None, multi_file_first=False):
 def clone_repo(repo: str):
     """Clone a repo to _repo_cache/ if not already cached.
 
-    Rules:   Uses bare clone for efficiency. Never delete the cache during runs.
+    Rules:   Uses --filter=blob:none (partial clone) for speed — still supports
+             git archive on any commit without downloading all blobs upfront.
+             Never delete the cache during runs.
     """
     repo_dir = REPO_CACHE / repo.replace("/", "__")
     if repo_dir.exists():
-        print(f"  Repo cached: {repo_dir}")
-        return repo_dir
+        # Verify it's a valid git repo (not a broken partial clone)
+        result = subprocess.run(
+            ["git", "--git-dir", str(repo_dir), "rev-list", "--count", "--all"],
+            capture_output=True, text=True,
+        )
+        if result.returncode == 0 and int(result.stdout.strip() or "0") > 0:
+            print(f"  Repo cached: {repo_dir}")
+            return repo_dir
+        else:
+            print(f"  Broken cache detected — re-cloning {repo_dir.name}")
+            shutil.rmtree(repo_dir)
 
     REPO_CACHE.mkdir(parents=True, exist_ok=True)
     url = f"https://github.com/{repo}.git"
-    print(f"  Cloning {url} ...")
-    subprocess.run(
-        ["git", "clone", "--bare", url, str(repo_dir)],
-        check=True, capture_output=True, text=True,
-    )
+    print(f"  Cloning {url} (partial, no blobs) ...")
+    try:
+        subprocess.run(
+            ["git", "clone", "--bare", "--filter=blob:none", url, str(repo_dir)],
+            check=True, text=True,
+        )
+    except subprocess.CalledProcessError as e:
+        print(f"  ERROR: git clone failed for {repo} (exit {e.returncode})")
+        if repo_dir.exists():
+            shutil.rmtree(repo_dir)
+        return None
     print(f"  Cloned: {repo_dir}")
     return repo_dir
 
@@ -199,12 +212,14 @@ def annotate_task(task: dict, model: str = None, no_llm: bool = False):
         print("  ERROR: 'codedna' CLI not found. Run: pip install git+https://github.com/Larens94/codedna.git")
         return False
     except subprocess.TimeoutExpired:
-        print(f"  WARNING: annotation timed out after 300s — codedna/ may be partially annotated")
-        return True
+        print(f"  ERROR: annotation timed out after 300s — removing incomplete codedna/")
+        shutil.rmtree(cdna_dir, ignore_errors=True)
+        return False
     except subprocess.CalledProcessError as e:
-        print(f"  WARNING: codedna init returned error — codedna/ may be partially annotated")
+        print(f"  ERROR: codedna init failed — removing incomplete codedna/")
         print(f"  {e.stderr[:300] if e.stderr else ''}")
-        return True
+        shutil.rmtree(cdna_dir, ignore_errors=True)
+        return False
 
 
 def update_tasks_json(tasks: list):
@@ -318,6 +333,10 @@ def main():
         print(f"{'='*60}")
 
         bare_repo = clone_repo(repo)
+        if bare_repo is None:
+            print(f"  Skipping {repo} — clone failed")
+            fail_count += len(repo_tasks)
+            continue
 
         for i, task in enumerate(repo_tasks, 1):
             iid = task["instance_id"]
