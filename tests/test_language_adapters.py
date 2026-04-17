@@ -1,11 +1,12 @@
 """test_language_adapters.py — Test suite for CodeDNA language adapters.
 
-exports: project(tmp_path) | write_file(project, name, content) | class TestTypeScript | class TestGo | class TestRuby | class TestCSharp | class TestPHP | class TestRust | class TestJava | class TestSwift | class TestKotlin | class TestFallback | class TestErrorHandling
+exports: project(tmp_path) | write_file(project, name, content) | class TestTypeScript | class TestGo | class TestRuby | class TestCSharp | class TestPHP | class TestRust | class TestJava | class TestSwift | class TestKotlin | class TestBlade | class TestFallback | class TestErrorHandling
 used_by: none
 rules:   Each language adapter must pass: export detection, private exclusion,
 header injection, and injection idempotency.
 tree-sitter tests are skipped if tree-sitter is not installed.
 agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | initial test suite for all 9 language adapters
+claude-opus-4-7 | anthropic | 2026-04-17 | s_20260417_blade | regression tests for Blade: {{-- --}} syntax (not //), idempotent inject, vendor/ excluded. Catches regression where .blade.php was being routed to PhpAdapter, corrupting Laravel views.
 """
 
 from __future__ import annotations
@@ -422,6 +423,81 @@ interface UserRepository {}
 
 
 # ── Fallback (tree-sitter not installed) ─────────────────────────────────────
+
+class TestBlade:
+    """Regression tests for Blade templates.
+
+    Previously, `.blade.php` files were annotated with `//` (PHP comment syntax)
+    because the extension resolution fell back to `.php`. Blade is not PHP: any
+    text outside `@php`/`<?php` is emitted to the rendered HTML, so `//` headers
+    appeared as visible text in every error page. Fix: compound-extension
+    resolution (_get_extension → .blade.php) routes to BladeAdapter, which uses
+    `{{-- ... --}}` — stripped entirely by the Blade compiler, invisible at render.
+    """
+
+    def test_blade_adapter_loads(self):
+        blade = get_adapter(".blade.php")
+        assert blade is not None
+        assert blade.__class__.__name__ == "BladeAdapter"
+
+    def test_blade_header_uses_blade_comment_syntax(self, project):
+        """Header MUST start with {{-- and end with --}}, never // or <!--."""
+        blade = get_adapter(".blade.php")
+        p = write_file(project, "welcome.blade.php",
+                       "<x-layout>\n    @section('content')\n        <h1>Hi</h1>\n    @endsection\n</x-layout>\n")
+        injected = blade.inject_header(
+            p.read_text(),
+            rel="resources/views/welcome.blade.php",
+            exports="@section:content", used_by="none", rules="none",
+            model_id="test-model", today="2026-04-17",
+        )
+        first_line = injected.splitlines()[0]
+        assert first_line.startswith("{{--"), \
+            f"Blade header must start with '{{{{--', got: {first_line!r}"
+        assert "//" not in injected.splitlines()[0], \
+            "Blade header must NEVER use PHP '//' comment syntax"
+        # Header block ends with --}}
+        header_block = injected.split("--}}", 1)[0] + "--}}"
+        assert header_block.endswith("--}}"), "Blade header must close with --}}"
+
+    def test_blade_header_idempotent(self, project):
+        """inject_header must be idempotent — running twice yields the same file."""
+        blade = get_adapter(".blade.php")
+        p = write_file(project, "idempotent.blade.php",
+                       "@section('x')x@endsection\n")
+        first = blade.inject_header(p.read_text(), "x.blade.php", "none", "none",
+                                    "none", "m", "2026-04-17")
+        second = blade.inject_header(first, "x.blade.php", "none", "none",
+                                     "none", "m", "2026-04-17")
+        assert first == second, "inject_header must not duplicate the header"
+
+    def test_blade_php_not_resolved_as_plain_php(self):
+        """CRITICAL: get_adapter('.blade.php') must return Blade, not Php adapter.
+
+        If this ever regresses (e.g. someone uses path.suffix instead of
+        _get_extension), Blade files get // headers and break rendering in every
+        Laravel project. This check catches that.
+        """
+        blade = get_adapter(".blade.php")
+        php = get_adapter(".php")
+        assert blade is not php, "Blade must NOT fall back to PHP adapter"
+        assert blade.__class__.__name__ != php.__class__.__name__
+
+    def test_vendor_excluded_from_default_scan(self, project):
+        """vendor/ contains third-party code — must NEVER be annotated by default."""
+        from codedna_tool.cli import collect_files
+
+        vendor_file = write_file(project, "vendor/laravel/framework/show.blade.php",
+                                 "<x-layout>vendor</x-layout>\n")
+        app_file = write_file(project, "resources/views/welcome.blade.php",
+                              "<x-layout>app</x-layout>\n")
+
+        files = collect_files(project, exclude=[], extensions=[".blade.php"])
+        paths = {str(f.relative_to(project)) for f in files}
+        assert "resources/views/welcome.blade.php" in paths
+        assert not any("vendor/" in p for p in paths), \
+            f"vendor/ MUST be excluded, got: {paths}"
+
 
 class TestFallback:
     def test_regex_adapters_always_available(self):
