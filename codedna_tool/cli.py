@@ -9,11 +9,11 @@ _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
 scan_file handles 3 import patterns: (1) from .mod import X, (2) from . import X
 (submodule-first then __init__.py symbol), (3) from pkg import X (tries pkg/X.py
 before falling back to pkg/__init__.py). All 3 were previously under-resolved.
-agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_003 | add DeepSeek to _detect_provider and env_map so --api-key works with deepseek/ model prefix
-claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | fix L2 batch overflow: _L2_BATCH_SIZE=12, dynamic max_tokens, _parse_json_response with truncation recovery
+agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | fix L2 batch overflow: _L2_BATCH_SIZE=12, dynamic max_tokens, _parse_json_response with truncation recovery
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | skip *_test.go; cap exports@20; fix non-Python path (raw join→_fmt_exports, module_rules→module_rules_raw, provider detection)
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_005 | run_lang_files returns (annotated, llm_calls) tuple; run() aggregates lang llm_calls into summary counter
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_bench | fix 3 used_by bugs in scan_file; fix LLM gating: run() checked HAS_ANTHROPIC instead of HAS_LITELLM|HAS_ANTHROPIC — litellm (DeepSeek/GPT) was silently falling back to --no-llm
+claude-opus-4-7 | anthropic | 2026-04-17 | s_20260417_001 | fix _detect_packages() flat parts[0] → __init__.py-aware with depth cap 3; _package_depends_on() takes pkg_keys to match deepest ancestor. Django monorepo now produces ~50 pkgs instead of collapsing to 5.
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -417,15 +417,18 @@ class LLM:
         return "unknown"
 
     def _call(self, prompt: str, max_tokens: int = 200) -> str:
+        # Rules: 90s request timeout — DeepSeek occasionally holds open TCP sockets
+        # without sending response; without a timeout the whole init pipeline hangs.
         if self._use_litellm:
             r = _litellm.completion(
                 model=self.model,
                 messages=[{"role": "user", "content": prompt}],
                 max_tokens=max_tokens,
+                timeout=90,
             )
             return r.choices[0].message.content.strip()
         # Anthropic fallback
-        r = self._client.messages.create(
+        r = self._client.with_options(timeout=90.0).messages.create(
             model=self.model, max_tokens=max_tokens, messages=[{"role": "user", "content": prompt}]
         )
         return r.content[0].text.strip()
@@ -972,8 +975,14 @@ def run(
             if candidates:
                 rules_map: dict[str, str] = {}
                 if llm:
-                    rules_map = llm.function_rules_batch(rel, candidates)
-                    llm_calls += 1
+                    # Rules: LLM failure (timeout, rate-limit) on ONE file must not
+                    # abort the whole init run — skip L2 for this file and continue.
+                    try:
+                        rules_map = llm.function_rules_batch(rel, candidates)
+                        llm_calls += 1
+                    except Exception as e:
+                        if verbose:
+                            print(f"    L2 skipped ({type(e).__name__}): {str(e)[:80]}")
 
                 # Apply bottom-to-top to keep earlier line numbers valid
                 to_inject = [
@@ -999,8 +1008,12 @@ def run(
             else:
                 rules = "none"
                 if llm:
-                    rules = llm.module_rules(rel, source)
-                    llm_calls += 1
+                    try:
+                        rules = llm.module_rules(rel, source)
+                        llm_calls += 1
+                    except Exception as e:
+                        if verbose:
+                            print(f"    L1 llm skipped ({type(e).__name__}): {str(e)[:80]}")
 
                 ub = ub_graph.get(rel, {})
                 agent_id = "codedna-cli (no-llm)" if no_llm else model
@@ -1875,31 +1888,73 @@ _MANIFEST_SKIP = {"__pycache__", ".git", "venv", ".venv", "node_modules",
                   "migrations", "dist", "build", ".tox", "coverage",
                   "_repo_cache", ".mypy_cache", ".pytest_cache", "htmlcov"}
 
+_MANIFEST_PKG_DEPTH = 3
+
 
 def _detect_packages(files: list[Path], root: Path) -> dict[str, list[str]]:
-    """Group source files by top-level package directory.
+    """Group source files by nearest ancestor Python package (directory with __init__.py).
 
-    Rules:   A 'package' is the first path segment under root.
-             Files directly in root are grouped under '' (root package).
-             Directories in _MANIFEST_SKIP are excluded.
+    Rules:   A 'package' is any directory containing __init__.py, capped at _MANIFEST_PKG_DEPTH
+             path components to avoid explosion in deeply nested monorepos.
+             Files are assigned to the deepest ancestor package (within depth cap).
+             Files with no ancestor package go under '' (root).
+             Directories matching _MANIFEST_SKIP are excluded at any depth.
+             Fallback: when no __init__.py exists anywhere (non-Python projects or
+             codebases without package markers), group by first path segment (legacy behaviour).
     """
+    pkg_dirs: set[str] = set()
+    for f in files:
+        if f.name != "__init__.py":
+            continue
+        try:
+            parts = f.parent.relative_to(root).parts
+        except ValueError:
+            continue
+        if not parts:
+            continue
+        if any(p in _MANIFEST_SKIP for p in parts):
+            continue
+        capped = parts[:_MANIFEST_PKG_DEPTH]
+        pkg_dirs.add("/".join(capped))
+
     pkgs: dict[str, list[str]] = {}
     for f in files:
-        rel = str(f.relative_to(root))
-        parts = Path(rel).parts
-        pkg = parts[0] if len(parts) > 1 else ""
-        if pkg in _MANIFEST_SKIP:
+        try:
+            rel = f.relative_to(root)
+        except ValueError:
             continue
-        pkgs.setdefault(pkg, []).append(rel)
+        parts = rel.parts
+        if any(p in _MANIFEST_SKIP for p in parts):
+            continue
+
+        if pkg_dirs:
+            best = ""
+            # Walk ancestors file → root, pick deepest within pkg_dirs (and depth cap)
+            for i in range(min(len(parts) - 1, _MANIFEST_PKG_DEPTH), 0, -1):
+                candidate = "/".join(parts[:i])
+                if candidate in pkg_dirs:
+                    best = candidate
+                    break
+            pkg = best
+        else:
+            pkg = parts[0] if len(parts) > 1 else ""
+            if pkg in _MANIFEST_SKIP:
+                continue
+
+        pkgs.setdefault(pkg, []).append(str(rel))
     return pkgs
 
 
 def _package_depends_on(pkg: str, pkg_files: list[str],
-                         infos: dict[str, "FileInfo"]) -> list[str]:
+                         infos: dict[str, "FileInfo"],
+                         pkg_keys: set[str]) -> list[str]:
     """Derive inter-package dependencies from import graph.
 
     Rules:   pkg A depends_on pkg B when any file in A imports from any file in B.
              Self-dependencies are excluded.
+             pkg_keys is the full set of detected packages — used to resolve each
+             imported file to its deepest ancestor package (matches _detect_packages logic).
+             Falls back to first path segment when no matching pkg_key is found.
     """
     deps: set[str] = set()
     for rel in pkg_files:
@@ -1907,9 +1962,20 @@ def _package_depends_on(pkg: str, pkg_files: list[str],
         if not info:
             continue
         for dep_rel in info.deps:
-            dep_pkg = Path(dep_rel).parts[0] if len(Path(dep_rel).parts) > 1 else ""
-            if dep_pkg != pkg and dep_pkg not in _MANIFEST_SKIP:
-                deps.add(dep_pkg + "/" if dep_pkg else ".")
+            dep_parts = Path(dep_rel).parts
+            if any(p in _MANIFEST_SKIP for p in dep_parts):
+                continue
+            dep_pkg = ""
+            if pkg_keys:
+                for i in range(min(len(dep_parts) - 1, _MANIFEST_PKG_DEPTH), 0, -1):
+                    candidate = "/".join(dep_parts[:i])
+                    if candidate in pkg_keys:
+                        dep_pkg = candidate
+                        break
+            else:
+                dep_pkg = dep_parts[0] if len(dep_parts) > 1 else ""
+            if dep_pkg and dep_pkg != pkg:
+                deps.add(dep_pkg + "/")
     return sorted(deps)
 
 
@@ -2109,9 +2175,10 @@ def cmd_manifest(
     packages: dict[str, dict] = {}
     llm_calls = 0
 
+    pkg_keys = set(pkg_map.keys())
     for pkg, files in sorted(pkg_map.items()):
         kf = _key_files(files, ub_graph, infos)
-        deps = _package_depends_on(pkg, files, infos)
+        deps = _package_depends_on(pkg, files, infos, pkg_keys)
         exports_sample = _exports_sample(files, infos)
 
         # Purpose: LLM or fallback
