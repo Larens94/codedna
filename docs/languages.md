@@ -1,21 +1,20 @@
 # Language Support
 
-CodeDNA v0.8 supports **11 languages**. Python is the reference implementation with full AST-based extraction (L1 module headers + L2 function `Rules:`). TypeScript and Go have optional tree-sitter AST support (`pip install codedna[treesitter]`). All other languages get L1-only annotation via regex adapters — no external toolchain required.
+CodeDNA v0.8 supports **9 source languages** via tree-sitter AST parsing, plus **7 template engines** via regex. All languages are auto-detected — no configuration needed.
 
-| Language | Extensions | L1 | L2 | AST | Framework awareness |
+| Language | Extensions | L1 | L2 | Parser | Framework awareness |
 |---|---|---|---|---|---|
 | Python | `.py` | ✅ | ✅ | Built-in `ast` | — |
-| TypeScript / JavaScript | `.ts .tsx .js .jsx .mjs` | ✅ | — | tree-sitter (optional) | — |
-| Go | `.go` | ✅ | — | tree-sitter (optional) | — |
-| PHP | `.php` | ✅ | — | Regex | **Laravel** (Route facades, Eloquent) · **Phalcon** (Controller/Model, DI, Router) |
-| Rust | `.rs` | ✅ | — | Regex | — |
-| Java | `.java` | ✅ | — | Regex | — |
-| Kotlin | `.kt .kts` | ✅ | — | Regex | — |
-| C# | `.cs` | ✅ | — | Regex | — |
-| Swift | `.swift` | ✅ | — | Regex | — |
-| Ruby | `.rb` | ✅ | — | Regex | — |
+| PHP | `.php` | ✅ | ✅ | tree-sitter | **Laravel** (Route facades, Eloquent, constructor injection) · **Phalcon** |
+| TypeScript / JavaScript | `.ts .tsx .js .jsx .mjs` | ✅ | ✅ | tree-sitter | — |
+| Go | `.go` | ✅ | ✅ | tree-sitter | — |
+| Java | `.java` | ✅ | ✅ | tree-sitter | — |
+| Kotlin | `.kt .kts` | ✅ | ✅ | tree-sitter | — |
+| Ruby | `.rb` | ✅ | ✅ | tree-sitter | — |
+| Rust | `.rs` | ✅ | ✅ | tree-sitter | — |
+| C# | `.cs` | ✅ | ✅ | tree-sitter | — |
 
-**Template engines** (L1 via block-comment extraction):
+**Template engines** (L1 only, regex-based by design):
 
 | Template | Extensions | Comment syntax |
 |---|---|---|
@@ -29,27 +28,26 @@ CodeDNA v0.8 supports **11 languages**. Python is the reference implementation w
 
 ---
 
-## CLI Commands
+## What tree-sitter extracts
 
-```bash
-codedna init ./src --extensions ts go              # TypeScript + Go
-codedna init ./app --extensions php                # PHP/Laravel or PHP/Phalcon
-codedna init ./templates --extensions volt blade   # Phalcon Volt + Laravel Blade
-codedna init . --extensions ts go php rs java      # mixed project
-codedna check . --extensions ts go -v              # coverage report
-```
+All source languages use tree-sitter for accurate AST-based extraction:
+
+- **Exports**: classes, public methods (with full signatures), interfaces, traits, enums, constants
+- **Dependencies**: `use`, `import`, `require` statements resolved to file paths
+- **Function info**: start line, doc block detection, Rules: detection — enables L2 injection
+- **Framework-specific**: Laravel routes (`Route::get`), PHP 8 attributes (`#[Route]`), enum cases, constructor injection
 
 ---
 
-## Tree-sitter AST Support
-
-For more accurate extraction on TypeScript and Go:
+## CLI Commands
 
 ```bash
-pip install codedna[treesitter]
+codedna init .                                 # auto-detect all languages
+codedna init ./src --extensions ts go          # TypeScript + Go only
+codedna init ./app --extensions php            # PHP/Laravel
+codedna check . -v                             # coverage report
+codedna refresh .                              # update exports + used_by (zero LLM cost)
 ```
-
-This adds AST-based parsing via tree-sitter (accurate export/import extraction, cross-file dependency graph). Falls back to regex when tree-sitter is not installed — zero breaking changes.
 
 ---
 
@@ -57,44 +55,33 @@ This adds AST-based parsing via tree-sitter (accurate export/import extraction, 
 
 ```php
 <?php
-// app/Http/Controllers/UserController.php — Handles user CRUD endpoints.
+// UserController.php — Handles user CRUD endpoints.
 //
-// exports: UserController::index() -> Response
-//          UserController::store(Request) -> JsonResponse
-// used_by: routes/web.php -> Route::resource('users', UserController::class)
-// rules:   must extend App\Http\Controllers\Controller.
-//          all public methods are auto-detected as exports.
-// agent:   claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | initial controller scaffold
+// exports: UserController | UserController::index() | UserController::store(Request $request): JsonResponse
+// used_by: routes/web.php
+// rules:   must extend App\Http\Controllers\Controller
+// agent:   codedna-cli (no-llm) | codedna-cli | 2026-04-18 | codedna-cli | initial CodeDNA annotation pass
 ```
 
-## PHP + Phalcon Example
+The PHP tree-sitter adapter auto-detects:
+- `class`, `interface`, `trait`, `enum` declarations
+- Public methods with full signatures (parameters + return types)
+- `use App\Models\User` → resolves to `app/Models/User.php` (PSR-4)
+- `Route::get('/path', ...)` → exports as `route:/path`
+- PHP 8 attributes `#[Middleware('auth')]` → exports as `attr:Middleware`
+- Enum cases `Status::Active` → exports as `Status::Active`
+- Constructor injection `__construct(UserService $service)` → dep on UserService
 
-```php
-<?php
-// app/controllers/UserController.php — Handles user CRUD in Phalcon MVC.
-//
-// exports: UserController::indexAction() -> Response
-//          UserController::createAction() -> Response
-//          route:/users
-//          service:userService
-// used_by: app/config/router.php -> $router->addGet('/users', ...)
-// rules:   extends Phalcon\Mvc\Controller — do not add constructor, use DI.
-//          $di->set('userService', ...) registers this service globally.
-// agent:   claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | initial Phalcon controller
+## Blade Template Example
 
-namespace App\Controllers;
-
-use Phalcon\Mvc\Controller;
-
-class UserController extends Controller
-{
-    public function indexAction() { ... }
-    public function createAction() { ... }
-}
+```blade
+{{-- layout.blade.php — Base application layout.
+--
+-- exports: none
+-- used_by: none
+-- rules:   @yield('content') is required — child views must define this section
+-- agent:   codedna-cli (no-llm) | codedna-cli | 2026-04-18 | codedna-cli | initial CodeDNA annotation pass
+--}}
 ```
 
-The PHP adapter auto-detects:
-- `extends Controller` / `extends Model` / `extends Phalcon\Mvc\Controller` → marks as Phalcon component
-- `$router->addGet('/uri', ...)` → exports as `route:/uri`
-- `$di->set('serviceName', ...)` / `$di->setShared(...)` → exports as `service:serviceName`
-- Public methods → annotated as `ClassName::method`
+Blade adapter detects `@extends`, `@include`, `@component`, `@livewire` as dependencies.

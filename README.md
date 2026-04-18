@@ -18,11 +18,11 @@
 </p>
 
 <p align="center">
+  <a href="#install">Install</a> · 
   <a href="#the-problem">Problem</a> · 
   <a href="#the-solution">Solution</a> · 
   <a href="#evidence">Evidence</a> · 
   <a href="#live-demo--flask-annotated-in-3-seconds">Live demo</a> · 
-  <a href="#install">Install</a> · 
   <a href="#how-it-works">How it works</a> · 
   <a href="#docs">Docs</a>
 </p>
@@ -32,6 +32,49 @@
 An in-source communication protocol where AI agents embed architectural context directly in the files they write. The next agent — different model, different tool, different session — reads it and knows what to do.
 
 No infrastructure. No retrieval pipeline. No external memory. The code carries its own context.
+
+---
+
+## Install
+
+### For AI coding agents
+
+Install the plugin, then run `/codedna:init` — it guides you through everything interactively.
+
+| Agent | Install command |
+|-------|---------|
+| **Claude Code** | `claude plugin marketplace add Larens94/codedna && claude plugin install codedna@codedna` |
+| **Cursor** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) cursor-hooks` |
+| **Copilot** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) copilot-hooks` |
+| **Cline** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) cline-hooks` |
+| **OpenCode** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) opencode` |
+| **Windsurf** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) windsurf` |
+
+After installing, run `/codedna:init` in your project. It will:
+
+1. Auto-detect your languages (PHP, TypeScript, Go, Python, etc.)
+2. Ask how to annotate: **Claude session** (zero API key) or **CLI** (tree-sitter, fast)
+3. Ask the depth: **human** (minimal) · **semi** (balanced, default) · **agent** (full protocol)
+4. Annotate all files and show a summary
+
+### CLI standalone (optional)
+
+For CI pipelines, scripting, or if you prefer the terminal:
+
+```bash
+pip install git+https://github.com/Larens94/codedna.git   # requires Python 3.11+
+```
+
+```bash
+codedna init . --no-llm                        # free, structural only (exports + used_by)
+codedna init . --model deepseek/deepseek-chat  # with LLM rules: (~$0.40 for 200 files)
+codedna init . --model ollama/llama3           # local LLM, free
+codedna check .                                # coverage report
+codedna refresh .                              # update exports + used_by (zero LLM cost)
+```
+
+> Languages auto-detected — PHP, TypeScript, Go, Java, Kotlin, Ruby all work out of the box.
+> Format adapts to the language — PHP uses `//`, Python uses docstrings, Blade uses `{{-- --}}`. See [docs/languages.md](docs/languages.md).
 
 ```diff
 +  NAVIGATION ACCURACY    ████████████░░░░   +13pp F1     SWE-bench · 3 models
@@ -314,7 +357,7 @@ An agent reading this project tomorrow skips the source. It reads the headers, k
 
 ## Multi-language — Go, Ruby, PHP, and more
 
-The same command works on all 11 supported languages. DeepSeek generates `rules:` for each file from the source — no language-specific config needed.
+The same command works on all supported languages. DeepSeek generates `rules:` for each file from the source — no language-specific config needed.
 
 ```bash
 # Go (gin framework — 59 files, 0 test files, 56 LLM calls)
@@ -357,51 +400,6 @@ codedna init sinatra/lib --extensions rb --model deepseek/deepseek-chat
 
 > `*_test.go` files are automatically excluded. Exports are capped at 20 entries for readability.
 > Large files with many exports still show the full count: `(+135 more)`.
-
----
-
-## Install
-
-### For AI coding agents
-
-Install the plugin for your agent, then use the built-in `/codedna:init` command — it will guide you through the setup interactively.
-
-| Agent | Install command |
-|-------|---------|
-| **Claude Code** | `claude plugin marketplace add Larens94/codedna && claude plugin install codedna@codedna` |
-| **Cursor** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) cursor-hooks` |
-| **Copilot** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) copilot-hooks` |
-| **Cline** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) cline-hooks` |
-| **OpenCode** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) opencode` |
-| **Windsurf** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) windsurf` |
-| **Other** | [QUICKSTART.md](./QUICKSTART.md) |
-
-After installing the plugin, run `/codedna:init` in your project. It will:
-
-1. Auto-detect your project languages (PHP, TypeScript, Go, etc.)
-2. Ask how to annotate: **Claude session** (uses your session tokens, no API key) or **CLI** (tree-sitter, fast)
-3. Ask the depth: **human** (minimal), **semi** (balanced, default), or **agent** (full protocol)
-4. Annotate all files and show a summary
-
-### CLI standalone (optional)
-
-If you want to use the CLI directly (outside of an AI agent), or if `/codedna:init` suggests it:
-
-```bash
-# requires Python 3.11+ (CLI only — no Python needed in your project)
-pip install git+https://github.com/Larens94/codedna.git
-```
-
-```bash
-codedna init . --no-llm                     # free, structural only (exports + used_by)
-codedna init . --model deepseek/deepseek-chat  # with LLM rules: (~$0.40 for 200 files)
-codedna init . --model ollama/llama3        # local LLM, free
-codedna check .                             # coverage report
-codedna refresh .                           # update exports + used_by (zero LLM cost)
-```
-
-> Language auto-detected from your project — PHP, TypeScript, Go, Java, Kotlin, Ruby all work out of the box.
-> Annotation format adapts to the language — PHP uses `//`, Python uses docstrings. See [docs/languages.md](docs/languages.md).
 
 ---
 
@@ -467,10 +465,9 @@ codedna mode agent    # full protocol
 | | |
 |---|---|
 | [SPEC.md](./SPEC.md) | Protocol specification v0.8 |
-| [QUICKSTART.md](./QUICKSTART.md) | Setup for every AI tool |
+| [docs/languages.md](docs/languages.md) | 9 languages, template engines, framework awareness |
 | [docs/benchmark.md](docs/benchmark.md) | SWE-bench results, annotation integrity |
 | [docs/experiments.md](docs/experiments.md) | Multi-agent experiments |
-| [docs/languages.md](docs/languages.md) | 11 languages, frameworks, template engines |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | Dev setup, contribution guide |
 
 ---
