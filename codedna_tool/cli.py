@@ -2506,7 +2506,7 @@ def _write_codedna(
         # Rolling window: keep only the last _SESSIONS_MAX entries.
         # Each entry starts with '  - agent:' — split on that marker and trim oldest.
         import re as _re
-        _SESSIONS_MAX = 10
+        _SESSIONS_MAX = 3
         header_line = "agent_sessions:\n"
         entries_raw = agent_sessions_block
         # Strip leading 'agent_sessions:' line for splitting

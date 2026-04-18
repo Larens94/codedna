@@ -66,7 +66,7 @@ When NOT to add: simple getters, obvious control flow, standard library usage.
 
 ## On session start
 
-Read `.codedna` at repo root — project structure and last 3-5 `agent_sessions:` entries.
+Read `.codedna` at repo root — project structure and last 3 `agent_sessions:` entries.
 
 ## On edit: always do these in order
 

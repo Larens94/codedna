@@ -174,7 +174,7 @@ def my_function():
 
 Use manifest-only read mode: read only the module docstring (first 8–12 lines) of each file to build an architectural map before deciding which files to open fully.
 
-At session start, also read the last 3–5 `agent_sessions:` entries in `.codedna` to understand recent project history.
+At session start, also read the last 3 `agent_sessions:` entries in `.codedna` to understand recent project history. Older sessions are automatically pruned — full history is in git.
 
 Filter by priority:
 - File has `used_by:` mentioning the file you're editing → always include

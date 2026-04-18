@@ -15,7 +15,7 @@ CodeDNA is the **shared** layer — git-tracked, visible to every agent and ever
 
 ## Session start
 
-1. Read `.codedna` at repo root — project map and last 3–5 `agent_sessions:` entries
+1. Read `.codedna` at repo root — project map and last 3 `agent_sessions:` entries
 2. Read only the module docstring (first 8–12 lines) of each file you plan to touch — build an `exports:` → `used_by:` graph before opening any file in full
 
 ## Reading a file

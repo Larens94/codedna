@@ -389,7 +389,7 @@ agent_sessions:
 | `message` | Narrative: what was done, what was discovered, what the next agent should know |
 
 **Agent behaviour:**
-- On session start: read the last 3–5 `agent_sessions:` entries to understand recent project history
+- On session start: read the last 3 `agent_sessions:` entries to understand recent project history
 - On session end: append a new entry — never edit existing ones
 - If new packages were discovered: also update `packages:` with their `purpose:` and `depends_on:`
 
