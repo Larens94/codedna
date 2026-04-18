@@ -85,6 +85,29 @@ codedna refresh .                              # update exports + used_by (zero 
 > Languages auto-detected — PHP, TypeScript, Go, Java, Kotlin, Ruby all work out of the box.
 > Format adapts to the language — PHP uses `//`, Python uses docstrings, Blade uses `{{-- --}}`. See [docs/languages.md](docs/languages.md).
 
+### Commands reference
+
+**Claude Code plugin** (after `claude plugin install codedna@codedna`):
+
+| Command | What it does |
+|---|---|
+| `/codedna:init` | Auto-detect languages, choose execution mode (Claude session or CLI), choose depth (human/semi/agent), annotate all files |
+| `/codedna:check` | Coverage report — how many files are annotated, stale `used_by:` refs. No changes. |
+| `/codedna:manifest` | Architectural map from headers only (first 10-15 lines per file). No full reads. |
+| `/codedna:impact <file>` | Dependency chain before editing — who imports this file, and who imports those |
+
+**CLI** (all commands auto-detect languages):
+
+| Command | What it does |
+|---|---|
+| `codedna init <path>` | Annotate all files. `--no-llm` = free structural pass. `--model <m>` = add semantic `rules:` via LLM. |
+| `codedna update <path>` | Incremental — only annotates files without headers (skips already annotated) |
+| `codedna refresh <path>` | Recalculate `exports:` + `used_by:` via AST/tree-sitter. Zero LLM cost. Preserves `rules:`/`agent:`. |
+| `codedna check <path>` | Coverage report. Exit code 1 if incomplete — works in CI. |
+| `codedna manifest <path>` | Generate `.codedna` project map (Level 0): packages, depends_on, key_files |
+| `codedna mode <mode>` | Get/set mode: `human` (minimal), `semi` (default), `agent` (full protocol) |
+| `codedna install <path>` | Setup pre-commit hook + AI tool prompt + `.codedna` manifest |
+
 ---
 
 ## The problem
