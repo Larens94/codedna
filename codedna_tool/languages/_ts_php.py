@@ -236,7 +236,7 @@ class TreeSitterPhpAdapter(TreeSitterAdapter):
 
         walk(root)
 
-        for route in _ROUTE_RE.findall(source)[:5]:
+        for route in _ROUTE_RE.findall(source)[:50]:
             entry = f"route:{route}"
             if entry not in exports:
                 exports.append(entry)

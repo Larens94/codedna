@@ -7,6 +7,7 @@ Uses {{-- --}} block comment for the CodeDNA header.
 Detects @extends, @include, @component, @livewire as deps.
 Detects @section, @slot, @yield as exports.
 agent:   claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | initial Blade template adapter
+claude-opus-4-6 | anthropic | 2026-04-18 | s_20260418_gate2 | fix agent field: use _detect_provider() instead of hardcoded 'unknown'
 """
 
 from __future__ import annotations
@@ -104,7 +105,7 @@ class BladeAdapter(LanguageAdapter):
             f"-- exports: {exports}\n"
             f"-- used_by: {used_by}\n"
             f"-- rules:   {rules}\n"
-            f"-- agent:   {model_id} | unknown | {today} | unknown | initial CodeDNA annotation pass\n"
+            f"-- agent:   {model_id} | {self._detect_provider(model_id)} | {today} | codedna-cli | initial CodeDNA annotation pass\n"
             f"--}}}}\n\n"
         )
         return header + source
