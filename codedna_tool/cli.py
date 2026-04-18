@@ -1172,7 +1172,7 @@ def _parse_existing_docstring(docstring: str) -> dict[str, str]:
             continue
 
         # Check if line starts a new field
-        for field_name in ("exports:", "used_by:", "rules:", "agent:"):
+        for field_name in ("exports:", "used_by:", "related:", "rules:", "agent:"):
             if stripped.startswith(field_name):
                 if current_field:
                     fields[current_field] = "\n".join(current_lines)
@@ -1191,12 +1191,13 @@ def _parse_existing_docstring(docstring: str) -> dict[str, str]:
 
 
 def _rebuild_docstring(fields: dict[str, str], new_exports: str, new_used_by: str) -> str:
-    """Rebuild a CodeDNA docstring with updated exports/used_by, preserving rules/agent/message.
+    """Rebuild a CodeDNA docstring with updated exports/used_by, preserving related/rules/agent/message.
 
-    Rules:   Must preserve the exact rules: and agent: (including message: sub-fields).
+    Rules:   Must preserve the exact related:, rules: and agent: (including message: sub-fields).
              Only exports: and used_by: are replaced.
     """
     first_line = fields.get("first_line", "module — unknown.")
+    related = fields.get("related", "")
     rules = fields.get("rules", "rules:   none")
     agent = fields.get("agent", "agent:   unknown")
 
@@ -1205,10 +1206,10 @@ def _rebuild_docstring(fields: dict[str, str], new_exports: str, new_used_by: st
         "",
         f"exports: {new_exports}",
         f"used_by: {new_used_by}",
-        rules,
-        agent,
-        '"""',
     ]
+    if related:
+        lines.append(related)
+    lines.extend([rules, agent, '"""'])
     return "\n".join(lines) + "\n"
 
 
@@ -1237,7 +1238,7 @@ def _parse_lang_header(source: str, comment_prefix: str) -> dict[str, str] | Non
 
         # First line of header (filename — purpose)
         if not header_started:
-            if any(content.startswith(f) for f in ("exports:", "used_by:", "rules:", "agent:")):
+            if any(content.startswith(f) for f in ("exports:", "used_by:", "related:", "rules:", "agent:")):
                 header_started = True
                 fields["first_line"] = ""
             elif " — " in content or content.endswith("."):
@@ -1251,7 +1252,7 @@ def _parse_lang_header(source: str, comment_prefix: str) -> dict[str, str] | Non
         header_line_indices.append(i)
 
         # Check if line starts a new field
-        for field_name in ("exports:", "used_by:", "rules:", "agent:", "message:"):
+        for field_name in ("exports:", "used_by:", "related:", "rules:", "agent:", "message:"):
             if content.startswith(field_name):
                 if current_field:
                     fields[current_field] = "\n".join(current_lines)
@@ -1280,12 +1281,13 @@ def _rebuild_lang_header(fields: dict[str, str], new_exports: str, new_used_by: 
                          comment_prefix: str) -> str:
     """Rebuild a non-Python CodeDNA comment header with updated exports/used_by.
 
-    Rules:   Preserves rules:, agent:, message: exactly as-is.
+    Rules:   Preserves related:, rules:, agent:, message: exactly as-is.
              Only exports: and used_by: are replaced.
              Multi-line used_by entries are indented with the comment prefix.
     """
     p = comment_prefix
     first_line = fields.get("first_line", "module.")
+    related = fields.get("related", "")
     rules = fields.get("rules", "rules:   none")
     agent = fields.get("agent", "agent:   unknown")
     message = fields.get("message", "")
@@ -1299,6 +1301,14 @@ def _rebuild_lang_header(fields: dict[str, str], new_exports: str, new_used_by: 
     lines.append(f"{p} used_by: {ub_lines[0]}")
     for ub in ub_lines[1:]:
         lines.append(f"{p}          {ub}")
+
+    # Preserve related: if present
+    if related:
+        related_content = related.replace("related:", "").strip() if related.startswith("related:") else related
+        r_lines = related_content.split("\n")
+        lines.append(f"{p} related: {r_lines[0]}")
+        for r in r_lines[1:]:
+            lines.append(f"{p}          {r}")
 
     # Multi-line rules
     rules_content = rules.replace("rules:", "").strip() if rules.startswith("rules:") else rules

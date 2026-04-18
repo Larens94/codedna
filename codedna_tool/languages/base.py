@@ -113,7 +113,7 @@ class LanguageAdapter(ABC):
                 if stripped.startswith(prefix):
                     stripped = stripped[len(prefix):].strip()
                     break
-            if stripped.startswith(("exports:", "used_by:", "rules:", "agent:", "message:")):
+            if stripped.startswith(("exports:", "used_by:", "related:", "rules:", "agent:", "message:")):
                 return True
         return False
 
