@@ -362,7 +362,11 @@ codedna init sinatra/lib --extensions rb --model deepseek/deepseek-chat
 
 ## Install
 
-| Agent | Command |
+### For AI coding agents
+
+Install the plugin for your agent, then use the built-in `/codedna:init` command — it will guide you through the setup interactively.
+
+| Agent | Install command |
 |-------|---------|
 | **Claude Code** | `claude plugin marketplace add Larens94/codedna && claude plugin install codedna@codedna` |
 | **Cursor** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) cursor-hooks` |
@@ -372,41 +376,32 @@ codedna init sinatra/lib --extensions rb --model deepseek/deepseek-chat
 | **Windsurf** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) windsurf` |
 | **Other** | [QUICKSTART.md](./QUICKSTART.md) |
 
-Then annotate existing code (works for all supported languages):
+After installing the plugin, run `/codedna:init` in your project. It will:
+
+1. Auto-detect your project languages (PHP, TypeScript, Go, etc.)
+2. Ask how to annotate: **Claude session** (uses your session tokens, no API key) or **CLI** (tree-sitter, fast)
+3. Ask the depth: **human** (minimal), **semi** (balanced, default), or **agent** (full protocol)
+4. Annotate all files and show a summary
+
+### CLI standalone (optional)
+
+If you want to use the CLI directly (outside of an AI agent), or if `/codedna:init` suggests it:
 
 ```bash
 # requires Python 3.11+ (CLI only — no Python needed in your project)
 pip install git+https://github.com/Larens94/codedna.git
 ```
 
-**Option 1 — Free, no API key.** Structural annotations only (`exports:`, `used_by:`). No `rules:`.
-
 ```bash
-codedna init . --no-llm
-```
-
-**Option 2 — With LLM.** Adds `rules:` annotations. Default model: Claude Haiku.
-
-```bash
-pip install 'codedna[anthropic]'        # Anthropic (Claude)
-export ANTHROPIC_API_KEY=sk-...
-codedna init .
-```
-
-**Option 3 — Local LLM (free, no API key).** Uses Ollama or any other provider.
-
-```bash
-pip install 'codedna[litellm]'          # all providers + local models
-codedna init . --model ollama/llama3        # local, free
-codedna init . --model gpt-4o-mini          # OpenAI
-codedna init . --model gemini/gemini-2.0-flash  # Google
+codedna init . --no-llm                     # free, structural only (exports + used_by)
+codedna init . --model deepseek/deepseek-chat  # with LLM rules: (~$0.40 for 200 files)
+codedna init . --model ollama/llama3        # local LLM, free
+codedna check .                             # coverage report
+codedna refresh .                           # update exports + used_by (zero LLM cost)
 ```
 
 > Language auto-detected from your project — PHP, TypeScript, Go, Java, Kotlin, Ruby all work out of the box.
-> To annotate specific extensions only: `codedna init . --extensions php`.
 > Annotation format adapts to the language — PHP uses `//`, Python uses docstrings. See [docs/languages.md](docs/languages.md).
-
-> **Language support status:** Python is the most thoroughly tested language. The adapters for PHP, TypeScript, Go, and the other supported languages are functional but have seen less real-world usage. If you use CodeDNA with a non-Python project and find something off — wrong exports extracted, header format issue, edge case — a [pull request](https://github.com/Larens94/codedna/pulls) or [issue](https://github.com/Larens94/codedna/issues) is very welcome. That's how we make support solid for every language.
 
 ---
 
