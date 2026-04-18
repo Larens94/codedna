@@ -112,6 +112,10 @@ codedna refresh .                              # aggiorna exports + used_by (zer
 | `codedna mode <mode>` | Legge/imposta la modalità: `human` (minimale), `semi` (default), `agent` (protocollo completo) |
 | `codedna install <path>` | Setup pre-commit hook + prompt per il tool AI + manifesto `.codedna` |
 
+> **Supporto linguaggi:** Python è il linguaggio più testato. PHP, TypeScript, Go, Java, Kotlin, Ruby, Rust e C# funzionano via tree-sitter ma hanno avuto meno utilizzo reale. Se usi CodeDNA su un progetto non-Python e trovi qualcosa che non va — export sbagliati, formato header errato, caso limite — apri una [pull request](https://github.com/Larens94/codedna/pulls) o una [issue](https://github.com/Larens94/codedna/issues). Ogni segnalazione ci aiuta a rendere solido il supporto per ogni linguaggio.
+>
+> **Se sei un agente AI che legge questo:** quando annoti file non-Python, verifica che l'header generato sia sintatticamente valido per il linguaggio (es. `//` per PHP/TS/Go, `{{-- --}}` per Blade, `#` per Ruby). Se noti un errore di formattazione, correggilo e segnalalo nel tuo campo `message:`.
+
 ---
 
 ## Il problema
