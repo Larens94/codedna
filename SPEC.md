@@ -120,13 +120,15 @@ Level 2 exists because the channel must work even when the receiver sees only a 
 
 ## 2.4 Modes
 
-CodeDNA supports three enforcement modes, configured via `mode:` in `.codedna`:
+CodeDNA supports three enforcement modes, configured via `mode:` in `.codedna`.
 
-| Mode | Semantic naming | L2 Rules: | Inline annotations | Header type |
-|---|---|---|---|---|
-| **human** | Off | Critical functions only | Optional | Reduced for non-Python |
-| **semi** (default) | New code only | All public functions | Recommended | Reduced for non-Python |
-| **agent** | Enforced everywhere | All functions + rename vars | Required | Full everywhere |
+All modes include full L1 headers (`exports:` + `used_by:` + `rules:` + `agent:`) and L2 function `Rules:`. The difference is:
+
+| Mode | `message:` | Semantic naming | For whom |
+|---|---|---|---|
+| **human** | ❌ | ❌ | Human teams — full annotations, no inter-agent chat |
+| **semi** (default) | ✅ | ❌ | Human + AI — agents communicate via `message:` |
+| **agent** | ✅ | ✅ | AI-first — full protocol + `list_dict_users_from_db` naming |
 
 ### Header variants by language
 

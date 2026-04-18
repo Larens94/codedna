@@ -315,11 +315,13 @@ Four levels, like a zoom lens:
 
 ### Modes
 
-| Mode | For whom | What changes |
-|---|---|---|
-| **human** | Human-written code | Minimal annotations, no semantic naming |
-| **semi** | Human + AI together | Annotations on new code, semantic naming on new vars |
-| **agent** | AI-first codebases | Full protocol, rename vars, all functions annotated |
+All modes annotate L1 (module headers) + L2 (function Rules:) + `rules:` + `agent:`. The difference is:
+
+| Mode | `message:` | Semantic naming | For whom |
+|---|---|---|---|
+| **human** | ❌ | ❌ | Human teams — annotations are there, no inter-agent chat |
+| **semi** | ✅ | ❌ | Human + AI together — agents communicate via `message:` (default) |
+| **agent** | ✅ | ✅ | AI-first codebases — full protocol + `list_dict_users_from_db` naming |
 
 ```bash
 codedna mode semi     # default

@@ -56,11 +56,13 @@ After installing, add `mode:` to your `.codedna` file:
 mode: semi    # human | semi | agent
 ```
 
-| Mode | For | What it does |
-|---|---|---|
-| **human** | Human-written code | Minimal annotations, no semantic naming |
-| **semi** | Human + AI together | Annotations on new code, semantic naming on new vars (default) |
-| **agent** | AI-first codebases | Full protocol everywhere, rename variables, all functions annotated |
+All modes include L1 headers + L2 function Rules: + `rules:` + `agent:`.
+
+| Mode | `message:` | Semantic naming | For whom |
+|---|---|---|---|
+| **human** | ❌ | ❌ | Human teams — full annotations, no inter-agent chat |
+| **semi** | ✅ | ❌ | Human + AI together — agents communicate via `message:` (default) |
+| **agent** | ✅ | ✅ | AI-first codebases — full protocol + semantic variable naming |
 
 ---
 

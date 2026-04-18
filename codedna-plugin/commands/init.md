@@ -67,9 +67,9 @@ Stop here — do not proceed.
 ┌─────────────────────────────────────────────────┐
 │ What depth?                                     │
 │                                                 │
-│   [1] human  — minimal (exports + used_by only) │
-│   [2] semi   — balanced (default, recommended)  │
-│   [3] agent  — full protocol + semantic naming   │
+│   [1] human  — full annotations, no message:     │
+│   [2] semi   — + message: inter-agent chat       │
+│   [3] agent  — + semantic variable naming        │
 │                                                 │
 └─────────────────────────────────────────────────┘
 
@@ -288,6 +288,8 @@ Run /codedna:manifest to generate the .codedna project map.
 - The `agent:` field must use today's date in `YYYY-MM-DD` format
 - Keep `exports:` concise — list only top-level public API, not every internal helper
 - `used_by: none` is correct when no other file imports this one — do not omit the field
-- For `mode: human` — omit `rules:` and `agent:` fields, only write `exports:` and `used_by:`
-- For `mode: agent` — add `message:` field after `agent:` for inter-agent observations
+- All modes write full headers: `exports:` + `used_by:` + `rules:` + `agent:`
+- For `mode: human` — omit `message:` field, no semantic variable naming
+- For `mode: semi` — add `message:` field, no semantic variable naming
+- For `mode: agent` — add `message:` field + use semantic variable naming (`list_dict_users_from_db`)
 - If user picks B but Python/CLI not installed — BLOCK and explain, never auto-fallback to A
