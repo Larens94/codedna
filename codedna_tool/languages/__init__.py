@@ -12,13 +12,13 @@ agent:   claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | added templ
 claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | added .volt (Phalcon Volt engine) via JinjaAdapter — same {# #} comment syntax
 claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_001 | added tree-sitter adapters for TS/JS and Go with regex fallback
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | added tree-sitter adapters for PHP, Java, Rust, C#, Ruby, Kotlin — all 9 source languages now AST-powered with regex fallback
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_001 | removed C#/Rust/Swift — simplified to 8 source languages + 14 template extensions; 22 total
 """
 
 from typing import Optional
 
 from .base import LanguageAdapter
 from .blade import BladeAdapter
-from .csharp import CSharpAdapter
 from .erb import ErbAdapter
 from .go import GoAdapter
 from .handlebars import HandlebarsAdapter
@@ -27,21 +27,18 @@ from .jinja import JinjaAdapter
 from .php import PhpAdapter
 from .razor import RazorAdapter
 from .ruby import RubyAdapter
-from .rust import RustAdapter
-from .swift import SwiftAdapter
 from .typescript import TypeScriptAdapter
 from .vue import VueAdapter, SvelteAdapter
 
 # ── Tree-sitter adapters (AST-based, preferred) ────────────────────────────────
 # Each try/except provides graceful degradation to the regex adapter if the
 # tree-sitter grammar package is missing or corrupted.
+# C# and Rust removed — too niche for current user base; reduces install footprint.
 
 _ts_adapter = None
 _go_ts_adapter = None
 _php_ts_adapter = None
 _java_ts_adapter = None
-_rust_ts_adapter = None
-_cs_ts_adapter = None
 _ruby_ts_adapter = None
 _kotlin_ts_adapter = None
 
@@ -70,18 +67,6 @@ except ImportError:
     pass
 
 try:
-    from ._ts_rust import TreeSitterRustAdapter
-    _rust_ts_adapter = TreeSitterRustAdapter()
-except ImportError:
-    pass
-
-try:
-    from ._ts_csharp import TreeSitterCSharpAdapter
-    _cs_ts_adapter = TreeSitterCSharpAdapter()
-except ImportError:
-    pass
-
-try:
     from ._ts_ruby import TreeSitterRubyAdapter
     _ruby_ts_adapter = TreeSitterRubyAdapter()
 except ImportError:
@@ -98,8 +83,6 @@ _ts_or_regex      = _ts_adapter      or TypeScriptAdapter()
 _go_or_regex      = _go_ts_adapter   or GoAdapter()
 _php_or_regex     = _php_ts_adapter  or PhpAdapter()
 _java_or_regex    = _java_ts_adapter or JavaAdapter()
-_rust_or_regex    = _rust_ts_adapter or RustAdapter()
-_cs_or_regex      = _cs_ts_adapter   or CSharpAdapter()
 _ruby_or_regex    = _ruby_ts_adapter or RubyAdapter()
 _kotlin_or_regex  = _kotlin_ts_adapter or KotlinAdapter()
 
@@ -112,13 +95,10 @@ _REGISTRY: dict[str, LanguageAdapter] = {
     ".mjs":   _ts_or_regex,
     ".go":    _go_or_regex,
     ".php":   _php_or_regex,
-    ".rs":    _rust_or_regex,
     ".java":  _java_or_regex,
     ".kt":    _kotlin_or_regex,
     ".kts":   _kotlin_or_regex,
     ".rb":    _ruby_or_regex,
-    ".cs":    _cs_or_regex,
-    ".swift": SwiftAdapter(),  # tree-sitter-swift 0.0.1 too early — regex only
     # Template engines
     ".blade.php": BladeAdapter(),
     ".j2":        JinjaAdapter(),

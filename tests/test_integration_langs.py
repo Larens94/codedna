@@ -1,6 +1,6 @@
 """test_integration_langs.py — Integration tests for all 8 non-Python language adapters.
 
-exports: FIXTURES_DIR | PYTHON | TODAY | MODEL | run_codedna() | class TestTypeScriptIntegration | class TestGoIntegration | class TestPHPIntegration | class TestJavaIntegration | class TestRustIntegration | class TestCSharpIntegration | class TestRubyIntegration | class TestKotlinIntegration | class TestCLIMultiLang
+exports: FIXTURES_DIR | PYTHON | TODAY | MODEL | run_codedna() | class TestTypeScriptIntegration | class TestGoIntegration | class TestPHPIntegration | class TestJavaIntegration | class TestRubyIntegration | class TestKotlinIntegration | class TestCLIMultiLang
 used_by: none
 rules:   Tests use realistic fixture files from tests/fixtures/ — not toy examples.
 Each language verifies: named exports, inject_header fields, idempotency,
@@ -8,7 +8,9 @@ validator acceptance, and CLI round-trip via subprocess.
 Fixtures represent real-world patterns (Laravel controller, Spring service, etc.).
 Adapter-specific symbols (tree-sitter impl methods) are checked with any() to
 pass regardless of whether tree-sitter or regex adapter is active.
+C# and Rust removed from registry (2026-04-18) — those test classes skipped.
 agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | initial integration tests for 8 languages with realistic fixtures
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | skip TestRustIntegration/TestCSharpIntegration + remove rs/cs from TestCLIMultiLang
 """
 
 from __future__ import annotations
@@ -228,6 +230,7 @@ class TestJavaIntegration:
 
 # ── Rust ──────────────────────────────────────────────────────────────────────
 
+@pytest.mark.skip(reason="Rust removed from registry (2026-04-18)")
 class TestRustIntegration:
     FIXTURE = FIXTURES_DIR / "user_service.rs"
 
@@ -282,6 +285,7 @@ class TestRustIntegration:
 
 # ── C# ────────────────────────────────────────────────────────────────────────
 
+@pytest.mark.skip(reason="C# removed from registry (2026-04-18)")
 class TestCSharpIntegration:
     FIXTURE = FIXTURES_DIR / "UserService.cs"
 
@@ -446,9 +450,11 @@ class TestCLIMultiLang:
     def test_cli_java(self, tmp_path):
         self._run_and_verify(tmp_path, "UserService.java", ".java")
 
+    @pytest.mark.skip(reason="Rust removed from registry (2026-04-18)")
     def test_cli_rust(self, tmp_path):
         self._run_and_verify(tmp_path, "user_service.rs", ".rs")
 
+    @pytest.mark.skip(reason="C# removed from registry (2026-04-18)")
     def test_cli_csharp(self, tmp_path):
         self._run_and_verify(tmp_path, "UserService.cs", ".cs")
 

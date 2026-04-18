@@ -8,8 +8,11 @@ using directives captured as dependency strings (not resolved to file paths).
 inject_header() delegated to CSharpAdapter (// block between using and namespace).
 MUST use child_by_field_name('name') for methods/properties — named_children[identifier]
 returns the return type first, not the method name.
+Return type node is name_node.prev_named_sibling — skip modifier nodes walking backwards.
+has_doc: prev_named_sibling of method_declaration is 'comment' starting with '///'.
 agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | initial tree-sitter C# adapter
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | fix: use child_by_field_name('name') — first identifier in named_children is the return type not the method name
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | GATE 3: add funcs (LangFuncInfo) extraction — params via parameters field, return type via name_node.prev_named_sibling, has_doc via _has_doc_block_above
 """
 
 from __future__ import annotations
@@ -19,7 +22,7 @@ from pathlib import Path
 from tree_sitter import Language
 import tree_sitter_c_sharp as ts_cs
 
-from .base import LangFileInfo
+from .base import LangFileInfo, LangFuncInfo
 from ._treesitter import TreeSitterAdapter
 from .csharp import CSharpAdapter
 
@@ -66,6 +69,8 @@ class TreeSitterCSharpAdapter(TreeSitterAdapter):
 
         exports: list[str] = []
         deps: list[str] = []
+        funcs: list[LangFuncInfo] = []
+        lines = source.splitlines()
 
         def walk(node) -> None:
             if node.type in ("class_declaration", "interface_declaration",
@@ -90,6 +95,32 @@ class TreeSitterCSharpAdapter(TreeSitterAdapter):
                             if entry not in exports:
                                 exports.append(entry)
 
+                            if node.type == "method_declaration":
+                                # Return type: prev_named_sibling of name node, skipping
+                                # modifier nodes (public, static, etc.)
+                                ret_node = id_node.prev_named_sibling
+                                while ret_node is not None and ret_node.type == "modifier":
+                                    ret_node = ret_node.prev_named_sibling
+
+                                params_node = node.child_by_field_name("parameters")
+                                sig = self._fmt_sig(entry, params_node, ret_node)
+
+                                start_line = node.start_point[0] + 1  # 1-based
+                                end_line = min(node.end_point[0] + 1, start_line + 19)
+                                snippet = "\n".join(lines[start_line - 1:end_line])
+
+                                has_doc = self._has_doc_block_above(node)
+                                has_rules = "Rules:" in snippet[:200]
+
+                                funcs.append(LangFuncInfo(
+                                    name=sig,
+                                    start_line=start_line,
+                                    has_doc=has_doc,
+                                    has_rules=has_rules,
+                                    source_snippet=snippet,
+                                    language="csharp",
+                                ))
+
             elif node.type == "using_directive":
                 qn = next(
                     (c for c in node.named_children
@@ -106,6 +137,6 @@ class TreeSitterCSharpAdapter(TreeSitterAdapter):
         walk(root)
 
         return LangFileInfo(
-            path=path, rel=rel, exports=exports, deps=deps,
+            path=path, rel=rel, exports=exports, deps=deps, funcs=funcs,
             has_codedna=self.has_codedna_header(source),
         )

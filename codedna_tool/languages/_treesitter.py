@@ -1,6 +1,6 @@
 """_treesitter.py — Base class for tree-sitter-powered CodeDNA adapters.
 
-exports: class TreeSitterAdapter
+exports: class TreeSitterAdapter | TreeSitterAdapter._has_doc_block_above(node) | TreeSitterAdapter._fmt_sig(name, params_node, return_node)
 used_by: codedna_tool/languages/_ts_csharp.py → TreeSitterAdapter
          codedna_tool/languages/_ts_go.py → TreeSitterAdapter
          codedna_tool/languages/_ts_java.py → TreeSitterAdapter
@@ -15,9 +15,10 @@ extract_info() must never raise — return LangFileInfo(parseable=False) on fail
 tree-sitter 0.25+ API: Query(lang, pattern) → QueryCursor(query) → cursor.captures(node).
 _parse_cached() uses identity (is) check — callers must reuse the same bytes object
 within a single extract_info() call to get cache hits; re-parse on different object.
-agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed API for tree-sitter 0.25: Query.captures → QueryCursor.captures
-claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | extended used_by to all 6 new tree-sitter adapters (PHP, Java, Rust, C#, Ruby, Kotlin)
+agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | extended used_by to all 6 new tree-sitter adapters (PHP, Java, Rust, C#, Ruby, Kotlin)
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | add _parse_cached() 1-entry cache — prevents parsing same bytes N times per extract_info() call
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php2 | GATE 3: delegate inject_function_rules() to regex_fallback — enables L2 PHPDoc Rules: via TreeSitterPhpAdapter
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | add _has_doc_block_above() + _fmt_sig() shared helpers — all 8 adapters use these for AST-based doc detection and full signature strings
 """
 
 from __future__ import annotations
@@ -55,6 +56,68 @@ class TreeSitterAdapter(LanguageAdapter):
                       rules: str, model_id: str, today: str) -> str:
         """Delegate to regex adapter — header injection logic is identical."""
         return self._regex_fallback.inject_header(source, rel, exports, used_by, rules, model_id, today)
+
+    def inject_function_rules(self, source: str, func, rules_text: str) -> str:
+        """Delegate to regex adapter — function rules injection logic is language-specific."""
+        return self._regex_fallback.inject_function_rules(source, func, rules_text)
+
+    # ── Shared signature + doc helpers (used by all language adapters) ──────────
+
+    @staticmethod
+    def _has_doc_block_above(node) -> bool:
+        """Return True if there is a doc comment immediately before this AST node.
+
+        Rules:   Checks prev_named_sibling — must be a comment/doc node type.
+                 Verified node types per language:
+                   PHP:        ends with '*/' → from source lines (handled in _ts_php.py)
+                   TypeScript: 'comment' starting with '/**'
+                   Go:         'comment' (godoc: '//' line immediately before)
+                   Java:       'block_comment' starting with '/**'
+                   Rust:       'line_comment' with outer_doc_comment_marker child
+                   C#:         'comment' starting with '///'
+                   Ruby:       'comment' (any '#' line immediately before)
+                   Kotlin:     'block_comment' starting with '/**'
+                 Returns False when no prev_named_sibling exists.
+        """
+        prev = node.prev_named_sibling
+        if prev is None:
+            return False
+        t = prev.text.decode("utf-8", errors="replace") if prev.text else ""
+        node_type = prev.type
+        if node_type == "block_comment":
+            return t.lstrip().startswith("/**")
+        if node_type == "comment":
+            stripped = t.lstrip()
+            return (stripped.startswith("/**") or stripped.startswith("//")
+                    or stripped.startswith("#"))
+        if node_type == "line_comment":
+            # Rust: outer doc comment has a child 'outer_doc_comment_marker'
+            return any(c.type == "outer_doc_comment_marker" for c in prev.children)
+        return False
+
+    @staticmethod
+    def _fmt_sig(name: str, params_node, return_node) -> str:
+        """Format a full function signature string from AST nodes.
+
+        Rules:   name is the bare function/method name (e.g. 'Foo::bar').
+                 params_node is the parameter list node (or None → bare name returned).
+                 return_node is the return type node (or None → no return type appended).
+                 Output: 'Foo::bar(TypeA $a, TypeB $b): ReturnType'
+                 Keeps parameter text compact — strip internal whitespace to single space.
+                 Returns bare name when params_node is None (safe fallback).
+        """
+        if params_node is None:
+            return name
+        params_text = params_node.text.decode("utf-8", errors="replace") if params_node.text else "()"
+        # Normalize whitespace inside params: collapse multiple spaces/newlines
+        import re as _re
+        params_text = _re.sub(r"\s+", " ", params_text).strip()
+        sig = f"{name}{params_text}"
+        if return_node is not None:
+            ret = return_node.text.decode("utf-8", errors="replace").strip()
+            if ret:
+                sig = f"{sig}: {ret}"
+        return sig
 
     def _parse_cached(self, source_bytes: bytes):
         """Parse source_bytes, returning a cached tree when the same bytes object is reused.

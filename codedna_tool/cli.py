@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """cli.py — CodeDNA v0.8 annotation tool: init, update, check, install.
 
-exports: class FuncInfo | class FileInfo | scan_file(path, repo_root) | build_used_by(infos) | build_ast_skeleton(source, rel) | class LLM | _EXPORTS_CAP | build_module_docstring(info, ub, rules, model_id) | inject_module_docstring(source, docstring) | inject_function_rules(source, func, rules_text) | collect_files(target, exclude, extensions) | run_lang_files(target, extensions, repo_root, exclude, model, dry_run, force, no_llm, verbose, api_key) | run(target, levels, model, dry_run, exclude, force, no_llm, only_public, verbose, api_key, repo_root, extensions) | cmd_refresh(target, repo_root, exclude, dry_run, verbose) | cmd_check(target, repo_root, exclude, verbose, extensions) | _TOOL_FILES | _HOOK_TOOLS | _TOOL_HOOKS_MAP | _HOOKS_BASE_MAP | _PRE_COMMIT_HOOK | (+7 more)
+exports: class FuncInfo | class FileInfo | scan_file(path, repo_root) | scan_file_lang(path, repo_root, adapter) | build_used_by(infos) | build_ast_skeleton(source, rel) | class LLM | _EXPORTS_CAP | build_module_docstring(info, ub, rules, model_id) | inject_module_docstring(source, docstring) | inject_function_rules(source, func, rules_text) | collect_files(target, exclude, extensions) | run_lang_files(target, extensions, repo_root, exclude, model, dry_run, force, no_llm, verbose, api_key) | run(target, levels, model, dry_run, exclude, force, no_llm, only_public, verbose, api_key, repo_root, extensions) | cmd_refresh(target, repo_root, exclude, dry_run, verbose) | cmd_check(target, repo_root, exclude, verbose, extensions) | _TOOL_FILES | _HOOK_TOOLS | _TOOL_HOOKS_MAP | _HOOKS_BASE_MAP | _PRE_COMMIT_HOOK | (+7 more)
 used_by: tests/test_cli.py → FileInfo, build_module_docstring
 rules:   L2 (function Rules:) applies Python AST only; language adapters are L1-only.
 LLM calls are capped at 2 per Python file; --no-llm skips all LLM calls.
@@ -9,11 +9,11 @@ _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
 scan_file handles 3 import patterns: (1) from .mod import X, (2) from . import X
 (submodule-first then __init__.py symbol), (3) from pkg import X (tries pkg/X.py
 before falling back to pkg/__init__.py). All 3 were previously under-resolved.
-agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | fix L2 batch overflow: _L2_BATCH_SIZE=12, dynamic max_tokens, _parse_json_response with truncation recovery
-claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | skip *_test.go; cap exports@20; fix non-Python path (raw join→_fmt_exports, module_rules→module_rules_raw, provider detection)
-claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_005 | run_lang_files returns (annotated, llm_calls) tuple; run() aggregates lang llm_calls into summary counter
-claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_bench | fix 3 used_by bugs in scan_file; fix LLM gating: run() checked HAS_ANTHROPIC instead of HAS_LITELLM|HAS_ANTHROPIC — litellm (DeepSeek/GPT) was silently falling back to --no-llm
-claude-opus-4-7 | anthropic | 2026-04-17 | s_20260417_001 | fix _detect_packages() flat parts[0] → __init__.py-aware with depth cap 3; _package_depends_on() takes pkg_keys to match deepest ancestor. Django monorepo now produces ~50 pkgs instead of collapsing to 5.
+agent:   claude-opus-4-7 | anthropic | 2026-04-18 | s_20260418_php | GATE 1: add scan_file_lang() wrapper + integrate into cmd_manifest — non-Python files now populate infos dict, enabling L0 manifest + cross-file used_by graph for PHP/TS/Go/Java/Rust/C#/Ruby/Kotlin. Python remains authoritative on rel-path conflicts.
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php2 | GATE 2+3: used_by graph for non-Python; lang_function_rules_batch() for LLM L2 on non-Python; run_lang_files L2 pass via adapter.inject_function_rules()
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_msg | add message: field to build_module_docstring() (Python) — present in all L1 headers now, empty by default, visible to next agent
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_sessions | _write_codedna() rolling window: keeps last 10 agent_sessions — prevents unbounded .codedna growth (was 22+ sessions / 688 lines)
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | _detect_project_meta(): reads go.mod/package.json/pom.xml/settings.gradle(.kts)/build.gradle(.kts)/Gemfile/Cargo.toml; integrated into cmd_install() + cmd_manifest(); README language count 11→9, L2 coverage updated
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -273,6 +273,30 @@ def scan_file(path: Path, repo_root: Path) -> FileInfo:
     )
 
 
+def scan_file_lang(path: Path, repo_root: Path, adapter) -> FileInfo:
+    """Scan a non-Python file via a language adapter and wrap result in FileInfo.
+
+    Rules:   adapter.extract_info() returns LangFileInfo where deps is list[str]
+             (list of dep file paths). We convert to dict[str, list[str]] so
+             build_used_by() can process Python + non-Python uniformly.
+             funcs=[] — L2 extraction per non-Python is not yet implemented (GATE 3).
+             docstring=None — non-Python files don't have a single "docstring" node;
+             has_codedna is detected by adapter.has_codedna_header() instead.
+    """
+    lang_info = adapter.extract_info(path, repo_root)
+    deps_dict = {dep: [] for dep in lang_info.deps}
+    return FileInfo(
+        path=lang_info.path,
+        rel=lang_info.rel,
+        exports=lang_info.exports,
+        deps=deps_dict,
+        docstring=None,
+        has_codedna=lang_info.has_codedna,
+        funcs=[],
+        parseable=lang_info.parseable,
+    )
+
+
 def build_used_by(infos: dict[str, FileInfo]) -> dict[str, dict[str, list[str]]]:
     """Invert deps graph → {file: {importer: [symbols]}}"""
     used_by: dict[str, dict] = {}
@@ -515,6 +539,39 @@ class LLM:
             return {}
         return parsed
 
+    def lang_function_rules_batch(self, rel: str, funcs: list, lang: str) -> dict[str, str]:
+        """LLM batch for non-Python functions using LangFuncInfo.source_snippet.
+
+        Rules:   Same batching + JSON contract as function_rules_batch.
+                 lang param sets the code fence language (e.g. 'php', 'typescript', 'go').
+                 funcs items must have .name, .source_snippet, .has_rules attributes.
+                 Skips funcs where has_rules=True (already annotated).
+        """
+        candidates = [f for f in funcs if not f.has_rules]
+        if not candidates:
+            return {}
+        result: dict[str, str] = {}
+        for i in range(0, len(candidates), self._L2_BATCH_SIZE):
+            batch = candidates[i : i + self._L2_BATCH_SIZE]
+            blocks = "\n\n".join(
+                f"### {f.name}\n```{lang}\n{f.source_snippet}\n```" for f in batch
+            )
+            max_tok = max(400, len(batch) * 50)
+            resp = self._call(
+                f"File: {rel}\n\n"
+                "For each function, does it have NON-OBVIOUS domain constraints a future developer MUST know?\n"
+                "YES → brief constraint (1-2 lines). NO → SKIP.\n\n"
+                f"{blocks}\n\n"
+                f'Return ONLY valid JSON: {{"func_name": "constraint or SKIP", ...}}',
+                max_tokens=max_tok,
+            )
+            parsed = self._parse_json_response(resp)
+            if parsed is None:
+                print(f"    WARNING: LLM returned invalid JSON for function rules in {rel} — skipping batch")
+            else:
+                result.update(parsed)
+        return result
+
     @staticmethod
     def _parse_json_response(resp: str) -> Optional[dict]:
         """Extract a JSON object from an LLM response, tolerating markdown fences and truncation.
@@ -611,6 +668,7 @@ def build_module_docstring(info: FileInfo, ub: dict, rules: str, model_id: str) 
         f"used_by: {_fmt_used_by(ub)}",
         f"rules:   {rules}",
         f"agent:   {model_id} | {provider} | {today} | codedna-cli | initial CodeDNA annotation pass",
+        "message: ",
         '"""',
     ]
     return "\n".join(lines) + "\n"
@@ -798,12 +856,12 @@ def run_lang_files(
     verbose: bool,
     api_key: Optional[str],
 ) -> tuple[int, int]:
-    """Annotate non-Python source files using language adapters (L1 module header only).
+    """Annotate non-Python source files using language adapters (L1 + L2 where supported).
 
     Rules:   Returns (annotated_count, llm_call_count) — caller adds llm_call_count to its own counter.
              Only runs for extensions that have a registered adapter.
-             L2 (function Rules:) is Python-only; language adapters do L1 only.
-             Only runs for extensions that have a registered adapter.
+             L2 (function Rules:) runs for adapters that override inject_function_rules() (e.g. PHP).
+             L2 requires LLM — skipped when no_llm=True.
     """
     lang_exts = [e for e in extensions if e != ".py" and get_adapter(e) is not None]
     if not lang_exts:
@@ -826,6 +884,14 @@ def run_lang_files(
     annotated = 0
     llm_calls = 0
 
+    # Build cross-file used_by graph for all non-Python files before annotating.
+    lang_infos: dict[str, FileInfo] = {}
+    for path in lang_files:
+        adapter = get_adapter(_get_extension(path))
+        if adapter is not None:
+            lang_infos[str(path.relative_to(repo_root))] = scan_file_lang(path, repo_root, adapter)
+    ub_graph_lang = build_used_by(lang_infos)
+
     for path in lang_files:
         adapter = get_adapter(_get_extension(path))
         if adapter is None:
@@ -844,7 +910,7 @@ def run_lang_files(
 
         source = path.read_text(encoding="utf-8", errors="replace")
         exports_str = _fmt_exports(info.exports)
-        used_by_str = "none"  # cross-file graph not available for non-Python files yet
+        used_by_str = _fmt_used_by(ub_graph_lang.get(info.rel, {}))
 
         rules_str = "none"
         if llm and info.exports:
@@ -867,6 +933,31 @@ def run_lang_files(
             annotated += 1
             if verbose:
                 print(f"  L1  {info.rel}  exports: {exports_str[:60]}")
+
+        # L2 pass: inject function Rules: for adapters that support it (e.g. PHP)
+        # Re-read info to get funcs (extract_info was already called above)
+        if llm and info.funcs:
+            lang = info.funcs[0].language if info.funcs else "unknown"
+            try:
+                rules_map = llm.lang_function_rules_batch(info.rel, info.funcs, lang)
+                llm_calls += 1
+            except Exception as e:
+                print(f"    L2 skipped ({type(e).__name__}): {str(e)[:80]}")
+                rules_map = {}
+
+            if rules_map:
+                # Apply bottom-to-top to preserve line numbers
+                current_source = path.read_text(encoding="utf-8", errors="replace")
+                sorted_funcs = sorted(info.funcs, key=lambda f: f.start_line, reverse=True)
+                for func in sorted_funcs:
+                    r = rules_map.get(func.name, "SKIP")
+                    if r and r != "SKIP":
+                        current_source = adapter.inject_function_rules(current_source, func, r)
+                if not dry_run:
+                    path.write_text(current_source, encoding="utf-8")
+                if verbose:
+                    n_injected = sum(1 for f in info.funcs if rules_map.get(f.name, "SKIP") != "SKIP")
+                    print(f"  L2  {info.rel}  {n_injected} Rules: injected")
 
     print(f"  Annotated {annotated} non-Python files")
     return annotated, llm_calls
@@ -977,12 +1068,13 @@ def run(
                 if llm:
                     # Rules: LLM failure (timeout, rate-limit) on ONE file must not
                     # abort the whole init run — skip L2 for this file and continue.
+                    # Always print the error (not only verbose) so silent rate-limits
+                    # are visible in logs.
                     try:
                         rules_map = llm.function_rules_batch(rel, candidates)
                         llm_calls += 1
                     except Exception as e:
-                        if verbose:
-                            print(f"    L2 skipped ({type(e).__name__}): {str(e)[:80]}")
+                        print(f"  ⚠️  L2 skipped {rel} ({type(e).__name__}): {str(e)[:120]}")
 
                 # Apply bottom-to-top to keep earlier line numbers valid
                 to_inject = [
@@ -1012,8 +1104,7 @@ def run(
                         rules = llm.module_rules(rel, source)
                         llm_calls += 1
                     except Exception as e:
-                        if verbose:
-                            print(f"    L1 llm skipped ({type(e).__name__}): {str(e)[:80]}")
+                        print(f"  ⚠️  L1 llm skipped {rel} ({type(e).__name__}): {str(e)[:120]}")
 
                 ub = ub_graph.get(rel, {})
                 agent_id = "codedna-cli (no-llm)" if no_llm else model
@@ -1121,13 +1212,139 @@ def _rebuild_docstring(fields: dict[str, str], new_exports: str, new_used_by: st
     return "\n".join(lines) + "\n"
 
 
+def _parse_lang_header(source: str, comment_prefix: str) -> dict[str, str] | None:
+    """Parse a non-Python CodeDNA comment header into field dict.
+
+    Rules:   Returns None if no CodeDNA header found.
+             Parses // exports:, // used_by:, // rules:, // agent:, // message: lines.
+             Preserves multi-line continuation values (indented lines after a field).
+    """
+    fields: dict[str, str] = {}
+    current_field = None
+    current_lines: list[str] = []
+    header_started = False
+    header_line_indices: list[int] = []
+
+    for i, line in enumerate(source.splitlines()):
+        stripped = line.strip()
+        # Strip comment prefix
+        if stripped.startswith(comment_prefix):
+            content = stripped[len(comment_prefix):].strip()
+        else:
+            if header_started:
+                break
+            continue
+
+        # First line of header (filename — purpose)
+        if not header_started:
+            if any(content.startswith(f) for f in ("exports:", "used_by:", "rules:", "agent:")):
+                header_started = True
+                fields["first_line"] = ""
+            elif " — " in content or content.endswith("."):
+                fields["first_line"] = content
+                header_started = True
+                header_line_indices.append(i)
+                continue
+            else:
+                continue
+
+        header_line_indices.append(i)
+
+        # Check if line starts a new field
+        for field_name in ("exports:", "used_by:", "rules:", "agent:", "message:"):
+            if content.startswith(field_name):
+                if current_field:
+                    fields[current_field] = "\n".join(current_lines)
+                current_field = field_name.rstrip(":")
+                current_lines = [content]
+                break
+        else:
+            if current_field and content:
+                current_lines.append(content)
+            elif not content:
+                # Blank comment line — skip
+                pass
+
+    if current_field:
+        fields[current_field] = "\n".join(current_lines)
+
+    if not fields or "exports" not in fields:
+        return None
+
+    fields["_header_start"] = str(min(header_line_indices)) if header_line_indices else "0"
+    fields["_header_end"] = str(max(header_line_indices)) if header_line_indices else "0"
+    return fields
+
+
+def _rebuild_lang_header(fields: dict[str, str], new_exports: str, new_used_by: str,
+                         comment_prefix: str) -> str:
+    """Rebuild a non-Python CodeDNA comment header with updated exports/used_by.
+
+    Rules:   Preserves rules:, agent:, message: exactly as-is.
+             Only exports: and used_by: are replaced.
+             Multi-line used_by entries are indented with the comment prefix.
+    """
+    p = comment_prefix
+    first_line = fields.get("first_line", "module.")
+    rules = fields.get("rules", "rules:   none")
+    agent = fields.get("agent", "agent:   unknown")
+    message = fields.get("message", "")
+
+    lines = [f"{p} {first_line}", f"{p}"]
+
+    lines.append(f"{p} exports: {new_exports}")
+
+    # Multi-line used_by
+    ub_lines = new_used_by.split("\n")
+    lines.append(f"{p} used_by: {ub_lines[0]}")
+    for ub in ub_lines[1:]:
+        lines.append(f"{p}          {ub}")
+
+    # Multi-line rules
+    rules_content = rules.replace("rules:", "").strip() if rules.startswith("rules:") else rules
+    r_lines = rules_content.split("\n")
+    lines.append(f"{p} rules:   {r_lines[0]}")
+    for r in r_lines[1:]:
+        lines.append(f"{p}          {r}")
+
+    # Multi-line agent
+    agent_content = agent.replace("agent:", "").strip() if agent.startswith("agent:") else agent
+    a_lines = agent_content.split("\n")
+    lines.append(f"{p} agent:   {a_lines[0]}")
+    for a in a_lines[1:]:
+        lines.append(f"{p} {a}")
+
+    if message:
+        msg_content = message.replace("message:", "").strip() if message.startswith("message:") else message
+        lines.append(f"{p} message: {msg_content}")
+
+    return "\n".join(lines)
+
+
+def _replace_lang_header(source: str, fields: dict[str, str], new_header: str) -> str:
+    """Replace the CodeDNA comment header block in a non-Python source file.
+
+    Rules:   Uses _header_start and _header_end from fields to locate the block.
+             Preserves everything before and after the header block.
+    """
+    src_lines = source.splitlines(keepends=True)
+    start = int(fields.get("_header_start", "0"))
+    end = int(fields.get("_header_end", "0"))
+
+    before = "".join(src_lines[:start])
+    after = "".join(src_lines[end + 1:])
+
+    return before + new_header + "\n" + after
+
+
 def cmd_refresh(target: Path, repo_root: Optional[Path], exclude: list[str],
                 dry_run: bool, verbose: bool):
-    """Refresh exports: and used_by: via AST. Zero LLM cost.
+    """Refresh exports: and used_by: via AST/tree-sitter. Zero LLM cost.
 
     Rules:   Only updates files that already have CodeDNA headers.
              Only changes exports: and used_by: — preserves rules:, agent:, message:.
              Scans the ENTIRE project to build the used_by graph, even if target is a single file.
+             Scans both Python (via ast) and non-Python (via tree-sitter adapters).
     """
     if repo_root is None:
         repo_root = target if target.is_dir() else target.parent
@@ -1135,25 +1352,47 @@ def cmd_refresh(target: Path, repo_root: Optional[Path], exclude: list[str],
     # Scan all Python files in project for complete dependency graph
     all_py = collect_files(repo_root, exclude, extensions=[".py"])
 
+    # Auto-detect non-Python extensions with available adapters
+    all_exts = _auto_detect_extensions(repo_root)
+    non_py_exts = [e for e in all_exts if e != ".py"]
+    all_lang = []
+    for ext in non_py_exts:
+        all_lang.extend(collect_files(repo_root, exclude, extensions=[ext]))
+
     print("CodeDNA Refresh v0.8")
     print(f"Target      {target}")
     print(f"Mode        {'DRY RUN' if dry_run else 'WRITE'}")
     print(f"Python      {len(all_py)} files scanned for dependency graph")
+    if all_lang:
+        print(f"Non-Python  {len(all_lang)} files ({', '.join(non_py_exts)})")
     print()
 
-    # Pass 1: scan all files
+    # Pass 1: scan all Python files
     infos: dict[str, FileInfo] = {}
     for f in all_py:
         info = scan_file(f, repo_root)
         if info.parseable:
             infos[info.rel] = info
 
-    # Pass 2: build used_by graph from ALL files
+    # Pass 1b: scan non-Python files via language adapters
+    lang_infos: dict[str, FileInfo] = {}
+    for f in all_lang:
+        ext = _get_extension(f)
+        adapter = get_adapter(ext)
+        if adapter is None:
+            continue
+        info = scan_file_lang(f, repo_root, adapter)
+        if info.parseable:
+            infos[info.rel] = info
+            lang_infos[info.rel] = info
+
+    # Pass 2: build used_by graph from ALL files (Python + non-Python)
     ub_graph = build_used_by(infos)
 
     # Pass 3: determine which files to refresh
     if target.is_file():
-        targets = {str(target.relative_to(repo_root)): infos.get(str(target.relative_to(repo_root)))}
+        rel_target = str(target.relative_to(repo_root))
+        targets = {rel_target: infos.get(rel_target)}
     else:
         targets = infos
 
@@ -1167,14 +1406,54 @@ def cmd_refresh(target: Path, repo_root: Optional[Path], exclude: list[str],
                 print(f"  skip (no header)   {rel}")
             continue
 
-        # Parse existing docstring
+        new_exports = _fmt_exports(info.exports)
+        new_used_by = _fmt_used_by(ub_graph.get(rel, {}))
+
+        # Non-Python files: use lang header parser
+        if rel in lang_infos:
+            ext = _get_extension(info.path)
+            adapter = get_adapter(ext)
+            if adapter is None:
+                skipped += 1
+                continue
+            source = info.path.read_text(encoding="utf-8", errors="replace")
+            fields = _parse_lang_header(source, adapter.comment_prefix)
+            if fields is None:
+                skipped += 1
+                continue
+
+            old_exp = fields.get("exports", "")
+            old_ub = fields.get("used_by", "")
+            old_exp_val = old_exp.replace("exports:", "").strip() if old_exp else ""
+            old_ub_val = old_ub.replace("used_by:", "").strip() if old_ub else ""
+
+            if old_exp_val == new_exports and old_ub_val == new_used_by:
+                if verbose:
+                    print(f"  unchanged          {rel}")
+                continue
+
+            new_header = _rebuild_lang_header(fields, new_exports, new_used_by,
+                                              adapter.comment_prefix)
+            new_source = _replace_lang_header(source, fields, new_header)
+
+            if not dry_run:
+                info.path.write_text(new_source, encoding="utf-8")
+
+            updated += 1
+            changes = []
+            if old_exp_val != new_exports:
+                changes.append("exports")
+            if old_ub_val != new_used_by:
+                changes.append("used_by")
+            print(f"  {'DRY ' if dry_run else ''}updated  {rel}  ({', '.join(changes)})")
+            continue
+
+        # Python files: use docstring parser
         if not info.docstring:
             skipped += 1
             continue
 
         old_fields = _parse_existing_docstring(info.docstring)
-        new_exports = _fmt_exports(info.exports)
-        new_used_by = _fmt_used_by(ub_graph.get(rel, {}))
 
         # Check if anything changed
         old_exports_raw = old_fields.get("exports", "")
@@ -1859,12 +2138,17 @@ def cmd_install(repo_root: Path, tools: list[str], skip_hook: bool = False,
     if path_codedna.exists():
         print("  SKIP  .codedna (already exists)")
     else:
-        str_project_name = repo_root.name
+        # Rules: prefer project name from build files (go.mod, package.json, pom.xml…)
+        #        over plain directory name — avoids generic names like 'src' or 'app'.
+        meta = _detect_project_meta(repo_root)
+        str_project_name = meta["name"] or repo_root.name
+        if meta["stack"]:
+            print(f"  INFO  stack detected: {', '.join(meta['stack'])}")
         path_codedna.write_text(
             _CODEDNA_TEMPLATE.format(project_name=str_project_name),
             encoding="utf-8",
         )
-        print("  OK    .codedna created")
+        print(f"  OK    .codedna created (project: {str_project_name})")
         int_count_installed += 1
 
     # Summary
@@ -1876,8 +2160,9 @@ def cmd_install(repo_root: Path, tools: list[str], skip_hook: bool = False,
 
     print()
     print("Next steps:")
-    print("  codedna init .                  # annotate all detected languages (auto-detect)")
-    print("  codedna init . --no-llm         # free — structural only, no API key needed")
+    print("  codedna init . --no-llm         # annotate code (free, no API key)")
+    print("  codedna init .                  # annotate with AI-generated rules:")
+    print("  codedna manifest .              # generate .codedna package map")
     print("  codedna check .                 # verify coverage")
     return 0
 
@@ -2015,6 +2300,127 @@ def _exports_sample(pkg_files: list[str], infos: dict[str, "FileInfo"]) -> str:
     return " | ".join(parts)
 
 
+def _detect_project_meta(root: Path) -> dict:
+    """Read project-level build files to extract name, description, and stack.
+
+    Rules:   Priority order: go.mod > package.json > pom.xml > settings.gradle(.kts) >
+             build.gradle(.kts) > Gemfile. First match wins for name/description.
+             stack: always lists ALL detected build files — a project can be multi-language.
+             Returns {name: str, description: str, stack: list[str]} — values may be empty.
+             Never raises — returns all-empty on any read/parse error.
+    """
+    import re as _re
+    import json as _json
+
+    name = ""
+    description = ""
+    stack: list[str] = []
+
+    # ── go.mod ────────────────────────────────────────────────────────────────
+    go_mod = root / "go.mod"
+    if go_mod.exists():
+        stack.append("go")
+        if not name:
+            try:
+                text = go_mod.read_text(encoding="utf-8", errors="replace")
+                m = _re.search(r"^module\s+(\S+)", text, _re.MULTILINE)
+                if m:
+                    # Use last path segment of module path as project name
+                    name = m.group(1).rstrip("/").split("/")[-1]
+            except OSError:
+                pass
+
+    # ── package.json ─────────────────────────────────────────────────────────
+    pkg_json = root / "package.json"
+    if pkg_json.exists():
+        stack.append("nodejs")
+        if not name:
+            try:
+                data = _json.loads(pkg_json.read_text(encoding="utf-8", errors="replace"))
+                name = data.get("name", "").lstrip("@").split("/")[-1]
+                description = data.get("description", "")
+            except (OSError, ValueError):
+                pass
+
+    # ── pom.xml ───────────────────────────────────────────────────────────────
+    pom_xml = root / "pom.xml"
+    if pom_xml.exists():
+        stack.append("java-maven")
+        if not name:
+            try:
+                text = pom_xml.read_text(encoding="utf-8", errors="replace")
+                m = _re.search(r"<artifactId>\s*([^<]+)\s*</artifactId>", text)
+                if m:
+                    name = m.group(1).strip()
+                if not description:
+                    m = _re.search(r"<description>\s*([^<]+)\s*</description>", text)
+                    if m:
+                        description = m.group(1).strip()
+            except OSError:
+                pass
+
+    # ── settings.gradle / settings.gradle.kts ────────────────────────────────
+    for settings_file in (root / "settings.gradle.kts", root / "settings.gradle"):
+        if settings_file.exists():
+            lang = "kotlin-gradle" if settings_file.suffix == ".kts" else "java-gradle"
+            if lang not in stack:
+                stack.append(lang)
+            if not name:
+                try:
+                    text = settings_file.read_text(encoding="utf-8", errors="replace")
+                    # rootProject.name = "myapp" or rootProject.name = 'myapp'
+                    m = _re.search(r'rootProject\.name\s*=\s*["\']([^"\']+)["\']', text)
+                    if m:
+                        name = m.group(1).strip()
+                except OSError:
+                    pass
+            break  # only read one settings file
+
+    # ── build.gradle / build.gradle.kts (fallback when no settings.gradle) ───
+    for build_file in (root / "build.gradle.kts", root / "build.gradle"):
+        if build_file.exists():
+            lang = "kotlin-gradle" if build_file.suffix == ".kts" else "java-gradle"
+            if lang not in stack:
+                stack.append(lang)
+            if not name:
+                try:
+                    text = build_file.read_text(encoding="utf-8", errors="replace")
+                    # group = "com.example" or rootProject.name = "..."
+                    m = _re.search(r'rootProject\.name\s*=\s*["\']([^"\']+)["\']', text)
+                    if not m:
+                        m = _re.search(r'\bgroup\s*=\s*["\']([^"\']+)["\']', text)
+                    if m:
+                        name = m.group(1).strip().split(".")[-1]
+                except OSError:
+                    pass
+            break
+
+    # ── Gemfile ────────────────────────────────────────────────────────────────
+    gemfile = root / "Gemfile"
+    if gemfile.exists():
+        stack.append("ruby")
+        # Gemfile has no project name — use directory name as fallback later
+
+    # ── Cargo.toml ────────────────────────────────────────────────────────────
+    cargo = root / "Cargo.toml"
+    if cargo.exists():
+        stack.append("rust")
+        if not name:
+            try:
+                text = cargo.read_text(encoding="utf-8", errors="replace")
+                m = _re.search(r'^\s*name\s*=\s*"([^"]+)"', text, _re.MULTILINE)
+                if m:
+                    name = m.group(1).strip()
+                if not description:
+                    m = _re.search(r'^\s*description\s*=\s*"([^"]+)"', text, _re.MULTILINE)
+                    if m:
+                        description = m.group(1).strip()
+            except OSError:
+                pass
+
+    return {"name": name, "description": description, "stack": stack}
+
+
 def _read_existing_codedna(codedna_path: Path) -> dict:
     """Read existing .codedna and extract fields we want to preserve.
 
@@ -2097,7 +2503,21 @@ def _write_codedna(
     lines.append("")
 
     if agent_sessions_block:
-        lines.append(agent_sessions_block.rstrip())
+        # Rolling window: keep only the last _SESSIONS_MAX entries.
+        # Each entry starts with '  - agent:' — split on that marker and trim oldest.
+        import re as _re
+        _SESSIONS_MAX = 10
+        header_line = "agent_sessions:\n"
+        entries_raw = agent_sessions_block
+        # Strip leading 'agent_sessions:' line for splitting
+        body = _re.sub(r"^agent_sessions:\s*\n?", "", entries_raw, count=1)
+        # Each session entry starts with '  - agent:' at column 0+2 spaces
+        entries = _re.split(r"(?=^  - agent:)", body, flags=_re.MULTILINE)
+        entries = [e for e in entries if e.strip()]
+        if len(entries) > _SESSIONS_MAX:
+            entries = entries[-_SESSIONS_MAX:]
+        trimmed = header_line + "".join(entries)
+        lines.append(trimmed.rstrip())
     else:
         lines.append("agent_sessions: []")
     lines.append("")
@@ -2144,13 +2564,27 @@ def cmd_manifest(
         info = scan_file(f, effective_root)
         if info.parseable:
             infos[info.rel] = info
-    ub_graph = build_used_by(infos)
 
-    # Also collect non-Python files for package detection
+    # Also collect non-Python files — populate infos via language adapters so
+    # build_used_by() can include their deps in the cross-file graph.
+    # Rules: keep Python authoritative on conflicts (same rel path wins Python).
     lang_exts = [e for e in all_exts if e != ".py"]
     all_files = list(py_files)
     for e in lang_exts:
-        all_files.extend(collect_files(target, excl, extensions=[e]))
+        adapter = get_adapter(e)
+        if adapter is None:
+            continue
+        lang_files = collect_files(target, excl, extensions=[e])
+        all_files.extend(lang_files)
+        for f in lang_files:
+            try:
+                info = scan_file_lang(f, effective_root, adapter)
+            except Exception:
+                continue
+            if info.parseable and info.rel not in infos:
+                infos[info.rel] = info
+
+    ub_graph = build_used_by(infos)
 
     pkg_map = _detect_packages(all_files, effective_root)
     if not pkg_map:
@@ -2172,6 +2606,17 @@ def cmd_manifest(
 
     # Build package data
     existing = _read_existing_codedna(codedna_path)
+
+    # Enrich project name/description from build files when .codedna has no values yet.
+    # Rules: only fills in blanks — never overwrites a description the user already wrote.
+    proj_meta = _detect_project_meta(effective_root)
+    if proj_meta["stack"]:
+        print(f"Stack detected: {', '.join(proj_meta['stack'])}")
+    if proj_meta["name"] and existing["project"] == effective_root.name:
+        existing["project"] = proj_meta["name"]
+    if not existing["description"] and proj_meta["description"]:
+        existing["description"] = proj_meta["description"]
+
     packages: dict[str, dict] = {}
     llm_calls = 0
 
@@ -2474,7 +2919,14 @@ def main():
         if not target.exists():
             print(f"Error: {target} does not exist", file=sys.stderr)
             return 1
-        exts = _normalize_extensions(getattr(args, "extensions", None))
+        # Rules: auto-detect extensions when --extensions is omitted — else a
+        # PHP-only project would report "No source files found" because default
+        # was .py only.
+        if not getattr(args, "extensions", None):
+            exts = _auto_detect_extensions(target)
+            print(f"Auto-detected: {', '.join(exts)}")
+        else:
+            exts = _normalize_extensions(args.extensions)
         return cmd_manifest(
             target=target,
             repo_root=target,

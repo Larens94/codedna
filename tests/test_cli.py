@@ -5,6 +5,7 @@ used_by: none
 rules:   Tests run codedna CLI as subprocess to verify end-to-end behavior.
 Each test uses tmp_path for isolation — never touches real project files.
 agent:   claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_002 | initial CLI test suite
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | add TestDetectProjectMeta: 12 unit tests for go.mod/package.json/pom.xml/settings.gradle/Cargo.toml parsing
 """
 
 from __future__ import annotations
@@ -167,3 +168,98 @@ class TestBuildDocstring:
         doc = build_module_docstring(info, {}, "none", "codedna-cli (no-llm)")
         assert "codedna-cli (no-llm)" in doc
         assert "haiku" not in doc
+
+
+# ── _detect_project_meta ─────────────────────────────────────────────────────
+
+class TestDetectProjectMeta:
+    """Unit tests for _detect_project_meta() — reads build files to extract name/description/stack."""
+
+    def _call(self, tmp_path):
+        from codedna_tool.cli import _detect_project_meta
+        return _detect_project_meta(tmp_path)
+
+    def test_go_mod_extracts_name(self, tmp_path):
+        (tmp_path / "go.mod").write_text("module github.com/acme/myservice\n\ngo 1.21\n")
+        meta = self._call(tmp_path)
+        assert meta["name"] == "myservice"
+        assert "go" in meta["stack"]
+
+    def test_go_mod_simple_module_name(self, tmp_path):
+        (tmp_path / "go.mod").write_text("module myapp\n\ngo 1.21\n")
+        meta = self._call(tmp_path)
+        assert meta["name"] == "myapp"
+
+    def test_package_json_name_and_description(self, tmp_path):
+        (tmp_path / "package.json").write_text(
+            '{"name": "my-frontend", "description": "React dashboard", "version": "1.0.0"}'
+        )
+        meta = self._call(tmp_path)
+        assert meta["name"] == "my-frontend"
+        assert meta["description"] == "React dashboard"
+        assert "nodejs" in meta["stack"]
+
+    def test_package_json_scoped_name_stripped(self, tmp_path):
+        (tmp_path / "package.json").write_text('{"name": "@acme/ui-lib", "description": ""}')
+        meta = self._call(tmp_path)
+        assert meta["name"] == "ui-lib"
+
+    def test_pom_xml_artifact_id(self, tmp_path):
+        (tmp_path / "pom.xml").write_text(
+            "<project><groupId>com.acme</groupId>"
+            "<artifactId>billing-service</artifactId>"
+            "<description>Handles invoices</description></project>"
+        )
+        meta = self._call(tmp_path)
+        assert meta["name"] == "billing-service"
+        assert meta["description"] == "Handles invoices"
+        assert "java-maven" in meta["stack"]
+
+    def test_settings_gradle_kts(self, tmp_path):
+        (tmp_path / "settings.gradle.kts").write_text('rootProject.name = "analytics"\n')
+        meta = self._call(tmp_path)
+        assert meta["name"] == "analytics"
+        assert "kotlin-gradle" in meta["stack"]
+
+    def test_settings_gradle(self, tmp_path):
+        (tmp_path / "settings.gradle").write_text("rootProject.name = 'warehouse'\n")
+        meta = self._call(tmp_path)
+        assert meta["name"] == "warehouse"
+        assert "java-gradle" in meta["stack"]
+
+    def test_gemfile_adds_ruby_to_stack(self, tmp_path):
+        (tmp_path / "Gemfile").write_text('source "https://rubygems.org"\ngem "rails"\n')
+        meta = self._call(tmp_path)
+        assert "ruby" in meta["stack"]
+
+    def test_cargo_toml_name_and_description(self, tmp_path):
+        (tmp_path / "Cargo.toml").write_text(
+            '[package]\nname = "my-crate"\ndescription = "A fast tool"\nversion = "0.1.0"\n'
+        )
+        meta = self._call(tmp_path)
+        assert meta["name"] == "my-crate"
+        assert meta["description"] == "A fast tool"
+        assert "rust" in meta["stack"]
+
+    def test_go_mod_takes_priority_over_package_json(self, tmp_path):
+        (tmp_path / "go.mod").write_text("module github.com/acme/backend\n\ngo 1.21\n")
+        (tmp_path / "package.json").write_text('{"name": "frontend", "description": "UI"}')
+        meta = self._call(tmp_path)
+        # go.mod wins for name (first evaluated)
+        assert meta["name"] == "backend"
+        # Both stacks detected
+        assert "go" in meta["stack"]
+        assert "nodejs" in meta["stack"]
+
+    def test_empty_directory_returns_empty_meta(self, tmp_path):
+        meta = self._call(tmp_path)
+        assert meta["name"] == ""
+        assert meta["description"] == ""
+        assert meta["stack"] == []
+
+    def test_no_raise_on_corrupt_json(self, tmp_path):
+        (tmp_path / "package.json").write_text("{not valid json}")
+        meta = self._call(tmp_path)
+        # Should not raise, just return empty
+        assert meta["name"] == ""
+        assert "nodejs" in meta["stack"]  # stack still detected even if parse failed

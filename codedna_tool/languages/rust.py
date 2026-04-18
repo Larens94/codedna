@@ -6,7 +6,9 @@ used_by: codedna_tool/languages/__init__.py → RustAdapter
 rules:   regex-based only — no cargo/rustc dependency required.
 Detects pub fn, pub struct, pub enum, pub trait, pub type, pub const/static.
 impl blocks are not traversed — only top-level pub items are captured.
+inject_function_rules() uses /// line comments (Rust doc convention, NOT /** */).
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | initial Rust adapter
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | add inject_function_rules() — injects /// Rules: above pub fn; handles existing /// doc block and no-doc cases
 """
 
 from __future__ import annotations
@@ -97,3 +99,33 @@ class RustAdapter(LanguageAdapter):
         before = "".join(lines[:insert_idx])
         after = "".join(lines[insert_idx:])
         return before + header + after
+
+    def inject_function_rules(self, source: str, func, rules_text: str) -> str:
+        """Inject a /// Rules: line above a pub Rust function or method.
+
+        Rules:   Must be idempotent — if func.has_rules is True, return source unchanged.
+                 Rust uses /// line comments for doc comments (NOT /** */ blocks).
+                 If func.has_doc=True: insert /// Rules: just above func.start_line
+                 (at the end of the existing /// block immediately preceding the fn).
+                 If func.has_doc=False: insert /// Rules: as a single line above func.start_line.
+                 Detect indentation from the function line.
+                 Caller MUST apply bottom-to-top when injecting multiple funcs to preserve line numbers.
+        """
+        if func.has_rules:
+            return source
+
+        lines = source.splitlines(keepends=True)
+        method_idx = func.start_line - 1  # 0-based index of function's first line
+
+        # Detect indentation from the function line
+        method_line = lines[method_idx] if method_idx < len(lines) else ""
+        indent = len(method_line) - len(method_line.lstrip())
+        pad = " " * indent
+
+        rules_line = f"{pad}/// Rules:   {rules_text}\n"
+
+        # Insert just above func.start_line regardless of has_doc —
+        # for has_doc=True this places Rules: as the last line of the existing /// block;
+        # for has_doc=False this inserts a standalone /// Rules: line.
+        lines = lines[:method_idx] + [rules_line] + lines[method_idx:]
+        return "".join(lines)

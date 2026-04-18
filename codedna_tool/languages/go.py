@@ -8,8 +8,10 @@ rules:   regex-based only — no go toolchain dependency required.
 Detects exports via capitalized top-level func/type/var/const identifiers.
 Import paths from 'import' blocks are captured but not resolved to file paths
 (Go module paths don't map 1:1 to repo file paths without go.mod parsing).
+inject_function_rules() uses // line comments (NOT /** */ blocks — Go has no block doc).
 agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_001 | initial Go adapter with regex-based extraction
 claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_002 | CodeDNA v0.8 compliance pass: added session_id to agent: field, added Rules: docstrings to extract_info and inject_header
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | add inject_function_rules() — injects // Rules: above exported Go functions/methods; handles existing godoc block and no-doc cases
 """
 
 from __future__ import annotations
@@ -126,3 +128,49 @@ class GoAdapter(LanguageAdapter):
         before = "".join(lines[:insert_idx])
         after = "".join(lines[insert_idx:])
         return before + header + after
+
+    def inject_function_rules(self, source: str, func, rules_text: str) -> str:
+        """Inject a // Rules: line above an exported Go function or method.
+
+        Rules:   Must be idempotent — if func.has_rules is True, return source unchanged.
+                 Go uses // line comments for godoc, NOT block comments (/** */).
+                 If func.has_doc=True: insert // Rules: line just above func.start_line
+                 (at end of the existing // comment block immediately preceding the func).
+                 If func.has_doc=False: insert // Rules: as a single line above func.start_line.
+                 Detect indentation from the function line — supports indented methods.
+                 Caller MUST apply bottom-to-top when injecting multiple funcs to preserve line numbers.
+        """
+        if func.has_rules:
+            return source
+
+        lines = source.splitlines(keepends=True)
+        method_idx = func.start_line - 1  # 0-based index of function's first line
+
+        # Detect indentation from the function line
+        method_line = lines[method_idx] if method_idx < len(lines) else ""
+        indent = len(method_line) - len(method_line.lstrip())
+        pad = " " * indent
+
+        rules_line = f"{pad}// Rules:   {rules_text}\n"
+
+        if func.has_doc:
+            # Find the last // comment line of the existing godoc block above the function.
+            # Walk upward from method_idx-1 while lines are // comments at the same indent.
+            insert_before = method_idx
+            idx = method_idx - 1
+            while idx >= 0:
+                stripped = lines[idx].strip()
+                if stripped.startswith("//"):
+                    insert_before = idx
+                    idx -= 1
+                else:
+                    break
+            # Insert Rules: at insert_before (start of existing comment block) is wrong —
+            # we want to append at the END of the block, just before func.start_line.
+            # So insert just before method_idx (after the last // comment line).
+            lines = lines[:method_idx] + [rules_line] + lines[method_idx:]
+        else:
+            # No existing doc — insert a single // Rules: line above the function
+            lines = lines[:method_idx] + [rules_line] + lines[method_idx:]
+
+        return "".join(lines)

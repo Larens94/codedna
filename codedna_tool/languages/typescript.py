@@ -6,9 +6,10 @@ used_by: codedna_tool/languages/__init__.py → TypeScriptAdapter
 rules:   regex-based only — never parse TS/JS AST (no Node.js dependency).
 Detects exports via 'export function', 'export class', 'export const', 'export default'.
 Import resolution is path-only (relative imports starting with '.' or './').
-agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_001 | initial TS/JS adapter with regex-based extraction
-claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_002 | CodeDNA v0.8 compliance pass: added session_id to agent: field, added Rules: docstrings to extract_info and inject_header
+inject_function_rules uses JSDoc /** ... */ blocks (same style as PHPDoc).
+agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_002 | CodeDNA v0.8 compliance pass: added session_id to agent: field, added Rules: docstrings to extract_info and inject_header
 claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed _resolve_import: check is_file() not exists() to avoid resolving directories as files
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | add inject_function_rules() — JSDoc Rules: injection; handles existing doc block (append before */) and no-doc (new /** */ block)
 """
 
 from __future__ import annotations
@@ -16,7 +17,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .base import LanguageAdapter, LangFileInfo
+from .base import LanguageAdapter, LangFileInfo, LangFuncInfo
 
 # Patterns for exported symbols
 _EXPORT_PATTERNS = [
@@ -100,6 +101,48 @@ class TypeScriptAdapter(LanguageAdapter):
         if lines and lines[0].startswith("#!"):
             return lines[0] + header + "".join(lines[1:])
         return header + source
+
+    def inject_function_rules(self, source: str, func: LangFuncInfo, rules_text: str) -> str:
+        """Inject a JSDoc Rules: block above a public TypeScript/JavaScript function or method.
+
+        Rules:   Must be idempotent — if func.has_rules is True, return source unchanged.
+                 If a JSDoc block already exists above the function (func.has_doc), append
+                 Rules: inside it before the closing */. Otherwise insert a new /** ... */ block.
+                 Operates by line number (func.start_line, 1-based) — caller MUST apply
+                 from BOTTOM to TOP to preserve line numbers across multiple injections.
+                 Indentation is detected from func.start_line — the leading whitespace of
+                 that line is used to align the JSDoc block.
+        """
+        if func.has_rules:
+            return source
+
+        lines = source.splitlines(keepends=True)
+        method_idx = func.start_line - 1  # 0-based index of the function's first line
+
+        # Detect indentation from the function/method line
+        method_line = lines[method_idx] if method_idx < len(lines) else ""
+        indent = len(method_line) - len(method_line.lstrip())
+        pad = " " * indent
+
+        if func.has_doc:
+            # Find the closing */ of the existing JSDoc above the function
+            close_idx = method_idx - 1
+            while close_idx >= 0 and "*/" not in lines[close_idx]:
+                close_idx -= 1
+            if close_idx >= 0:
+                # Insert Rules: line before the closing */
+                rules_line = f"{pad} * Rules:   {rules_text}\n"
+                lines = lines[:close_idx] + [rules_line] + lines[close_idx:]
+                return "".join(lines)
+
+        # No existing JSDoc — insert a new block above the function
+        jsdoc = (
+            f"{pad}/**\n"
+            f"{pad} * Rules:   {rules_text}\n"
+            f"{pad} */\n"
+        )
+        lines = lines[:method_idx] + [jsdoc] + lines[method_idx:]
+        return "".join(lines)
 
     @staticmethod
     def _resolve_import(current_file: Path, import_path: str, repo_root: Path) -> str | None:

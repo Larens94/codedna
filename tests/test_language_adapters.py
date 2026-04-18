@@ -1,12 +1,15 @@
 """test_language_adapters.py — Test suite for CodeDNA language adapters.
 
-exports: project(tmp_path) | write_file(project, name, content) | class TestTypeScript | class TestGo | class TestRuby | class TestCSharp | class TestPHP | class TestRust | class TestJava | class TestSwift | class TestKotlin | class TestBlade | class TestFallback | class TestErrorHandling
+exports: project(tmp_path) | write_file(project, name, content) | class TestTypeScript | class TestGo | class TestRuby | class TestPHP | class TestJava | class TestKotlin | class TestBlade | class TestFallback | class TestErrorHandling
 used_by: none
 rules:   Each language adapter must pass: export detection, private exclusion,
 header injection, and injection idempotency.
 tree-sitter tests are skipped if tree-sitter is not installed.
+C#, Rust, Swift adapters removed from registry — tests marked skip with reason.
 agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | initial test suite for all 9 language adapters
 claude-opus-4-7 | anthropic | 2026-04-17 | s_20260417_blade | regression tests for Blade: {{-- --}} syntax (not //), idempotent inject, vendor/ excluded. Catches regression where .blade.php was being routed to PhpAdapter, corrupting Laravel views.
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php2 | GATE 3: add PHP L2 tests — funcs_populated, inject_function_rules (no-doc, idempotent, bottom-to-top)
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | remove C#/Rust/Swift from registry → skip those test classes; fix TestFallback/TestErrorHandling ext lists
 """
 
 from __future__ import annotations
@@ -240,6 +243,7 @@ class Service; end
 
 # ── C# ───────────────────────────────────────────────────────────────────────
 
+@pytest.mark.skip(reason="C# removed from registry (2026-04-18) — adapter code kept but not registered")
 class TestCSharp:
     def test_class_inside_namespace(self, project):
         cs = get_adapter(".cs")
@@ -315,9 +319,59 @@ class UserController extends Controller
         r2 = php.inject_header(r1, "Foo.php", "Foo", "none", "none", "test", "2026-04-14")
         assert r1 == r2
 
+    def test_funcs_populated(self, project):
+        """extract_info() returns LangFuncInfo for each public method (GATE 3)."""
+        php = get_adapter(".php")
+        p = write_file(project, "UserController.php", "<?php\nclass UserController {\n    public function index() {}\n    public function store() {}\n    private function validate() {}\n}\n")
+        info = php.extract_info(p, project)
+        assert len(info.funcs) == 2, f"Expected 2 public methods, got {len(info.funcs)}: {[f.name for f in info.funcs]}"
+        names = [f.name for f in info.funcs]
+        assert any("index" in n for n in names)
+        assert any("store" in n for n in names)
+        assert all(f.language == "php" for f in info.funcs)
+
+    def test_inject_function_rules_no_doc(self, project):
+        """inject_function_rules() creates a new PHPDoc block above the method."""
+        from codedna_tool.languages.base import LangFuncInfo
+        php = get_adapter(".php")
+        source = "<?php\nclass Foo {\n    public function bar() { return 1; }\n}\n"
+        func = LangFuncInfo(name="Foo::bar", start_line=3, has_doc=False,
+                            has_rules=False, source_snippet="", language="php")
+        result = php.inject_function_rules(source, func, "returns 1 always — test only")
+        assert "/**" in result
+        assert "Rules:   returns 1 always" in result
+        assert "public function bar" in result
+
+    def test_inject_function_rules_idempotent(self, project):
+        """inject_function_rules() is a no-op when has_rules=True."""
+        from codedna_tool.languages.base import LangFuncInfo
+        php = get_adapter(".php")
+        source = "<?php\nclass Foo {\n    public function bar() {}\n}\n"
+        func = LangFuncInfo(name="Foo::bar", start_line=3, has_doc=False,
+                            has_rules=True, source_snippet="", language="php")
+        result = php.inject_function_rules(source, func, "should not appear")
+        assert result == source
+
+    def test_inject_function_rules_bottom_to_top(self, project):
+        """Multiple PHPDoc injections applied bottom-to-top preserve line numbers."""
+        from codedna_tool.languages.base import LangFuncInfo
+        php = get_adapter(".php")
+        source = "<?php\nclass C {\n    public function a() {}\n    public function b() {}\n}\n"
+        funcs = [
+            LangFuncInfo(name="C::a", start_line=3, has_doc=False, has_rules=False, source_snippet="", language="php"),
+            LangFuncInfo(name="C::b", start_line=4, has_doc=False, has_rules=False, source_snippet="", language="php"),
+        ]
+        current = source
+        for func in sorted(funcs, key=lambda f: f.start_line, reverse=True):
+            current = php.inject_function_rules(current, func, f"rules for {func.name}")
+        assert current.count("/**") == 2
+        assert "rules for C::a" in current
+        assert "rules for C::b" in current
+
 
 # ── Rust ─────────────────────────────────────────────────────────────────────
 
+@pytest.mark.skip(reason="Rust removed from registry (2026-04-18) — adapter code kept but not registered")
 class TestRust:
     def test_pub_vs_private(self, project):
         rs = get_adapter(".rs")
@@ -372,6 +426,7 @@ public class UserService {
 
 # ── Swift ────────────────────────────────────────────────────────────────────
 
+@pytest.mark.skip(reason="Swift removed from registry (2026-04-18) — adapter code kept but not registered")
 class TestSwift:
     def test_all_declaration_types(self, project):
         sw = get_adapter(".swift")
@@ -501,11 +556,16 @@ class TestBlade:
 
 class TestFallback:
     def test_regex_adapters_always_available(self):
-        """Even without tree-sitter, all adapters must load."""
-        for ext in [".ts", ".tsx", ".js", ".jsx", ".mjs", ".go", ".php", ".rs",
-                    ".java", ".kt", ".rb", ".cs", ".swift"]:
+        """Even without tree-sitter, all registered adapters must load."""
+        for ext in [".ts", ".tsx", ".js", ".jsx", ".mjs", ".go", ".php",
+                    ".java", ".kt", ".rb"]:
             adapter = get_adapter(ext)
             assert adapter is not None, f"No adapter for {ext}"
+
+    def test_removed_languages_return_none(self):
+        """C#, Rust, Swift removed from registry — must return None, not raise."""
+        for ext in [".cs", ".rs", ".swift"]:
+            assert get_adapter(ext) is None, f"{ext} should be unregistered"
 
     def test_unsupported_extension_returns_none(self):
         assert get_adapter(".xyz") is None
@@ -523,7 +583,7 @@ class TestErrorHandling:
         assert info.exports == []
 
     def test_empty_file(self, project):
-        for ext in [".ts", ".go", ".rb", ".cs", ".rs", ".java", ".swift", ".kt", ".php"]:
+        for ext in [".ts", ".go", ".rb", ".java", ".kt", ".php"]:
             adapter = get_adapter(ext)
             p = write_file(project, f"empty{ext}", "")
             info = adapter.extract_info(p, project)

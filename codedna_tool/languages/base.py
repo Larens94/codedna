@@ -1,6 +1,6 @@
 """base.py — Abstract base class for CodeDNA v0.8 language adapters.
 
-exports: class LangFileInfo | class LanguageAdapter
+exports: class LangFuncInfo | class LangFileInfo | class LanguageAdapter
 used_by: codedna_tool/languages/__init__.py → LanguageAdapter
          codedna_tool/languages/_treesitter.py → LanguageAdapter
          codedna_tool/languages/_ts_csharp.py → LangFileInfo
@@ -30,11 +30,11 @@ extract_info() must never raise — return empty defaults on failure.
 inject_header() must be idempotent: if header already present, return source unchanged.
 _build_header_lines() MUST emit agent: with 5 fields: model-id | provider | YYYY-MM-DD | session_id | narrative.
 Never change the field order in _build_header_lines() — downstream validators parse by position.
-agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_002 | v0.8 compliance: fixed used_by →, [cascade] tags, 5-field agent: line
-claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | fixed has_codedna_header to detect headers in any comment format (// # * /** {{-- {# <%#), prevents duplicate headers on re-run
-claude-sonnet-4-6 | anthropic | 2026-04-15 | s_20260415_002 | emit full 4-field header (exports/used_by/rules/agent) for all non-Python languages — adapters already extract them, _build_header_lines was discarding them
+agent:   claude-sonnet-4-6 | anthropic | 2026-04-15 | s_20260415_002 | emit full 4-field header (exports/used_by/rules/agent) for all non-Python languages — adapters already extract them, _build_header_lines was discarding them
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | fix provider/session_id always "unknown" — added _detect_provider() in base, derives from model_id; removed caller-supplied provider param
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_005 | fix multi-line rules normalization; ruff cleanup: ambiguous var l→line, removed unused Optional import
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php2 | GATE 3: add LangFuncInfo dataclass + funcs field to LangFileInfo — enables L2 function Rules: for non-Python adapters (PHP first)
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_msg | add message: empty field to _build_header_lines() — visible to next agent even when empty
 """
 
 from __future__ import annotations
@@ -45,12 +45,24 @@ from pathlib import Path
 
 
 @dataclass
+class LangFuncInfo:
+    """Info about a public function/method in a non-Python source file (for L2 Rules:)."""
+    name: str
+    start_line: int        # 1-based line of the function/method keyword
+    has_doc: bool          # True if a doc block (PHPDoc, JSDoc, etc.) already exists above
+    has_rules: bool        # True if a Rules: annotation already exists
+    source_snippet: str    # ≤20 lines of method body for LLM context
+    language: str          # e.g. "php", "typescript", "go"
+
+
+@dataclass
 class LangFileInfo:
     """Extracted information from a non-Python source file."""
     path: Path
     rel: str
     exports: list[str] = field(default_factory=list)
     deps: list[str] = field(default_factory=list)        # imported module paths (best-effort)
+    funcs: list["LangFuncInfo"] = field(default_factory=list)  # public funcs for L2 (GATE 3)
     has_codedna: bool = False
     parseable: bool = True
 
@@ -76,6 +88,15 @@ class LanguageAdapter(ABC):
                       rules: str, model_id: str, today: str) -> str:
         """Prepend (or replace) a CodeDNA comment block in source. Return new source."""
 
+    def inject_function_rules(self, source: str, func: "LangFuncInfo", rules_text: str) -> str:
+        """Inject a Rules: annotation above a public function/method.
+
+        Rules:   Default implementation returns source unchanged — only adapters
+                 that support L2 (e.g. PHP via PHPDoc) override this method.
+                 Must be idempotent: if func.has_rules is True, return source unchanged.
+        """
+        return source
+
     def has_codedna_header(self, source: str) -> bool:
         """Quick check: does source already contain a CodeDNA block in any comment format?
 
@@ -91,7 +112,7 @@ class LanguageAdapter(ABC):
                 if stripped.startswith(prefix):
                     stripped = stripped[len(prefix):].strip()
                     break
-            if stripped.startswith(("exports:", "used_by:", "rules:", "agent:")):
+            if stripped.startswith(("exports:", "used_by:", "rules:", "agent:", "message:")):
                 return True
         return False
 
@@ -144,4 +165,5 @@ class LanguageAdapter(ABC):
             f"{p} used_by: {used_by}",
             f"{p} rules:   {rules_normalized}",
             f"{p} agent:   {model_id} | {provider} | {today} | codedna-cli | initial CodeDNA annotation pass",
+            f"{p} message: ",
         ]

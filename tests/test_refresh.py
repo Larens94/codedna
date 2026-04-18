@@ -6,6 +6,7 @@ rules:   Tests verify that refresh updates exports/used_by without touching rule
 Tests also verify Python relative imports (from .module) are resolved correctly.
 agent:   claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_003 | initial refresh + relative import tests
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | updated TestReducedHeader: all languages now emit full headers (exports+used_by+rules+agent); updated validator test to require full PHP header
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | remove .rs from TestReducedHeader ext list — Rust removed from registry
 """
 
 from __future__ import annotations
@@ -17,6 +18,14 @@ from pathlib import Path
 import pytest
 
 PYTHON = sys.executable
+
+
+def _has_treesitter_php() -> bool:
+    try:
+        import tree_sitter_php  # noqa: F401
+        return True
+    except ImportError:
+        return False
 
 
 def run_codedna(*args, cwd=None):
@@ -133,7 +142,6 @@ class TestReducedHeader:
             (".go", "package main\nfunc Hello() {}"),
             (".php", "<?php\nclass Foo {}"),
             (".java", "public class Foo {}"),
-            (".rs", "pub fn hello() {}"),
         ]:
             adapter = get_adapter(ext)
             result = adapter.inject_header(code, f"test{ext}", "Hello", "none", "none", "test", "2026-04-15")
@@ -179,6 +187,79 @@ class TestReducedHeader:
         p.write_text('"""app.py — test.\n\nrules: none\nagent: test | 2026-04-15 | test\n"""\ndef foo(): pass\n')
         r = vm.validate_file(p)
         assert not r.valid, "Python without exports/used_by should fail"
+
+
+class TestCrossLanguageRefresh:
+    @pytest.mark.skipif(
+        not _has_treesitter_php(),
+        reason="tree-sitter-php not installed",
+    )
+    def test_refresh_php_used_by(self, tmp_path):
+        """PHP file importing a class should populate used_by on the target."""
+        # Create a mini PHP project with PSR-4 layout
+        app = tmp_path / "app" / "Models"
+        app.mkdir(parents=True)
+        ctrl = tmp_path / "app" / "Http" / "Controllers"
+        ctrl.mkdir(parents=True)
+
+        # Model file
+        (app / "User.php").write_text(
+            "<?php\n"
+            "// User.php — User model.\n//\n"
+            "// exports: User\n"
+            "// used_by: none\n"
+            "// rules:   none\n"
+            "// agent:   test | anthropic | 2026-04-18 | s_001 | test\n"
+            "\nnamespace App\\Models;\n\nclass User {}\n"
+        )
+
+        # Controller that imports User
+        (ctrl / "UserController.php").write_text(
+            "<?php\n"
+            "// UserController.php — handles users.\n//\n"
+            "// exports: UserController\n"
+            "// used_by: none\n"
+            "// rules:   none\n"
+            "// agent:   test | anthropic | 2026-04-18 | s_001 | test\n"
+            "\nnamespace App\\Http\\Controllers;\n\n"
+            "use App\\Models\\User;\n\n"
+            "class UserController {\n"
+            "    public function show() { return new User(); }\n"
+            "}\n"
+        )
+
+        # Run refresh
+        rc, out, err = run_codedna("refresh", str(tmp_path))
+        assert rc == 0, f"refresh failed: {err}"
+
+        # User.php should now have used_by mentioning UserController
+        user_content = (app / "User.php").read_text()
+        assert "UserController" in user_content or "Controllers" in user_content, \
+            f"used_by not populated in User.php:\n{user_content}"
+
+    @pytest.mark.skipif(
+        not _has_treesitter_php(),
+        reason="tree-sitter-php not installed",
+    )
+    def test_refresh_php_preserves_rules(self, tmp_path):
+        """Refresh must preserve rules: and agent: in PHP headers."""
+        (tmp_path / "Foo.php").write_text(
+            "<?php\n"
+            "// Foo.php — test.\n//\n"
+            "// exports: Foo\n"
+            "// used_by: none\n"
+            "// rules:   NEVER delete — soft delete only\n"
+            "// agent:   my-model | anthropic | 2026-04-18 | s_001 | important\n"
+            "\nclass Foo {\n"
+            "    public function bar() {}\n"
+            "}\n"
+        )
+        rc, out, err = run_codedna("refresh", str(tmp_path))
+        assert rc == 0
+        content = (tmp_path / "Foo.php").read_text()
+        assert "NEVER delete" in content, "rules: was modified"
+        assert "my-model" in content, "agent: was modified"
+        assert "important" in content, "agent narrative was modified"
 
 
 class TestHasCodednaHeader:

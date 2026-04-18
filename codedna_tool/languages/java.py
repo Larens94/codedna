@@ -1,6 +1,6 @@
 """java.py — CodeDNA v0.8 adapter for Java and Kotlin source files.
 
-exports: _JAVA_CLASS_RE | _JAVA_METHOD_RE | _JAVA_IMPORT_RE | _KT_CLASS_RE | _KT_FUN_RE | _KT_CONST_RE | _KT_IMPORT_RE | class JavaAdapter | class KotlinAdapter
+exports: _JAVA_CLASS_RE | _JAVA_METHOD_RE | _JAVA_IMPORT_RE | _KT_CLASS_RE | _KT_FUN_RE | _KT_CONST_RE | _KT_IMPORT_RE | class JavaAdapter | class KotlinAdapter | KotlinAdapter.inject_function_rules
 used_by: codedna_tool/languages/__init__.py → JavaAdapter, KotlinAdapter
          codedna_tool/languages/_ts_java.py → JavaAdapter
          codedna_tool/languages/_ts_kotlin.py → KotlinAdapter
@@ -8,8 +8,12 @@ rules:   regex-based only — no JVM dependency required.
 Java: detects public class/interface/enum/record and public methods.
 Kotlin: detects class/object/fun/val/const at top level and public members.
 Annotations (@Override, @SpringBootApplication etc.) are not captured as exports.
+inject_function_rules uses JavaDoc /** ... */ blocks (same style as JSDoc/PHPDoc).
+KotlinAdapter.inject_function_rules uses KDoc /** */ style — same block format as JavaDoc.
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | initial Java + Kotlin adapters
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | fixed double blank line: strip leading newlines from after before reassembling, both JavaAdapter and KotlinAdapter
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | add inject_function_rules() to JavaAdapter — JavaDoc Rules: injection; handles existing doc block and no-doc cases
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | add inject_function_rules() to KotlinAdapter — KDoc Rules: injection; same /** */ block format as JavaDoc
 """
 
 from __future__ import annotations
@@ -17,7 +21,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .base import LanguageAdapter, LangFileInfo
+from .base import LanguageAdapter, LangFileInfo, LangFuncInfo
 
 # ── Java ──────────────────────────────────────────────────────────────────────
 
@@ -123,6 +127,46 @@ class JavaAdapter(LanguageAdapter):
         after = "".join(lines[insert_idx:]).lstrip("\n")
         return before + "\n" + header + "\n" + after
 
+    def inject_function_rules(self, source: str, func: LangFuncInfo, rules_text: str) -> str:
+        """Inject a JavaDoc Rules: block above a public Java method.
+
+        Rules:   Must be idempotent — if func.has_rules is True, return source unchanged.
+                 If a JavaDoc block already exists above the method (func.has_doc), append
+                 Rules: inside it before the closing */. Otherwise insert a new /** ... */ block.
+                 Operates by line number (func.start_line, 1-based) — caller MUST apply
+                 from BOTTOM to TOP to preserve line numbers across multiple injections.
+                 Indentation is detected from the method line's leading whitespace.
+        """
+        if func.has_rules:
+            return source
+
+        lines = source.splitlines(keepends=True)
+        method_idx = func.start_line - 1  # 0-based index of the method's first line
+
+        # Detect indentation from the method line
+        method_line = lines[method_idx] if method_idx < len(lines) else ""
+        indent = len(method_line) - len(method_line.lstrip())
+        pad = " " * indent
+
+        if func.has_doc:
+            # Find the closing */ of the existing JavaDoc above the method
+            close_idx = method_idx - 1
+            while close_idx >= 0 and "*/" not in lines[close_idx]:
+                close_idx -= 1
+            if close_idx >= 0:
+                rules_line = f"{pad} * Rules:   {rules_text}\n"
+                lines = lines[:close_idx] + [rules_line] + lines[close_idx:]
+                return "".join(lines)
+
+        # No existing JavaDoc — insert a new block above the method
+        javadoc = (
+            f"{pad}/**\n"
+            f"{pad} * Rules:   {rules_text}\n"
+            f"{pad} */\n"
+        )
+        lines = lines[:method_idx] + [javadoc] + lines[method_idx:]
+        return "".join(lines)
+
 
 class KotlinAdapter(LanguageAdapter):
     """CodeDNA adapter for .kt files.
@@ -183,3 +227,42 @@ class KotlinAdapter(LanguageAdapter):
         before = "".join(lines[:insert_idx])
         after = "".join(lines[insert_idx:]).lstrip("\n")
         return before + "\n" + header + "\n" + after
+
+    def inject_function_rules(self, source: str, func: LangFuncInfo, rules_text: str) -> str:
+        """Inject a KDoc Rules: block above a public Kotlin function.
+
+        Rules:   Must be idempotent — if func.has_rules is True, return source unchanged.
+                 Kotlin uses KDoc /** */ blocks (same format as JavaDoc).
+                 If func.has_doc=True: insert Rules: line before closing */ of existing block.
+                 If func.has_doc=False: insert a new /** Rules: */ block above func.start_line.
+                 Operates by line number (func.start_line, 1-based) — caller MUST apply
+                 from BOTTOM to TOP to preserve line numbers across multiple injections.
+        """
+        if func.has_rules:
+            return source
+
+        lines = source.splitlines(keepends=True)
+        method_idx = func.start_line - 1  # 0-based index of function's first line
+
+        method_line = lines[method_idx] if method_idx < len(lines) else ""
+        indent = len(method_line) - len(method_line.lstrip())
+        pad = " " * indent
+
+        if func.has_doc:
+            # Find the closing */ of the existing KDoc block above the function
+            close_idx = method_idx - 1
+            while close_idx >= 0 and "*/" not in lines[close_idx]:
+                close_idx -= 1
+            if close_idx >= 0:
+                rules_line = f"{pad} * Rules:   {rules_text}\n"
+                lines = lines[:close_idx] + [rules_line] + lines[close_idx:]
+                return "".join(lines)
+
+        # No existing KDoc — insert a new block above the function
+        kdoc = (
+            f"{pad}/**\n"
+            f"{pad} * Rules:   {rules_text}\n"
+            f"{pad} */\n"
+        )
+        lines = lines[:method_idx] + [kdoc] + lines[method_idx:]
+        return "".join(lines)

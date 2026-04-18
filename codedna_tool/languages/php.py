@@ -1,6 +1,6 @@
 """php.py — CodeDNA v0.8 adapter for PHP source files (Laravel + Phalcon).
 
-exports: _CLASS_RE | _INTERFACE_RE | _TRAIT_RE | _ENUM_RE | _FUNC_RE | _PUBLIC_METHOD_RE | _ROUTE_RE | _NAMESPACE_RE | _USE_RE | _PHALCON_EXTENDS_RE | _PHALCON_ROUTER_RE | _PHALCON_DI_RE | class PhpAdapter
+exports: _CLASS_RE | _INTERFACE_RE | _TRAIT_RE | _ENUM_RE | _FUNC_RE | _PUBLIC_METHOD_RE | _ROUTE_RE | _NAMESPACE_RE | _USE_RE | _PHALCON_EXTENDS_RE | _PHALCON_ROUTER_RE | _PHALCON_DI_RE | class PhpAdapter | PhpAdapter.inject_function_rules
 used_by: codedna_tool/languages/__init__.py → PhpAdapter
          codedna_tool/languages/_ts_php.py → PhpAdapter
 rules:   regex-based only — no PHP interpreter dependency required.
@@ -9,9 +9,9 @@ Laravel-aware: detects Route facades, controller methods, Eloquent model fillabl
 Phalcon-aware: detects extends Controller/Model, $router->add, $di->set/setShared.
 PHP uses block comments (/** ... */ or /* ... */); single-line uses //.
 inject_header uses single-line // comments to avoid conflict with PHPDoc blocks.
-agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | initial PHP/Laravel adapter
-claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | added Phalcon framework awareness: Controller/Model/DI/Router patterns
-claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_005 | remove unused ns_prefix/namespace dead code (ruff F841)
+agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_005 | remove unused ns_prefix/namespace dead code (ruff F841)
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php | fix _resolve_use: lowercase-first candidate order + resolve() for real fs path — fixes macOS case-insensitive match returning App/ instead of app/ (Laravel PSR-4 convention)
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php2 | GATE 3: add inject_function_rules() — injects PHPDoc Rules: above public methods; handles existing PHPDoc (append before */) and no-doc (new block)
 """
 
 from __future__ import annotations
@@ -19,7 +19,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .base import LanguageAdapter, LangFileInfo
+from .base import LanguageAdapter, LangFileInfo, LangFuncInfo
 
 # Top-level declarations (public only for classes; all functions at file scope)
 _CLASS_RE = re.compile(r"^(?:abstract\s+|final\s+|readonly\s+)*class\s+(\w+)", re.MULTILINE)
@@ -206,6 +206,46 @@ class PhpAdapter(LanguageAdapter):
         after = "".join(lines[insert_idx:])
         return before + "\n" + header + "\n" + after
 
+    def inject_function_rules(self, source: str, func: LangFuncInfo, rules_text: str) -> str:
+        """Inject a PHPDoc Rules: block above a public PHP method.
+
+        Rules:   Must be idempotent — if func.has_rules is True, return source unchanged.
+                 If a PHPDoc block already exists above the method (func.has_doc), append
+                 Rules: inside it before the closing */. Otherwise insert a new /** ... */ block.
+                 Operates by line number (func.start_line, 1-based) — caller MUST apply
+                 from BOTTOM to TOP to preserve line numbers across multiple injections.
+        """
+        if func.has_rules:
+            return source
+
+        lines = source.splitlines(keepends=True)
+        method_idx = func.start_line - 1  # 0-based index of method's first line
+
+        # Detect indentation from the method line
+        method_line = lines[method_idx] if method_idx < len(lines) else ""
+        indent = len(method_line) - len(method_line.lstrip())
+        pad = " " * indent
+
+        if func.has_doc:
+            # Find the closing */ of the existing PHPDoc above the method
+            close_idx = method_idx - 1
+            while close_idx >= 0 and "*/" not in lines[close_idx]:
+                close_idx -= 1
+            if close_idx >= 0:
+                # Insert Rules: line before the closing */
+                rules_line = f"{pad} * Rules:   {rules_text}\n"
+                lines = lines[:close_idx] + [rules_line] + lines[close_idx:]
+                return "".join(lines)
+
+        # No existing PHPDoc — insert a new block above the method
+        phpdoc = (
+            f"{pad}/**\n"
+            f"{pad} * Rules:   {rules_text}\n"
+            f"{pad} */\n"
+        )
+        lines = lines[:method_idx] + [phpdoc] + lines[method_idx:]
+        return "".join(lines)
+
     @staticmethod
     def _resolve_use(fqcn: str, repo_root: Path) -> str | None:
         """Resolve a PHP fully-qualified class name to a repo-relative file path.
@@ -219,11 +259,13 @@ class PhpAdapter(LanguageAdapter):
         # Laravel: App → app
         lower_parts = parts[0].lower() + parts[1:] if parts else parts
 
-        for candidate_parts in [parts, lower_parts]:
+        for candidate_parts in [lower_parts, parts]:
             candidate = repo_root / f"{candidate_parts}.php"
             if candidate.exists():
                 try:
-                    return str(candidate.relative_to(repo_root))
+                    # Use resolve() to get real filesystem path (fixes macOS
+                    # case-insensitive match returning wrong-case rel path).
+                    return str(candidate.resolve().relative_to(repo_root.resolve()))
                 except ValueError:
                     pass
         return None

@@ -1,14 +1,16 @@
 """ruby.py — CodeDNA v0.8 adapter for Ruby source files.
 
-exports: _MODULE_RE | _CLASS_RE | _DEF_RE | _ATTR_RE | _REQUIRE_RE | _PRIVATE_RE | class RubyAdapter
+exports: _MODULE_RE | _CLASS_RE | _DEF_RE | _ATTR_RE | _REQUIRE_RE | _PRIVATE_RE | class RubyAdapter | RubyAdapter.inject_function_rules
 used_by: codedna_tool/languages/__init__.py → RubyAdapter
          codedna_tool/languages/_ts_ruby.py → RubyAdapter
 rules:   regex-based only — no Ruby interpreter dependency required.
 Detects module/class definitions and public def methods.
 attr_accessor/attr_reader/attr_writer are captured as exports.
 Rails-aware: before_action, scope, has_many captured as metadata (not exports).
+inject_function_rules uses # comment lines — inserts '# Rules:   text' above func.start_line.
 agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed nested class/module detection: allow indented class/module, method prefix uses innermost class not first module
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | fixed inject_header: no leading blank line when file has no shebang/frozen_string_literal (prefix only added when before is non-empty)
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | GATE 3: add inject_function_rules() — Ruby # comment Rules: insertion above func.start_line; has_doc and no-doc cases both insert at same position
 """
 
 from __future__ import annotations
@@ -16,7 +18,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .base import LanguageAdapter, LangFileInfo
+from .base import LanguageAdapter, LangFileInfo, LangFuncInfo
 
 _MODULE_RE   = re.compile(r"^\s*module\s+(\w+)", re.MULTILINE)
 _CLASS_RE    = re.compile(r"^\s*class\s+(\w+)", re.MULTILINE)
@@ -149,3 +151,31 @@ class RubyAdapter(LanguageAdapter):
         after = "".join(lines[insert_idx:])
         prefix = "\n" if before else ""
         return before + prefix + header + "\n" + after
+
+    def inject_function_rules(self, source: str, func: LangFuncInfo, rules_text: str) -> str:
+        """Inject a Ruby # Rules: comment above a public method.
+
+        Rules:   Must be idempotent — if func.has_rules is True, return source unchanged.
+                 Ruby docs use # comment lines.
+                 Both has_doc=True and has_doc=False: insert '# Rules:   rules_text' as a
+                 single # line immediately above func.start_line (before the def line).
+                 When has_doc=True the Rules: line is appended at the end of the existing
+                 comment block (just before the def line), keeping it with the doc block.
+                 Detect indentation from the function line.
+                 Operates by line number (func.start_line, 1-based) — caller MUST apply
+                 from BOTTOM to TOP to preserve line numbers across multiple injections.
+        """
+        if func.has_rules:
+            return source
+
+        lines = source.splitlines(keepends=True)
+        method_idx = func.start_line - 1  # 0-based index of the def line
+
+        method_line = lines[method_idx] if method_idx < len(lines) else ""
+        indent = len(method_line) - len(method_line.lstrip())
+        pad = " " * indent
+
+        # Insert '# Rules:   ...' immediately above the def line (after any existing comments)
+        rules_line = f"{pad}# Rules:   {rules_text}\n"
+        lines = lines[:method_idx] + [rules_line] + lines[method_idx:]
+        return "".join(lines)

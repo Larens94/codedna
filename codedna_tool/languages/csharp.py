@@ -1,14 +1,16 @@
 """csharp.py — CodeDNA v0.8 adapter for C# source files.
 
-exports: _CLASS_RE | _METHOD_RE | _PROP_RE | _USING_RE | _NS_RE | class CSharpAdapter
+exports: _CLASS_RE | _METHOD_RE | _PROP_RE | _USING_RE | _NS_RE | class CSharpAdapter | CSharpAdapter.inject_function_rules
 used_by: codedna_tool/languages/__init__.py → CSharpAdapter
          codedna_tool/languages/_ts_csharp.py → CSharpAdapter
 rules:   regex-based only — no .NET SDK dependency required.
 Detects public class/interface/enum/struct/record and public methods.
 Namespace-qualified exports: Class::Method for public members.
 Attributes ([Attribute]) before declarations are ignored.
+inject_function_rules uses /// XML doc comments — has_doc inserts <remarks>Rules:, no-doc inserts new <summary>Rules:.
 agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed class detection inside namespace blocks: allow indented class/interface/enum/struct/record
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | fixed inject_header: header now inserted before namespace declaration, not between 'namespace Foo' and its '{'; also fixed leading blank line
+claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | GATE 3: add inject_function_rules() — C# XML doc comments (///); has_doc appends <remarks>Rules:, no-doc inserts new <summary>Rules: block
 """
 
 from __future__ import annotations
@@ -16,7 +18,7 @@ from __future__ import annotations
 import re
 from pathlib import Path
 
-from .base import LanguageAdapter, LangFileInfo
+from .base import LanguageAdapter, LangFileInfo, LangFuncInfo
 
 _CLASS_RE  = re.compile(
     r"^\s*(?:public\s+)?(?:abstract\s+|sealed\s+|static\s+|partial\s+)*"
@@ -137,3 +139,40 @@ class CSharpAdapter(LanguageAdapter):
         after_norm = after.lstrip("\n")
         separator = "\n\n" if before_norm else ""
         return before_norm + separator + header + "\n" + after_norm
+
+    def inject_function_rules(self, source: str, func: LangFuncInfo, rules_text: str) -> str:
+        """Inject a C# XML doc Rules: comment above a public method.
+
+        Rules:   Must be idempotent — if func.has_rules is True, return source unchanged.
+                 C# uses /// XML doc comments.
+                 If func.has_doc=True: insert /// <remarks>Rules: rules_text</remarks> just
+                 above func.start_line (immediately before the method, after existing ///).
+                 If func.has_doc=False: insert a /// <summary>Rules: rules_text</summary>
+                 block above func.start_line.
+                 Operates by line number (func.start_line, 1-based) — caller MUST apply
+                 from BOTTOM to TOP to preserve line numbers across multiple injections.
+        """
+        if func.has_rules:
+            return source
+
+        lines = source.splitlines(keepends=True)
+        method_idx = func.start_line - 1  # 0-based index of method's first line
+
+        # Detect indentation from the method line
+        method_line = lines[method_idx] if method_idx < len(lines) else ""
+        indent = len(method_line) - len(method_line.lstrip())
+        pad = " " * indent
+
+        if func.has_doc:
+            # Insert /// <remarks>Rules: ...</remarks> immediately above the method line
+            # (the existing /// lines are above; we add one more just before the method)
+            rules_line = f"{pad}/// <remarks>Rules:   {rules_text}</remarks>\n"
+            lines = lines[:method_idx] + [rules_line] + lines[method_idx:]
+        else:
+            # No existing doc — insert a new /// <summary>Rules: ...</summary> block
+            doc_block = (
+                f"{pad}/// <summary>Rules:   {rules_text}</summary>\n"
+            )
+            lines = lines[:method_idx] + [doc_block] + lines[method_idx:]
+
+        return "".join(lines)
