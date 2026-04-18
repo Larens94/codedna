@@ -536,7 +536,7 @@ codedna init /path/to/project <span class="c">--no-llm  # free, structural only<
 
     <div class="table-wrap"><table>
       <tr><th>File</th><th>What it does</th></tr>
-      <tr><td><span class="ic">AGENTS.md</span></td><td>CodeDNA v0.8 instructions — loaded automatically as system prompt</td></tr>
+      <tr><td><span class="ic">AGENTS.md</span></td><td>CodeDNA v0.9 instructions — loaded automatically as system prompt</td></tr>
       <tr><td><span class="ic">.opencode/plugins/codedna.js</span></td><td>After every file write → warns on missing headers (11 languages). At session end → reminds to update <span class="ic">.codedna</span> and commit with AI trailers.</td></tr>
     </table></div>
 
@@ -712,7 +712,7 @@ agent:   claude-sonnet-4-6 | anthropic | 2026-03-24 | s_20260324_001 | what was 
 
 import os
 from typing import Optional</pre></div>
-      <h3><code>message:</code> — Agent-to-Agent Chat (v0.8)</h3>
+      <h3><code>message:</code> — Agent-to-Agent Chat (v0.9)</h3>
       <p>The <code>message:</code> sub-field is a conversational layer between agents. Use it for observations not yet certain enough to become <code>rules:</code>.</p>
       <p><strong>Lifecycle:</strong> a message is either <strong>promoted</strong> to <code>rules:</code> (reply <code>@prev: promoted to rules:</code>) or <strong>dismissed</strong> (<code>@prev: not applicable because...</code>). Always append-only.</p>
       <p><strong>Works at both levels:</strong> Level 1 (module docstring) and Level 2 (function docstring) — so agents using a sliding window still receive it.</p>

@@ -1,4 +1,4 @@
-"""codedna_tool — CodeDNA v0.8 in-source annotation protocol for AI agents.
+"""codedna_tool — CodeDNA v0.9 in-source annotation protocol for AI agents.
 
 exports: none
 used_by: none

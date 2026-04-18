@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="./SPEC.md"><img src="https://img.shields.io/badge/protocol-v0.8-6366f1" alt="Protocol"></a>
+  <a href="./SPEC.md"><img src="https://img.shields.io/badge/protocol-v0.9-6366f1" alt="Protocol"></a>
   <a href="https://doi.org/10.5281/zenodo.19158336"><img src="https://img.shields.io/badge/DOI-zenodo.19158336-blue" alt="DOI"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
   <a href="https://github.com/Larens94/codedna/actions/workflows/ci.yml"><img src="https://github.com/Larens94/codedna/actions/workflows/ci.yml/badge.svg" alt="CI"></a>

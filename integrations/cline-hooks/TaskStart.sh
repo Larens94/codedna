@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CodeDNA v0.8 — Cline TaskStart hook
+# CodeDNA v0.9 — Cline TaskStart hook
 # Place in: .clinerules/hooks/TaskStart.sh (make executable)
 # Requires: Cline v3.36+
 #

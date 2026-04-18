@@ -1,6 +1,6 @@
 # Language Support
 
-CodeDNA v0.8 supports **9 source languages** via tree-sitter AST parsing, plus **7 template engines** via regex. All languages are auto-detected — no configuration needed.
+CodeDNA v0.9 supports **9 source languages** via tree-sitter AST parsing, plus **7 template engines** via regex. All languages are auto-detected — no configuration needed.
 
 | Language | Extensions | L1 | L2 | Parser | Framework awareness |
 |---|---|---|---|---|---|

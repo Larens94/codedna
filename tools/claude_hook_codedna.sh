@@ -1,8 +1,8 @@
 #!/usr/bin/env bash
-# claude_hook_codedna.sh — Claude Code PostToolUse hook for CodeDNA v0.8 enforcement.
+# claude_hook_codedna.sh — Claude Code PostToolUse hook for CodeDNA v0.9 enforcement.
 #
 # Receives JSON on stdin from Claude Code with tool_name, tool_input, tool_output.
-# Validates that Python/TS/Go/etc files have a CodeDNA v0.8 header after Write or Edit.
+# Validates that Python/TS/Go/etc files have a CodeDNA v0.9 header after Write or Edit.
 #
 # Exit 0 = OK (feedback shown to agent)
 # Exit 2 = block (prevents the tool action — only for PreToolUse, not PostToolUse)
@@ -61,7 +61,7 @@ if echo "$OUTPUT" | grep -q "^FAIL "; then
     # Extract errors
     ERRORS=$(echo "$OUTPUT" | grep -E "error:|missing:" | head -5)
     echo ""
-    echo "━━━ CodeDNA v0.8 — annotation missing or incomplete ━━━"
+    echo "━━━ CodeDNA v0.9 — annotation missing or incomplete ━━━"
     echo "File: $FILE_PATH"
     echo "$ERRORS" | sed 's/^/  /'
     echo ""
@@ -102,7 +102,7 @@ except Exception:
 
     if [[ -n "$L2_ISSUES" ]]; then
         echo ""
-        echo "━━━ CodeDNA v0.8 — L2 function annotations ━━━"
+        echo "━━━ CodeDNA v0.9 — L2 function annotations ━━━"
         echo "File: $FILE_PATH"
         echo "$L2_ISSUES"
         echo ""

@@ -376,7 +376,7 @@ img { max-width: 100%; height: auto; }
   <a class="nav-logo" href="#">
     <div class="nav-logo-mark"><img src="logo.png" alt="CodeDNA logo"></div>
     <span class="nav-logo-text">CodeDNA</span>
-    <span class="nav-version">v0.8</span>
+    <span class="nav-version">v0.9</span>
   </a>
   <div class="nav-links" id="nav-links">
     <a href="#problema" data-i18n="navProblem" onclick="closeNav()">The Problem</a>
@@ -397,7 +397,7 @@ img { max-width: 100%; height: auto; }
   <div class="hero-grid-bg"></div>
   <canvas id="hero-canvas"></canvas>
   <div class="hero-inner">
-    <div class="hero-eyebrow fade-up"><span class="eyebrow-dot"></span>CodeDNA Annotation Standard · v0.8 · MIT</div>
+    <div class="hero-eyebrow fade-up"><span class="eyebrow-dot"></span>CodeDNA Annotation Standard · v0.9 · MIT</div>
     <h1 class="fade-up" data-i18n-html="h1">The code that<br><em>explains itself.</em></h1>
     <p class="hero-sub fade-up" data-i18n-html="heroSub">
       AI tools editing your code make mistakes because they have <strong>no context</strong>. CodeDNA embeds it directly in the files — like DNA in every cell. Zero RAG. Minimal drift.
@@ -707,7 +707,7 @@ data  = get_users()
 <!-- MESSAGE: FIELD -->
 <div class="section" id="message-field">
   <div class="section-inner">
-    <div class="eyebrow">v0.8 Feature</div>
+    <div class="eyebrow">v0.9 Feature</div>
     <h2><code>message:</code> — Agent-to-Agent Chat in Code</h2>
     <p class="section-lead">The <code>agent:</code> field records what an agent did. The <code>message:</code> sub-field adds a <strong>conversational layer</strong> — soft observations and open questions left directly for the next agent, co-located with the code.</p>
 
@@ -883,7 +883,7 @@ agent:   gemini-2.5-pro | 2026-03-18 | Added annual_summary.
       <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm5Title">Enterprise Benchmark — 105-file, 3 bugs, 48 distractors</div><div class="rm-sub" data-i18n="rm5Sub">−29% tool calls, 0 incorrect root-cause identifications (vs 1 Control). Replicable on disk.</div></div></div>
       <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm6Title">Multi-Model SWE-bench Benchmark — 5 tasks, 5 runs/task</div><div class="rm-sub" data-i18n="rm6Sub">Gemini 2.5 Flash: ctrl=60%, DNA=72%, Δ=+13pp, p=0.040 · DeepSeek Chat: ctrl=50%, DNA=60%, Δ=+9pp, p=0.11 · Gemini 2.5 Pro: ctrl=60%, DNA=69%, Δ=+9pp, p=0.11</div></div></div>
       <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm7Title">White Paper / arXiv preprint</div><div class="rm-sub" data-i18n="rm7Sub">Formal study with reproducible methodology, DNA analogy, and comparison against SWE-bench, LoCoBench-Agent, ETH Zurich (2026).</div></div></div>
-      <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Redundancy Audit (v0.8) ✦ Current</div><div class="rm-sub">Header reduced to 3 fields: exports, used_by, rules. rules: promoted to required — the inter-agent communication channel. Python-only focus.</div></div></div>
+      <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Redundancy Audit (v0.9) ✦ Current</div><div class="rm-sub">Header reduced to 3 fields: exports, used_by, rules. rules: promoted to required — the inter-agent communication channel. Python-only focus.</div></div></div>
       <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">M1 — CLI &amp; Auto-Annotation</div><div class="rm-sub">AST skeleton extraction · <code>codedna init</code>, <code>codedna update</code>, <code>codedna check</code> · pip installable · Claude Code Challenge: 7/7 patch files in ~8 min vs 6/7 in ~10–11 min (control). <a href="https://github.com/Larens94/codedna/tree/main/benchmark_agent/claude_code_challenge" target="_blank" style="color:var(--black);">Results →</a></div></div></div>
       <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">M3 — Multi-Tool Enforcement Hooks</div><div class="rm-sub">Active hooks for Claude Code (4), Cursor (2), GitHub Copilot (3), Cline (2), OpenCode (plugin). Validates on every write — no manual reminder needed. Pre-commit hook for all tools.</div></div></div>
       <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm11Title">M4 — Language Extension</div><div class="rm-sub">CLI supports 11 languages: Python (AST), TypeScript/JS (tree-sitter), Go (tree-sitter), PHP, Rust, Java, Kotlin, Ruby, C#, Swift. validate_manifests.py supports template engines (Blade, Jinja2, ERB, Vue, Svelte…). Plugin marketplace available for Claude Code.</div></div></div>
@@ -902,7 +902,7 @@ agent:   gemini-2.5-pro | 2026-03-18 | Added annual_summary.
   <div class="logo-row">
     <div class="logo-mark">DNA</div>
     <strong style="color:var(--black); font-size:1rem;">CodeDNA</strong>
-    <span style="font-size:0.7rem; color:var(--gray-400);">v0.8 · MIT</span>
+    <span style="font-size:0.7rem; color:var(--gray-400);">v0.9 · MIT</span>
   </div>
   <p style="margin-bottom:0.5rem;"><em>"Every file carries the complete genome of the project it belongs to."</em></p>
   <p><a href="https://github.com/Larens94/codedna">github.com/Larens94/codedna</a></p>

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CodeDNA v0.8 — Cline PostToolUse hook
+# CodeDNA v0.9 — Cline PostToolUse hook
 # Place in: .clinerules/hooks/PostToolUse.sh (make executable)
 # Requires: Cline v3.36+
 #
@@ -38,7 +38,7 @@ OUTPUT=$(python3 "$VALIDATOR" "$FILE_PATH" 2>&1) || true
 
 if echo "$OUTPUT" | grep -q "^FAIL "; then
     ERRORS=$(echo "$OUTPUT" | grep -E "error:|missing:" | head -5 | sed 's/^/  /')
-    MSG="CodeDNA v0.8 — annotation missing or incomplete\nFile: $FILE_PATH\n$ERRORS\n\nAdd to the top of the file:\n  exports: / used_by: / rules: / agent: fields"
+    MSG="CodeDNA v0.9 — annotation missing or incomplete\nFile: $FILE_PATH\n$ERRORS\n\nAdd to the top of the file:\n  exports: / used_by: / rules: / agent: fields"
     echo "{\"output\": \"$(echo "$MSG" | sed 's/"/\\"/g' | tr '\n' '|')\"}"
 fi
 

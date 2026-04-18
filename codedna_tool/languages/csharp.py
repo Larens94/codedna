@@ -1,4 +1,4 @@
-"""csharp.py — CodeDNA v0.8 adapter for C# source files.
+"""csharp.py — CodeDNA v0.9 adapter for C# source files.
 
 exports: _CLASS_RE | _METHOD_RE | _PROP_RE | _USING_RE | _NS_RE | class CSharpAdapter | CSharpAdapter.inject_function_rules
 used_by: codedna_tool/languages/__init__.py → CSharpAdapter

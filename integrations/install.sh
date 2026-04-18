@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CodeDNA v0.8 — One-Line Installer
+# CodeDNA v0.9 — One-Line Installer
 #
 # Usage (recommended — installs CLI + hook + prompt):
 #   pip install git+https://github.com/Larens94/codedna.git && codedna install
@@ -43,7 +43,7 @@ fi
 
 # ── Fallback: curl-based install (prompt files only) ──────────────────────────
 
-echo "CodeDNA v0.8 — Integration Installer (prompt files only)"
+echo "CodeDNA v0.9 — Integration Installer (prompt files only)"
 echo "  Target: $REPO_ROOT"
 echo ""
 echo "  TIP: For full setup (pre-commit hook + validation), run:"
@@ -134,7 +134,7 @@ do_claude_hooks() {
     "PostToolUse": [
       {
         "matcher": "Write|Edit",
-        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_codedna.sh", "timeout": 10, "statusMessage": "CodeDNA v0.8 — validating annotations..." }]
+        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_codedna.sh", "timeout": 10, "statusMessage": "CodeDNA v0.9 — validating annotations..." }]
       },
       {
         "matcher": "Write|Edit",
@@ -147,7 +147,7 @@ do_claude_hooks() {
     ],
     "Stop": [
       {
-        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_stop.sh", "timeout": 5, "statusMessage": "CodeDNA v0.8 — checking session end protocol..." }]
+        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_stop.sh", "timeout": 5, "statusMessage": "CodeDNA v0.9 — checking session end protocol..." }]
       },
       {
         "hooks": [{

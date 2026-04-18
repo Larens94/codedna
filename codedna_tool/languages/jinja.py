@@ -1,4 +1,4 @@
-"""jinja.py — CodeDNA v0.8 adapter for Jinja2 and Twig templates.
+"""jinja.py — CodeDNA v0.9 adapter for Jinja2 and Twig templates.
 
 exports: _EXTENDS_RE | _INCLUDE_RE | _IMPORT_RE | _BLOCK_RE | _MACRO_RE | class JinjaAdapter
 used_by: codedna_tool/languages/__init__.py → JinjaAdapter

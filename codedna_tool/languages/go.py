@@ -1,4 +1,4 @@
-"""go.py — CodeDNA v0.8 adapter for Go source files.
+"""go.py — CodeDNA v0.9 adapter for Go source files.
 
 exports: _FUNC_RE | _TYPE_RE | _VAR_RE | _IMPORT_SINGLE_RE | _IMPORT_BLOCK_RE | class GoAdapter
 used_by: codedna_tool/languages/__init__.py → GoAdapter
@@ -10,7 +10,7 @@ Import paths from 'import' blocks are captured but not resolved to file paths
 (Go module paths don't map 1:1 to repo file paths without go.mod parsing).
 inject_function_rules() uses // line comments (NOT /** */ blocks — Go has no block doc).
 agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_001 | initial Go adapter with regex-based extraction
-claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_002 | CodeDNA v0.8 compliance pass: added session_id to agent: field, added Rules: docstrings to extract_info and inject_header
+claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_002 | CodeDNA v0.9 compliance pass: added session_id to agent: field, added Rules: docstrings to extract_info and inject_header
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | add inject_function_rules() — injects // Rules: above exported Go functions/methods; handles existing godoc block and no-doc cases
 """
 

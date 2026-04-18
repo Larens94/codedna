@@ -1,8 +1,8 @@
 ---
-description: CodeDNA v0.8 — how to read, write, and edit Python files in this project
+description: CodeDNA v0.9 — how to read, write, and edit Python files in this project
 ---
 
-# CodeDNA v0.8 — In-Source Communication Protocol
+# CodeDNA v0.9 — In-Source Communication Protocol
 
 This project uses **CodeDNA**. Every source file carries its own context in a Python-native module docstring. Agents communicate across sessions through structured annotations co-located with the code.
 
@@ -72,7 +72,7 @@ def my_function(arg: type) -> return_type:
     """
 ```
 
-## `message:` — Agent Chat Layer *(v0.8 experimental)*
+## `message:` — Agent Chat Layer *(v0.9)*
 
 Use `message:` for observations not yet certain enough to become `rules:`, open questions, and notes for the next agent.
 

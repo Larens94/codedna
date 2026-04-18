@@ -1,15 +1,15 @@
 """setup_benchmark.py — Download and prepare SWE-bench tasks for CodeDNA benchmark.
 
-exports: PROJECTS_DIR | REPO_CACHE | TASKS_FILE | load_swebench_tasks(repo_filter, n_tasks, multi_file_first) | clone_repo(repo) | checkout_task(task, bare_repo, force) | annotate_task(task, model, no_llm) | update_tasks_json(tasks) | main()
+exports: PROJECTS_DIR | REPO_CACHE | TASKS_FILE | load_swebench_tasks(repo_filter, n_tasks, multi_file_first, dataset) | clone_repo(repo) | checkout_task(task, bare_repo, force) | annotate_task(task, model, no_llm) | update_tasks_json(tasks) | main()
 used_by: none
 rules:   Never modify existing control/ or codedna/ directories unless --force is passed.
 Each task must have: control/ (vanilla repo at base_commit) + codedna/ (annotated).
 Annotation uses codedna CLI (codedna init) — not the Gemini annotator.
 Repo clones use --filter=blob:none (blobless) — blobs fetched on demand by git archive.
 clone_repo() returns None on failure — main() must check and skip the repo.
-agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_003 | initial benchmark setup script
-claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_004 | moved to labs/benchmark/, updated paths
+agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_004 | moved to labs/benchmark/, updated paths
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_bench | fix annotate_task: remove partial codedna/ on timeout/CalledProcessError; switch clone to --filter=blob:none + broken-cache detection; clone_repo now returns None on failure
+claude-opus-4-7 | anthropic | 2026-04-17 | s_20260417_opus47 | added --task-id flag to filter specific SWE-bench instance_ids (bare number or full id); enables targeted download of our 5 benchmark tasks
 USAGE:
 # Step 1: List available tasks
 python setup_benchmark.py --list --repo django/django
@@ -40,11 +40,13 @@ REPO_CACHE   = Path(__file__).parent / "_repo_cache"
 TASKS_FILE   = Path(__file__).parent / "tasks.json"
 
 
-def load_swebench_tasks(repo_filter=None, n_tasks=None, multi_file_first=False):
-    """Load tasks from SWE-bench Verified dataset.
+def load_swebench_tasks(repo_filter=None, n_tasks=None, multi_file_first=False,
+                         dataset="verified"):
+    """Load tasks from SWE-bench dataset.
 
     Rules:   Requires 'datasets' package (pip install datasets).
              Returns tasks sorted by n_files descending if multi_file_first=True.
+             dataset="verified" (500 tasks, default) or "full" (2294 tasks).
     """
     try:
         from datasets import load_dataset
@@ -52,8 +54,12 @@ def load_swebench_tasks(repo_filter=None, n_tasks=None, multi_file_first=False):
         print("ERROR: pip install datasets")
         sys.exit(1)
 
-    print("Loading SWE-bench Verified from HuggingFace...")
-    ds = load_dataset("princeton-nlp/SWE-bench_Verified", split="test")
+    if dataset == "full":
+        print("Loading SWE-bench (full, 2294 tasks) from HuggingFace...")
+        ds = load_dataset("princeton-nlp/SWE-bench", split="test")
+    else:
+        print("Loading SWE-bench Verified from HuggingFace...")
+        ds = load_dataset("princeton-nlp/SWE-bench_Verified", split="test")
 
     tasks = []
     for row in ds:
@@ -271,17 +277,37 @@ def main():
                         help="LLM model for annotation (e.g. ollama/llama3, claude-haiku-4-5-20251001)")
     parser.add_argument("--force", action="store_true",
                         help="Re-download and re-annotate even if directories exist")
+    parser.add_argument("--task-id", nargs="+", default=None,
+                        help="Filter to specific task IDs, e.g. --task-id 14480 13495 "
+                             "(accepts bare numbers or full instance_ids like django__django-14480)")
+    parser.add_argument("--dataset", choices=["verified", "full"], default="verified",
+                        help="Which SWE-bench split to load (default: verified=500, full=2294)")
     args = parser.parse_args()
 
     repo_filter = None if args.all else args.repo
-    if not args.all and not args.repo and not args.list:
-        parser.error("Specify --repo <owner/repo> or --all")
+    if not args.all and not args.repo and not args.list and not args.task_id:
+        parser.error("Specify --repo <owner/repo>, --all, or --task-id <id...>")
 
     tasks = load_swebench_tasks(
         repo_filter=repo_filter,
-        n_tasks=args.n_tasks,
+        n_tasks=None if args.task_id else args.n_tasks,
         multi_file_first=args.multi_file_first,
+        dataset=args.dataset,
     )
+
+    if args.task_id:
+        wanted = set()
+        for t in args.task_id:
+            t = t.strip()
+            if "__" in t:
+                wanted.add(t)
+            else:
+                wanted.add(f"django__django-{t}")
+        tasks = [t for t in tasks if t["instance_id"] in wanted]
+        if not tasks:
+            print(f"No tasks matched --task-id {args.task_id}")
+            return
+        print(f"Filtered to {len(tasks)} task(s) via --task-id")
 
     if not tasks:
         print("No tasks found.")

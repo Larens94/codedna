@@ -1,9 +1,9 @@
 #!/usr/bin/env python3
-"""validate_manifests.py — Validate CodeDNA v0.8 annotations across a codebase.
+"""validate_manifests.py — Validate CodeDNA v0.9 annotations across a codebase.
 
 exports: REQUIRED_FIELDS_FULL | REQUIRED_FIELDS | SKIP_DIRS | COMMENT_PREFIX | _DATE_RE | _PURPOSE_MAX_WORDS | _AGENT_MAX_ENTRIES | class ValidationResult | validate_file(path) | validate_directory(root, extensions) | print_results(results, verbose) | main()
 used_by: none
-rules:   validates v0.8 format only (exports:/used_by:/rules:/agent: in module docstring).
+rules:   validates v0.9 format only (exports:/used_by:/rules:/agent: in module docstring).
 Python uses AST; other languages use regex on first 40 lines.
 read-only — never modifies files.
 agent:   claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | fixed _extract_python: return (None, {}) for valid Python without docstring
@@ -249,7 +249,7 @@ def validate_file(path: Path) -> ValidationResult:
             result.err("Cannot parse file (SyntaxError or unreadable)")
             return result
         if not fields and first_line is None:
-            result.err("No module docstring found — add a CodeDNA v0.8 header")
+            result.err("No module docstring found — add a CodeDNA v0.9 header")
             return result
         if first_line:
             _validate_purpose(result, first_line, path.name)
@@ -260,7 +260,7 @@ def validate_file(path: Path) -> ValidationResult:
     elif ext in COMMENT_PREFIX:
         _, fields = _extract_other(path, COMMENT_PREFIX[ext])
         if fields is None:
-            result.err(f"No CodeDNA comment block found — add a CodeDNA v0.8 header ({ext} file)")
+            result.err(f"No CodeDNA comment block found — add a CodeDNA v0.9 header ({ext} file)")
             return result
     else:
         result.warn(f"Extension {ext!r} not supported — skipping")
@@ -323,7 +323,7 @@ def print_results(results: list[ValidationResult], verbose: bool) -> int:
     print("=" * 50)
 
     if not invalid:
-        print("All CodeDNA v0.8 annotations valid.")
+        print("All CodeDNA v0.9 annotations valid.")
     else:
         print(f"{len(invalid)} file(s) failed. Run `codedna init` to annotate missing files.")
 
@@ -336,7 +336,7 @@ def print_results(results: list[ValidationResult], verbose: bool) -> int:
 def main() -> int:
     p = argparse.ArgumentParser(
         prog="validate_manifests",
-        description="Validate CodeDNA v0.8 annotations",
+        description="Validate CodeDNA v0.9 annotations",
     )
     p.add_argument("path", nargs="?", default=".", type=Path, help="File or directory to validate (default: .)")
     p.add_argument("--extensions", nargs="+", metavar="EXT",

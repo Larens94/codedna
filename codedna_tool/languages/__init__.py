@@ -1,4 +1,4 @@
-"""languages/__init__.py — Language adapter registry for CodeDNA v0.8.
+"""languages/__init__.py — Language adapter registry for CodeDNA v0.9.
 
 exports: SUPPORTED_EXTENSIONS | get_adapter(extension)
 used_by: codedna_tool/cli.py → SUPPORTED_EXTENSIONS, get_adapter

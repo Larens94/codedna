@@ -1,4 +1,4 @@
-"""base.py — Abstract base class for CodeDNA v0.8 language adapters.
+"""base.py — Abstract base class for CodeDNA v0.9 language adapters.
 
 exports: class LangFuncInfo | class LangFileInfo | class LanguageAdapter
 used_by: codedna_tool/languages/__init__.py → LanguageAdapter
@@ -137,7 +137,7 @@ class LanguageAdapter(ABC):
 
     def _build_header_lines(self, rel: str, exports: str, used_by: str,
                             rules: str, model_id: str, today: str) -> list[str]:
-        """Build a full CodeDNA v0.8 comment block for non-Python languages.
+        """Build a full CodeDNA v0.9 comment block for non-Python languages.
 
         Rules:   All languages emit the full 4-field header: exports, used_by, rules, agent.
                  exports: and used_by: are written as 'none' when not available — explicit

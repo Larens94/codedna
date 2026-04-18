@@ -40,11 +40,11 @@ Empirical analysis across 5 tasks (Gemini 2.5 Flash, ≥5 runs each) suggests a 
 
 > ⚠ Task 13495 shows a model-dependent anomaly: Flash benefits strongly (+22pp) while DeepSeek and Pro regress (−8/−9pp). Under investigation.
 
-> **Transparency note on 11808:** the cross-cutting task was included deliberately to test the limits of the protocol. The benchmark annotations do **not** pre-populate a list of affected files — the agent must discover them independently. CodeDNA v0.7 shows Δ ≈ 0% on this task type. This is reported as a known limitation, not hidden. See [SPEC.md §2.4](../SPEC.md) for the proposed v0.8 extension (`cross_cutting_patterns:`) and why it would not constitute cheating.
+> **Transparency note on 11808:** the cross-cutting task was included deliberately to test the limits of the protocol. The benchmark annotations do **not** pre-populate a list of affected files — the agent must discover them independently. CodeDNA v0.7 shows Δ ≈ 0% on this task type. This is reported as a known limitation, not hidden. See [SPEC.md §2.4](../SPEC.md) for the proposed v0.9 feature (`cross_cutting_patterns:`) and why it would not constitute cheating.
 
 **CodeDNA is most effective when there is a navigable call chain.** The `used_by:` graph guides the agent from entry point to all affected files. For cross-cutting concerns (same fix in many independent files with no shared ancestor), the benefit is smaller because there is no natural navigation path to follow.
 
-### `related:` field — closing the cross-cutting gap (v0.8)
+### `related:` field — closing the cross-cutting gap (v0.9)
 
 The `related:` field was introduced to address the cross-cutting limitation. While `used_by:` captures structural links (imports), `related:` captures **semantic links** — files that share the same logic without importing each other.
 

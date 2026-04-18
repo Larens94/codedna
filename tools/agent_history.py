@@ -3,7 +3,7 @@
 exports: R | G | Y | B | M | C | W | DIM | D | PROVIDER_COLOURS | class AgentSession | view_timeline(list_session) | view_messages(list_session) | view_file_map(list_session) | view_model_stats(list_session) | view_missing_data() | main()
 used_by: none
 rules:   reads git log only — never modifies repo state.
-reasoning is NOT available in git trailers (not captured at v0.7/v0.8).
+reasoning is NOT available in git trailers (not captured at v0.7/v0.9).
 AI-Visited: lists files read, not the reasoning behind navigation choices.
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-20 | s_20260320_002 | created
 message: "reasoning data missing — see --missing-data flag for full picture

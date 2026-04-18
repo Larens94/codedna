@@ -1,4 +1,4 @@
-"""rust.py — CodeDNA v0.8 adapter for Rust source files.
+"""rust.py — CodeDNA v0.9 adapter for Rust source files.
 
 exports: _PUB_FN_RE | _PUB_STRUCT_RE | _PUB_ENUM_RE | _PUB_TRAIT_RE | _PUB_TYPE_RE | _PUB_CONST_RE | _MOD_RE | _USE_RE | class RustAdapter
 used_by: codedna_tool/languages/__init__.py → RustAdapter

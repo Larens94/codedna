@@ -1,0 +1,150 @@
+{
+  "session_id": "bench_deepseek-chat_11991_control_20260418_210823_r2",
+  "model": "deepseek-chat",
+  "provider": "openai",
+  "task": "django__django-11991",
+  "condition": "control",
+  "ground_truth": [
+    "django/contrib/gis/db/backends/postgis/schema.py",
+    "django/contrib/postgres/indexes.py",
+    "django/db/backends/base/features.py",
+    "django/db/backends/base/schema.py",
+    "django/db/backends/postgresql/features.py",
+    "django/db/backends/postgresql/schema.py",
+    "django/db/models/base.py",
+    "django/db/models/constraints.py",
+    "django/db/models/indexes.py"
+  ],
+  "metrics_read": {
+    "recall": 0.3333333333333333,
+    "precision": 1.0,
+    "f1": 0.5
+  },
+  "trace": [
+    {
+      "t": 4.01,
+      "tool": "list_files",
+      "args": {
+        "directory": "."
+      },
+      "result_len": 281
+    },
+    {
+      "t": 6.88,
+      "tool": "list_files",
+      "args": {
+        "directory": "django"
+      },
+      "result_len": 255
+    },
+    {
+      "t": 10.03,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db"
+      },
+      "result_len": 98
+    },
+    {
+      "t": 13.64,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db/models"
+      },
+      "result_len": 320
+    },
+    {
+      "t": 18.35,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db/backends"
+      },
+      "result_len": 152
+    },
+    {
+      "t": 21.84,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/indexes.py"
+      },
+      "result_len": 5245
+    },
+    {
+      "t": 25.83,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/constraints.py"
+      },
+      "result_len": 5934
+    },
+    {
+      "t": 30.59,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/schema.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 36.19,
+      "tool": "grep",
+      "args": {
+        "pattern": "_create_index_sql",
+        "directory": "django/db/backends/base/schema.py"
+      },
+      "result_len": 1083
+    },
+    {
+      "t": 41.39,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/schema.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 47.46,
+      "tool": "grep",
+      "args": {
+        "pattern": "def _create_index_sql",
+        "directory": "django/db/backends/base/schema.py"
+      },
+      "result_len": 223
+    },
+    {
+      "t": 52.55,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/schema.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 59.15,
+      "tool": "grep",
+      "args": {
+        "pattern": "def _create_index_sql.*:",
+        "directory": "django/db/backends/base/schema.py"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 65.09,
+      "tool": "grep",
+      "args": {
+        "pattern": "_create_index_sql",
+        "directory": "django/db/backends/base/schema.py"
+      },
+      "result_len": 1083
+    },
+    {
+      "t": 69.97,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/schema.py"
+      },
+      "result_len": 40000
+    }
+  ],
+  "note_missing": "reasoning/chain-of-thought not captured \u2014 trace contains tool sequence + timestamps only"
+}

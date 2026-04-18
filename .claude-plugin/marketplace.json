@@ -12,7 +12,7 @@
     {
       "name": "codedna",
       "source": "./codedna-plugin",
-      "description": "CodeDNA v0.8 protocol enforcement — adds /codedna:init, /codedna:check, /codedna:manifest, /codedna:impact skills + automatic annotation validation on every file write",
+      "description": "CodeDNA v0.9 protocol enforcement — adds /codedna:init, /codedna:check, /codedna:manifest, /codedna:impact skills + automatic annotation validation on every file write",
       "version": "1.0.0",
       "author": {
         "name": "Fabrizio Corpora"

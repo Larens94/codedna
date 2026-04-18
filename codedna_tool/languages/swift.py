@@ -1,4 +1,4 @@
-"""swift.py — CodeDNA v0.8 adapter for Swift source files.
+"""swift.py — CodeDNA v0.9 adapter for Swift source files.
 
 exports: _PUB | _FUNC_RE | _CLASS_RE | _STRUCT_RE | _ENUM_RE | _PROTOCOL_RE | _TYPEALIAS_RE | _VAR_RE | _IMPORT_RE | class SwiftAdapter
 used_by: codedna_tool/languages/__init__.py → SwiftAdapter

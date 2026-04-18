@@ -1,4 +1,4 @@
-# CodeDNA v0.8 — Protocol for Claude Code
+# CodeDNA v0.9 — Protocol for Claude Code
 
 This project uses the **CodeDNA** in-source communication protocol. Follow these rules on every file operation.
 

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""cli.py — CodeDNA v0.8 annotation tool: init, update, check, install.
+"""cli.py — CodeDNA v0.9 annotation tool: init, update, check, install.
 
 exports: class FuncInfo | class FileInfo | scan_file(path, repo_root) | scan_file_lang(path, repo_root, adapter) | build_used_by(infos) | build_ast_skeleton(source, rel) | class LLM | _EXPORTS_CAP | build_module_docstring(info, ub, rules, model_id) | inject_module_docstring(source, docstring) | inject_function_rules(source, func, rules_text) | collect_files(target, exclude, extensions) | run_lang_files(target, extensions, repo_root, exclude, model, dry_run, force, no_llm, verbose, api_key) | run(target, levels, model, dry_run, exclude, force, no_llm, only_public, verbose, api_key, repo_root, extensions) | cmd_refresh(target, repo_root, exclude, dry_run, verbose) | cmd_check(target, repo_root, exclude, verbose, extensions) | _TOOL_FILES | _HOOK_TOOLS | _TOOL_HOOKS_MAP | _HOOKS_BASE_MAP | _PRE_COMMIT_HOOK | (+7 more)
 used_by: tests/test_cli.py → FileInfo, build_module_docstring
@@ -473,7 +473,7 @@ class LLM:
     def _module_rules_from_context(self, rel: str, context_block: str) -> str:
         """Shared prompt builder for module_rules and module_rules_raw."""
         resp = self._call(
-            "You are generating the `rules:` field for a CodeDNA v0.8 module header.\n\n"
+            "You are generating the `rules:` field for a CodeDNA v0.9 module header.\n\n"
             "Below is the source context of the file.\n\n"
             f"File: {rel}\n{context_block}\n\n"
             "Write 1-3 lines of hard architectural constraints a future agent MUST know before editing.\n"
@@ -983,7 +983,7 @@ def run(
     all_exts = _normalize_extensions(extensions)
     py_files = collect_files(target, exclude, extensions=[".py"])
 
-    print("CodeDNA Annotator v0.8")
+    print("CodeDNA Annotator v0.9")
     print(f"Target      {target}")
     print(f"Extensions  {', '.join(all_exts)}")
     print(f"Levels      {levels}")
@@ -1369,7 +1369,7 @@ def cmd_refresh(target: Path, repo_root: Optional[Path], exclude: list[str],
     for ext in non_py_exts:
         all_lang.extend(collect_files(repo_root, exclude, extensions=[ext]))
 
-    print("CodeDNA Refresh v0.8")
+    print("CodeDNA Refresh v0.9")
     print(f"Target      {target}")
     print(f"Mode        {'DRY RUN' if dry_run else 'WRITE'}")
     print(f"Python      {len(all_py)} files scanned for dependency graph")
@@ -1690,7 +1690,7 @@ _HOOKS_BASE_MAP = {
 }
 
 _PRE_COMMIT_HOOK = r'''#!/usr/bin/env bash
-# CodeDNA v0.8 pre-commit hook — validates staged files.
+# CodeDNA v0.9 pre-commit hook — validates staged files.
 # Installed by: codedna install
 
 set -euo pipefail
@@ -1720,7 +1720,7 @@ if [[ -z "$STAGED" ]]; then
     exit 0
 fi
 
-echo "CodeDNA v0.8 — validating staged files..."
+echo "CodeDNA v0.9 — validating staged files..."
 
 # Detect extensions in use
 EXTS=""
@@ -1771,13 +1771,13 @@ for FILE in $STAGED; do
         ERRORS=$((ERRORS + 1))
         echo ""
         echo "FAIL  $FILE"
-        echo "      Missing CodeDNA v0.8 header"
+        echo "      Missing CodeDNA v0.9 header"
     fi
 done
 
 echo ""
 if [[ $ERRORS -gt 0 ]]; then
-    echo "Commit blocked: $ERRORS file(s) missing CodeDNA v0.8 annotations."
+    echo "Commit blocked: $ERRORS file(s) missing CodeDNA v0.9 annotations."
     echo ""
     echo "Quick fix:  codedna init <path> --no-llm    (structural only, instant)"
     echo "Full fix:   codedna init <path>              (with AI-generated rules:)"
@@ -1785,7 +1785,7 @@ if [[ $ERRORS -gt 0 ]]; then
     exit 1
 fi
 
-echo "All staged files pass CodeDNA v0.8 validation."
+echo "All staged files pass CodeDNA v0.9 validation."
 exit 0
 '''
 
@@ -2039,16 +2039,16 @@ _CLAUDE_HOOKS_SETTINGS = r'''{
     "PostToolUse": [
       {
         "matcher": "Write",
-        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_codedna.sh", "timeout": 10, "statusMessage": "CodeDNA v0.8 — validating annotations..." }]
+        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_codedna.sh", "timeout": 10, "statusMessage": "CodeDNA v0.9 — validating annotations..." }]
       },
       {
         "matcher": "Edit",
-        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_codedna.sh", "timeout": 10, "statusMessage": "CodeDNA v0.8 — validating annotations..." }]
+        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_codedna.sh", "timeout": 10, "statusMessage": "CodeDNA v0.9 — validating annotations..." }]
       }
     ],
     "Stop": [
       {
-        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_stop.sh", "timeout": 5, "statusMessage": "CodeDNA v0.8 — checking session end protocol..." }]
+        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_stop.sh", "timeout": 5, "statusMessage": "CodeDNA v0.9 — checking session end protocol..." }]
       },
       {
         "hooks": [{
@@ -2076,7 +2076,7 @@ def cmd_install(repo_root: Path, tools: list[str], skip_hook: bool = False,
 
     str_raw_base_url = "https://raw.githubusercontent.com/Larens94/codedna/main/integrations"
 
-    print("CodeDNA v0.8 — Project Setup")
+    print("CodeDNA v0.9 — Project Setup")
     print(f"  Target: {repo_root}")
     print()
 
@@ -2693,7 +2693,7 @@ def cmd_manifest(
 def main():
     p = argparse.ArgumentParser(
         prog="codedna",
-        description="CodeDNA v0.8 — in-source annotation protocol",
+        description="CodeDNA v0.9 — in-source annotation protocol",
         formatter_class=argparse.RawDescriptionHelpFormatter,
     )
     subs = p.add_subparsers(dest="command", metavar="COMMAND")

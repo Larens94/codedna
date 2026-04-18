@@ -1,4 +1,4 @@
-"""vue.py — CodeDNA v0.8 adapter for Vue SFC and Svelte components.
+"""vue.py — CodeDNA v0.9 adapter for Vue SFC and Svelte components.
 
 exports: _DEFINE_PROPS_RE | _DEFINE_EMITS_RE | _DEFINE_EXPOSE_RE | _PROPS_RE | _IMPORT_RE | _COMPONENTS_RE | _SVELTE_EXPORT_RE | _SVELTE_SLOT_RE | class VueAdapter | class SvelteAdapter
 used_by: codedna_tool/languages/__init__.py → SvelteAdapter, VueAdapter

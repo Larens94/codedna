@@ -9,7 +9,7 @@
 </p>
 
 <p align="center">
-  <a href="./SPEC.md"><img src="https://img.shields.io/badge/protocol-v0.8-6366f1" alt="Protocol"></a>
+  <a href="./SPEC.md"><img src="https://img.shields.io/badge/protocol-v0.9-6366f1" alt="Protocol"></a>
   <a href="https://doi.org/10.5281/zenodo.19158336"><img src="https://img.shields.io/badge/DOI-zenodo.19158336-blue" alt="DOI"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
   <a href="https://github.com/Larens94/codedna/actions/workflows/ci.yml"><img src="https://github.com/Larens94/codedna/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
@@ -420,7 +420,7 @@ codedna mode agent    # full protocol
 
 | | |
 |---|---|
-| [SPEC.md](./SPEC.md) | Protocol specification v0.8 |
+| [SPEC.md](./SPEC.md) | Protocol specification v0.9 |
 | [docs/languages.md](docs/languages.md) | 9 languages, template engines, framework awareness |
 | [docs/benchmark.md](docs/benchmark.md) | SWE-bench results, annotation integrity |
 | [docs/experiments.md](docs/experiments.md) | Multi-agent experiments |
@@ -432,7 +432,7 @@ codedna mode agent    # full protocol
 
 | Milestone | Status |
 |---|---|
-| Protocol v0.8 + CLI + modes + `message:` | Done |
+| Protocol v0.9 + CLI + modes + `message:` | Done |
 | Enforcement hooks (Claude, Cursor, Copilot, Cline, OpenCode) | Done |
 | 11 languages + tree-sitter AST | Done |
 | SWE-bench Verified (500 tasks, 12 repos) | In progress |

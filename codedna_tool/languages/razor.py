@@ -1,4 +1,4 @@
-"""razor.py — CodeDNA v0.8 adapter for Razor templates (.cshtml, .razor).
+"""razor.py — CodeDNA v0.9 adapter for Razor templates (.cshtml, .razor).
 
 exports: _MODEL_RE | _INJECT_RE | _USING_RE | _PARTIAL_TAG_RE | _COMPONENT_TAG_RE | _SECTION_RE | _RENDER_SECTION_RE | class RazorAdapter
 used_by: codedna_tool/languages/__init__.py → RazorAdapter

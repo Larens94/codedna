@@ -1,4 +1,4 @@
-"""java.py — CodeDNA v0.8 adapter for Java and Kotlin source files.
+"""java.py — CodeDNA v0.9 adapter for Java and Kotlin source files.
 
 exports: _JAVA_CLASS_RE | _JAVA_METHOD_RE | _JAVA_IMPORT_RE | _KT_CLASS_RE | _KT_FUN_RE | _KT_CONST_RE | _KT_IMPORT_RE | class JavaAdapter | class KotlinAdapter | KotlinAdapter.inject_function_rules
 used_by: codedna_tool/languages/__init__.py → JavaAdapter, KotlinAdapter

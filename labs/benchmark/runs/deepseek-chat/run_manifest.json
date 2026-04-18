@@ -1,0 +1,46 @@
+{
+  "timestamp_utc": "2026-04-18T18:53:19Z",
+  "model_name": "deepseek-chat",
+  "model_id": "deepseek-chat",
+  "provider": "openai",
+  "cli_args": {
+    "runs": 3,
+    "temperature": 0.1,
+    "max_turns": 15,
+    "condition": "control+codedna",
+    "task": [
+      "django__django-12508",
+      "django__django-11991",
+      "django__django-11808",
+      "django__django-14480",
+      "django__django-13495",
+      "django__django-11532",
+      "django__django-11138",
+      "django__django-11883",
+      "django__django-12396",
+      "django__django-12733"
+    ]
+  },
+  "git": {
+    "commit": "210c655ae24e",
+    "dirty": true
+  },
+  "file_sha256": {
+    "runner": "5e622a447e3c9b42",
+    "tasks_json": "c7955154eccc2de2"
+  },
+  "prompt_sha256": {
+    "system": "6ab1b3b1acd1281c",
+    "matched_control": "21e25da23de70118",
+    "codedna": "a1509ee3c5eb660a"
+  },
+  "limits": {
+    "read_file_limit": 40000,
+    "grep_limit": 4000,
+    "history_window": 8
+  },
+  "python_version": "3.11.6",
+  "sdk_versions": {
+    "anthropic": "0.96.0"
+  }
+}

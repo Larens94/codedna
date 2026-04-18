@@ -102,11 +102,11 @@ If `.claude/settings.local.json` already exists, **merge** this `"hooks"` block 
     "PostToolUse": [
       {
         "matcher": "Write",
-        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_codedna.sh", "timeout": 10, "statusMessage": "CodeDNA v0.8 — validating annotations..." }]
+        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_codedna.sh", "timeout": 10, "statusMessage": "CodeDNA v0.9 — validating annotations..." }]
       },
       {
         "matcher": "Edit",
-        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_codedna.sh", "timeout": 10, "statusMessage": "CodeDNA v0.8 — validating annotations..." }]
+        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_codedna.sh", "timeout": 10, "statusMessage": "CodeDNA v0.9 — validating annotations..." }]
       },
       {
         "matcher": "Write|Edit",
@@ -119,7 +119,7 @@ If `.claude/settings.local.json` already exists, **merge** this `"hooks"` block 
     ],
     "Stop": [
       {
-        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_stop.sh", "timeout": 5, "statusMessage": "CodeDNA v0.8 — checking session end protocol..." }]
+        "hooks": [{ "type": "command", "command": "bash tools/claude_hook_stop.sh", "timeout": 5, "statusMessage": "CodeDNA v0.9 — checking session end protocol..." }]
       },
       {
         "hooks": [{
@@ -220,7 +220,7 @@ This creates two files in your project:
 
 | File | Purpose |
 |---|---|
-| `AGENTS.md` | CodeDNA v0.8 instructions — loaded automatically by OpenCode as system prompt |
+| `AGENTS.md` | CodeDNA v0.9 instructions — loaded automatically by OpenCode as system prompt |
 | `.opencode/plugins/codedna.js` | Active enforcement plugin — warns on missing headers, reminds at session end |
 
 **What the plugin does:**

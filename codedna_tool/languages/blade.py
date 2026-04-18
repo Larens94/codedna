@@ -1,4 +1,4 @@
-"""blade.py — CodeDNA v0.8 adapter for Laravel Blade templates.
+"""blade.py — CodeDNA v0.9 adapter for Laravel Blade templates.
 
 exports: _EXTENDS_RE | _INCLUDE_RE | _COMPONENT_RE | _LIVEWIRE_RE | _SECTION_RE | _SLOT_RE | class BladeAdapter
 used_by: codedna_tool/languages/__init__.py → BladeAdapter

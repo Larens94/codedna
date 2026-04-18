@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CodeDNA v0.8 — Cursor afterFileEdit hook
+# CodeDNA v0.9 — Cursor afterFileEdit hook
 # Place in: .cursor/hooks/after-file-edit.sh (make executable)
 # Requires: Cursor v1.7+
 #
@@ -37,7 +37,7 @@ OUTPUT=$(python3 "$VALIDATOR" "$FILE_PATH" 2>&1) || true
 if echo "$OUTPUT" | grep -q "^FAIL "; then
     ERRORS=$(echo "$OUTPUT" | grep -E "error:|missing:" | head -5)
     echo ""
-    echo "━━━ CodeDNA v0.8 — annotation missing or incomplete ━━━"
+    echo "━━━ CodeDNA v0.9 — annotation missing or incomplete ━━━"
     echo "File: $FILE_PATH"
     echo "$ERRORS" | sed 's/^/  /'
     echo ""

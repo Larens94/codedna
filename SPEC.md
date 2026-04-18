@@ -5,7 +5,7 @@
 **Status:** Stable
 **Language:** Python (canonical), TypeScript, JavaScript, Go, Rust, Java, Ruby, C/C++
 
-> **Versioning note**: the *protocol* version (0.8) tracks the annotation format and field semantics. The *tool release* (v1.0.0) tracks the CLI, plugin, and integrations. They evolve independently — protocol v0.8 may ship as tool v1.x for multiple releases.
+> **Versioning note**: the *protocol* version (0.8) tracks the annotation format and field semantics. The *tool release* (v1.0.0) tracks the CLI, plugin, and integrations. They evolve independently — protocol v0.9 may ship as tool v1.x for multiple releases.
 
 ---
 
@@ -220,7 +220,7 @@ The SWE-bench task set used in this benchmark deliberately includes one cross-cu
 
 This is the honest baseline: CodeDNA v0.7 as currently specified shows **Δ ≈ 0%** on cross-cutting tasks. This result is reported transparently in the benchmark.
 
-**The proposed extension for v0.8:** a `cross_cutting_patterns:` section in the `.codedna` manifest, written by agents as they encounter such patterns during development — not pre-populated for evaluation tasks. Example:
+**The proposed extension for v0.9:** a `cross_cutting_patterns:` section in the `.codedna` manifest, written by agents as they encounter such patterns during development — not pre-populated for evaluation tasks. Example:
 
 ```yaml
 cross_cutting_patterns:

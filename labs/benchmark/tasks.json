@@ -765,5 +765,136 @@
       "sympy/utilities/randtest.py"
     ],
     "n_files": 2
+  },
+  {
+    "instance_id": "django__django-11808",
+    "repo": "django/django",
+    "base_commit": "67e7dffe9543aff259f63c8f12d15642fe7be100",
+    "problem_statement": "__eq__ should return NotImplemented when equality cannot be checked.\nDescription\n\t \n\t\t(last modified by Elizabeth Uselton)\n\t \nModel.__eq__ never returns NotImplemented if it encounters an object it doesn't know how to compare against. Instead, if the object it is comparing to is not a Django Model, it automatically returns False. \nhttps://github.com/django/django/blob/master/django/db/models/base.py#L526\nAccording to the Python 3 data model reference, a __eq__ should return NotImplemented\nhttps://docs.python.org/3/reference/datamodel.html#object.__eq__\nIf a.__eq__(b) returns NotImplemented, then b.__eq__(a) will be tried. If both return NotImplemented, then an is check is performed, and if that fails it returns False.\nThis may seem like a relatively innocuous difference, but it can cause some nasty bugs. The most obvious is that for testing,\n<A Django Model> == mock.ANY returns False, since by not returning NotImplemented it never even looks at the overridden __eq__ on ANY.\n",
+    "files_in_patch": [
+      "django/contrib/messages/storage/base.py",
+      "django/contrib/postgres/constraints.py",
+      "django/core/validators.py",
+      "django/db/models/base.py",
+      "django/db/models/constraints.py",
+      "django/db/models/expressions.py",
+      "django/db/models/indexes.py",
+      "django/db/models/query.py",
+      "django/db/models/query_utils.py",
+      "django/template/context.py"
+    ],
+    "n_files": 10
+  },
+  {
+    "instance_id": "django__django-11991",
+    "repo": "django/django",
+    "base_commit": "f997b5e6ae85e2df2342b1a7812fe8130206c957",
+    "problem_statement": "Add support for adding non-key columns to indexes\nDescription\n\t \n\t\t(last modified by Hannes Ljungberg)\n\t \nPostgres got support for the INCLUDE clause in CREATE INDEX. This can be used to add non-key columns to the index. \nCREATE INDEX idx\n\tON t1 ( col1 )\n\tINCLUDE ( col2 );\nThis allows for Index Only Scans on queries like:\nSELECT col1, col2 FROM t1 WHERE t1 = 'foo';\nMore info:\n\u200bhttps://www.postgresql.org/docs/current/sql-createindex.html\n\u200bhttps://use-the-index-luke.com/blog/2019-04/include-columns-in-btree-indexes\n\u200bhttps://www.postgresql.org/docs/current/indexes-index-only-scans.html\nThe idea is to add an additional kwarg to Index to support this: \nIndex(\n\tname='some-idx',\n\tfields=['headline'],\n\tinclude=['pub_date']\n)\nOne of the biggest possibilities of this feature is to add included columns to unique indexes and use them to perform Index Only Scans. This would require adding the same kwarg to UniqueConstraint. The implementation would be a lot like the condition kwargs to both Index and UniqueConstraint. \nAt the moment the only Django-supported database that can use this feature is Postgres but it's also supported by Microsoft SQL Server and IBM Db2 with the same syntax. Because of this I think it shouldn't be implemented as a postgres only feature but exposed on BaseDatabaseSchemaEditor to ease the adding of support when/if sqlite or mariadb/mysql get it.\n",
+    "files_in_patch": [
+      "django/contrib/gis/db/backends/postgis/schema.py",
+      "django/contrib/postgres/indexes.py",
+      "django/db/backends/base/features.py",
+      "django/db/backends/base/schema.py",
+      "django/db/backends/postgresql/features.py",
+      "django/db/backends/postgresql/schema.py",
+      "django/db/models/base.py",
+      "django/db/models/constraints.py",
+      "django/db/models/indexes.py"
+    ],
+    "n_files": 9
+  },
+  {
+    "instance_id": "django__django-12508",
+    "repo": "django/django",
+    "base_commit": "b9e2355eb07938829a1a31ed7b60e5f72d4b92e3",
+    "problem_statement": "Add support for ./manage.py dbshell -c SQL\nDescription\n\t\nAt the moment you cannot run specific SQL directly with dbshell:\n./manage.py dbshell -c \"select * from auth_group\"\nYou have to use pipes, that are not always convenient:\necho \"select * from auth_group\" | ./manage.py dbshell\nIf we add -c argument, it would be in sync with shell command, where you could provide commands already.\n",
+    "files_in_patch": [
+      "django/core/management/base.py",
+      "django/core/management/commands/dbshell.py",
+      "django/db/backends/base/client.py",
+      "django/db/backends/mysql/client.py",
+      "django/db/backends/mysql/creation.py",
+      "django/db/backends/oracle/client.py",
+      "django/db/backends/postgresql/client.py",
+      "django/db/backends/sqlite3/client.py"
+    ],
+    "n_files": 8
+  },
+  {
+    "instance_id": "django__django-13495",
+    "repo": "django/django",
+    "base_commit": "b26ec77deb7c5052163ef8514ec7db70c0a5ea2a",
+    "problem_statement": "Trunc() function take tzinfo param into account only when DateTimeField() are used as output_field\nDescription\n\t\nI'm trying to use TruncDay() function like this \nTruncDay('created_at', output_field=DateField(), tzinfo=tz_kyiv)\nbut for PostgresSQL the code are generated as \n(DATE_TRUNC('day', \"storage_transaction\".\"created_at\"))\nSo timezone convertation like \nAT TIME ZONE 'Europe/Kiev'\nwas totally missed from sql.\nAfter the investigation of code I've found out that Timezone converting are applied only when output_field=DateTimeField\n\tdef as_sql(self, compiler, connection):\n\t\tinner_sql, inner_params = compiler.compile(self.lhs)\n\t\tif isinstance(self.output_field, DateTimeField):\n\t\t\ttzname = self.get_tzname()\n\t\t\tsql = connection.ops.datetime_trunc_sql(self.kind, inner_sql, tzname)\n\t\telif isinstance(self.output_field, DateField):\n\t\t\tsql = connection.ops.date_trunc_sql(self.kind, inner_sql)\n\t\telif isinstance(self.output_field, TimeField):\n\t\t\tsql = connection.ops.time_trunc_sql(self.kind, inner_sql)\n\t\telse:\n\t\t\traise ValueError('Trunc only valid on DateField, TimeField, or DateTimeField.')\n\t\treturn sql, inner_params\nWhy is that? Is there any reason for it OR is it only such feature that isn't still implemented?\n",
+    "files_in_patch": [
+      "django/db/backends/base/operations.py",
+      "django/db/backends/mysql/operations.py",
+      "django/db/backends/oracle/operations.py",
+      "django/db/backends/postgresql/operations.py",
+      "django/db/backends/sqlite3/base.py",
+      "django/db/backends/sqlite3/operations.py",
+      "django/db/models/functions/datetime.py"
+    ],
+    "n_files": 7
+  },
+  {
+    "instance_id": "django__django-14480",
+    "repo": "django/django",
+    "base_commit": "795da6306a048b18c0158496b0d49e8e4f197a32",
+    "problem_statement": "Add logical XOR support to Q() and QuerySet().\nDescription\n\t\nXOR seems to be available in \u200bPostgresql, \u200bMySQL, \u200bSequelServer and \u200bOracle but NOT \u200bsqlite. Two stackoverflow questions cover this sort of thing: \u200bhttps://stackoverflow.com/questions/50408142/django-models-xor-at-the-model-level and \u200bhttps://stackoverflow.com/questions/14711203/perform-a-logical-exclusive-or-on-a-django-q-object.\nI propose adding XOR to work with Q queries like the \u200banswer to the second question above. This will be my first time making a major contribution so we'll see how this goes (apologies in advance if this is annoying!).\n",
+    "files_in_patch": [
+      "django/db/backends/base/features.py",
+      "django/db/backends/mysql/features.py",
+      "django/db/models/expressions.py",
+      "django/db/models/query.py",
+      "django/db/models/query_utils.py",
+      "django/db/models/sql/__init__.py",
+      "django/db/models/sql/where.py"
+    ],
+    "n_files": 7
+  },
+  {
+    "instance_id": "django__django-11883",
+    "repo": "django/django",
+    "base_commit": "6e99585c19290fb9bec502cac8210041fdb28484",
+    "problem_statement": "Make cache.delete() return whether or not it suceeded.\nDescription\n\t\nIt can be quite useful when dealing with complex caching/locking systems or simply for logging purposes.\nMemcache clients already returns this value and it should be straigtforward to implement for file, inmemory, and database backend based on the number of returned rows.\nRedis del operation also returns the number of keys it successfully deleted so it should be implementable if it's eventually added as discussed on the mailing list.\n",
+    "files_in_patch": [
+      "django/core/cache/backends/base.py",
+      "django/core/cache/backends/db.py",
+      "django/core/cache/backends/dummy.py",
+      "django/core/cache/backends/filebased.py",
+      "django/core/cache/backends/locmem.py",
+      "django/core/cache/backends/memcached.py"
+    ],
+    "n_files": 6
+  },
+  {
+    "instance_id": "django__django-12396",
+    "repo": "django/django",
+    "base_commit": "9cc743d0c82e019306d80eb8a83f86f8c6244610",
+    "problem_statement": "Omits test_ prefix from database name when running subset of tests\nDescription\n\t \n\t\t(last modified by Matthijs Kooijman)\n\t \nWhile debugging some test framework issues wrt mysql, I noticed a problem where the test runner would try to access the test database without prefixing test_, leading to an access denied error (because my permissions are set up tightly).\nWhat I suspect happens is that this subset of tests only uses the default database, so only that one is set up by DisoveryRunner.setup_databases. This is confirmed by using a debugger, which shows \u200bdatabases only contains 'default'. Then, it runs the check management command, which looks at settings.DATABASES, which still contains the settings for default and other. This in turn causes a connection to the other database to be made, but since the name of that database is not modified by \u200bcreate_test_db, that still refers to the original name, and the connection fails.\nTo reproduce, I have a clean master (c33eb6dcd0c211f8f02b2976fe3b3463f0a54498), with the following tests/test_mysql.py:\nDATABASES = {\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n\t'default': {\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t'ENGINE': 'django.db.backends.mysql',\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n\t\t'HOST': 'localhost',\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t'USER': 'test_django',\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n\t\t'PASSWORD': 'XXX',\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n\t\t# Django prepends test_ to this name...\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n\t\t'NAME': 'django_main',\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n\t},\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n\t'other': {\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n\t\t'ENGINE': 'django.db.backends.mysql',\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n\t\t'HOST': 'localhost',\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\t'USER': 'test_django',\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n\t\t'PASSWORD': 'XXX',\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n\t\t# Django prepends test_ to this name...\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n\t\t'NAME': 'django_other',\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n\t}\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n}\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\nSECRET_KEY = \"django_tests_secret_key\"\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n# Use a fast hasher to speed up tests.\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \nPASSWORD_HASHERS = [\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t'django.contrib.auth.hashers.MD5PasswordHasher',\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n]\nThen inside tests, I run:\n ./runtests.py --settings test_mysql --parallel 1 timezones \nI think the --parallel 1 is not strictly needed, but might make things easier to debug. With the above, I get:\nCreating test database for alias 'default'...\nDestroying test database for alias 'default'...\nTesting against Django installed in '/home/matthijs/docs/src/upstream/django/django'\nTraceback (most recent call last):\n File \"/home/matthijs/docs/src/upstream/django/django/db/backends/base/base.py\", line 220, in ensure_connection\n\tself.connect()\n File \"/home/matthijs/docs/src/upstream/django/django/utils/asyncio.py\", line 24, in inner\n\treturn func(*args, **kwargs)\n File \"/home/matthijs/docs/src/upstream/django/django/db/backends/base/base.py\", line 197, in connect\n\tself.connection = self.get_new_connection(conn_params)\n File \"/home/matthijs/docs/src/upstream/django/django/utils/asyncio.py\", line 24, in inner\n\treturn func(*args, **kwargs)\n File \"/home/matthijs/docs/src/upstream/django/django/db/backends/mysql/base.py\", line 233, in get_new_connection\n\treturn Database.connect(**conn_params)\n File \"/home/matthijs/docs/src/upstream/django/venv/lib/python3.7/site-packages/MySQLdb/__init__.py\", line 84, in Connect\n\treturn Connection(*args, **kwargs)\n File \"/home/matthijs/docs/src/upstream/django/venv/lib/python3.7/site-packages/MySQLdb/connections.py\", line 179, in __init__\n\tsuper(Connection, self).__init__(*args, **kwargs2)\nMySQLdb._exceptions.OperationalError: (1044, \"Access denied for user 'test_django'@'localhost' to database 'django_other'\")\nThe above exception was the direct cause of the following exception:\nTraceback (most recent call last):\n File \"./runtests.py\", line 566, in <module>\n\toptions.start_at, options.start_after, options.pdb,\n File \"./runtests.py\", line 308, in django_tests\n\textra_tests=extra_tests,\n File \"/home/matthijs/docs/src/upstream/django/django/test/runner.py\", line 687, in run_tests\n\tself.run_checks()\n File \"/home/matthijs/docs/src/upstream/django/django/test/runner.py\", line 625, in run_checks\n\tcall_command('check', verbosity=self.verbosity)\n File \"/home/matthijs/docs/src/upstream/django/django/core/management/__init__.py\", line 168, in call_command\n\treturn command.execute(*args, **defaults)\n File \"/home/matthijs/docs/src/upstream/django/django/core/management/base.py\", line 369, in execute\n\toutput = self.handle(*args, **options)\n File \"/home/matthijs/docs/src/upstream/django/django/core/management/commands/check.py\", line 64, in handle\n\tfail_level=getattr(checks, options['fail_level']),\n File \"/home/matthijs/docs/src/upstream/django/django/core/management/base.py\", line 395, in check\n\tinclude_deployment_checks=include_deployment_checks,\n File \"/home/matthijs/docs/src/upstream/django/django/core/management/base.py\", line 382, in _run_checks\n\treturn checks.run_checks(**kwargs)\n File \"/home/matthijs/docs/src/upstream/django/django/core/checks/registry.py\", line 72, in run_checks\n\tnew_errors = check(app_configs=app_configs)\n File \"/home/matthijs/docs/src/upstream/django/django/core/checks/model_checks.py\", line 34, in check_all_models\n\terrors.extend(model.check(**kwargs))\n File \"/home/matthijs/docs/src/upstream/django/django/db/models/base.py\", line 1276, in check\n\t*cls._check_constraints(),\n File \"/home/matthijs/docs/src/upstream/django/django/db/models/base.py\", line 1842, in _check_constraints\n\tconnection.features.supports_table_check_constraints or\n File \"/home/matthijs/docs/src/upstream/django/django/utils/functional.py\", line 48, in __get__\n\tres = instance.__dict__[self.name] = self.func(instance)\n File \"/home/matthijs/docs/src/upstream/django/django/db/backends/mysql/features.py\", line 97, in supports_column_check_constraints\n\tif self.connection.mysql_is_mariadb:\n File \"/home/matthijs/docs/src/upstream/django/django/utils/functional.py\", line 48, in __get__\n\tres = instance.__dict__[self.name] = self.func(instance)\n File \"/home/matthijs/docs/src/upstream/django/django/db/backends/mysql/base.py\", line 364, in mysql_is_mariadb\n\treturn 'mariadb' in self.mysql_server_info.lower()\n File \"/home/matthijs/docs/src/upstream/django/django/utils/functional.py\", line 48, in __get__\n\tres = instance.__dict__[self.name] = self.func(instance)\n File \"/home/matthijs/docs/src/upstream/django/django/db/backends/mysql/base.py\", line 351, in mysql_server_info\n\twith self.temporary_connection() as cursor:\n File \"/usr/lib/python3.7/contextlib.py\", line 112, in __enter__\n\treturn next(self.gen)\n File \"/home/matthijs/docs/src/upstream/django/django/db/backends/base/base.py\", line 604, in temporary_connection\n\twith self.cursor() as cursor:\n File \"/home/matthijs/docs/src/upstream/django/django/utils/asyncio.py\", line 24, in inner\n\treturn func(*args, **kwargs)\n File \"/home/matthijs/docs/src/upstream/django/django/db/backends/base/base.py\", line 260, in cursor\n\treturn self._cursor()\n File \"/home/matthijs/docs/src/upstream/django/django/db/backends/base/base.py\", line 236, in _cursor\n\tself.ensure_connection()\n File \"/home/matthijs/docs/src/upstream/django/django/utils/asyncio.py\", line 24, in inner\n\treturn func(*args, **kwargs)\n File \"/home/matthijs/docs/src/upstream/django/django/db/backends/base/base.py\", line 220, in ensure_connection\n\tself.connect()\n File \"/home/matthijs/docs/src/upstream/django/django/db/utils.py\", line 90, in __exit__\n\traise dj_exc_value.with_traceback(traceback) from exc_value\n File \"/home/matthijs/docs/src/upstream/django/django/db/backends/base/base.py\", line 220, in ensure_connection\n\tself.connect()\n File \"/home/matthijs/docs/src/upstream/django/django/utils/asyncio.py\", line 24, in inner\n\treturn func(*args, **kwargs)\n File \"/home/matthijs/docs/src/upstream/django/django/db/backends/base/base.py\", line 197, in connect\n\tself.connection = self.get_new_connection(conn_params)\n File \"/home/matthijs/docs/src/upstream/django/django/utils/asyncio.py\", line 24, in inner\n\treturn func(*args, **kwargs)\n File \"/home/matthijs/docs/src/upstream/django/django/db/backends/mysql/base.py\", line 233, in get_new_connection\n\treturn Database.connect(**conn_params)\n File \"/home/matthijs/docs/src/upstream/django/venv/lib/python3.7/site-packages/MySQLdb/__init__.py\", line 84, in Connect\n\treturn Connection(*args, **kwargs)\n File \"/home/matthijs/docs/src/upstream/django/venv/lib/python3.7/site-packages/MySQLdb/connections.py\", line 179, in __init__\n\tsuper(Connection, self).__init__(*args, **kwargs2)\ndjango.db.utils.OperationalError: (1044, \"Access denied for user 'test_django'@'localhost' to database 'django_other'\")\nI am not quite familiar with this code, and this is already a distraction from a distraction from a distraction from the actual project I was working on, so I'm going to leave this here for others to fix :-)\n",
+    "files_in_patch": [
+      "django/core/checks/database.py",
+      "django/core/checks/registry.py",
+      "django/core/management/base.py",
+      "django/core/management/commands/check.py",
+      "django/core/management/commands/migrate.py",
+      "django/db/models/base.py"
+    ],
+    "n_files": 6
+  },
+  {
+    "instance_id": "django__django-12733",
+    "repo": "django/django",
+    "base_commit": "8bcca47e8356521f52f0738d9633befd53007cae",
+    "problem_statement": "Use PostgreSQL TRUNCATE \u2026 RESTART IDENTITY keyword to reset sequences in sql_flush()\nDescription\n\t\nRather than executing an additional query per truncated table, can truncate and reset sequences in a single query by using the RESTART IDENTITY syntax.\nMy project uses the sql_flush() operation internally and profiling shows that it can consume a large percentage of the runtime. Reducing the number of queries to one should help provide a small performance improvement.\n",
+    "files_in_patch": [
+      "django/core/management/sql.py",
+      "django/db/backends/base/operations.py",
+      "django/db/backends/mysql/operations.py",
+      "django/db/backends/oracle/operations.py",
+      "django/db/backends/postgresql/operations.py",
+      "django/db/backends/sqlite3/operations.py"
+    ],
+    "n_files": 6
   }
 ]

@@ -1,4 +1,4 @@
-"""ruby.py — CodeDNA v0.8 adapter for Ruby source files.
+"""ruby.py — CodeDNA v0.9 adapter for Ruby source files.
 
 exports: _MODULE_RE | _CLASS_RE | _DEF_RE | _ATTR_RE | _REQUIRE_RE | _PRIVATE_RE | class RubyAdapter | RubyAdapter.inject_function_rules
 used_by: codedna_tool/languages/__init__.py → RubyAdapter

@@ -1,5 +1,5 @@
 #!/usr/bin/env bash
-# CodeDNA v0.8 — GitHub Copilot hooks script
+# CodeDNA v0.9 — GitHub Copilot hooks script
 # Place in: .github/hooks/codedna.sh (make executable)
 # Called by .github/hooks/hooks.json for session_start, post_tool_use, session_end.
 #
@@ -46,7 +46,7 @@ print(inp.get('file_path', inp.get('path', '')))" 2>/dev/null || echo "")
     if echo "$OUTPUT" | grep -q "^FAIL "; then
         ERRORS=$(echo "$OUTPUT" | grep -E "error:|missing:" | head -5)
         echo ""
-        echo "━━━ CodeDNA v0.8 — annotation missing or incomplete ━━━"
+        echo "━━━ CodeDNA v0.9 — annotation missing or incomplete ━━━"
         echo "File: $FILE_PATH"
         echo "$ERRORS" | sed 's/^/  /'
         echo ""
@@ -60,7 +60,7 @@ print(inp.get('file_path', inp.get('path', '')))" 2>/dev/null || echo "")
     STAGED=$(git diff --cached --name-only 2>/dev/null | grep -E '\.(py|ts|go|rs|java|kt|swift|rb)$' || true)
     if [[ -n "$CHANGED" ]] || [[ -n "$STAGED" ]]; then
         echo ""
-        echo "━━━ CodeDNA v0.8 — session end protocol ━━━"
+        echo "━━━ CodeDNA v0.9 — session end protocol ━━━"
         echo "Source files were modified. Remember to:"
         echo "  1. Append an agent_sessions: entry to .codedna"
         echo "  2. Commit with AI git trailers: AI-Agent, AI-Provider, AI-Session, AI-Visited, AI-Message"

@@ -1,4 +1,4 @@
-"""handlebars.py — CodeDNA v0.8 adapter for Handlebars and Mustache templates.
+"""handlebars.py — CodeDNA v0.9 adapter for Handlebars and Mustache templates.
 
 exports: _PARTIAL_RE | _BLOCK_RE | _HELPER_RE | class HandlebarsAdapter
 used_by: codedna_tool/languages/__init__.py → HandlebarsAdapter

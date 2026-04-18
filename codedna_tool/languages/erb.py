@@ -1,4 +1,4 @@
-"""erb.py — CodeDNA v0.8 adapter for ERB and EJS templates.
+"""erb.py — CodeDNA v0.9 adapter for ERB and EJS templates.
 
 exports: _RENDER_RE | _INCLUDE_RE | _CONTENT_FOR_RE | _YIELD_RE | class ErbAdapter
 used_by: codedna_tool/languages/__init__.py → ErbAdapter

@@ -1,4 +1,4 @@
-"""php.py — CodeDNA v0.8 adapter for PHP source files (Laravel + Phalcon).
+"""php.py — CodeDNA v0.9 adapter for PHP source files (Laravel + Phalcon).
 
 exports: _CLASS_RE | _INTERFACE_RE | _TRAIT_RE | _ENUM_RE | _FUNC_RE | _PUBLIC_METHOD_RE | _ROUTE_RE | _NAMESPACE_RE | _USE_RE | _PHALCON_EXTENDS_RE | _PHALCON_ROUTER_RE | _PHALCON_DI_RE | class PhpAdapter | PhpAdapter.inject_function_rules
 used_by: codedna_tool/languages/__init__.py → PhpAdapter

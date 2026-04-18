@@ -1,6 +1,6 @@
-# CodeDNA v0.8 — GitHub Copilot Instructions
+# CodeDNA v0.9 — GitHub Copilot Instructions
 
-This codebase uses the CodeDNA communication protocol (v0.8). Apply these rules in every suggestion.
+This codebase uses the CodeDNA communication protocol (v0.9). Apply these rules in every suggestion.
 
 > Annotate your project: `pip install git+https://github.com/Larens94/codedna.git` then `codedna init ./`
 
@@ -82,7 +82,7 @@ Read `.codedna` at repo root — project structure and last 3 `agent_sessions:` 
 2. Every public function **must** have a `Rules:` docstring
 3. Use semantic names: `list_dict_orders_from_db = query(sql)` not `data = query(sql)`
 
-## `message:` — Agent Chat Layer (v0.8)
+## `message:` — Agent Chat Layer (v0.9)
 
 Use `message:` for observations not yet certain enough to become `rules:`:
 

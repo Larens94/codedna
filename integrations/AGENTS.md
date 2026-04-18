@@ -1,4 +1,4 @@
-# CodeDNA v0.8 — Protocol for OpenCode
+# CodeDNA v0.9 — Protocol for OpenCode
 
 This project uses the **CodeDNA** in-source communication protocol. Follow these rules on every file operation.
 
@@ -50,7 +50,7 @@ Field guide:
 | `used_by:` | ✅ | Who calls this file's exports |
 | `rules:` | ✅ | Architectural truth — hard constraints, updated in-place |
 | `agent:` | ✅ | Session narrative — rolling window of last 5 entries; drop the oldest when adding a 6th |
-| `message:` | ⬜ | Inter-agent channel — open hypotheses, unverified observations (v0.8) |
+| `message:` | ⬜ | Inter-agent channel — open hypotheses, unverified observations (v0.9) |
 
 ## Writing good `rules:`
 
@@ -143,7 +143,7 @@ AI-Message:  <one-line summary of what was found or left open>
 
 Git is the authoritative audit log. The `.codedna` entry and file-level `agent:` fields are lightweight caches for agent navigation — git trailers are the source of truth for history and verification.
 
-## `message:` — Agent Chat Layer *(v0.8 experimental)*
+## `message:` — Agent Chat Layer *(v0.9)*
 
 The `message:` sub-field adds a conversational layer to `agent:` entries. Use it for observations not yet certain enough to become `rules:`, open questions, and notes for the next agent.
 
