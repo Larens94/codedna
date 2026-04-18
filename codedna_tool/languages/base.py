@@ -35,6 +35,7 @@ claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | fix provider/sessi
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_005 | fix multi-line rules normalization; ruff cleanup: ambiguous var l→line, removed unused Optional import
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php2 | GATE 3: add LangFuncInfo dataclass + funcs field to LangFileInfo — enables L2 function Rules: for non-Python adapters (PHP first)
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_msg | add message: empty field to _build_header_lines() — visible to next agent even when empty
+claude-opus-4-6 | anthropic | 2026-04-18 | s_20260418_gate2 | fix multi-line used_by missing comment prefix — _build_header_lines now normalizes used_by like rules
 """
 
 from __future__ import annotations
@@ -150,19 +151,21 @@ class LanguageAdapter(ABC):
         purpose = f"{stem} module"
         provider = self._detect_provider(model_id)
 
-        # Normalize multi-line rules: each continuation line must carry the comment prefix.
-        # LLMs sometimes return numbered lists with embedded newlines — join them with a separator.
-        rules_lines = [line.strip() for line in rules.splitlines() if line.strip()]
-        if len(rules_lines) > 1:
-            rules_normalized = f"\n{p}          ".join(rules_lines)
-        else:
-            rules_normalized = rules_lines[0] if rules_lines else "none"
+        # Normalize multi-line fields: each continuation line must carry the comment prefix.
+        def _normalize_field(value: str, indent: str = "         ") -> str:
+            lines = [line.strip() for line in value.splitlines() if line.strip()]
+            if len(lines) > 1:
+                return f"\n{p}{indent}".join(lines)
+            return lines[0] if lines else "none"
+
+        used_by_normalized = _normalize_field(used_by, " " * 9)
+        rules_normalized = _normalize_field(rules, " " * 10)
 
         return [
             f"{p} {filename} — {purpose}.",
             f"{p}",
             f"{p} exports: {exports}",
-            f"{p} used_by: {used_by}",
+            f"{p} used_by: {used_by_normalized}",
             f"{p} rules:   {rules_normalized}",
             f"{p} agent:   {model_id} | {provider} | {today} | codedna-cli | initial CodeDNA annotation pass",
             f"{p} message: ",
