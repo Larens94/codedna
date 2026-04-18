@@ -134,6 +134,8 @@ Agent C adds a feature. Calls `get_invoices()` without filtering suspended tenan
 exports: monthly_revenue(year, month) -> dict
 used_by: api/reports.py → revenue_route
          api/serializers.py → Schema [cascade]
+related: billing/currency.py — shares multi-currency
+         conversion logic (no import link)
 rules:   get_invoices() returns ALL tenants
          — MUST filter is_suspended() BEFORE sum
 agent:   claude-sonnet | 2026-03-10
@@ -151,6 +153,8 @@ agent:   gemini-2.5-pro | 2026-03-18
 **One read. The agent knows:**
 
 **`used_by:`** — 2 files depend on me. One is `[cascade]` — must update if I change.
+
+**`related:`** — another file shares my currency logic but doesn't import me. Check it too.
 
 **`rules:`** — upstream function returns all tenants. I must filter.
 
@@ -287,6 +291,8 @@ Four levels, like a zoom lens:
 > See also: [architecture diagram](docs/diagrams/codedna_architecture.svg)
 
 **`used_by:`** — reverse dependency graph. Who imports this file. The agent follows it instead of grepping.
+
+**`related:`** — cross-cutting links. Files that share the same logic without importing each other. Catches fixes that span multiple unrelated modules.
 
 **`rules:`** — hard constraints. Specific and actionable: *"amount is cents not euros"*, not *"handle errors gracefully."*
 

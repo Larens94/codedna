@@ -103,6 +103,18 @@ def monthly_revenue(year: int, month: int) -> dict:
 
 Level 2 exists because the channel must work even when the receiver sees only a fragment. The message is repeated at every danger point — this is the holographic property in action.
 
+**Example D — Cross-Cutting Links Catch Non-Obvious Dependencies**
+
+Agent E is asked to fix unicode domain handling in `mail/utils.py`. It follows `used_by:` and finds 3 callers in `mail/`. But the official fix also requires changes in `validators.py` and `encoding.py` — files that share the same IDNA/punycode logic without importing `mail/utils.py`. Without CodeDNA, Agent E would need to grep the entire codebase for "idna" or "punycode". With `related:`:
+
+```python
+used_by: mail/message.py → DNS_NAME
+related: django/core/validators.py — shares IDNA/punycode domain encoding logic
+         django/utils/encoding.py — encoding utilities for non-ASCII domains
+```
+
+Agent E immediately knows to check `validators.py` and `encoding.py`. The `related:` field captures **semantic links** — files that share a pattern or logic without a structural import. `used_by:` answers "who imports me?", `related:` answers "who does the same thing as me?".
+
 ---
 
 ## 2. Goals
@@ -447,7 +459,8 @@ The `agent:` field is **multi-entry with a rolling window** — each agent sessi
 |---|---|---|
 | first line | ✅ | `<filename> — <purpose>` (≤15 words, describes *what*, not *how*) |
 | `exports` | ✅ | Public API with signatures |
-| `used_by` | ✅ | Inverse of deps; who calls this file's exports. Optional `[cascade]` tag marks targets that **MUST** be updated when exports change. |
+| `used_by` | ✅ | Inverse of deps; who calls this file's exports. Structural link (import). Optional `[cascade]` tag marks targets that **MUST** be updated when exports change. |
+| `related` | ⬜ | **Cross-cutting link.** Files that share the same logic/pattern without importing each other. Semantic link — catches non-obvious dependencies that `used_by` misses. |
 | `rules` | ✅ | **Architectural truth channel.** Hard constraints, domain knowledge, what to do and what to avoid. Updated in-place — always reflects the current correct state. |
 | `agent` | ✅ | **Session narrative channel.** Rolling window of the last 5 agent entries. Format: `model-id \| provider \| YYYY-MM-DD \| session_id \| narrative`. Drop the oldest when adding a 6th. Full history in git and `.codedna`. |
 

@@ -35,6 +35,7 @@ The format adapts to the language. Never use Python docstrings in non-Python fil
 
 exports: monthly_revenue(year, month) -> dict
 used_by: api/reports.py → revenue_route
+related: billing/currency.py — shares multi-currency conversion logic
 rules:   get_invoices() returns ALL tenants — MUST filter is_suspended() before sum
 agent:   claude-sonnet-4-6 | anthropic | 2026-04-15 | s_001 | initial implementation
 """
@@ -67,8 +68,9 @@ agent:   claude-sonnet-4-6 | anthropic | 2026-04-15 | s_001 | initial layout
 
 1. Read the **module header** at the top of every source file before reading any code.
 2. Parse `exports:` — symbols you **must never rename or remove** without explicit instruction.
-3. Parse `used_by:` — callers that will be affected by your changes.
-4. Parse `rules:` — hard constraints; read **before writing any logic**.
+3. Parse `used_by:` — callers that will be affected by your changes (structural link via import).
+4. Parse `related:` — files that share the same logic without importing each other (semantic link). Check these too.
+5. Parse `rules:` — hard constraints; read **before writing any logic**.
 5. Parse `agent:` — session history; read to understand *why* the current state exists.
 6. For Python/Ruby functions with a `Rules:` docstring, read and respect those before writing logic.
 
@@ -80,7 +82,8 @@ Every new source file **must begin** with a CodeDNA header in the correct format
 |---|---|---|
 | First line | ✅ | `filename — <purpose ≤15 words>` |
 | `exports:` | ✅ | Public API with return type |
-| `used_by:` | ✅ | Who calls this file's exports |
+| `used_by:` | ✅ | Who calls this file's exports (structural link) |
+| `related:` | ⬜ | Files sharing the same logic without importing each other (semantic link) |
 | `rules:` | ✅ | Hard constraints — specific and actionable |
 | `agent:` | ✅ | Rolling window of last 5 entries |
 | `message:` | ⬜ | Inter-agent channel — open hypotheses |

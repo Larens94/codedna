@@ -166,6 +166,7 @@ For each unannotated file:
 
 exports: fn1(arg) -> ReturnType | fn2(arg) -> ReturnType
 used_by: caller.py → caller_fn
+related: other_file.py — shares same pattern (no import link)
 rules:   <constraint or none>
 agent:   claude-opus-4-6 | anthropic | <YYYY-MM-DD> | codedna-init | initial CodeDNA annotation
 """

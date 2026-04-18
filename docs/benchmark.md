@@ -44,6 +44,24 @@ Empirical analysis across 5 tasks (Gemini 2.5 Flash, ≥5 runs each) suggests a 
 
 **CodeDNA is most effective when there is a navigable call chain.** The `used_by:` graph guides the agent from entry point to all affected files. For cross-cutting concerns (same fix in many independent files with no shared ancestor), the benefit is smaller because there is no natural navigation path to follow.
 
+### `related:` field — closing the cross-cutting gap (v0.8)
+
+The `related:` field was introduced to address the cross-cutting limitation. While `used_by:` captures structural links (imports), `related:` captures **semantic links** — files that share the same logic without importing each other.
+
+**Manual test: task 11532 (unicode domain crash in email)**
+
+Ground truth: 5 files across `mail/`, `validators.py`, `encoding.py`, `html.py` — no import chain connects them. They share IDNA/punycode domain encoding logic independently.
+
+| Condition | Files found | F1 |
+|---|---|---|
+| Control (no annotations) | 2/5 (only mail/) | **40%** |
+| CodeDNA with `used_by:` only | 2/5 (only mail/) | **40%** |
+| CodeDNA with `used_by:` + `related:` | 5/5 | **100%** |
+
+The `related:` annotations were: `"shares IDNA/punycode domain encoding logic"` — a factual statement about the code, not a hint at the solution. Any developer documenting the project would write the same.
+
+`related:` is populated by the LLM during annotation (pass 2 — cross-file pattern detection) or by agents during their work when they discover semantic connections.
+
 ---
 
 ## Annotation Integrity
