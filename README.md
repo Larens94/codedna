@@ -263,6 +263,8 @@ This pattern works with any number of agents. The more agents in the team, the m
 # → Adds its own message: "implement social OAuth2 providers (Google, GitHub)"
 ```
 
+In the same experiment, the team **without CodeDNA** hit a critical failure: one agent started building with Flask, another switched to FastAPI mid-session. Both frameworks ended up in the codebase simultaneously — no annotation existed to say "we're using FastAPI, not Flask." With CodeDNA, `rules: must register all routers before returning app` on `main.py` locked the architectural choice from the first agent onward.
+
 **This is the key insight for multi-agent software engineering:** CodeDNA annotations are not just documentation — they are a **coordination protocol**. No orchestrator needed. No shared memory. The code is the channel.
 
 ### Agents find cross-cutting dependencies
