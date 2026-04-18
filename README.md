@@ -232,21 +232,38 @@ rules:   all models must inherit from Base; use UUID for public IDs; timestamps 
 """
 ```
 
-The Director declared "this file will be consumed by these modules for these purposes." When the BackendEngineer ran next, it read that contract and built the API routers accordingly — without any direct communication between the two agents.
+The flow:
 
-The same pattern appeared across the team:
-
-```python
-# AgentIntegrator wrote runner.py with:
-used_by: agents.py router → run_agent, main.py → SSE endpoint
-# BackendEngineer (who wrote agents.py) saw this and connected the call correctly
-
-# DataEngineer wrote credits.py with:
-rules:   all operations must be atomic; use SELECT FOR UPDATE
-# Every downstream agent that touched billing respected this constraint
+```
+  ProductArchitect             BackendEngineer              DataEngineer
+  ─────────────────           ─────────────────           ─────────────────
+  creates models.py            reads models.py              reads credits.py
+  writes:                      sees:                        sees:
+    used_by: all API routers     "I must build routers        "operations must be
+    rules: use UUID, UTC          that consume this"           atomic, SELECT FOR
+                                                               UPDATE"
+  creates api/ stubs           builds full API routers
+  writes:                      respects UUID + UTC          builds billing/stripe
+    used_by: main.py            constraint from rules:       respects atomicity
+                                                             constraint
+       ↓ exits                      ↓ exits                      ↓ exits
+  ─────────────────────────────────────────────────────────────────────────
+  No direct communication. The code carried the contracts.
 ```
 
-**This is the key insight for multi-agent systems:** CodeDNA annotations are not just documentation — they are a **coordination protocol**. Each agent writes what it built and what it expects, and the next agent reads those expectations and fulfills them. No orchestrator needed. No shared memory. The code is the channel.
+Each agent wrote what it built and what it expects. The next agent read those expectations and fulfilled them — without any orchestrator passing messages, without shared memory, without API calls between agents. **The code was the only communication channel.**
+
+This pattern works with any number of agents. The more agents in the team, the more valuable the annotations become — each agent leaves a richer contract for the next one.
+
+```python
+# FrontendDesigner reads jwt.py (written by BackendEngineer)
+# Sees: rules: must use settings.SECRET_KEY; must validate token expiration
+# Sees: message: "implement token blacklist for logout functionality"
+# → Builds auth UI that respects the JWT contract
+# → Adds its own message: "implement social OAuth2 providers (Google, GitHub)"
+```
+
+**This is the key insight for multi-agent software engineering:** CodeDNA annotations are not just documentation — they are a **coordination protocol**. No orchestrator needed. No shared memory. The code is the channel.
 
 ### Agents find cross-cutting dependencies
 

@@ -232,21 +232,38 @@ rules:   tutti i modelli devono ereditare da Base; usare UUID per gli ID pubblic
 """
 ```
 
-Il Director ha dichiarato "questo file sarà consumato da questi moduli per questi scopi." Quando il BackendEngineer è partito, ha letto quel contratto e ha costruito i router API di conseguenza — senza nessuna comunicazione diretta tra i due agenti.
+Il flusso:
 
-Lo stesso pattern si è ripetuto in tutto il team:
-
-```python
-# AgentIntegrator ha scritto runner.py con:
-used_by: agents.py router → run_agent, main.py → SSE endpoint
-# BackendEngineer (che ha scritto agents.py) ha visto questo e collegato la chiamata
-
-# DataEngineer ha scritto credits.py con:
-rules:   tutte le operazioni devono essere atomiche; usare SELECT FOR UPDATE
-# Ogni agente a valle che ha toccato il billing ha rispettato questo vincolo
+```
+  ProductArchitect             BackendEngineer              DataEngineer
+  ─────────────────           ─────────────────           ─────────────────
+  crea models.py               legge models.py              legge credits.py
+  scrive:                      vede:                        vede:
+    used_by: all API routers     "devo costruire i router     "le operazioni devono
+    rules: usare UUID, UTC        che consumano questo"        essere atomiche,
+                                                               SELECT FOR UPDATE"
+  crea api/ stubs              costruisce i router API
+  scrive:                      rispetta il vincolo          costruisce billing/stripe
+    used_by: main.py            UUID + UTC dalle rules:      rispetta il vincolo
+                                                             di atomicità
+       ↓ esce                       ↓ esce                      ↓ esce
+  ─────────────────────────────────────────────────────────────────────────
+  Nessuna comunicazione diretta. Il codice ha trasportato i contratti.
 ```
 
-**Questo è l'insight chiave per i sistemi multi-agente:** le annotazioni CodeDNA non sono solo documentazione — sono un **protocollo di coordinamento**. Ogni agente scrive cosa ha costruito e cosa si aspetta, e l'agente successivo legge quelle aspettative e le soddisfa. Nessun orchestratore necessario. Nessuna memoria condivisa. Il codice è il canale.
+Ogni agente ha scritto cosa ha costruito e cosa si aspetta. L'agente successivo ha letto quelle aspettative e le ha soddisfatte — senza orchestratore, senza memoria condivisa, senza chiamate API tra agenti. **Il codice è stato l'unico canale di comunicazione.**
+
+Questo pattern funziona con qualsiasi numero di agenti. Più agenti ci sono nel team, più le annotazioni diventano preziose — ogni agente lascia un contratto più ricco per il successivo.
+
+```python
+# FrontendDesigner legge jwt.py (scritto da BackendEngineer)
+# Vede: rules: must use settings.SECRET_KEY; must validate token expiration
+# Vede: message: "implement token blacklist for logout functionality"
+# → Costruisce la UI auth rispettando il contratto JWT
+# → Aggiunge il suo message: "implement social OAuth2 providers (Google, GitHub)"
+```
+
+**Questo è l'insight chiave per il software engineering multi-agente:** le annotazioni CodeDNA non sono solo documentazione — sono un **protocollo di coordinamento**. Nessun orchestratore necessario. Nessuna memoria condivisa. Il codice è il canale.
 
 ### Gli agenti trovano le dipendenze cross-cutting
 

@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Install — CodeDNA</title>
-<meta name="description" content="Install CodeDNA for Claude Code, Cursor, Copilot, Cline, OpenCode and 8 programming languages.">
+<meta name="description" content="Install CodeDNA for Claude Code, Cursor, Copilot, Cline, OpenCode and 9 programming languages.">
 <link rel="icon" href="logo.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -320,7 +320,7 @@ tr:last-child td { border-bottom: none; }
     </a>
     <a class="sb-link" href="#plugin">
       <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#999" stroke-width="2"><path d="M20.24 12.24a6 6 0 0 0-8.49-8.49L5 10.5V19h8.5z"/><line x1="16" y1="8" x2="2" y2="22"/><line x1="17.5" y1="15" x2="9" y2="15"/></svg>
-      Plugin <span style="font-size:10px;color:var(--gray-400);margin-left:4px">soon</span>
+      Plugin
     </a>
   </div>
 </aside>
@@ -628,21 +628,23 @@ ANTHROPIC_API_KEY=sk-... codedna init /path/to/project --model claude-haiku-4-5-
     <h3>Commands</h3>
     <div class="table-wrap"><table>
       <tr><th>Command</th><th>What it does</th></tr>
-      <tr><td><span class="ic">codedna init PATH</span></td><td>First-time annotation — L1 module headers + L2 function <span class="ic">Rules:</span></td></tr>
+      <tr><td><span class="ic">codedna init PATH</span></td><td>First-time annotation — L1 module headers + L2 function <span class="ic">Rules:</span>. Auto-detects languages.</td></tr>
       <tr><td><span class="ic">codedna update PATH</span></td><td>Incremental — only unannotated files, safe to re-run</td></tr>
-      <tr><td><span class="ic">codedna check PATH</span></td><td>Coverage report without modifying files</td></tr>
-      <tr><td><span class="ic">codedna manifest PATH</span></td><td>Full architectural map — package tree, import graph</td></tr>
-      <tr><td><span class="ic">codedna init PATH --extensions ts go</span></td><td>Annotate TypeScript + Go files too (L1 only)</td></tr>
+      <tr><td><span class="ic">codedna refresh PATH</span></td><td>Recalculate <span class="ic">exports:</span> + <span class="ic">used_by:</span> via AST/tree-sitter. Zero LLM cost. Preserves <span class="ic">rules:</span>/<span class="ic">agent:</span>.</td></tr>
+      <tr><td><span class="ic">codedna check PATH</span></td><td>Coverage report without modifying files. Exit code 1 if incomplete — works in CI.</td></tr>
+      <tr><td><span class="ic">codedna manifest PATH</span></td><td>Generate <span class="ic">.codedna</span> project map (Level 0): packages, depends_on, key_files</td></tr>
+      <tr><td><span class="ic">codedna mode MODE</span></td><td>Get/set mode: <span class="ic">human</span> (minimal), <span class="ic">semi</span> (default), <span class="ic">agent</span> (full protocol)</td></tr>
     </table></div>
 
     <h3>Supported models</h3>
     <div class="table-wrap"><table>
       <tr><th>Provider</th><th>Example</th><th>Cost</th></tr>
+      <tr><td>None</td><td><span class="ic">--no-llm</span></td><td>Free — structural only (exports + used_by)</td></tr>
       <tr><td>Ollama (local)</td><td><span class="ic">ollama/llama3</span></td><td>Free</td></tr>
+      <tr><td>DeepSeek</td><td><span class="ic">deepseek/deepseek-chat</span></td><td>~$0.40 / 200 files</td></tr>
       <tr><td>Anthropic</td><td><span class="ic">claude-haiku-4-5-20251001</span></td><td>~$1–3 / project</td></tr>
       <tr><td>OpenAI</td><td><span class="ic">openai/gpt-4o-mini</span></td><td>Low</td></tr>
       <tr><td>Google</td><td><span class="ic">gemini/gemini-2.0-flash</span></td><td>Low</td></tr>
-      <tr><td>None</td><td><span class="ic">--no-llm</span></td><td>Free</td></tr>
     </table></div>
   </section>
 
@@ -682,6 +684,14 @@ ANTHROPIC_API_KEY=sk-... codedna init /path/to/project --model claude-haiku-4-5-
         <svg viewBox="0 0 24 24" width="36" height="36"><path fill="#cc342d" d="M20.2 16.3L22 7.4l-5.5 3.4-4.1-5-1.6 5.8-5.4-3.2L7.8 20h12.4zM2 12l3.2 8h1.6L4.4 12H2zm18 8l2-8h-1.6L18.4 20H20z"/></svg>
         <div class="lang-card-name">Ruby</div><div class="lang-card-sub"># comment block</div>
       </div>
+      <div class="lang-card" data-lang="php" onclick="showLang('php',this)">
+        <svg viewBox="0 0 24 24" width="36" height="36"><ellipse cx="12" cy="12" rx="11" ry="7" fill="#777bb3"/><path fill="#fff" d="M7.5 9h1.6l-.4 2h1c.8 0 1.2-.4 1.3-1 .1-.5-.2-1-1-1H7.5zm-1 5l1-5h-.01L6.5 14h1zm5-5h1.6l-.4 2h1c.8 0 1.2-.4 1.3-1 .1-.5-.2-1-1-1h-2.5zm-1 5l1-5h-.01L10.5 14h1zm5.5-5h1.3l-.8 4h-1.3l.8-4zm-.4 2c.1-.5.5-1 1.2-1h.5l.2-1h-1.5c-1.2 0-2 .8-2.2 2h1.8z"/></svg>
+        <div class="lang-card-name">PHP</div><div class="lang-card-sub">// comment block</div>
+      </div>
+      <div class="lang-card" data-lang="blade" onclick="showLang('blade',this)">
+        <svg viewBox="0 0 24 24" width="36" height="36"><rect width="24" height="24" rx="3" fill="#f9322c"/><path fill="#fff" d="M7 7h10v2H9v2h6v2H9v2h8v2H7V7z"/></svg>
+        <div class="lang-card-name">Blade</div><div class="lang-card-sub">{{-- --}}</div>
+      </div>
     </div>
 
     <!-- PYTHON -->
@@ -694,6 +704,7 @@ ANTHROPIC_API_KEY=sk-... codedna init /path/to/project --model claude-haiku-4-5-
 
 exports: public_fn(arg) -> ReturnType
 used_by: caller.py → caller_fn | other.py → other_fn
+related: similar_logic.py — shares same pattern (no import link)
 rules:   hard constraint agents must never violate
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-24 | s_20260324_001 | what was done
          message: "open hypothesis for the next agent"
@@ -827,6 +838,52 @@ public class ClassName { ... }</pre></div>
 require 'json'</pre></div>
     </div>
 
+    <!-- PHP -->
+    <div class="lang-pane" id="lang-php">
+      <div class="lang-head">
+        <svg viewBox="0 0 24 24" width="28" height="28"><ellipse cx="12" cy="12" rx="11" ry="7" fill="#777bb3"/></svg>
+        <div class="lang-head-text"><h3>PHP</h3><p><code>//</code> comment block — after <code>&lt;?php</code>, NOT PHPDoc</p></div>
+      </div>
+      <div class="cb"><button class="cp" onclick="copyPre(this)">copy</button><pre>&lt;?php
+<span class="c">// UserController.php — Handles user CRUD endpoints.
+//
+// exports: UserController | UserController::index() | UserController::store(Request $request)
+// used_by: routes/web.php
+// related: app/Models/User.php — shared user domain logic
+// rules:   must extend App\Http\Controllers\Controller
+// agent:   codedna-cli | codedna-cli | 2026-04-18 | codedna-cli | initial CodeDNA annotation</span>
+
+namespace App\Http\Controllers;</pre></div>
+      <h3>Blade templates</h3>
+      <div class="cb"><button class="cp" onclick="copyPre(this)">copy</button><pre><span class="c">{{-- layout.blade.php — Base application layout.
+--
+-- exports: none
+-- used_by: none
+-- rules:   @yield('content') is required — child views must define this section
+-- agent:   codedna-cli | codedna-cli | 2026-04-18 | codedna-cli | initial CodeDNA annotation
+--}}</span>
+
+&lt;!DOCTYPE html&gt;</pre></div>
+    </div>
+
+    <!-- BLADE (redirect to PHP pane) -->
+    <div class="lang-pane" id="lang-blade">
+      <div class="lang-head">
+        <svg viewBox="0 0 24 24" width="28" height="28"><rect width="24" height="24" rx="3" fill="#f9322c"/><path fill="#fff" d="M7 7h10v2H9v2h6v2H9v2h8v2H7V7z"/></svg>
+        <div class="lang-head-text"><h3>Blade (Laravel)</h3><p><code>{{-- --}}</code> comment block — at the top of the file</p></div>
+      </div>
+      <div class="cb"><button class="cp" onclick="copyPre(this)">copy</button><pre><span class="c">{{-- layout.blade.php — Base application layout.
+--
+-- exports: none
+-- used_by: none
+-- rules:   @yield('content') is required — child views must define this section
+-- agent:   codedna-cli | codedna-cli | 2026-04-18 | codedna-cli | initial CodeDNA annotation
+--}}</span>
+
+&lt;!DOCTYPE html&gt;
+&lt;html&gt;</pre></div>
+    </div>
+
     <!-- JAVASCRIPT (shares TS pane) -->
     <div class="lang-pane" id="lang-javascript">
       <div class="lang-head">
@@ -867,12 +924,16 @@ const something = require('./something');</pre></div>
 
   <!-- PLUGIN -->
   <section id="plugin">
-    <h2>Claude Code Plugin <span class="badge badge-gray" style="font-size:11px">Coming soon</span></h2>
-    <p>The CodeDNA plugin for Claude Code has been accepted by Anthropic and is currently under review — not yet available in the public directory.</p>
-    <div class="callout callout-amber">Use <a href="#claude-code" style="color:var(--amber);font-weight:600">Claude Code hooks</a> or the <a href="#cli" style="color:var(--amber);font-weight:600">CLI</a> in the meantime — they provide equivalent functionality.</div>
-    <p>Once available:</p>
-    <div class="cb"><button class="cp" onclick="copyPre(this)">copy</button><pre>claude plugin install codedna</pre></div>
-    <p>No API key. No extra cost. Uses your existing Claude subscription. Adds <span class="ic">/codedna:init</span>, <span class="ic">/codedna:check</span>, <span class="ic">/codedna:manifest</span>, <span class="ic">/codedna:impact</span> + four enforcement hooks.</p>
+    <h2>Claude Code Plugin <span class="badge badge-green" style="font-size:11px">Available</span></h2>
+    <div class="install-box">
+      <div>
+        <div class="lbl">terminal</div>
+        <code id="plg-cmd">claude plugin marketplace add Larens94/codedna && claude plugin install codedna@codedna</code>
+      </div>
+      <button class="cp" onclick="copyText('plg-cmd',this)">copy</button>
+    </div>
+    <div class="callout callout-green"><strong>Important:</strong> After installing, start a <strong>new session</strong> (close and reopen Claude Code, or run <code>/clear</code>). Slash commands are only available after restarting.</div>
+    <p>No API key. No extra cost. Uses your existing Claude subscription. Adds interactive setup via <span class="ic">/codedna:init</span> + coverage check via <span class="ic">/codedna:check</span> + architectural map via <span class="ic">/codedna:manifest</span> + impact analysis via <span class="ic">/codedna:impact</span>.</p>
   </section>
 
 </main>
@@ -903,7 +964,7 @@ const something = require('./something');</pre></div>
 
   <span class="toc-group">Reference</span>
   <a href="#hook-events">Hook Events</a>
-  <a href="#plugin">Plugin <span style="font-size:9px;color:var(--gray-400)">soon</span></a>
+  <a href="#plugin"><span class="toc-dot g"></span>Plugin</a>
 </nav>
 </div><!-- content-wrap -->
 

@@ -110,6 +110,14 @@ agent:   AgentIntegrator | 2024-12-05 | implemented persistent memory with simil
 
 These are not instructions the agent received — they are observations it left for itself (and for future agents), co-located with the code where the work would eventually happen.
 
+### Annotations as inter-agent contracts (emergent behaviour)
+
+Agents used `used_by:` not just to document existing imports, but as **architectural contracts for files that didn't exist yet**. The ProductArchitect wrote `used_by: all API routers` on `models.py` before any router existed — declaring who should consume it. When the BackendEngineer ran, it read that contract and built the routers accordingly.
+
+The same pattern appeared with `rules:`: the DataEngineer wrote `rules: all operations must be atomic; use SELECT FOR UPDATE` on `credits.py`, and every downstream agent that touched billing respected that constraint without being told.
+
+This transforms CodeDNA from documentation into a **coordination protocol** — each agent writes what it built and what it expects, the next agent reads and fulfills. No orchestrator needed.
+
 ### What the unconstrained condition built
 
 Condition B (no CodeDNA) produced working code but with a notable structural anomaly: the agent **started Flask, then pivoted to FastAPI mid-session**, leaving both stacks in the codebase simultaneously. CodeDNA's `rules:` and `used_by:` fields force the agent to declare architectural boundaries upfront, which appears to reduce mid-session pivots.
