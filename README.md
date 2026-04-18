@@ -13,7 +13,7 @@
   <a href="https://doi.org/10.5281/zenodo.19158336"><img src="https://img.shields.io/badge/DOI-zenodo.19158336-blue" alt="DOI"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
   <a href="https://github.com/Larens94/codedna/actions/workflows/ci.yml"><img src="https://github.com/Larens94/codedna/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="docs/languages.md"><img src="https://img.shields.io/badge/languages-11-6366f1" alt="Languages"></a>
+  <a href="docs/languages.md"><img src="https://img.shields.io/badge/languages-9-6366f1" alt="Languages"></a>
   <a href="https://discord.gg/7Fs5J2ua"><img src="https://img.shields.io/badge/discord-join-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
 </p>
 
@@ -372,7 +372,7 @@ codedna init sinatra/lib --extensions rb --model deepseek/deepseek-chat
 | **Windsurf** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) windsurf` |
 | **Other** | [QUICKSTART.md](./QUICKSTART.md) |
 
-Then annotate existing code (works for all 11 languages):
+Then annotate existing code (works for all supported languages):
 
 ```bash
 # requires Python 3.11+ (CLI only — no Python needed in your project)
@@ -402,7 +402,7 @@ codedna init . --model gpt-4o-mini          # OpenAI
 codedna init . --model gemini/gemini-2.0-flash  # Google
 ```
 
-> Language auto-detected from your project — PHP, TypeScript, Go, Rust, Java, Kotlin, C#, Swift, Ruby all work out of the box.
+> Language auto-detected from your project — PHP, TypeScript, Go, Java, Kotlin, Ruby all work out of the box.
 > To annotate specific extensions only: `codedna init . --extensions php`.
 > Annotation format adapts to the language — PHP uses `//`, Python uses docstrings. See [docs/languages.md](docs/languages.md).
 
@@ -447,8 +447,8 @@ Four levels, like a zoom lens:
 
 **Header by language:**
 - **All languages** — full L1 header: `exports:` + `used_by:` + `rules:` + `agent:` + `message:`
-- **Python, Ruby** — also get L2: function-level `Rules:` docstrings
-- **All others** — L1 only (no function-level annotations; LLMs infer structure from the language)
+- **All source languages** — also get L2: function-level `Rules:` docstrings (Python, Go, TypeScript, PHP, Java, Kotlin, Ruby)
+- **Template engines** — L1 only (Blade, Jinja2, ERB, Handlebars, Razor, Vue SFC, Svelte)
 
 ### Modes
 
