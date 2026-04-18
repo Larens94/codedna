@@ -307,7 +307,7 @@ rules:   get_fqdn() returns raw unicode hostname — callers must handle non-ASC
 
 </details>
 
-> [Full benchmark](docs/benchmark.md) · [Experiment details](docs/experiments.md) · [Raw data](benchmark_agent/runs/)
+> [Full benchmark](docs/benchmark.md) · [Experiment details](docs/experiments.md) · [Agent test sessions](docs/agent-tests.md) · [Raw data](benchmark_agent/runs/)
 
 ---
 
@@ -427,6 +427,7 @@ codedna mode agent    # full protocol
 | [SPEC.md](./SPEC.md) | Protocol specification v0.9 |
 | [docs/languages.md](docs/languages.md) | 9 languages, template engines, framework awareness |
 | [docs/benchmark.md](docs/benchmark.md) | SWE-bench results, annotation integrity |
+| [docs/agent-tests.md](docs/agent-tests.md) | Real AI agent sessions — control vs CodeDNA on SWE-bench tasks |
 | [docs/experiments.md](docs/experiments.md) | Multi-agent experiments |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | Dev setup, contribution guide |
 
