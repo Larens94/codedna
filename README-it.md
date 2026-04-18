@@ -218,6 +218,36 @@ Senza queste note, il prossimo agente apre `auth_service.py` e non ha idea che i
 | SaaS multi-agente (5 agenti, DeepSeek R1) | **98.2% adozione**, complessità inferiore (2.1 vs 3.1) |
 | Qualità fix (Claude Sonnet) | **7/7** file della patch vs 6/7, zero modifiche fallite |
 
+### Le annotazioni come contratti architetturali nei team multi-agente
+
+Nell'esperimento SaaS (5 agenti, DeepSeek R1), è successo qualcosa di inaspettato: l'agente **Director** (ProductArchitect) ha usato `used_by:` non solo per documentare gli import esistenti, ma come **contratti architetturali per file che non esistevano ancora**.
+
+```python
+# Scritto dal ProductArchitect PRIMA che il BackendEngineer partisse
+"""models.py — Modelli database core.
+
+exports: Base, User, Agent, AgentRun, CreditAccount, Invoice
+used_by: session.py, seed.py, all API routers     ← questi file non esistono ancora
+rules:   tutti i modelli devono ereditare da Base; usare UUID per gli ID pubblici; timestamp in UTC
+"""
+```
+
+Il Director ha dichiarato "questo file sarà consumato da questi moduli per questi scopi." Quando il BackendEngineer è partito, ha letto quel contratto e ha costruito i router API di conseguenza — senza nessuna comunicazione diretta tra i due agenti.
+
+Lo stesso pattern si è ripetuto in tutto il team:
+
+```python
+# AgentIntegrator ha scritto runner.py con:
+used_by: agents.py router → run_agent, main.py → SSE endpoint
+# BackendEngineer (che ha scritto agents.py) ha visto questo e collegato la chiamata
+
+# DataEngineer ha scritto credits.py con:
+rules:   tutte le operazioni devono essere atomiche; usare SELECT FOR UPDATE
+# Ogni agente a valle che ha toccato il billing ha rispettato questo vincolo
+```
+
+**Questo è l'insight chiave per i sistemi multi-agente:** le annotazioni CodeDNA non sono solo documentazione — sono un **protocollo di coordinamento**. Ogni agente scrive cosa ha costruito e cosa si aspetta, e l'agente successivo legge quelle aspettative e le soddisfa. Nessun orchestratore necessario. Nessuna memoria condivisa. Il codice è il canale.
+
 ### Gli agenti trovano le dipendenze cross-cutting
 
 Bug Django #11532 (crash dominio unicode). Il fix coinvolge 5 file tra `mail/`, `validators.py`, `encoding.py`, `html.py` — nessuna catena di import li collega. Condividono la logica IDNA/punycode in modo indipendente.

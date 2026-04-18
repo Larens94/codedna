@@ -218,6 +218,36 @@ Without these notes, the next agent opens `auth_service.py` and has no idea refr
 | Multi-agent SaaS (5 agents, DeepSeek R1) | **98.2% adoption**, lower complexity (2.1 vs 3.1) |
 | Fix quality (Claude Sonnet) | **7/7** patch files vs 6/7, zero failed edits |
 
+### Annotations as architectural contracts in multi-agent teams
+
+In the SaaS experiment (5 agents, DeepSeek R1), something unexpected happened: the **Director agent** (ProductArchitect) used `used_by:` not just to document existing imports, but as **architectural contracts for files that didn't exist yet**.
+
+```python
+# Written by ProductArchitect BEFORE BackendEngineer ran
+"""models.py — Core database models.
+
+exports: Base, User, Agent, AgentRun, CreditAccount, Invoice
+used_by: session.py, seed.py, all API routers     ← these files don't exist yet
+rules:   all models must inherit from Base; use UUID for public IDs; timestamps in UTC
+"""
+```
+
+The Director declared "this file will be consumed by these modules for these purposes." When the BackendEngineer ran next, it read that contract and built the API routers accordingly — without any direct communication between the two agents.
+
+The same pattern appeared across the team:
+
+```python
+# AgentIntegrator wrote runner.py with:
+used_by: agents.py router → run_agent, main.py → SSE endpoint
+# BackendEngineer (who wrote agents.py) saw this and connected the call correctly
+
+# DataEngineer wrote credits.py with:
+rules:   all operations must be atomic; use SELECT FOR UPDATE
+# Every downstream agent that touched billing respected this constraint
+```
+
+**This is the key insight for multi-agent systems:** CodeDNA annotations are not just documentation — they are a **coordination protocol**. Each agent writes what it built and what it expects, and the next agent reads those expectations and fulfills them. No orchestrator needed. No shared memory. The code is the channel.
+
 ### Agents find cross-cutting dependencies
 
 Django bug #11532 (unicode domain crash). The fix spans 5 files across `mail/`, `validators.py`, `encoding.py`, `html.py` — no import chain connects them. They share IDNA/punycode logic independently.
