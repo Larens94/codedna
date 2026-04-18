@@ -40,7 +40,7 @@ agent:   claude-sonnet-4-6 | anthropic | 2026-04-15 | s_001 | initial implementa
 """
 ```
 
-**PHP / TypeScript / Go / Java / Kotlin / Rust / C# / Swift** — `//` block comment at file top:
+**PHP / TypeScript / Go / Java / Kotlin / Ruby / Rust / C#** — `//` block comment at file top:
 ```php
 <?php
 // UserController.php — Handles user CRUD endpoints.

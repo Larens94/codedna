@@ -11,11 +11,11 @@
 #   bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) claude
 #
 # What this does:
-#   1. pip install codedna  — CLI tool with multi-language support (11 languages)
+#   1. pip install codedna  — CLI tool with multi-language support (9 languages + templates)
 #   2. codedna install      — pre-commit hook + AI tool prompt + .codedna manifest
 #
 # Supported AI tools: claude claude-hooks cursor cursor-hooks copilot copilot-hooks cline cline-hooks windsurf opencode opencode-hooks
-# Supported languages: Python, TypeScript/JS, Go, PHP, Rust, Java, Kotlin, Ruby, C#, Swift
+# Supported languages: Python, TypeScript/JS, Go, PHP, Java, Kotlin, Ruby, Rust, C#
 
 set -euo pipefail
 

@@ -6,7 +6,7 @@ description: CodeDNA coverage report — find unannotated files and stale used_b
 
 Perform a CodeDNA compliance check on the current project. Do the following:
 
-1. **Find all source files** in the project (Python: `*.py`, TypeScript: `*.ts/*.tsx`, JavaScript: `*.js`, Go: `*.go`, Rust: `*.rs`, Java: `*.java`) — exclude `venv/`, `node_modules/`, `.git/`, `__pycache__/`, `dist/`, `build/`.
+1. **Find all source files** in the project (`.py`, `.php`, `.blade.php`, `.ts`, `.tsx`, `.js`, `.go`, `.java`, `.kt`, `.rb`, `.rs`, `.cs`) — exclude `vendor/`, `node_modules/`, `venv/`, `.venv/`, `.git/`, `__pycache__/`, `dist/`, `build/`, `migrations/`.
 
 2. **Check each file** for a CodeDNA module annotation:
    - Python: first token must be a string literal (module docstring) containing `exports:`, `used_by:`, and `rules:` fields.

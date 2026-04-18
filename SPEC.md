@@ -141,16 +141,18 @@ agent:   model | provider | date | session | narrative
 """
 ```
 
-**Reduced header** (PHP, Java, Go, Rust, TypeScript, C#, Swift, Kotlin) — LLMs infer exports and reverse dependencies from the language's native visibility and namespace system:
+**Non-Python header** (PHP, Java, Go, TypeScript, Kotlin, Ruby, Rust, C#) — full header using `//` comment syntax:
 ```php
 // filename.php — purpose.
 //
+// exports: ClassName | ClassName::method(arg) -> ReturnType
+// used_by: caller.php → callerMethod
 // rules:   constraint
 // agent:   model | provider | date | session | narrative
 //          message: "observation"
 ```
 
-The reduced header saves ~60% of annotation tokens for languages where `exports:` and `used_by:` provide no information the LLM cannot already infer.
+**Template engines** (Blade, Jinja2, ERB, Handlebars, Razor, Vue, Svelte) — use their native comment syntax (`{{-- --}}`, `{# #}`, etc.) with L1 only.
 
 ---
 

@@ -33,6 +33,13 @@ An in-source communication protocol where AI agents embed architectural context 
 
 No infrastructure. No retrieval pipeline. No external memory. The code carries its own context.
 
+```diff
++  NAVIGATION ACCURACY    ████████████░░░░   +13pp F1     SWE-bench · 3 models
++  FIX QUALITY            ████████████████   7 / 7        Django #13495 · Claude Sonnet
++  TEAM VELOCITY          █████████████░░░   1.6×         5-agent team · DeepSeek R1
++  PROTOCOL ADOPTION      ███████████████░   98.2%        multi-agent SaaS · no instruction
+```
+
 ---
 
 ## Install
@@ -75,13 +82,6 @@ codedna refresh .                              # update exports + used_by (zero 
 
 > Languages auto-detected — PHP, TypeScript, Go, Java, Kotlin, Ruby all work out of the box.
 > Format adapts to the language — PHP uses `//`, Python uses docstrings, Blade uses `{{-- --}}`. See [docs/languages.md](docs/languages.md).
-
-```diff
-+  NAVIGATION ACCURACY    ████████████░░░░   +13pp F1     SWE-bench · 3 models
-+  FIX QUALITY            ████████████████   7 / 7        Django #13495 · Claude Sonnet
-+  TEAM VELOCITY          █████████████░░░   1.6×         5-agent team · DeepSeek R1
-+  PROTOCOL ADOPTION      ███████████████░   98.2%        multi-agent SaaS · no instruction
-```
 
 ---
 
