@@ -57,6 +57,8 @@ Install the plugin, then run `/codedna:init` — it guides you through everythin
 | **OpenCode** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) opencode` |
 | **Windsurf** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) windsurf` |
 
+> **Important:** After installing the plugin, start a **new session** (close and reopen Claude Code, or run `/clear`). The plugin's slash commands (`/codedna:init`, `/codedna:check`, etc.) are only available after restarting.
+
 After installing, run `/codedna:init` in your project. It will:
 
 1. Auto-detect your languages (PHP, TypeScript, Go, Python, etc.)
