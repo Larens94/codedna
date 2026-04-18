@@ -749,7 +749,10 @@ def run_openai_compat(problem: str, repo_root: Path, model_id: str,
                 args = json.loads(tc.function.arguments)
             except json.JSONDecodeError:
                 args = {}
-            res = fns[tc.function.name](**args) if tc.function.name in fns else "unknown"
+            try:
+                res = fns[tc.function.name](**args) if tc.function.name in fns else "unknown"
+            except TypeError:
+                res = f"(error: invalid arguments for {tc.function.name})"
             messages.append({"role": "tool", "tool_call_id": tc.id, "content": res})
 
     # Force final summary if agent exhausted max_turns without a text response
@@ -838,7 +841,10 @@ def run_openai_responses(problem: str, repo_root: Path, model_id: str, max_turns
                 args = json.loads(tc.arguments)
             except json.JSONDecodeError:
                 args = {}
-            res = fns[tc.name](**args) if tc.name in fns else "unknown function"
+            try:
+                res = fns[tc.name](**args) if tc.name in fns else "unknown function"
+            except TypeError:
+                res = f"(error: invalid arguments for {tc.name})"
             tool_results.append({
                 "type": "function_call_output",
                 "call_id": tc.call_id,
