@@ -27,6 +27,10 @@
   <a href="#docs">Docs</a>
 </p>
 
+<p align="center">
+  <strong>English</strong> · <a href="./README-it.md">Italiano</a>
+</p>
+
 ---
 
 An in-source communication protocol where AI agents embed architectural context directly in the files they write. The next agent — different model, different tool, different session — reads it and knows what to do.
