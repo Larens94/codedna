@@ -1352,7 +1352,7 @@ def cmd_refresh(target: Path, repo_root: Optional[Path], exclude: list[str],
     """Refresh exports: and used_by: via AST/tree-sitter. Zero LLM cost.
 
     Rules:   Only updates files that already have CodeDNA headers.
-             Only changes exports: and used_by: — preserves rules:, agent:, message:.
+             Only changes exports: and used_by: — preserves related:, rules:, agent:, message:.
              Scans the ENTIRE project to build the used_by graph, even if target is a single file.
              Scans both Python (via ast) and non-Python (via tree-sitter adapters).
     """
@@ -2750,10 +2750,10 @@ def main():
         "mode",
         help="Get or set the CodeDNA mode (human, semi, agent)",
         description=(
-            "Modes control how strict CodeDNA enforcement is:\n"
-            "  human  — minimal: L1 headers, Rules: on critical functions only, no semantic naming\n"
-            "  semi   — balanced: L1+L2 on new code, semantic naming on new vars (default)\n"
-            "  agent  — full: all functions annotated, semantic naming enforced, rename vars\n\n"
+            "All modes include full L1+L2 annotations. The difference:\n"
+            "  human  — no message:, no semantic naming\n"
+            "  semi   — + message: inter-agent chat (default)\n"
+            "  agent  — + message: + semantic variable naming\n\n"
             "Examples:\n"
             "  codedna mode              # show current mode\n"
             "  codedna mode semi         # set mode to semi\n"
@@ -2802,7 +2802,7 @@ def main():
     # ── refresh ──────────────────────────────────────────────────────────────
     refresh_p = subs.add_parser(
         "refresh",
-        help="Refresh exports: and used_by: via AST (zero LLM cost, preserves rules:/agent:/message:)",
+        help="Refresh exports: and used_by: via AST (zero LLM cost, preserves related:/rules:/agent:/message:)",
         description=(
             "Re-scans the project and updates ONLY the structural fields:\n"
             "  - exports: recalculated from AST\n"
