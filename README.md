@@ -214,6 +214,31 @@ Without these notes, the next agent opens `auth_service.py` and has no idea refr
 | Multi-agent SaaS (5 agents, DeepSeek R1) | **98.2% adoption**, lower complexity (2.1 vs 3.1) |
 | Fix quality (Claude Sonnet) | **7/7** patch files vs 6/7, zero failed edits |
 
+### Agents find cross-cutting dependencies
+
+Django bug #11532 (unicode domain crash). The fix spans 5 files across `mail/`, `validators.py`, `encoding.py`, `html.py` — no import chain connects them. They share IDNA/punycode logic independently.
+
+`used_by:` alone can't find them. But `related:` can:
+
+```python
+"""mail/utils.py — Email sending helper functions.
+
+exports: class CachedDnsName | DNS_NAME
+used_by: mail/message.py → DNS_NAME
+related: django/core/validators.py — shares IDNA/punycode domain encoding logic
+         django/utils/encoding.py — encoding utilities for non-ASCII domains
+rules:   get_fqdn() returns raw unicode hostname — callers must handle non-ASCII
+"""
+```
+
+| Condition | Files found | F1 |
+|---|---|---|
+| Control (no annotations) | 2 / 5 | 40% |
+| CodeDNA with `used_by:` only | 2 / 5 | 40% |
+| CodeDNA with `used_by:` + `related:` | **5 / 5** | **100%** |
+
+`related:` captures **semantic links** — files that share the same pattern without importing each other. `used_by:` answers *"who imports me?"*, `related:` answers *"who does the same thing as me?"*.
+
 <details>
 <summary>Navigation demo — real benchmark data</summary>
 
