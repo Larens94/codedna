@@ -435,14 +435,16 @@ codedna mode agent    # full protocol
 
 ## Roadmap
 
-| Milestone | Status |
-|---|---|
-| Protocol v0.9 + CLI + modes + `message:` | Done |
-| Enforcement hooks (Claude, Cursor, Copilot, Cline, OpenCode) | Done |
-| 11 languages + tree-sitter AST | Done |
-| SWE-bench Verified (500 tasks, 12 repos) | In progress |
-| VSCode extension | Planned |
-| arXiv preprint | Planned |
+All components are functional and tested but **experimental** — the protocol, CLI, and benchmark are actively evolving based on real-world usage and research feedback.
+
+| Area | What works | What's next |
+|---|---|---|
+| **Protocol v0.9** | `exports:` `used_by:` `related:` `rules:` `agent:` `message:` — all fields implemented | `related:` auto-generation via LLM, stale annotation detection |
+| **CLI** | `init` `update` `refresh` `check` `manifest` `mode` `install` — 9 languages via tree-sitter | PyPI publish, `codedna verify` for stale refs, cross-cutting pass 2 |
+| **Benchmark** | 6 Django tasks, +13pp F1 (DeepSeek), +13pp (Gemini Flash p=0.040) | Placebo condition, effect size, 20+ tasks, 5+ models |
+| **Integrations** | Claude Code plugin, Cursor, Copilot, Cline, OpenCode, Windsurf hooks | VS Code extension, GitHub Action for CI |
+| **Languages** | Python, PHP, TypeScript, Go, Java, Kotlin, Ruby, Rust, C# + 7 template engines | More real-world testing on non-Python projects |
+| **Research** | Multi-agent experiments (98.2% adoption, 1.6x speedup), SWE-bench benchmark | arXiv preprint, placebo + ablation study |
 
 ---
 
