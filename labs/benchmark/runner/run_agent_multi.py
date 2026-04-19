@@ -1215,7 +1215,7 @@ def main():
                                          session_id=str_sid, model=model_name,
                                          provider=cfg["provider"], task=iid, condition="placebo",
                                          repo_root=placebo_dir)
-                        pr = r["metrics_read"]
+                        pr = r["metrics_proposed"]
                         path_trace = _save_trace(traces_dir, str_sid, r, gt)
                         print(f"  Placebo: {r['tool_calls']} calls "
                               f"({r['read_calls']} reads, {r['grep_calls']} greps) | "
