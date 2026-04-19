@@ -1,0 +1,479 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeDNA — Report installazione · sample-laravel-app</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+:root {
+  --black: #0a0a0a;
+  --white: #ffffff;
+  --gray-100: #f5f5f5;
+  --gray-200: #e8e8e8;
+  --gray-400: #999999;
+  --gray-600: #555555;
+  --gray-800: #222222;
+  --radius: 3px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+  --green: #16a34a;
+  --green-lt: #f0fdf4;
+  --red: #dc2626;
+  --red-lt: #fef2f2;
+  --amber: #d97706;
+  --amber-lt: #fffbeb;
+}
+
+html { scroll-behavior: smooth; }
+body { font-family: var(--font); background: var(--white); color: var(--black); line-height: 1.6; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+code, pre, .mono { font-family: 'JetBrains Mono', monospace; }
+a { color: inherit; }
+
+/* NAV */
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px; height: 60px;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--gray-200);
+}
+.nav-logo { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
+.nav-logo-mark { width: 32px; height: 32px; border-radius: var(--radius); background: var(--black); display: flex; align-items: center; justify-content: center; color: var(--white); font-weight: 700; font-size: 0.85rem; }
+.nav-logo-text { font-size: 0.9375rem; font-weight: 700; color: var(--black); letter-spacing: -0.02em; }
+.nav-version { font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em; padding: 0.15rem 0.5rem; border-radius: var(--radius); background: var(--gray-100); color: var(--gray-600); border: 1px solid var(--gray-200); }
+.nav-meta { font-size: 0.8rem; color: var(--gray-600); font-family: 'JetBrains Mono', monospace; }
+
+/* CONTAINER */
+.container { max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+
+/* HERO */
+.hero {
+  min-height: 70vh; position: relative; overflow: hidden;
+  display: flex; align-items: center;
+  padding: 120px 28px 60px;
+  background: var(--white);
+}
+.hero-grid-bg {
+  position: absolute; inset: 0; pointer-events: none;
+  background-image:
+    linear-gradient(rgba(0,0,0,0.04) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.04) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.hero-inner { position: relative; z-index: 1; max-width: 900px; margin: 0 auto; width: 100%; }
+.hero-eyebrow {
+  display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 1.5rem;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray-400);
+}
+.eyebrow-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--green); animation: pulse 2s infinite; }
+@keyframes pulse { 0%,100%{opacity:1} 50%{opacity:.3} }
+
+h1 {
+  font-size: clamp(2.2rem, 4.5vw, 3.6rem); font-weight: 700; letter-spacing: -0.03em; line-height: 1.08;
+  color: var(--black); margin-bottom: 1.25rem;
+}
+h1 em { font-style: normal; color: var(--black); text-decoration: underline; text-underline-offset: 4px; text-decoration-thickness: 2px; }
+.hero-sub {
+  font-size: 1.05rem; color: var(--gray-600); line-height: 1.75; margin-bottom: 2rem; max-width: 620px;
+}
+.hero-sub strong { color: var(--black); font-weight: 600; }
+.hero-meta { display: flex; flex-wrap: wrap; gap: 0.75rem; font-size: 0.8rem; }
+.hero-meta .pill-meta { display: inline-flex; align-items: center; gap: 0.4rem; padding: 0.4rem 0.8rem; border-radius: var(--radius); background: var(--gray-100); border: 1px solid var(--gray-200); color: var(--gray-600); font-family: 'JetBrains Mono', monospace; font-weight: 500; }
+.hero-meta .pill-meta strong { color: var(--black); font-weight: 600; }
+
+/* STATS ROW */
+.stats-row {
+  background: var(--white); border-top: 1px solid var(--gray-200); border-bottom: 1px solid var(--gray-200);
+  display: grid; grid-template-columns: repeat(4,1fr);
+}
+.stat-cell { padding: 2rem 2.5rem; border-right: 1px solid var(--gray-200); position: relative; overflow: hidden; }
+.stat-cell:last-child { border-right: none; }
+.stat-number { font-size: 2.2rem; font-weight: 700; letter-spacing: -0.04em; line-height: 1; color: var(--black); }
+.stat-label { font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray-400); margin-top: 0.35rem; }
+.stat-note { font-size: 0.75rem; color: var(--gray-400); margin-top: 0.2rem; }
+
+/* SECTIONS */
+.section { padding: 96px 0; }
+.section-inner { max-width: 1100px; margin: 0 auto; padding: 0 28px; }
+.section-alt { background: var(--gray-100); }
+.section-dark { background: var(--black); color: var(--white); }
+.section-dark h2 { color: var(--white); }
+.section-dark .section-lead { color: var(--gray-400); }
+.section-dark .eyebrow { color: var(--gray-400); }
+
+.eyebrow {
+  display: block; margin-bottom: 0.75rem;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray-400);
+}
+h2 { font-size: clamp(1.6rem, 2.5vw, 2.4rem); font-weight: 700; letter-spacing: -0.02em; line-height: 1.15; color: var(--black); margin-bottom: 1rem; }
+.section-lead { font-size: 1rem; color: var(--gray-600); max-width: 620px; line-height: 1.75; margin-bottom: 3rem; }
+
+/* CODE BLOCK — dark */
+.code-block { background: var(--black); border-radius: var(--radius); border: 1px solid var(--gray-800); overflow: hidden; margin-bottom: 1.5rem; }
+.code-bar { display: flex; align-items: center; gap: 0.4rem; padding: 0.6rem 1rem; border-bottom: 1px solid rgba(255,255,255,0.08); }
+.dot { width: 9px; height: 9px; border-radius: 50%; }
+.dot.r { background: #ff5f57; } .dot.y { background: #febc2e; } .dot.g { background: #28c840; }
+.code-filename { font-size: 0.7rem; color: #6272a4; font-family: 'JetBrains Mono', monospace; margin-left: 0.5rem; }
+.code-pre { padding: 1.25rem 1.5rem; font-size: 0.8rem; line-height: 1.85; overflow-x: auto; color: #f8f8f2; white-space: pre; }
+.tk { color: #bd93f9; } .ts { color: #50fa7b; } .tc { color: #6272a4; } .th { color: #ffb86c; font-weight: 500; } .ti { color: #ff79c6; } .tn { color: #8be9fd; }
+
+/* WARNING BANNER */
+.warning-banner { background: var(--amber-lt); border: 1px solid rgba(217,119,6,0.25); border-left: 3px solid var(--amber); border-radius: var(--radius); padding: 1.25rem 1.5rem; margin: 2rem 0; display: flex; gap: 1rem; align-items: flex-start; }
+.warning-badge { flex-shrink: 0; font-size: 0.65rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; padding: 0.35rem 0.6rem; border-radius: var(--radius); background: var(--amber); color: var(--white); white-space: nowrap; }
+.warning-body { font-size: 0.92rem; color: var(--gray-800); line-height: 1.7; }
+.warning-body strong { color: var(--black); }
+
+/* TABLES */
+.compare-table-wrap { border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; background: var(--white); }
+table.comp { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.comp th { padding: 0.875rem 1.25rem; text-align: left; background: var(--gray-100); border-bottom: 1px solid var(--gray-200); font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.07em; color: var(--gray-400); }
+.comp td { padding: 0.875rem 1.25rem; border-bottom: 1px solid var(--gray-200); color: var(--gray-600); }
+.comp tr:last-child td { border-bottom: none; }
+.comp tr.hl td { background: var(--gray-100); }
+.comp td.num { font-family: 'JetBrains Mono', monospace; font-weight: 600; color: var(--black); text-align: right; width: 80px; }
+.comp td code { background: var(--gray-100); padding: 1px 6px; border-radius: var(--radius); font-size: 0.82rem; }
+
+/* PILLS */
+.pill { display: inline-block; padding: 0.2rem 0.65rem; border-radius: var(--radius); font-size: 0.7rem; font-weight: 700; border: 1px solid var(--gray-200); font-family: 'JetBrains Mono', monospace; }
+.pill-g { background: var(--green-lt); color: var(--green); border-color: rgba(22,163,74,0.2); }
+.pill-r { background: var(--red-lt); color: var(--red); border-color: rgba(220,38,38,0.2); }
+.pill-a { background: var(--amber-lt); color: var(--amber); border-color: rgba(217,119,6,0.2); }
+
+/* RULES LIST */
+.rules-list { display: flex; flex-direction: column; gap: 0; border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; background: var(--white); }
+.section-alt .rules-list { background: var(--white); }
+.rule-row { display: grid; grid-template-columns: 200px 1fr; gap: 1.5rem; padding: 1.25rem 1.5rem; border-bottom: 1px solid var(--gray-200); }
+.rule-row:last-child { border-bottom: none; }
+.rule-file { font-family: 'JetBrains Mono', monospace; font-size: 0.78rem; color: var(--black); font-weight: 600; }
+.rule-file small { display: block; color: var(--gray-400); font-weight: 500; margin-top: 2px; font-size: 0.7rem; text-transform: uppercase; letter-spacing: 0.08em; }
+.rule-text { font-size: 0.88rem; color: var(--gray-600); line-height: 1.65; }
+.rule-text code { background: var(--gray-100); padding: 1px 6px; border-radius: var(--radius); font-size: 0.82rem; color: var(--black); }
+
+/* PHASE CARDS */
+.phase-grid { display: grid; grid-template-columns: repeat(2, 1fr); gap: 1px; background: var(--gray-200); border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; margin-bottom: 2rem; }
+.phase-card { background: var(--white); padding: 2rem; }
+.phase-num { font-size: 11px; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray-400); margin-bottom: 0.5rem; }
+.phase-title { font-size: 1.1rem; font-weight: 700; color: var(--black); margin-bottom: 0.75rem; }
+.phase-desc { font-size: 0.88rem; color: var(--gray-600); line-height: 1.7; margin-bottom: 1rem; }
+.phase-stats { display: flex; gap: 1.25rem; font-size: 0.78rem; color: var(--gray-400); }
+.phase-stats strong { display: block; font-size: 1.1rem; color: var(--black); font-family: 'JetBrains Mono', monospace; font-weight: 700; }
+
+/* CHECKLIST */
+.checklist { list-style: none; padding: 0; }
+.checklist li { display: flex; gap: 0.75rem; padding: 0.75rem 0; border-bottom: 1px solid var(--gray-200); font-size: 0.92rem; color: var(--gray-600); line-height: 1.6; }
+.checklist li:last-child { border-bottom: none; }
+.checklist li::before { content: ""; width: 18px; height: 18px; border-radius: 50%; border: 2px solid var(--gray-200); flex-shrink: 0; margin-top: 2px; }
+.checklist li.done::before { background: var(--green); border-color: var(--green); }
+.checklist li.pending::before { background: transparent; border-color: var(--gray-400); }
+.checklist li strong { color: var(--black); font-weight: 600; }
+.checklist li code { background: var(--gray-100); padding: 1px 6px; border-radius: var(--radius); font-family: 'JetBrains Mono', monospace; font-size: 0.85rem; }
+
+/* FOOTER */
+footer { padding: 3rem 28px; text-align: center; border-top: 1px solid var(--gray-200); background: var(--white); }
+footer .logo-row { display: flex; align-items: center; justify-content: center; gap: 0.5rem; margin-bottom: 0.75rem; }
+footer .logo-mark { width: 28px; height: 28px; border-radius: var(--radius); background: var(--black); display: flex; align-items: center; justify-content: center; font-size: 0.75rem; font-weight: 900; color: var(--white); }
+footer p { font-size: 0.82rem; color: var(--gray-400); line-height: 1.75; }
+footer a { color: var(--black); text-decoration: underline; text-underline-offset: 3px; }
+
+/* RESPONSIVE */
+@media (max-width: 900px) {
+  nav { padding: 0 1.25rem; }
+  .nav-meta { display: none; }
+  .hero { padding: 90px 1.5rem 50px; min-height: auto; }
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .stat-cell { padding: 1.5rem 1.25rem; }
+  .stat-cell:nth-child(2) { border-right: none; }
+  .stat-cell:nth-child(3) { border-right: 1px solid var(--gray-200); border-top: 1px solid var(--gray-200); }
+  .stat-cell:nth-child(4) { border-right: none; border-top: 1px solid var(--gray-200); }
+  .section { padding: 64px 0; }
+  .section-inner { padding: 0 1.5rem; }
+  .phase-grid { grid-template-columns: 1fr; }
+  .rule-row { grid-template-columns: 1fr; gap: 0.4rem; }
+}
+@media (max-width: 600px) {
+  .stats-row { grid-template-columns: 1fr 1fr; }
+  .stat-number { font-size: 1.75rem; }
+  .warning-banner { flex-direction: column; gap: 0.75rem; }
+}
+</style>
+</head>
+<body>
+
+<nav>
+  <a href="#" class="nav-logo">
+    <div class="nav-logo-mark">CD</div>
+    <span class="nav-logo-text">CodeDNA</span>
+    <span class="nav-version">v0.9</span>
+  </a>
+  <div class="nav-meta">
+    sample-laravel-app · branch <strong style="color:var(--black);">codedna-init</strong>
+  </div>
+</nav>
+
+<section class="hero">
+  <div class="hero-grid-bg"></div>
+  <div class="hero-inner">
+    <div class="hero-eyebrow">
+      <span class="eyebrow-dot"></span>
+      Report installazione · 2026-04-19
+    </div>
+    <h1>CodeDNA installato su <em>sample-laravel-app</em>.</h1>
+    <p class="hero-sub">
+      Annotazione completa di <strong>248 file sorgente</strong> via pass strutturale CLI + 7 subagent LLM paralleli. Ogni file ora porta in testa il proprio contratto: <strong>exports</strong>, <strong>used_by</strong>, <strong>rules</strong>, <strong>agent history</strong>. Il file è il canale.
+    </p>
+    <div class="hero-meta">
+      <span class="pill-meta">commit <strong>a2f99dd</strong></span>
+      <span class="pill-meta">branch <strong>codedna-init</strong></span>
+      <span class="pill-meta">mode <strong>agent</strong></span>
+      <span class="pill-meta">agent <strong>claude-opus-4-7</strong></span>
+    </div>
+  </div>
+</section>
+
+<div class="stats-row">
+  <div class="stat-cell">
+    <div class="stat-number">248</div>
+    <div class="stat-label">File annotati</div>
+    <div class="stat-note">100% coverage</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-number">7</div>
+    <div class="stat-label">Subagent LLM</div>
+    <div class="stat-note">Paralleli, 3 wave</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-number">2</div>
+    <div class="stat-label">Fasi</div>
+    <div class="stat-note">CLI structural + LLM</div>
+  </div>
+  <div class="stat-cell">
+    <div class="stat-number">0</div>
+    <div class="stat-label">Codice toccato</div>
+    <div class="stat-note">Solo comment headers</div>
+  </div>
+</div>
+
+<!-- SECTION 1 — Install -->
+<section class="section">
+  <div class="section-inner">
+    <span class="eyebrow">Step 1</span>
+    <h2>Installazione</h2>
+    <p class="section-lead">Due componenti: il plugin Claude Code (per le skill <code>/codedna:*</code> in sessione) e il pacchetto Python (per il pass strutturale senza LLM).</p>
+
+    <div class="code-block">
+      <div class="code-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="code-filename">plugin install</span></div>
+      <pre class="code-pre"><span class="tc"># plugin Claude Code (scope: user, disponibile in tutte le sessioni)</span>
+claude plugin marketplace add <span class="ts">Larens94/codedna</span>
+claude plugin install <span class="ts">codedna@codedna</span>
+
+<span class="tc"># CLI Python (richiesto da --no-llm structural pass)</span>
+pip install git+https://github.com/Larens94/codedna.git</pre>
+    </div>
+
+    <div class="code-block">
+      <div class="code-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="code-filename">annotation workflow</span></div>
+      <pre class="code-pre">python3 -m codedna_tool.cli <span class="th">mode</span> agent           <span class="tc"># set operational mode</span>
+python3 -m codedna_tool.cli <span class="th">init</span> . --no-llm      <span class="tc"># pass 1: structural (free)</span>
+python3 -m codedna_tool.cli <span class="th">refresh</span> .            <span class="tc"># build used_by graph</span>
+python3 -m codedna_tool.cli <span class="th">manifest</span> .           <span class="tc"># generate .codedna</span>
+python3 -m codedna_tool.cli <span class="th">check</span> .              <span class="tc"># coverage report</span></pre>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 2 — Two phases -->
+<section class="section section-alt">
+  <div class="section-inner">
+    <span class="eyebrow">Step 2</span>
+    <h2>Annotazione in due fasi</h2>
+    <p class="section-lead">Il pass CLI strutturale ha popolato tutti gli header in ~30 secondi a costo zero. I 7 subagent LLM hanno poi riscritto ogni header con purpose descrittivo, <code>rules:</code> concrete e <code>used_by:</code> verificato via grep.</p>
+
+    <div class="phase-grid">
+      <div class="phase-card">
+        <div class="phase-num">Fase 1</div>
+        <div class="phase-title">Pass strutturale CLI</div>
+        <div class="phase-desc"><code>codedna init --no-llm</code> su tutto il progetto. Tree-sitter parsa i file, estrae simboli e costruisce il grafo delle dipendenze da <code>import</code> / <code>use</code>.</div>
+        <div class="phase-stats">
+          <div><strong>248</strong>file</div>
+          <div><strong>~30s</strong>tempo</div>
+          <div><strong>0 LLM</strong>costo</div>
+        </div>
+      </div>
+      <div class="phase-card">
+        <div class="phase-num">Fase 2</div>
+        <div class="phase-title">Pass LLM multi-agent</div>
+        <div class="phase-desc">7 subagent Opus 4.7 in parallelo, ciascuno con template preciso e mappe di ricerca precomputate. Ogni agente ha letto, analizzato e riscritto la propria batch di file.</div>
+        <div class="phase-stats">
+          <div><strong>247</strong>file upgrade</div>
+          <div><strong>3</strong>wave paralleli</div>
+          <div><strong>+rules</strong>architetturali</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="compare-table-wrap">
+      <table class="comp">
+        <thead>
+          <tr><th style="width: 60px;">#</th><th>Batch</th><th>Scope</th><th class="num">File</th></tr>
+        </thead>
+        <tbody>
+          <tr><td class="num">1</td><td><code>components/ui/*.tsx</code></td><td>shadcn/ui primitives — aggregate exports</td><td class="num">31</td></tr>
+          <tr><td class="num">2</td><td><code>pages/*</code> + <code>layouts/*</code></td><td>pagine Inertia + layout React</td><td class="num">28</td></tr>
+          <tr><td class="num">3</td><td>Feature components + entry</td><td>RichTextEditor, EventForm, app.tsx, ssr.tsx</td><td class="num">23</td></tr>
+          <tr class="hl"><td class="num">4</td><td><code>app/Models/*.php</code></td><td>Eloquent domain layer + rules invariant</td><td class="num">20</td></tr>
+          <tr class="hl"><td class="num">5</td><td>Controllers + Middleware + Requests</td><td>contratti Inertia::render, shared props</td><td class="num">32</td></tr>
+          <tr class="hl"><td class="num">6</td><td>Mail + Services + config + boilerplate</td><td>Tier 1 rules + Tier 2 structural</td><td class="num">45</td></tr>
+          <tr><td class="num">7</td><td>TSX rimanenti</td><td>pages CRUD, hooks, utils, types</td><td class="num">66</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 3 — Bug TSX -->
+<section class="section">
+  <div class="section-inner">
+    <span class="eyebrow">Limite riscontrato</span>
+    <h2>Parser TypeScript — gap noti</h2>
+    <p class="section-lead">Il pass strutturale <code>--no-llm</code> via tree-sitter non riconosce tre costrutti TypeScript comuni. Di conseguenza 83 file TSX sono stati inizialmente annotati con <code>exports: none</code> pur avendo export reali.</p>
+
+    <div class="warning-banner">
+      <span class="warning-badge">Nota</span>
+      <div class="warning-body">
+        Il supporto a <strong>TypeScript/TSX è ancora in fase sperimentale</strong> come dichiarato nella documentazione ufficiale CodeDNA. Il parser tree-sitter non copre tutte le sintassi moderne di React/Inertia: per questo nel nostro progetto (frontend quasi interamente <code>.tsx</code>) è stato necessario un secondo giro via LLM per recuperare gli export mancanti.
+      </div>
+    </div>
+
+    <div class="compare-table-wrap">
+      <table class="comp">
+        <thead>
+          <tr><th>Sintassi</th><th>Esempio</th><th style="width: 120px;">Estratto?</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Aggregate export</td>
+            <td><code>export { Button, buttonVariants }</code></td>
+            <td><span class="pill pill-r">perso</span></td>
+          </tr>
+          <tr>
+            <td>Default export nominato</td>
+            <td><code>export default function Login()</code></td>
+            <td><span class="pill pill-r">perso</span></td>
+          </tr>
+          <tr>
+            <td>Default arrow anonimo</td>
+            <td><code>export default ({ children }) =&gt; ...</code></td>
+            <td><span class="pill pill-a">atteso</span></td>
+          </tr>
+          <tr class="hl">
+            <td>Named function/const export</td>
+            <td><code>export function formatCurrency()</code></td>
+            <td><span class="pill pill-g">ok</span></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+
+    <p style="margin-top: 2rem; font-size: 0.92rem; color: var(--gray-600); line-height: 1.75;">
+      <strong>Workaround adottato:</strong> pass Fase 2 via LLM che "vede" correttamente la sintassi. Coerente con lo stato sperimentale di TSX. Il bug è candidato per un'issue upstream su <code>github.com/Larens94/codedna</code>.
+    </p>
+  </div>
+</section>
+
+<!-- SECTION 4 — Rules -->
+<section class="section section-alt">
+  <div class="section-inner">
+    <span class="eyebrow">Valore aggiunto</span>
+    <h2>Regole architetturali catturate</h2>
+    <p class="section-lead">Il pass LLM ha estratto invariant non ovvi che il CLI strutturale non avrebbe mai scoperto. Sono ora in <code>rules:</code> e visibili al prossimo agente.</p>
+
+    <div class="rules-list">
+      <div class="rule-row">
+        <div class="rule-file">Season.php<small>Model</small></div>
+        <div class="rule-text"><code>is_active</code> deve avere un solo <code>true</code> — l'accessor con cache diventa non-deterministico altrimenti.</div>
+      </div>
+      <div class="rule-row">
+        <div class="rule-file">Payment.php<small>Model</small></div>
+        <div class="rule-text"><code>payment_intent_id</code> è l'<strong>idempotency key</strong> per retry webhook Stripe/PayPal. Non rigenerare mai.</div>
+      </div>
+      <div class="rule-row">
+        <div class="rule-file">EventRoom.php<small>Model</small></div>
+        <div class="rule-text"><code>min_capacity</code> / <code>max_capacity</code> <strong>override</strong> <code>Room.max_capacity</code> (rif. commit <code>c39ad6a</code>, <code>b39dc11</code>).</div>
+      </div>
+      <div class="rule-row">
+        <div class="rule-file">HandleInertiaRequests<small>Middleware</small></div>
+        <div class="rule-text"><code>share()</code> è il contratto verso il frontend — le chiavi devono corrispondere a <code>SharedProps</code> in <code>resources/js/types/index.d.ts</code>.</div>
+      </div>
+      <div class="rule-row">
+        <div class="rule-file">CartController.php<small>Controller</small></div>
+        <div class="rule-text">La session key <code>room_reservations</code> è <strong>condivisa</strong> con il middleware Inertia — modificare qui richiede auditare il middleware.</div>
+      </div>
+      <div class="rule-row">
+        <div class="rule-file">User.php<small>Model</small></div>
+        <div class="rule-text"><code>password</code> usa il cast <code>hashed</code> di Laravel 11 — <strong>mai</strong> assegnare un valore pre-hashed.</div>
+      </div>
+      <div class="rule-row">
+        <div class="rule-file">routes/web.php<small>Routes</small></div>
+        <div class="rule-text">I <strong>route names</strong> sono public API consumata da <code>ziggy-js</code> nel frontend — rinominare rompe tutti i <code>route('name')</code> in <code>.tsx</code>.</div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 5 — Final state -->
+<section class="section section-dark">
+  <div class="section-inner">
+    <span class="eyebrow">Stato finale</span>
+    <h2>Coverage check — 100%</h2>
+    <p class="section-lead">Tutti i file hanno header CodeDNA in mode <code style="color:#50fa7b; background:transparent; border: 1px solid #333;">agent</code>, signature uniforme <code style="color:#50fa7b; background:transparent; border: 1px solid #333;">claude-opus-4-7</code>, <code>.codedna</code> manifest con entry <code>agent_sessions</code> per <code>s_20260419_001</code>.</p>
+
+    <div class="code-block" style="border-color: #333;">
+      <div class="code-bar"><span class="dot r"></span><span class="dot y"></span><span class="dot g"></span><span class="code-filename">codedna check</span></div>
+      <pre class="code-pre"><span class="ts">CodeDNA Check</span>
+Target      sample-laravel-app
+Extensions  .blade.php, .js, .php, .py, .ts, .tsx
+
+L1 non-Python headers  <span class="th">248/248</span>  <span class="ts">(100%)</span>
+
+<span class="ts">OK — fully annotated</span></pre>
+    </div>
+  </div>
+</section>
+
+<!-- SECTION 6 — Next steps -->
+<section class="section">
+  <div class="section-inner">
+    <span class="eyebrow">Cosa resta</span>
+    <h2>Prossimi passi</h2>
+    <p class="section-lead">Tutte le modifiche sono <em>comment-only</em> — zero rischio runtime. Branch pronto per il push.</p>
+
+    <ul class="checklist">
+      <li class="done"><div><strong>Installazione CodeDNA v0.9</strong> completata via plugin Claude Code + CLI Python.</div></li>
+      <li class="done"><div><strong>Annotazione di 248 file</strong> con header mode <code>agent</code>, coverage 100%.</div></li>
+      <li class="done"><div><strong>Manifest <code>.codedna</code></strong> creato con grafo dipendenze + entry <code>agent_sessions</code>.</div></li>
+      <li class="done"><div><strong>Commit <code>a2f99dd</code></strong> su branch <code>codedna-init</code> con trailer AI conformi al protocollo v0.9.</div></li>
+      <li class="pending"><div><strong>Push del branch:</strong> <code>git push -u origin codedna-init</code></div></li>
+      <li class="pending"><div><strong>(Opzionale)</strong> PR verso <code>main</code> — changes sono comment-only.</div></li>
+      <li class="pending"><div><strong>(Opzionale)</strong> Issue upstream su <code>Larens94/codedna</code> per il bug del parser TSX sperimentale.</div></li>
+    </ul>
+  </div>
+</section>
+
+<footer>
+  <div class="logo-row">
+    <div class="logo-mark">CD</div>
+    <span style="font-weight:700;">CodeDNA</span>
+    <span class="nav-version" style="margin-left: 0.25rem;">v0.9</span>
+  </div>
+  <p>
+    Report generato il 2026-04-19 · session <code style="font-family: 'JetBrains Mono', monospace;">s_20260419_001</code> · agent <code style="font-family: 'JetBrains Mono', monospace;">claude-opus-4-7</code><br>
+    Protocollo CodeDNA: <a href="https://github.com/Larens94/codedna" target="_blank">github.com/Larens94/codedna</a>
+  </p>
+</footer>
+
+</body>
+</html>
