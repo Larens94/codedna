@@ -163,14 +163,16 @@ def summarize_model(results: list, model_name: str,
     print(f"    {active}")
     print('='*90)
 
-    # Per-task F1 table (metrics_read.f1)
+    # Per-task F1 table (metrics_proposed.f1 — what the agent proposes as final answer)
     print(f"\n{'Task':<26} " + " ".join(f"{c:>9}" for c in active))
     print("-" * (26 + 10 * len(active)))
     for e in results:
         iid = e.get("instance_id", "?").replace("django__django-", "")
         row = f"{iid:<26} "
         for c in active:
-            f1 = _mean_metric(e, c, ["metrics_read", "f1"])
+            f1 = _mean_metric(e, c, ["metrics_proposed", "f1"])
+            if f1 is None:
+                f1 = _mean_metric(e, c, ["metrics_read", "f1"])
             row += f"{f1:>9.3f} " if f1 is not None else f"{'n/a':>9} "
         print(row)
 
@@ -179,14 +181,18 @@ def summarize_model(results: list, model_name: str,
         for baseline in [b for b in ("control", "matched", "placebo") if b in active]:
             pairs = []
             for e in results:
-                bl = _mean_metric(e, baseline, ["metrics_read", "f1"])
-                tr = _mean_metric(e, "codedna", ["metrics_read", "f1"])
+                bl = _mean_metric(e, baseline, ["metrics_proposed", "f1"])
+                if bl is None:
+                    bl = _mean_metric(e, baseline, ["metrics_read", "f1"])
+                tr = _mean_metric(e, "codedna", ["metrics_proposed", "f1"])
+                if tr is None:
+                    tr = _mean_metric(e, "codedna", ["metrics_read", "f1"])
                 if bl is not None and tr is not None:
                     pairs.append((bl, tr))
             if len(pairs) < 3:
                 print(f"\n  codedna vs {baseline}: only {len(pairs)} paired tasks — skipping stats")
                 continue
-            print(f"\n  Δ(codedna − {baseline}) on F1_read:")
+            print(f"\n  Δ(codedna − {baseline}) on F1_proposed:")
             diffs = [b - a for a, b in pairs]
             mean, lo, hi = bootstrap_ci(diffs)
             w = wilcoxon_signed_rank(pairs)
