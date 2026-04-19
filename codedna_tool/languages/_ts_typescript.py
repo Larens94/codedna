@@ -216,6 +216,18 @@ class TreeSitterTypeScriptAdapter(TreeSitterAdapter):
                                     n = _t(vname)
                                     if n not in exports:
                                         exports.append(n)
+                    elif child.type == "export_clause":
+                        # export { A, B, C } — aggregate re-export
+                        for spec in child.named_children:
+                            if spec.type == "export_specifier":
+                                name_node = next(
+                                    (c for c in spec.named_children if c.type == "identifier"),
+                                    None,
+                                )
+                                if name_node:
+                                    n = _t(name_node)
+                                    if n not in exports:
+                                        exports.append(n)
                 # Don't recurse deeper into export_statement children that we've handled
                 return
 
