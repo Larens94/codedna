@@ -15,6 +15,14 @@ packages:
     purpose: "Utilities for processing agent traces, validating manifests, and extracting city data from CodeDNA sources"
     key_files: [agent_history.py, traces_to_training.py, validate_manifests.py, extract_city_data.py]
 
+  .planning/:
+    purpose: "Planning artifacts for this fork: PRD, codebase maps, and semantic wiki support documents"
+    key_files: [STACK.md, ARCHITECTURE.md, CONCERNS.md, TESTING.md, codedna-wiki-fork-prd.md]
+
+  .agents/:
+    purpose: "Repo-local Codex skills and workflows that extend CodeDNA with project-specific agent behavior"
+    key_files: [SKILL.md]
+
 cross_cutting_patterns: {}
 
 agent_sessions:
@@ -592,3 +600,83 @@ agent_sessions:
       Added module_rules_raw() using raw source snippet. Also: skip *_test.go, cap exports
       at 20, fix provider always "unknown", normalize multi-line rules with comment prefix.
       Tested on gin (59 files, 56 LLM calls) and sinatra (7 files, 6 LLM calls).
+
+  - agent: gpt-5.4
+    provider: openai
+    date: 2026-04-17
+    session_id: s_20260417_001
+    task: "add codex wiki fork baseline and init scaffold"
+    changed:
+      - .planning/prd/codedna-wiki-fork-prd.md
+      - .planning/codebase/STACK.md
+      - .planning/codebase/INTEGRATIONS.md
+      - .planning/codebase/ARCHITECTURE.md
+      - .planning/codebase/STRUCTURE.md
+      - .planning/codebase/CONVENTIONS.md
+      - .planning/codebase/TESTING.md
+      - .planning/codebase/CONCERNS.md
+      - .agents/skills/create-wiki/SKILL.md
+      - codedna-wiki.md
+      - codedna_tool/wiki.py
+      - codedna_tool/cli.py
+      - tests/test_cli.py
+      - .codedna
+    visited:
+      - AGENTS.md
+      - .codedna
+      - README.md
+      - pyproject.toml
+      - codedna_tool/cli.py
+      - codedna_tool/__init__.py
+      - codedna_tool/languages/base.py
+      - tools/validate_manifests.py
+      - benchmark_agent/benchmark_server.py
+      - benchmark_agent/swebench/run_agent_multi.py
+      - examples/python-api/api/routes.py
+      - experiments/run_experiment.py
+      - tests/test_cli.py
+      - tests/conftest.py
+      - integrations/AGENTS.md
+      - codedna-plugin/README.md
+    message: >
+      Created a fork-specific PRD and the first `.planning/codebase/` map, then added a
+      repo-local `create-wiki` skill plus `codedna-wiki.md` as the semantic companion to
+      `.codedna` Level 0. Implemented non-destructive wiki scaffolding in `codedna init`
+      via a dedicated helper module so repeated init runs stay idempotent. Verified with
+      `pytest tests/test_cli.py -q` (16 passed) and `pytest tests/test_refresh.py tests/test_validator.py -q`
+      (36 passed). New repo rule captured in `codedna_tool/cli.py`: init must scaffold wiki
+      assets without overwriting existing files.
+
+  - agent: claude-opus-4-7
+    provider: anthropic
+    date: 2026-04-19
+    session_id: s_20260419_001
+    task: "wiki standalone subcommand + dedicated wiki-keeper sub-agent (haiku)"
+    changed:
+      - codedna_tool/cli.py
+      - codedna_tool/wiki.py
+      - tests/test_cli.py
+      - .agents/skills/create-wiki/SKILL.md
+      - .claude/agents/codedna-wiki-keeper.md
+      - .codedna
+    visited:
+      - .codedna
+      - .planning/prd/codedna-wiki-fork-prd.md
+      - .planning/codebase/STACK.md
+      - .planning/codebase/CONCERNS.md
+      - .agents/skills/create-wiki/SKILL.md
+      - codedna-wiki.md
+      - codedna_tool/wiki.py
+      - codedna_tool/cli.py
+      - tests/test_cli.py
+      - integrations/AGENTS.md
+      - AGENTS.md
+      - .claude/agents/codedna-protocol-enforcer.md
+    message: >
+      Added explicit `codedna wiki [PATH]` subcommand — wiki maintenance is now
+      first-class and independent of init/GSD/any plugin. Added dedicated Claude Code
+      sub-agent `.claude/agents/codedna-wiki-keeper.md` (model: haiku) that isolates
+      wiki reads/writes from the main agent context. `ensure_wiki_scaffold()` now
+      creates 3 assets: skill, wiki, and claude agent. SKILL.md updated to instruct
+      sub-agent spawn in Claude Code context; direct workflow retained for Codex/OpenCode.
+      21 tests pass (cli) + 36 (refresh/validator). Validators clean.

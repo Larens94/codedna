@@ -4,7 +4,9 @@ exports: PYTHON | run_codedna() | class TestInit | class TestCheck | class TestR
 used_by: none
 rules:   Tests run codedna CLI as subprocess to verify end-to-end behavior.
 Each test uses tmp_path for isolation — never touches real project files.
+`init` coverage must include repo-level side effects such as wiki scaffolding.
 agent:   claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_002 | initial CLI test suite
+gpt-5.4 | openai | 2026-04-17 | s_20260417_001 | added init coverage for create-wiki skill scaffold, codedna-wiki.md, and dry-run/idempotency behavior
 """
 
 from __future__ import annotations
@@ -20,7 +22,11 @@ PYTHON = sys.executable
 
 
 def run_codedna(*args, cwd=None):
-    """Run codedna CLI and return (returncode, stdout, stderr)."""
+    """Run codedna CLI and return (returncode, stdout, stderr).
+
+    Rules:   Always invoke the module entrypoint (`python -m codedna_tool.cli`) so tests
+             exercise the real CLI dispatch path.
+    """
     result = subprocess.run(
         [PYTHON, "-m", "codedna_tool.cli", *args],
         capture_output=True, text=True, cwd=cwd, timeout=60,
@@ -96,6 +102,80 @@ class TestInit:
 
         ts_content = (mini_project / "app.ts").read_text()
         assert "exports:" in ts_content or "// app.ts" in ts_content
+
+    def test_init_scaffolds_create_wiki_skill_and_wiki(self, mini_project):
+        rc, out, err = run_codedna("init", str(mini_project), "--no-llm")
+
+        assert rc == 0
+        assert (mini_project / ".agents" / "skills" / "create-wiki" / "SKILL.md").exists()
+        assert (mini_project / "codedna-wiki.md").exists()
+
+        wiki_content = (mini_project / "codedna-wiki.md").read_text()
+        assert ".codedna" in wiki_content
+        assert "semantic companion" in wiki_content
+
+    def test_init_wiki_scaffold_is_idempotent(self, mini_project):
+        run_codedna("init", str(mini_project), "--no-llm")
+
+        skill_path = mini_project / ".agents" / "skills" / "create-wiki" / "SKILL.md"
+        wiki_path = mini_project / "codedna-wiki.md"
+        skill_first = skill_path.read_text()
+        wiki_first = wiki_path.read_text()
+
+        run_codedna("init", str(mini_project), "--no-llm")
+
+        assert skill_first == skill_path.read_text()
+        assert wiki_first == wiki_path.read_text()
+
+    def test_init_dry_run_does_not_create_wiki_scaffold(self, mini_project):
+        rc, out, err = run_codedna("init", str(mini_project), "--no-llm", "--dry-run")
+
+        assert rc == 0
+        assert not (mini_project / ".agents" / "skills" / "create-wiki" / "SKILL.md").exists()
+        assert not (mini_project / "codedna-wiki.md").exists()
+
+
+# ── codedna wiki (standalone, no init required) ──────────────────────────────
+
+class TestWiki:
+    def test_wiki_scaffolds_without_init(self, tmp_path):
+        rc, out, err = run_codedna("wiki", str(tmp_path))
+
+        assert rc == 0
+        assert (tmp_path / "codedna-wiki.md").exists()
+        assert (tmp_path / ".agents" / "skills" / "create-wiki" / "SKILL.md").exists()
+        assert (tmp_path / ".claude" / "agents" / "codedna-wiki-keeper.md").exists()
+        assert "Created" in out
+
+    def test_wiki_scaffolds_claude_agent_with_haiku_model(self, tmp_path):
+        run_codedna("wiki", str(tmp_path))
+        agent_content = (tmp_path / ".claude" / "agents" / "codedna-wiki-keeper.md").read_text()
+        assert "model: haiku" in agent_content
+        assert "codedna-wiki-keeper" in agent_content
+
+    def test_wiki_skill_references_subagent_spawn(self, tmp_path):
+        run_codedna("wiki", str(tmp_path))
+        skill_content = (tmp_path / ".agents" / "skills" / "create-wiki" / "SKILL.md").read_text()
+        assert "codedna-wiki-keeper" in skill_content
+        assert "haiku" in skill_content.lower() or "sub-agent" in skill_content.lower()
+
+    def test_wiki_dry_run_writes_nothing(self, tmp_path):
+        rc, out, err = run_codedna("wiki", str(tmp_path), "--dry-run")
+
+        assert rc == 0
+        assert "Would create" in out
+        assert not (tmp_path / "codedna-wiki.md").exists()
+        assert not (tmp_path / ".agents" / "skills" / "create-wiki" / "SKILL.md").exists()
+        assert not (tmp_path / ".claude" / "agents" / "codedna-wiki-keeper.md").exists()
+
+    def test_wiki_idempotent(self, tmp_path):
+        run_codedna("wiki", str(tmp_path))
+        wiki_first = (tmp_path / "codedna-wiki.md").read_text()
+
+        rc, out, err = run_codedna("wiki", str(tmp_path))
+        assert rc == 0
+        assert "Reused" in out
+        assert (tmp_path / "codedna-wiki.md").read_text() == wiki_first
 
 
 # ── codedna check ────────────────────────────────────────────────────────────

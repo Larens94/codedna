@@ -46,6 +46,10 @@ experiments/runs/run_20260329_163535
 .claude/agent-memory/
 .claude/scheduled_tasks.lock
 .claude/settings.json
+.claude/settings.local.json
+
+# Planning — internal docs not part of protocol changes
+.planning/
 
 # Drafts — not for repo
 note_dev_2

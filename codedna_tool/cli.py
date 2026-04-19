@@ -6,14 +6,17 @@ used_by: tests/test_cli.py → FileInfo, build_module_docstring
 rules:   L2 (function Rules:) applies Python AST only; language adapters are L1-only.
 LLM calls are capped at 2 per Python file; --no-llm skips all LLM calls.
 _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
+`init` must scaffold `codedna-wiki.md` and `.agents/skills/create-wiki/SKILL.md`
+idempotently at repo root without overwriting existing wiki assets.
 scan_file handles 3 import patterns: (1) from .mod import X, (2) from . import X
 (submodule-first then __init__.py symbol), (3) from pkg import X (tries pkg/X.py
 before falling back to pkg/__init__.py). All 3 were previously under-resolved.
-agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_003 | add DeepSeek to _detect_provider and env_map so --api-key works with deepseek/ model prefix
-claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | fix L2 batch overflow: _L2_BATCH_SIZE=12, dynamic max_tokens, _parse_json_response with truncation recovery
+agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | fix L2 batch overflow: _L2_BATCH_SIZE=12, dynamic max_tokens, _parse_json_response with truncation recovery
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | skip *_test.go; cap exports@20; fix non-Python path (raw join→_fmt_exports, module_rules→module_rules_raw, provider detection)
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_005 | run_lang_files returns (annotated, llm_calls) tuple; run() aggregates lang llm_calls into summary counter
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_bench | fix 3 used_by bugs in scan_file; fix LLM gating: run() checked HAS_ANTHROPIC instead of HAS_LITELLM|HAS_ANTHROPIC — litellm (DeepSeek/GPT) was silently falling back to --no-llm
+gpt-5.4 | openai | 2026-04-17 | s_20260417_001 | scaffold repo-local create-wiki skill and codedna-wiki.md after init via dedicated helper module
+claude-opus-4-7 | anthropic | 2026-04-19 | s_20260419_001 | add explicit `codedna wiki` subcommand so semantic wiki is independent of init; idempotent scaffold with --dry-run
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -22,6 +25,7 @@ install        Setup CodeDNA in a project (pre-commit hook + AI tool prompt + .c
 init   PATH    First-time annotation of every source file under PATH
 update PATH    Annotate only files missing CodeDNA headers (incremental)
 check  PATH    Report annotation coverage without modifying files
+wiki   [PATH]  Scaffold codedna-wiki.md and repo-local create-wiki skill (idempotent)
 LLM calls: max 2 per Python file (1 module skeleton rules + 1 function batch).
 0 calls if file already annotated (skipped by init/update).
 Non-Python files: 1 LLM call per file for rules: (or none with --no-llm).
@@ -44,6 +48,7 @@ from pathlib import Path
 from typing import Optional
 
 from .languages import SUPPORTED_EXTENSIONS, get_adapter
+from .wiki import ensure_wiki_scaffold
 
 try:
     import litellm as _litellm
@@ -2330,6 +2335,24 @@ def main():
     manifest_p.add_argument("-v", "--verbose", action="store_true",
                             help="Show per-package details")
 
+    # ── wiki ─────────────────────────────────────────────────────────────────
+    wiki_p = subs.add_parser(
+        "wiki",
+        help="Scaffold the semantic wiki companion to .codedna (codedna-wiki.md + create-wiki skill)",
+        description=(
+            "Create the CodeDNA semantic wiki assets at the project root:\n"
+            "  - codedna-wiki.md                         (semantic companion to .codedna)\n"
+            "  - .agents/skills/create-wiki/SKILL.md     (repo-local skill)\n\n"
+            "Idempotent: existing files are never overwritten.\n"
+            "Use --dry-run to preview what would be created."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    wiki_p.add_argument("path", type=Path, nargs="?", default=Path("."),
+                        help="Project root (default: current directory)")
+    wiki_p.add_argument("--dry-run", action="store_true",
+                        help="Report missing files without writing them")
+
     args = p.parse_args()
 
     # ── dispatch ──────────────────────────────────────────────────────────────
@@ -2420,6 +2443,22 @@ def main():
             exclude=list(args.exclude),
         )
 
+    if args.command == "wiki":
+        path_project_root = args.path.resolve()
+        if not path_project_root.exists():
+            print(f"Error: {path_project_root} does not exist", file=sys.stderr)
+            return 1
+        obj_wiki_result = ensure_wiki_scaffold(path_project_root, dry_run=args.dry_run)
+        if obj_wiki_result.created:
+            verb = "Would create" if args.dry_run else "Created"
+            for str_path in obj_wiki_result.created:
+                print(f"{verb:<11} {str_path}")
+        for str_path in obj_wiki_result.existing:
+            print(f"Reused      {str_path}")
+        if not obj_wiki_result.created and not obj_wiki_result.existing:
+            print("No wiki assets to scaffold.")
+        return 0
+
     if args.command == "refresh":
         target = args.path.resolve()
         if not target.exists():
@@ -2469,6 +2508,19 @@ def main():
         repo_root=repo_root,
         extensions=exts,
     )
+
+    if args.command == "init":
+        path_project_root = repo_root or (target if target.is_dir() else target.parent)
+        obj_wiki_result = ensure_wiki_scaffold(path_project_root, dry_run=args.dry_run)
+        if obj_wiki_result.created or obj_wiki_result.existing:
+            print()
+            print("Wiki scaffold")
+            if obj_wiki_result.created:
+                verb = "Would create" if args.dry_run else "Created"
+                for str_path in obj_wiki_result.created:
+                    print(f"  {verb:<11} {str_path}")
+            for str_path in obj_wiki_result.existing:
+                print(f"  Reused      {str_path}")
     return 0
 
 
