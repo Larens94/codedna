@@ -1,0 +1,15 @@
+name: "CodeDNA CodeQL Config"
+
+# Exclude paths that contain code we don't own or maintain:
+# - experiments/: LLM-generated agent outputs from benchmark runs
+# - labs/benchmark/runs/, benchmark_agent/runs/: raw benchmark artifacts
+# - venv/, node_modules/, __pycache__/: vendored/generated code
+# - tests/fixtures/: intentionally malformed samples
+paths-ignore:
+  - experiments/**
+  - labs/benchmark/runs/**
+  - benchmark_agent/runs/**
+  - '**/venv/**'
+  - '**/node_modules/**'
+  - '**/__pycache__/**'
+  - tests/fixtures/**
