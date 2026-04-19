@@ -424,7 +424,7 @@ codedna mode agent    # protocollo completo
 
 | | |
 |---|---|
-| [SPEC.md](./SPEC.md) | Specifica del protocollo v0.8 |
+| [SPEC.md](./SPEC.md) | Specifica del protocollo v0.9 |
 | [docs/languages.md](docs/languages.md) | 9 linguaggi, template engine, framework awareness |
 | [docs/benchmark.md](docs/benchmark.md) | Risultati SWE-bench, integrità annotazioni |
 | [docs/experiments.md](docs/experiments.md) | Esperimenti multi-agente |
@@ -434,14 +434,16 @@ codedna mode agent    # protocollo completo
 
 ## Roadmap
 
-| Milestone | Stato |
-|---|---|
-| Protocollo v0.8 + CLI + modalità + `message:` + `related:` | Completato |
-| Hook di enforcement (Claude, Cursor, Copilot, Cline, OpenCode) | Completato |
-| 9 linguaggi + AST tree-sitter | Completato |
-| SWE-bench Verified (500 task, 12 repository) | In corso |
-| Estensione VSCode | Pianificato |
-| Preprint arXiv | Pianificato |
+Tutti i componenti sono funzionanti e testati ma **sperimentali** — il protocollo, la CLI e il benchmark sono in evoluzione attiva basata sull'utilizzo reale e il feedback della ricerca.
+
+| Area | Cosa funziona | Prossimi passi |
+|---|---|---|
+| **Protocollo v0.9** | `exports:` `used_by:` `related:` `rules:` `agent:` `message:` — tutti i campi implementati | Auto-generazione `related:` via LLM, rilevamento annotazioni stale |
+| **CLI** | `init` `update` `refresh` `check` `manifest` `mode` `install` — 9 linguaggi via tree-sitter | Pubblicazione PyPI, `codedna verify` per riferimenti stale, pass 2 cross-cutting |
+| **Benchmark** | 6 task Django, +13pp F1 (DeepSeek), +13pp (Gemini Flash p=0.040) | Condizione placebo, effect size, 20+ task, 5+ modelli |
+| **Integrazioni** | Plugin Claude Code, Cursor, Copilot, Cline, OpenCode, Windsurf hooks | Estensione VS Code, GitHub Action per CI |
+| **Linguaggi** | Python, PHP, TypeScript, Go, Java, Kotlin, Ruby, Rust, C# + 7 template engine | Più test su progetti reali non-Python |
+| **Ricerca** | Esperimenti multi-agente (98.2% adozione, 1.6x più veloce), benchmark SWE-bench | Preprint arXiv, studio placebo + ablazione |
 
 ---
 
