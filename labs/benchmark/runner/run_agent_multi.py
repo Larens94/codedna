@@ -115,11 +115,15 @@ per-function constraints that tell you:
 
 1. Start with the `.codedna` manifest to locate the RIGHT package.
 2. Read the header of 1–3 candidate files (first 20 lines). Filter by `exports:` and `purpose:`.
-3. If a file looks relevant: read fully, then follow the `used_by:` graph — every caller listed is
-   a candidate file to modify (especially cross-cutting fixes).
-4. If `rules:` mentions a file/backend/package, read that immediately.
-5. When inside a function, read its `Rules:` docstring BEFORE deciding what to change.
-6. Before your final answer: verify every file you propose has had its `used_by:` and `rules:`
+3. If a file looks relevant: read fully, then check its `used_by:` graph.
+   IMPORTANT: `used_by:` tells you WHO depends on this file — NOT that all of them need changes.
+   For each caller, ask: "does this caller's domain intersect with the bug?" If not, skip it.
+   Think: "which of these callers could be affected by THIS SPECIFIC change?"
+4. If `related:` is present, check those files too — they share the same logic without importing
+   each other (cross-cutting pattern). Same filter applies: is it relevant to THIS bug?
+5. If `rules:` mentions a file/backend/package, read that immediately.
+6. When inside a function, read its `Rules:` docstring BEFORE deciding what to change.
+7. Before your final answer: verify every file you propose has had its `used_by:` and `rules:`
    checked, and every function you'd edit has its `Rules:` read.
 
 ---
@@ -992,7 +996,7 @@ def main():
         print(f"{'='*70}")
 
         def avg_f1(runs):
-            vals = [r["metrics_read"]["f1"] for r in runs]
+            vals = [r["metrics_proposed"]["f1"] for r in runs]
             m = sum(vals) / len(vals)
             std = (sum((v - m)**2 for v in vals) / (len(vals) - 1)) ** 0.5 if len(vals) > 1 else 0.0
             return {"mean": round(m, 4), "std": round(std, 4), "values": [round(v, 4) for v in vals]}
@@ -1172,7 +1176,7 @@ def main():
                                      session_id=str_sid, model=model_name,
                                      provider=cfg["provider"], task=iid, condition="control",
                                      repo_root=ctrl_dir)
-                    cr = r["metrics_read"]
+                    cr = r["metrics_proposed"]
                     path_trace = _save_trace(traces_dir, str_sid, r, gt)
                     print(f"  Control: {r['tool_calls']} calls "
                           f"({r['read_calls']} reads, {r['grep_calls']} greps) | "
@@ -1190,7 +1194,7 @@ def main():
                                      session_id=str_sid, model=model_name,
                                      provider=cfg["provider"], task=iid, condition="matched",
                                      repo_root=ctrl_dir)
-                    mr = r["metrics_read"]
+                    mr = r["metrics_proposed"]
                     path_trace = _save_trace(traces_dir, str_sid, r, gt)
                     print(f"  Matched: {r['tool_calls']} calls "
                           f"({r['read_calls']} reads, {r['grep_calls']} greps) | "
@@ -1229,7 +1233,7 @@ def main():
                                      session_id=str_sid, model=model_name,
                                      provider=cfg["provider"], task=iid, condition="codedna",
                                      repo_root=cdna_dir)
-                    dr = r["metrics_read"]
+                    dr = r["metrics_proposed"]
                     path_trace = _save_trace(traces_dir, str_sid, r, gt)
                     print(f"  CodeDNA: {r['tool_calls']} calls "
                           f"({r['read_calls']} reads, {r['grep_calls']} greps) | "

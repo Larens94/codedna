@@ -68,11 +68,11 @@ agent:   claude-sonnet-4-6 | anthropic | 2026-04-15 | s_001 | initial layout
 
 1. Read the **module header** at the top of every source file before reading any code.
 2. Parse `exports:` — symbols you **must never rename or remove** without explicit instruction.
-3. Parse `used_by:` — callers that will be affected by your changes (structural link via import).
-4. Parse `related:` — files that share the same logic without importing each other (semantic link). Check these too.
+3. Parse `used_by:` — callers that depend on this file. **Do not follow all blindly.** Ask: "does this caller intersect with my current task?" Only explore relevant callers.
+4. Parse `related:` — files sharing the same logic without importing each other. Same filter: is it relevant to this task?
 5. Parse `rules:` — hard constraints; read **before writing any logic**.
-5. Parse `agent:` — session history; read to understand *why* the current state exists.
-6. For Python/Ruby functions with a `Rules:` docstring, read and respect those before writing logic.
+6. Parse `agent:` — session history; read to understand *why* the current state exists.
+7. For any function with a `Rules:` docstring, read and respect those before writing logic.
 
 ## Writing new files
 

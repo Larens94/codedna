@@ -1172,7 +1172,7 @@ def _parse_existing_docstring(docstring: str) -> dict[str, str]:
             continue
 
         # Check if line starts a new field
-        for field_name in ("exports:", "used_by:", "related:", "rules:", "agent:"):
+        for field_name in ("exports:", "used_by:", "related:", "rules:", "agent:", "message:"):
             if stripped.startswith(field_name):
                 if current_field:
                     fields[current_field] = "\n".join(current_lines)
@@ -1200,6 +1200,7 @@ def _rebuild_docstring(fields: dict[str, str], new_exports: str, new_used_by: st
     related = fields.get("related", "")
     rules = fields.get("rules", "rules:   none")
     agent = fields.get("agent", "agent:   unknown")
+    message = fields.get("message", "message: ")
 
     lines = [
         f'"""{first_line}',
@@ -1209,7 +1210,7 @@ def _rebuild_docstring(fields: dict[str, str], new_exports: str, new_used_by: st
     ]
     if related:
         lines.append(related)
-    lines.extend([rules, agent, '"""'])
+    lines.extend([rules, agent, message, '"""'])
     return "\n".join(lines) + "\n"
 
 

@@ -8,10 +8,11 @@ This project uses the **CodeDNA** in-source communication protocol. Follow these
 
 1. Read the **module docstring** at the top of every Python file before reading any code.
 2. Parse `exports:` — these are symbols you **must never rename or remove** without explicit instruction.
-3. Parse `used_by:` — these are callers that will be affected by your changes.
-4. Parse `rules:` — hard constraints for every edit in this file; read **before writing any logic**.
-5. Parse `agent:` — session history written by previous agents; read to understand *why* the current state exists.
-6. For any function with a `Rules:` docstring, read and respect those before writing logic.
+3. Parse `used_by:` — callers that depend on this file. **Do not follow all of them blindly.** Ask: "does this caller's domain intersect with my current task?" Only explore callers relevant to the specific change you're making.
+4. Parse `related:` — files sharing the same logic without importing each other. Same filter: is it relevant to this task?
+5. Parse `rules:` — hard constraints for every edit in this file; read **before writing any logic**.
+6. Parse `agent:` — session history written by previous agents; read to understand *why* the current state exists.
+7. For any function with a `Rules:` docstring, read and respect those before writing logic.
 
 ## Writing new files
 
