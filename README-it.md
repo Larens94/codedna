@@ -180,13 +180,15 @@ Nessun grep. Nessuna lettura di 18 file. Nessuna riscoperta di vincoli.
 
 ### Gli agenti trovano i file giusti più velocemente
 
-SWE-bench, 5 bug Django, 3 modelli. Stesso prompt, stessi tool, stessi task. **Unica differenza: annotazioni CodeDNA.**
+SWE-bench, 6 bug Django, 3 run per condizione. Stesso prompt, stessi tool. **Unica differenza: annotazioni CodeDNA.**
 
 | Modello | Senza | Con CodeDNA | Delta |
 |---|---|---|---|
-| Gemini 2.5 Flash | 60% F1 | **72% F1** | **+13pp** (p=0.040) |
-| DeepSeek Chat | 50% F1 | **60% F1** | **+9pp** |
-| Gemini 2.5 Pro | 60% F1 | **69% F1** | **+9pp** |
+| Gemini 2.5 Flash (5 task) | 60% F1 | **72% F1** | **+13pp** (p=0.040) |
+| DeepSeek Chat (6 task, 3 run) | 60% F1 | **71% F1** | **+11pp** (p=0.014, Wilcoxon) |
+| Gemini 2.5 Pro (5 task) | 60% F1 | **69% F1** | **+9pp** |
+
+**Stabilità più che fortuna.** Su DeepSeek il vantaggio non è solo media più alta — è varianza più bassa. Su due task (11138, 11808) la std di control su 3 run è 0.22–0.25 F1 (l'agente a volte indovina, a volte no), mentre con CodeDNA la std scende a 0.00–0.06. Tutti i 6/6 task favoriscono CodeDNA, nessuna inversione. L'agente con annotazioni lavora per **comprensione strutturale**, non per caso.
 
 ### Gli agenti correggono il pattern giusto
 
