@@ -284,3 +284,51 @@ class TestHasCodednaHeader:
 
         bare = "package main\n\nfunc Main() {}\n"
         assert not adapter.has_codedna_header(bare)
+
+
+class TestRelatedField:
+    """Tests for the related: field (v0.9) — semantic cross-cutting links."""
+
+    def test_parser_recognizes_related(self):
+        from codedna_tool.cli import _parse_existing_docstring
+
+        doc = '"""test.py — test.\n\nexports: foo()\nused_by: bar.py → baz\nrelated: other.py — shares logic\nrules:   none\nagent:   test | anthropic | 2026-04-20 | s_001 | test\n"""'
+        fields = _parse_existing_docstring(doc)
+        assert "related" in fields
+        assert "shares logic" in fields["related"]
+
+    def test_rebuild_preserves_related(self):
+        from codedna_tool.cli import _parse_existing_docstring, _rebuild_docstring
+
+        doc = '"""test.py — test.\n\nexports: foo()\nused_by: bar.py → baz\nrelated: other.py — shares logic\n         another.py — same pattern\nrules:   none\nagent:   test | anthropic | 2026-04-20 | s_001 | test\n"""'
+        fields = _parse_existing_docstring(doc)
+        rebuilt = _rebuild_docstring(fields, "new_foo()", "new_bar.py → new_baz")
+        assert "related:" in rebuilt
+        assert "shares logic" in rebuilt
+        assert "same pattern" in rebuilt
+
+    def test_refresh_preserves_related(self, tmp_path):
+        """codedna refresh must not strip related: when updating used_by."""
+        (tmp_path / "utils.py").write_text(
+            '"""utils.py — utils.\n\n'
+            'exports: helper()\n'
+            'used_by: none\n'
+            'related: other.py — shares algorithm\n'
+            'rules:   none\n'
+            'agent:   test | anthropic | 2026-04-20 | s_001 | test\n'
+            '"""\n\ndef helper(): return "ok"\n'
+        )
+        (tmp_path / "app.py").write_text('from utils import helper\ndef main(): return helper()\n')
+        run_codedna("init", str(tmp_path), "--no-llm")
+        run_codedna("refresh", str(tmp_path))
+
+        utils = (tmp_path / "utils.py").read_text()
+        assert "related: other.py — shares algorithm" in utils
+        assert "app.py" in utils  # used_by was updated
+
+    def test_has_codedna_header_detects_related_only(self):
+        from codedna_tool.languages.go import GoAdapter
+        adapter = GoAdapter()
+
+        src = "// main.go — entry.\n//\n// related: other.go — shares logic\n\npackage main\n"
+        assert adapter.has_codedna_header(src)
