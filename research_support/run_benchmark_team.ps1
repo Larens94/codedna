@@ -89,9 +89,12 @@ $AnnotateArgs = @(
     "--multi-file-first",
     "--annotate",
     "--no-llm"
+    # Note: --no-llm produces structural annotations only (exports + used_by).
+    # For semantic rules: use --model deepseek/deepseek-chat (~$0.40 per 200 files).
+    # After annotation, run: python3 -m codedna_tool.cli refresh <path> for complete used_by graph.
 )
 
-Write-Host "`n[2/3] Creating CodeDNA annotated variant (--no-llm)..."
+Write-Host "`n[2/3] Creating CodeDNA annotated variant (--no-llm, structural only)..."
 Invoke-PythonStep -ScriptArgs $AnnotateArgs -LogFile (Join-Path $LogDir "02_annotate.txt") -StepName "Annotate"
 
 if ($PrepareOnly) {
@@ -100,7 +103,7 @@ if ($PrepareOnly) {
 }
 
 $RunArgs = @(
-    "benchmark_agent/swebench/run_agent_multi.py",
+    "labs/benchmark/runner/run_agent_multi.py",
     "--model", $Model,
     "--runs", $Runs,
     "--temperature", $Temperature,
@@ -112,5 +115,4 @@ Write-Host "`n[3/3] Running benchmark..."
 Invoke-PythonStep -ScriptArgs $RunArgs -LogFile (Join-Path $LogDir "03_run.txt") -StepName "Benchmark run"
 
 Write-Host "`nDone. Next step:"
-Write-Host "python benchmark_agent/swebench/analyze_multi.py"
-Write-Host "python benchmark_agent/swebench/analyze_multi.py --qualitative"
+Write-Host "python labs/benchmark/tools/analyze.py deepseek-chat"

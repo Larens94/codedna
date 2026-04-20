@@ -22,7 +22,9 @@ from typing import Dict, Iterable, List, Tuple
 
 
 ROOT = Path(__file__).resolve().parents[1]
-RUNS_DIR = ROOT / "benchmark_agent" / "runs"
+_LEGACY_RUNS = ROOT / "benchmark_agent" / "runs"
+_LABS_RUNS = ROOT / "labs" / "benchmark" / "runs"
+RUNS_DIR = _LABS_RUNS if _LABS_RUNS.exists() and any(_LABS_RUNS.iterdir()) else _LEGACY_RUNS
 OUT_DIR = ROOT / "research_support" / "analysis"
 
 
@@ -37,7 +39,8 @@ def _safe_std(values: List[float]) -> float:
 
 
 def _metric_f1(run: dict) -> float:
-    return float(run.get("metrics_read", {}).get("f1", 0.0))
+    m = run.get("metrics_proposed") or run.get("metrics_read") or {}
+    return float(m.get("f1", 0.0))
 
 
 def _metric(run: dict, key: str) -> float | None:
