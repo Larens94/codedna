@@ -1,8 +1,7 @@
 // format.go — Currency, date, and string formatting utilities.
 //
-// exports: FormatCurrency(amountCents int, currency string) string
-//          FormatDate(t time.Time) string | Truncate(s string, maxLen int) string
-// used_by: services/revenue.go → MonthlyRevenue
+// exports: FormatCurrency | FormatDate | Truncate
+// used_by: none
 // rules:   FormatCurrency expects integer cents, not float dollars.
 // agent:   claude-sonnet-4-6 | 2026-03-24 | initial CodeDNA annotation
 package utils

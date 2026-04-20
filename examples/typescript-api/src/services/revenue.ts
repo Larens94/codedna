@@ -1,7 +1,7 @@
 // revenue.ts — revenue module.
 //
 // exports: monthlyRevenue | annualSummary | topCustomers
-// used_by: none
+// used_by: src/routes.ts
 // rules:   none
 // agent:   claude-haiku-4-5-20251001 | unknown | 2026-03-27 | unknown | initial CodeDNA annotation pass
 

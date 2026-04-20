@@ -303,7 +303,7 @@ bool_is_admin_from_db        = user["role"] == "admin"
 
 ## Scientific Paper
 
-→ [`paper/codedna_paper.pdf`](./paper/codedna_paper.pdf)
+→ [`paper/codedna_paper_v0.7.pdf`](./paper/codedna_paper_v0.7.pdf) (v0.9 paper in preparation)
 
 ## Benchmark Code
 

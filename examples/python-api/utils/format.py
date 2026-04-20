@@ -1,10 +1,12 @@
 """python-api/utils/format.py — Currency, date, and string formatting utilities.
 
 exports: format_currency(amount_cents, currency) | format_date(dt, fmt) | format_user_label(name, email) | truncate(text, max_len, suffix)
-used_by: none
+used_by: api/routes.py → format_date
+         services/revenue.py → format_currency
 rules:   - All formatting functions must handle None/empty inputs gracefully without raising exceptions
 - Currency formatting must support only the predefined symbol dictionary; new currencies require explicit addition to the symbols map
 agent:   claude-haiku-4-5-20251001 | 2026-03-27 | initial CodeDNA annotation pass
+message: 
 """
 
 from datetime import datetime

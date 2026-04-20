@@ -1,6 +1,6 @@
 // main.go — Entry point: wires HTTP mux and starts server on :8080.
 //
-// exports: main()
+// exports: none
 // used_by: none
 // rules:   none
 // agent:   claude-sonnet-4-6 | 2026-03-24 | initial CodeDNA annotation

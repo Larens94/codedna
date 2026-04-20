@@ -1,7 +1,7 @@
 // user.go — User and Invoice structs with suspension helpers.
 //
-// exports: User | Invoice | (User).IsSuspended() bool | (User).DisplayName() string
-// used_by: handlers/revenue.go → revenueHandler | services/revenue.go → MonthlyRevenue, GetActiveUsers
+// exports: User | IsSuspended | DisplayName | Invoice
+// used_by: none
 // rules:   always call IsSuspended() — never read SuspendedAt directly.
 // agent:   claude-sonnet-4-6 | 2026-03-24 | initial CodeDNA annotation
 package models

@@ -3,8 +3,8 @@
 
 // Order.php — Order module.
 //
-// exports: Order | Order::user | Order::isActive | Order::amountFormatted
-// used_by: none
+// exports: Order | Order::user(): BelongsTo | Order::isActive(): bool | Order::amountFormatted(): string
+// used_by: app/Http/Controllers/OrderController.php
 // rules:   none
 // agent:   claude-haiku-4-5-20251001 | unknown | 2026-03-27 | unknown | initial CodeDNA annotation pass
 

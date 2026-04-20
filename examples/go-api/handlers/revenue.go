@@ -1,7 +1,7 @@
 // revenue.go — HTTP handlers for revenue API endpoints.
 //
-// exports: RegisterRoutes(mux *http.ServeMux)
-// used_by: main.go → main
+// exports: RegisterRoutes
+// used_by: none
 // rules:   month must be validated 1-12 before passing to services.
 //          limit from query params capped at 100 via getLimit().
 // agent:   claude-sonnet-4-6 | 2026-03-24 | initial CodeDNA annotation

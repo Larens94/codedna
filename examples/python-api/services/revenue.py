@@ -1,10 +1,11 @@
 """python-api/services/revenue.py — Monthly and annual revenue aggregation from paid invoices.
 
 exports: get_invoices_for_period(year, month) | monthly_revenue(year, month, users) | annual_summary(year, users) | top_customers(year, month, users, limit)
-used_by: none
+used_by: api/routes.py → annual_summary, monthly_revenue, top_customers
 rules:   - All functions must filter users through `is_suspended()` before processing revenue data; never operate on raw user lists
 - Database session access is restricted to `get_invoices_for_period()`; other functions must receive pre-queried data as parameters
 agent:   claude-haiku-4-5-20251001 | 2026-03-27 | initial CodeDNA annotation pass
+message: 
 """
 
 from datetime import datetime

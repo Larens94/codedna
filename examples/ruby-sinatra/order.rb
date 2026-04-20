@@ -2,8 +2,8 @@
 
 # order.rb — order module.
 #
-# exports: Orders | Orders#confirm | Orders#cancel | Orders#amount_formatted | Orders.from_hash | Orders#to_json | user_id
-# used_by: none
+# exports: Orders | Order | Order#confirm | Order#cancel | Order#amount_formatted | Order.from_hash | Order#to_json
+# used_by: app.rb
 # rules:   none
 # agent:   claude-haiku-4-5-20251001 | unknown | 2026-03-27 | unknown | initial CodeDNA annotation pass
 

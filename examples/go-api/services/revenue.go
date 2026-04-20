@@ -1,9 +1,7 @@
 // revenue.go — Revenue aggregation logic for monthly and annual reports.
 //
-// exports: GetActiveUsers() []models.User | GetInvoicesForPeriod(year, month int) []models.Invoice
-//          MonthlyRevenue(year, month int, users []models.User) map[string]interface{}
-//          AnnualSummary(year int, users []models.User) []map[string]interface{}
-// used_by: handlers/revenue.go → revenueHandler
+// exports: GetActiveUsers | GetInvoicesForPeriod | MonthlyRevenue | AnnualSummary
+// used_by: none
 // rules:   GetInvoicesForPeriod returns ALL invoices, including suspended users —
 //          always filter by activeIDs inside MonthlyRevenue before aggregating.
 // agent:   claude-sonnet-4-6 | 2026-03-24 | initial CodeDNA annotation

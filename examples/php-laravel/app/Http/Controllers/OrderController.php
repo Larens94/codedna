@@ -3,8 +3,8 @@
 
 // OrderController.php — OrderController module.
 //
-// exports: OrderController | OrderController::index | OrderController::show | OrderController::store | OrderController::destroy
-// used_by: none
+// exports: OrderController | OrderController::index(Request $request): JsonResponse | OrderController::show(string $id): JsonResponse | OrderController::store(Request $request): JsonResponse | OrderController::destroy(string $id): JsonResponse
+// used_by: routes/api.php
 // rules:   none
 // agent:   claude-haiku-4-5-20251001 | unknown | 2026-03-27 | unknown | initial CodeDNA annotation pass
 
