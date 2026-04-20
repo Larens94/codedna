@@ -1,5 +1,5 @@
 {
-  "timestamp_utc": "2026-04-18T18:53:19Z",
+  "timestamp_utc": "2026-04-19T18:43:03Z",
   "model_name": "deepseek-chat",
   "model_id": "deepseek-chat",
   "provider": "openai",
@@ -9,30 +9,26 @@
     "max_turns": 15,
     "condition": "control+codedna",
     "task": [
-      "django__django-12508",
-      "django__django-11991",
       "django__django-11808",
       "django__django-14480",
       "django__django-13495",
-      "django__django-11532",
       "django__django-11138",
-      "django__django-11883",
-      "django__django-12396",
-      "django__django-12733"
+      "django__django-11532",
+      "django__django-11883"
     ]
   },
   "git": {
-    "commit": "210c655ae24e",
+    "commit": "d4b3f1481c88",
     "dirty": true
   },
   "file_sha256": {
-    "runner": "5e622a447e3c9b42",
+    "runner": "482ad4c2f09f0e24",
     "tasks_json": "c7955154eccc2de2"
   },
   "prompt_sha256": {
     "system": "6ab1b3b1acd1281c",
     "matched_control": "21e25da23de70118",
-    "codedna": "a1509ee3c5eb660a"
+    "codedna": "d7d2ac2f892b1b7d"
   },
   "limits": {
     "read_file_limit": 40000,

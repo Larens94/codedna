@@ -1,0 +1,145 @@
+{
+  "session_id": "bench_deepseek-chat_11883_control_20260420_040115_r1",
+  "model": "deepseek-chat",
+  "provider": "openai",
+  "task": "django__django-11883",
+  "condition": "control",
+  "ground_truth": [
+    "django/core/cache/backends/base.py",
+    "django/core/cache/backends/db.py",
+    "django/core/cache/backends/dummy.py",
+    "django/core/cache/backends/filebased.py",
+    "django/core/cache/backends/locmem.py",
+    "django/core/cache/backends/memcached.py"
+  ],
+  "metrics_read": {
+    "recall": 1.0,
+    "precision": 1.0,
+    "f1": 1.0
+  },
+  "trace": [
+    {
+      "t": 3.5,
+      "tool": "list_files",
+      "args": {
+        "directory": "."
+      },
+      "result_len": 299
+    },
+    {
+      "t": 7.36,
+      "tool": "list_files",
+      "args": {
+        "directory": "django"
+      },
+      "result_len": 255
+    },
+    {
+      "t": 11.97,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/core"
+      },
+      "result_len": 250
+    },
+    {
+      "t": 15.48,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/core/cache"
+      },
+      "result_len": 47
+    },
+    {
+      "t": 19.47,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/core/cache/backends"
+      },
+      "result_len": 112
+    },
+    {
+      "t": 24.14,
+      "tool": "read_file",
+      "args": {
+        "path": "django/core/cache/backends/base.py"
+      },
+      "result_len": 10076
+    },
+    {
+      "t": 31.72,
+      "tool": "read_file",
+      "args": {
+        "path": "django/core/cache/backends/memcached.py"
+      },
+      "result_len": 7581
+    },
+    {
+      "t": 41.39,
+      "tool": "read_file",
+      "args": {
+        "path": "django/core/cache/backends/filebased.py"
+      },
+      "result_len": 5419
+    },
+    {
+      "t": 46.2,
+      "tool": "read_file",
+      "args": {
+        "path": "django/core/cache/backends/db.py"
+      },
+      "result_len": 10868
+    },
+    {
+      "t": 50.81,
+      "tool": "read_file",
+      "args": {
+        "path": "django/core/cache/backends/locmem.py"
+      },
+      "result_len": 4095
+    },
+    {
+      "t": 55.01,
+      "tool": "read_file",
+      "args": {
+        "path": "django/core/cache/backends/dummy.py"
+      },
+      "result_len": 1116
+    },
+    {
+      "t": 60.72,
+      "tool": "grep",
+      "args": {
+        "pattern": "delete.*return",
+        "directory": "django"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 65.72,
+      "tool": "grep",
+      "args": {
+        "pattern": "def test.*delete",
+        "directory": "tests"
+      },
+      "result_len": 4000
+    },
+    {
+      "t": 69.32,
+      "tool": "list_files",
+      "args": {
+        "directory": "tests"
+      },
+      "result_len": 4273
+    },
+    {
+      "t": 73.03,
+      "tool": "list_files",
+      "args": {
+        "directory": "tests/cache"
+      },
+      "result_len": 98
+    }
+  ],
+  "note_missing": "reasoning/chain-of-thought not captured \u2014 trace contains tool sequence + timestamps only"
+}

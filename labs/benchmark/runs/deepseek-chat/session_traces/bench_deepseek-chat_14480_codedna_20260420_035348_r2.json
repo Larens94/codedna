@@ -1,0 +1,148 @@
+{
+  "session_id": "bench_deepseek-chat_14480_codedna_20260420_035348_r2",
+  "model": "deepseek-chat",
+  "provider": "openai",
+  "task": "django__django-14480",
+  "condition": "codedna",
+  "ground_truth": [
+    "django/db/backends/base/features.py",
+    "django/db/backends/mysql/features.py",
+    "django/db/models/expressions.py",
+    "django/db/models/query.py",
+    "django/db/models/query_utils.py",
+    "django/db/models/sql/__init__.py",
+    "django/db/models/sql/where.py"
+  ],
+  "metrics_read": {
+    "recall": 0.42857142857142855,
+    "precision": 0.6,
+    "f1": 0.5
+  },
+  "trace": [
+    {
+      "t": 4.65,
+      "tool": "list_files",
+      "args": {
+        "directory": "."
+      },
+      "result_len": 317
+    },
+    {
+      "t": 9.0,
+      "tool": "list_files",
+      "args": {
+        "directory": "django"
+      },
+      "result_len": 245
+    },
+    {
+      "t": 14.12,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db/models"
+      },
+      "result_len": 320
+    },
+    {
+      "t": 19.12,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/__init__.py"
+      },
+      "result_len": 28942
+    },
+    {
+      "t": 25.85,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/query_utils.py"
+      },
+      "result_len": 14183
+    },
+    {
+      "t": 31.1,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/query.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 38.02,
+      "tool": "grep",
+      "args": {
+        "pattern": "__xor__",
+        "directory": "django"
+      },
+      "result_len": 348
+    },
+    {
+      "t": 43.59,
+      "tool": "grep",
+      "args": {
+        "pattern": "__and__|__or__",
+        "directory": "django/db/models"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 48.46,
+      "tool": "grep",
+      "args": {
+        "pattern": "def __and__",
+        "directory": "django"
+      },
+      "result_len": 1019
+    },
+    {
+      "t": 56.09,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/query_utils.py"
+      },
+      "result_len": 14183
+    },
+    {
+      "t": 62.44,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/query.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 68.37,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db/models/sql"
+      },
+      "result_len": 128
+    },
+    {
+      "t": 73.09,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/sql/constants.py"
+      },
+      "result_len": 1475
+    },
+    {
+      "t": 79.14,
+      "tool": "grep",
+      "args": {
+        "pattern": "AND|OR|XOR",
+        "directory": "django/db/models/sql"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 84.15,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/sql/__init__.py"
+      },
+      "result_len": 755
+    }
+  ],
+  "note_missing": "reasoning/chain-of-thought not captured \u2014 trace contains tool sequence + timestamps only"
+}

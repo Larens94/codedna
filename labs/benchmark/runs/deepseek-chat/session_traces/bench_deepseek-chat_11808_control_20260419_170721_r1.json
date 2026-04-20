@@ -1,0 +1,153 @@
+{
+  "session_id": "bench_deepseek-chat_11808_control_20260419_170721_r1",
+  "model": "deepseek-chat",
+  "provider": "openai",
+  "task": "django__django-11808",
+  "condition": "control",
+  "ground_truth": [
+    "django/contrib/messages/storage/base.py",
+    "django/contrib/postgres/constraints.py",
+    "django/core/validators.py",
+    "django/db/models/base.py",
+    "django/db/models/constraints.py",
+    "django/db/models/expressions.py",
+    "django/db/models/indexes.py",
+    "django/db/models/query.py",
+    "django/db/models/query_utils.py",
+    "django/template/context.py"
+  ],
+  "metrics_read": {
+    "recall": 0.1,
+    "precision": 1.0,
+    "f1": 0.18181818181818182
+  },
+  "trace": [
+    {
+      "t": 3.38,
+      "tool": "list_files",
+      "args": {
+        "directory": "."
+      },
+      "result_len": 299
+    },
+    {
+      "t": 6.87,
+      "tool": "list_files",
+      "args": {
+        "directory": "django"
+      },
+      "result_len": 255
+    },
+    {
+      "t": 10.1,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db"
+      },
+      "result_len": 98
+    },
+    {
+      "t": 13.02,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db/models"
+      },
+      "result_len": 320
+    },
+    {
+      "t": 17.21,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/base.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 20.7,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/base.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 26.38,
+      "tool": "grep",
+      "args": {
+        "pattern": "def __eq__",
+        "directory": "django/db/models/base.py"
+      },
+      "result_len": 161
+    },
+    {
+      "t": 30.01,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/base.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 38.55,
+      "tool": "grep",
+      "args": {
+        "pattern": "__eq__",
+        "directory": "tests"
+      },
+      "result_len": 3273
+    },
+    {
+      "t": 43.61,
+      "tool": "grep",
+      "args": {
+        "pattern": "Model.*__eq__|__eq__.*Model",
+        "directory": "tests"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 48.51,
+      "tool": "grep",
+      "args": {
+        "pattern": "mock\\.ANY",
+        "directory": "tests"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 52.4,
+      "tool": "list_files",
+      "args": {
+        "directory": "tests"
+      },
+      "result_len": 4273
+    },
+    {
+      "t": 56.53,
+      "tool": "list_files",
+      "args": {
+        "directory": "tests/model_meta"
+      },
+      "result_len": 65
+    },
+    {
+      "t": 60.95,
+      "tool": "grep",
+      "args": {
+        "pattern": "__eq__|equality|equal",
+        "directory": "tests/model_meta"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 65.66,
+      "tool": "grep",
+      "args": {
+        "pattern": "__eq__|NotImplemented",
+        "directory": "tests/basic"
+      },
+      "result_len": 12
+    }
+  ],
+  "note_missing": "reasoning/chain-of-thought not captured \u2014 trace contains tool sequence + timestamps only"
+}

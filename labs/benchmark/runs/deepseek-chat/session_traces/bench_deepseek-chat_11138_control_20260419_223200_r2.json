@@ -1,0 +1,147 @@
+{
+  "session_id": "bench_deepseek-chat_11138_control_20260419_223200_r2",
+  "model": "deepseek-chat",
+  "provider": "openai",
+  "task": "django__django-11138",
+  "condition": "control",
+  "ground_truth": [
+    "django/db/backends/mysql/operations.py",
+    "django/db/backends/oracle/operations.py",
+    "django/db/backends/sqlite3/base.py",
+    "django/db/backends/sqlite3/operations.py"
+  ],
+  "metrics_read": {
+    "recall": 0.75,
+    "precision": 0.42857142857142855,
+    "f1": 0.5454545454545454
+  },
+  "trace": [
+    {
+      "t": 4.12,
+      "tool": "list_files",
+      "args": {
+        "directory": "."
+      },
+      "result_len": 281
+    },
+    {
+      "t": 7.26,
+      "tool": "list_files",
+      "args": {
+        "directory": "django"
+      },
+      "result_len": 255
+    },
+    {
+      "t": 11.52,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/mysql/operations.py"
+      },
+      "result_len": 12885
+    },
+    {
+      "t": 22.24,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/operations.py"
+      },
+      "result_len": 26027
+    },
+    {
+      "t": 27.15,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/sqlite3/operations.py"
+      },
+      "result_len": 13910
+    },
+    {
+      "t": 31.24,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/oracle/operations.py"
+      },
+      "result_len": 25529
+    },
+    {
+      "t": 37.09,
+      "tool": "grep",
+      "args": {
+        "pattern": "timezone",
+        "directory": "django/db"
+      },
+      "result_len": 4000
+    },
+    {
+      "t": 41.82,
+      "tool": "grep",
+      "args": {
+        "pattern": "class.*Connection",
+        "directory": "django/db/backends"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 46.61,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/base.py"
+      },
+      "result_len": 24312
+    },
+    {
+      "t": 54.69,
+      "tool": "grep",
+      "args": {
+        "pattern": "datetime_cast_date_sql",
+        "directory": "django"
+      },
+      "result_len": 1427
+    },
+    {
+      "t": 59.67,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/functions/datetime.py"
+      },
+      "result_len": 11071
+    },
+    {
+      "t": 69.45,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/postgresql/operations.py"
+      },
+      "result_len": 12000
+    },
+    {
+      "t": 77.53,
+      "tool": "grep",
+      "args": {
+        "pattern": "TIME_ZONE.*settings_dict",
+        "directory": "django/db"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 83.3,
+      "tool": "grep",
+      "args": {
+        "pattern": "self\\.timezone",
+        "directory": "django/db"
+      },
+      "result_len": 403
+    },
+    {
+      "t": 90.77,
+      "tool": "grep",
+      "args": {
+        "pattern": "TIME_ZONE.*database",
+        "directory": "tests"
+      },
+      "result_len": 189
+    }
+  ],
+  "note_missing": "reasoning/chain-of-thought not captured \u2014 trace contains tool sequence + timestamps only"
+}
