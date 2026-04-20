@@ -5,14 +5,13 @@ used_by: none
 rules:   Tests cover Python, PHP, Go, TS, C#, Ruby — all must FAIL without header.
 Validator is imported directly, not via subprocess.
 agent:   claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_002 | initial validator test suite
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_unused | remove unused pytest import (CodeQL #1675)
 """
 
 from __future__ import annotations
 
 import sys
 from pathlib import Path
-
-import pytest
 
 # Add tools/ to path so we can import validate_manifests
 sys.path.insert(0, str(Path(__file__).parent.parent / "tools"))

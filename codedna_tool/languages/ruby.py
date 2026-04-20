@@ -11,6 +11,7 @@ inject_function_rules uses # comment lines — inserts '# Rules:   text' above f
 agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed nested class/module detection: allow indented class/module, method prefix uses innermost class not first module
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | fixed inject_header: no leading blank line when file has no shebang/frozen_string_literal (prefix only added when before is non-empty)
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | GATE 3: add inject_function_rules() — Ruby # comment Rules: insertion above func.start_line; has_doc and no-doc cases both insert at same position
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | add comment to empty except ValueError in require_relative dep resolution — CodeQL #1096
 """
 
 from __future__ import annotations
@@ -109,6 +110,7 @@ class RubyAdapter(LanguageAdapter):
                     try:
                         dep = str(candidate.relative_to(repo_root))
                     except ValueError:
+                        # candidate outside repo_root — keep original dep string
                         pass
             if dep not in list_str_deps:
                 list_str_deps.append(dep)

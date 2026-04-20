@@ -4,11 +4,10 @@ exports: mini_project(tmp_path) | mini_project_annotated(tmp_path) | mini_codedn
 used_by: none
 rules:   All fixtures create temporary directories that are cleaned up automatically.
 agent:   claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_002 | initial conftest with shared fixtures
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_unused | remove unused Path import (CodeQL #1672)
 """
 
 from __future__ import annotations
-
-from pathlib import Path
 
 import pytest
 

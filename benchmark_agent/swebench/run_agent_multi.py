@@ -10,6 +10,7 @@ session_id format: bench_<model>_<task_short>_<condition>_<YYYYMMDD_HHMMSS>
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-20 | s_20260320_003 | added session trace logging
 claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | added --local-model and --base-url for Ollama/vLLM support
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_bench | fix token tracking in run_openai_compat (DeepSeek/GPT); smarter extract_proposed_files with proposal markers; add redundant_reads/nav_efficiency/tokens_per_gt_file/first_hit metrics to build_result; add --projects-dir and --tasks-file CLI args so labs/benchmark/projects can be used directly
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | fix file handle leak in _save_results (with-open); add explicit raise after call_with_retry loop (CodeQL #1082, #1088)
 message: "reasoning still not captured — trace has tool sequence + timestamps but not
 model chain-of-thought. Worth capturing in a future pass."
 Usage:
@@ -293,6 +294,7 @@ def call_with_retry(fn, *args, max_attempts=5, **kwargs):
                 time.sleep(wait)
             else:
                 raise
+    raise RuntimeError("call_with_retry exhausted max_attempts without return/raise")
 
 
 FORCE_FINAL_PROMPT = (
@@ -827,7 +829,8 @@ def main():
             existing = []
             if out_file.exists():
                 try:
-                    existing = json.load(open(out_file))
+                    with open(out_file) as f:
+                        existing = json.load(f)
                 except json.JSONDecodeError:
                     existing = []
             for new_entry in new_entries:

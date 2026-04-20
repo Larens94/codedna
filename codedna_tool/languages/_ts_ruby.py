@@ -12,6 +12,7 @@ the method node must be a 'comment' node (Ruby comments are body_statement sibli
 NOT prev_named_sibling of the method node itself — _has_doc_block_above does NOT work here).
 agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | initial tree-sitter Ruby adapter
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | GATE 3: add funcs (LangFuncInfo) extraction — params from method_parameters, Ruby # comment has_doc via body_statement sibling check
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | add comment to empty except ValueError (require_relative outside repo_root) — CodeQL #1687
 """
 
 from __future__ import annotations
@@ -209,6 +210,7 @@ class TreeSitterRubyAdapter(TreeSitterAdapter):
                                             if rel_dep not in deps:
                                                 deps.append(rel_dep)
                                         except ValueError:
+                                            # candidate outside repo_root — skip dep
                                             pass
                                     else:
                                         if pstr not in deps:

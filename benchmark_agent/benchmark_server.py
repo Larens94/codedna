@@ -1,8 +1,12 @@
-"""
-benchmark_server.py — Live benchmark runner with SSE streaming.
+"""benchmark_server.py — Live Flask benchmark runner with SSE streaming.
 
-Imports ALL logic directly from run_agent_multi.py to guarantee identical behavior.
-Only adds: Flask server + SSE event streaming + reasoning capture.
+exports: app | run_with_streaming() | _save_run_results() | _avg_f1()
+used_by: none (entry-point script)
+rules:   task_id MUST be digits-only (path traversal guard at line 466).
+         Resolved ctrl_dir/cdna_dir MUST be contained in PROJECTS_DIR (line 478).
+         Model segment in save path MUST be sanitized (line 589) — containment check under RUNS_DIR.
+         Imports ALL logic from swebench/run_agent_multi.py to guarantee identical behavior.
+agent:   claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | initial CodeDNA header; add task_id digit validation + PROJECTS_DIR containment check + RUNS_DIR containment check; fix file handle leaks; drop unused re/time/all_runs (CodeQL #1072-1077, #1083-1087)
 
 Usage:
   GEMINI_API_KEY=... python benchmark_server.py
@@ -11,10 +15,8 @@ Usage:
 
 import json
 import os
-import re
 import sys
 import threading
-import time
 import traceback
 from pathlib import Path
 from queue import Queue, Empty
@@ -396,7 +398,8 @@ def api_results():
     for results_file in sorted(RUNS_DIR.glob("*/results.json")):
         model_name = results_file.parent.name
         try:
-            entries = json.load(open(results_file))
+            with open(results_file) as f:
+                entries = json.load(f)
         except (json.JSONDecodeError, OSError):
             continue
         model_data = []
@@ -466,6 +469,10 @@ def api_run():
     if model_name not in ram.MODELS:
         return jsonify({"error": f"Unknown model: {model_name}"}), 400
 
+    # Rules: task_id must be digits only — prevents path traversal via ../ in instance_id
+    if not str(task_id).isdigit():
+        return jsonify({"error": f"Invalid task_id (digits only): {task_id}"}), 400
+
     cfg = ram.MODELS[model_name]
     instance_id = f"django__django-{task_id}"
 
@@ -475,8 +482,13 @@ def api_run():
     if not task:
         return jsonify({"error": f"Task not found: {instance_id}"}), 400
 
-    ctrl_dir = PROJECTS_DIR / instance_id / "control"
-    cdna_dir = PROJECTS_DIR / instance_id / "codedna"
+    # Rules: containment check — instance_id is user-derived, verify resolved path is inside PROJECTS_DIR
+    ctrl_dir = (PROJECTS_DIR / instance_id / "control").resolve()
+    cdna_dir = (PROJECTS_DIR / instance_id / "codedna").resolve()
+    projects_root = PROJECTS_DIR.resolve()
+    if not (str(ctrl_dir).startswith(str(projects_root) + "/")
+            and str(cdna_dir).startswith(str(projects_root) + "/")):
+        return jsonify({"error": "Invalid instance_id path"}), 400
 
     if not ctrl_dir.exists() or not cdna_dir.exists():
         return jsonify({"error": f"Repos not set up for {instance_id}"}), 400
@@ -578,14 +590,19 @@ def _avg_f1(runs: list) -> dict:
 
 def _save_run_results(meta, side_results, gt):
     """Save to runs/<model>/results.json — compatible with analyze_multi.py format."""
-    run_dir = RUNS_DIR / meta["model"].replace('/', '-')
+    # Rules: sanitize model segment — strip path separators and enforce containment under RUNS_DIR
+    safe_model = meta["model"].replace('/', '-').replace('\\', '-').replace('..', '-')
+    run_dir = (RUNS_DIR / safe_model).resolve()
+    if not str(run_dir).startswith(str(RUNS_DIR.resolve()) + "/"):
+        raise ValueError(f"Invalid model path: {meta['model']}")
     run_dir.mkdir(parents=True, exist_ok=True)
     out_file = run_dir / "results.json"
 
     existing = []
     if out_file.exists():
         try:
-            existing = json.load(open(out_file))
+            with open(out_file) as f:
+                existing = json.load(f)
         except json.JSONDecodeError:
             existing = []
 
@@ -605,7 +622,6 @@ def _save_run_results(meta, side_results, gt):
             "codedna":            cdna_runs[0] if cdna_runs else None,
         }
         if ctrl_runs or cdna_runs:
-            all_runs = ctrl_runs + cdna_runs
             new_entry["n_runs"]           = len(ctrl_runs) or len(cdna_runs)
             new_entry["temperature"]      = meta.get("temperature", 0.0)
             new_entry["control_runs"]     = ctrl_runs if ctrl_runs else None

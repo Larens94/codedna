@@ -6,16 +6,14 @@ rules:   Tests run codedna CLI as subprocess to verify end-to-end behavior.
 Each test uses tmp_path for isolation — never touches real project files.
 agent:   claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_002 | initial CLI test suite
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | add TestDetectProjectMeta: 12 unit tests for go.mod/package.json/pom.xml/settings.gradle/Cargo.toml parsing
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_unused | remove unused json/pytest imports (CodeQL #1673, #1674)
 """
 
 from __future__ import annotations
 
-import json
 import subprocess
 import sys
 from pathlib import Path
-
-import pytest
 
 PYTHON = sys.executable
 

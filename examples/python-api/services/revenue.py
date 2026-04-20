@@ -5,11 +5,10 @@ used_by: api/routes.py → annual_summary, monthly_revenue, top_customers
 rules:   - All functions must filter users through `is_suspended()` before processing revenue data; never operate on raw user lists
 - Database session access is restricted to `get_invoices_for_period()`; other functions must receive pre-queried data as parameters
 agent:   claude-haiku-4-5-20251001 | 2026-03-27 | initial CodeDNA annotation pass
-message: 
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_unused | remove unused Optional import (CodeQL #1092)
 """
 
 from datetime import datetime
-from typing import Optional
 
 from models.user import Invoice, User
 from utils.format import format_currency

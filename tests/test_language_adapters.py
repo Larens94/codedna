@@ -10,12 +10,12 @@ agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | initial tes
 claude-opus-4-7 | anthropic | 2026-04-17 | s_20260417_blade | regression tests for Blade: {{-- --}} syntax (not //), idempotent inject, vendor/ excluded. Catches regression where .blade.php was being routed to PhpAdapter, corrupting Laravel views.
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php2 | GATE 3: add PHP L2 tests — funcs_populated, inject_function_rules (no-doc, idempotent, bottom-to-top)
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | remove C#/Rust/Swift from registry → skip those test classes; fix TestFallback/TestErrorHandling ext lists
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_unused | remove unused tempfile import and unused vendor_file/app_file vars (CodeQL #1668, #1694, #1695)
 """
 
 from __future__ import annotations
 
 from pathlib import Path
-import tempfile
 
 import pytest
 
@@ -542,10 +542,10 @@ class TestBlade:
         """vendor/ contains third-party code — must NEVER be annotated by default."""
         from codedna_tool.cli import collect_files
 
-        vendor_file = write_file(project, "vendor/laravel/framework/show.blade.php",
-                                 "<x-layout>vendor</x-layout>\n")
-        app_file = write_file(project, "resources/views/welcome.blade.php",
-                              "<x-layout>app</x-layout>\n")
+        write_file(project, "vendor/laravel/framework/show.blade.php",
+                   "<x-layout>vendor</x-layout>\n")
+        write_file(project, "resources/views/welcome.blade.php",
+                   "<x-layout>app</x-layout>\n")
 
         files = collect_files(project, exclude=[], extensions=[".blade.php"])
         paths = {str(f.relative_to(project)) for f in files}

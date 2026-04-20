@@ -12,6 +12,7 @@ claude-opus-4-7 | anthropic | 2026-04-17 | s_20260417_001 | register claude-opus
 claude-opus-4-7 | anthropic | 2026-04-17 | s_20260417_opus47 | Opus 4.7 deprecates temperature param — wrap in _NO_TEMPERATURE_MODELS gate; build extra_kwargs dynamically
 claude-opus-4-7 | anthropic | 2026-04-17 | s_20260417_infra | forked from benchmark_agent/swebench — labs-dedicated runner. Raised READ_FILE_LIMIT 12000→40000 per validator (2026-unrealistic at 1M ctx). Upgraded CODEDNA_PROMPT to v0.8 with L2 Rules guidance. Plan: port robust path parser inline, add matched_control + shuffled_placebo conditions, capture run_manifest.json per run.
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_secfix | fix file handle leak in _save_results — wrap open() in with-statement (CodeQL #1708)
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | add explanatory comments to 2 empty except blocks (_local_py_files, anthropic ImportError); add explicit raise RuntimeError after call_with_retry loop for mixed-returns (CodeQL #1709, #1710, #1711)
 message: "reasoning still not captured — trace has tool sequence + timestamps but not
 model chain-of-thought. Worth capturing in a future pass."
 Usage:
@@ -362,6 +363,7 @@ def _list_repo_py_files(repo_root: Path) -> list:
                 continue
             out.append(str(f.relative_to(repo_root)))
     except (OSError, ValueError):
+        # repo iteration failed or a file path is outside repo_root — return partial list
         pass
     return out
 
@@ -454,6 +456,7 @@ def call_with_retry(fn, *args, max_attempts=5, **kwargs):
                 time.sleep(wait)
             else:
                 raise
+    raise RuntimeError("call_with_retry exhausted max_attempts without return/raise")
 
 
 FORCE_FINAL_PROMPT = (
@@ -1084,6 +1087,7 @@ def main():
             import anthropic as _ant
             manifest["sdk_versions"] = {"anthropic": _ant.__version__}
         except ImportError:
+            # anthropic SDK not installed — skip version capture
             pass
         manifest_path = run_dir / "run_manifest.json"
         manifest_path.write_text(json.dumps(manifest, indent=2))

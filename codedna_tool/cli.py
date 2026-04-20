@@ -9,11 +9,11 @@ _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
 scan_file handles 3 import patterns: (1) from .mod import X, (2) from . import X
 (submodule-first then __init__.py symbol), (3) from pkg import X (tries pkg/X.py
 before falling back to pkg/__init__.py). All 3 were previously under-resolved.
-agent:   claude-opus-4-7 | anthropic | 2026-04-18 | s_20260418_php | GATE 1: add scan_file_lang() wrapper + integrate into cmd_manifest — non-Python files now populate infos dict, enabling L0 manifest + cross-file used_by graph for PHP/TS/Go/Java/Rust/C#/Ruby/Kotlin. Python remains authoritative on rel-path conflicts.
-claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php2 | GATE 2+3: used_by graph for non-Python; lang_function_rules_batch() for LLM L2 on non-Python; run_lang_files L2 pass via adapter.inject_function_rules()
+agent:   claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php2 | GATE 2+3: used_by graph for non-Python; lang_function_rules_batch() for LLM L2 on non-Python; run_lang_files L2 pass via adapter.inject_function_rules()
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_msg | add message: field to build_module_docstring() (Python) — present in all L1 headers now, empty by default, visible to next agent
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_sessions | _write_codedna() rolling window: keeps last 10 agent_sessions — prevents unbounded .codedna growth (was 22+ sessions / 688 lines)
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | _detect_project_meta(): reads go.mod/package.json/pom.xml/settings.gradle(.kts)/build.gradle(.kts)/Gemfile/Cargo.toml; integrated into cmd_install() + cmd_manifest(); README language count 11→9, L2 coverage updated
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | add explanatory comments to 9 empty except blocks (scan_file ValueError for outside-repo paths, JSON repair fallback, _detect_project_meta OSError per-file) — CodeQL py/empty-except alerts #1689, #1696-1698, #1702-1707
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -201,6 +201,7 @@ def scan_file(path: Path, repo_root: Path) -> FileInfo:
                                 syms = [a.name for a in node.names if a.name != "*"]
                                 deps.setdefault(key, []).extend(syms)
                             except ValueError:
+                                # candidate is outside repo_root — skip dep
                                 pass
                             break
                 else:
@@ -216,6 +217,7 @@ def scan_file(path: Path, repo_root: Path) -> FileInfo:
                                     key = str(candidate.relative_to(repo_root))
                                     deps.setdefault(key, [])
                                 except ValueError:
+                                    # candidate is outside repo_root — skip dep
                                     pass
                                 break
                         else:
@@ -226,6 +228,7 @@ def scan_file(path: Path, repo_root: Path) -> FileInfo:
                                     key = str(init.relative_to(repo_root))
                                     deps.setdefault(key, []).append(alias.name)
                                 except ValueError:
+                                    # init file is outside repo_root — skip dep
                                     pass
             elif node.module:
                 # Absolute import: from pkg import X
@@ -610,6 +613,7 @@ class LLM:
                 if brace >= 0:
                     return json.loads(candidate[brace:])
         except (json.JSONDecodeError, ValueError):
+            # JSON repair failed — fall through to return None
             pass
 
         return None
@@ -2339,6 +2343,7 @@ def _detect_project_meta(root: Path) -> dict:
                     # Use last path segment of module path as project name
                     name = m.group(1).rstrip("/").split("/")[-1]
             except OSError:
+                # go.mod unreadable — leave name empty, caller falls back to dir name
                 pass
 
     # ── package.json ─────────────────────────────────────────────────────────
@@ -2351,6 +2356,7 @@ def _detect_project_meta(root: Path) -> dict:
                 name = data.get("name", "").lstrip("@").split("/")[-1]
                 description = data.get("description", "")
             except (OSError, ValueError):
+                # package.json unreadable or malformed JSON — skip meta extraction
                 pass
 
     # ── pom.xml ───────────────────────────────────────────────────────────────
@@ -2368,6 +2374,7 @@ def _detect_project_meta(root: Path) -> dict:
                     if m:
                         description = m.group(1).strip()
             except OSError:
+                # pom.xml unreadable — skip meta extraction
                 pass
 
     # ── settings.gradle / settings.gradle.kts ────────────────────────────────
@@ -2384,6 +2391,7 @@ def _detect_project_meta(root: Path) -> dict:
                     if m:
                         name = m.group(1).strip()
                 except OSError:
+                    # settings.gradle unreadable — skip meta extraction
                     pass
             break  # only read one settings file
 
@@ -2403,6 +2411,7 @@ def _detect_project_meta(root: Path) -> dict:
                     if m:
                         name = m.group(1).strip().split(".")[-1]
                 except OSError:
+                    # build.gradle unreadable — skip meta extraction
                     pass
             break
 
@@ -2427,6 +2436,7 @@ def _detect_project_meta(root: Path) -> dict:
                     if m:
                         description = m.group(1).strip()
             except OSError:
+                # Cargo.toml unreadable — skip meta extraction
                 pass
 
     return {"name": name, "description": description, "stack": stack}

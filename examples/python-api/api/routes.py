@@ -4,13 +4,13 @@ exports: revenue_route(year, month) | annual_route(year) | top_customers_route(y
 used_by: none
 rules:   All route functions must validate input parameters (year/month ranges) before querying the database, and limit result sets to prevent performance degradation. The module depends on a `db.session` object from an external `db` module for all data access.
 agent:   claude-haiku-4-5-20251001 | 2026-03-27 | initial CodeDNA annotation pass
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_unused | remove unused format_date import (CodeQL #1093)
 """
 
 from flask import Blueprint, jsonify, request
 
 from models.user import User
 from services.revenue import annual_summary, monthly_revenue, top_customers
-from utils.format import format_date
 
 bp = Blueprint("revenue", __name__, url_prefix="/api/revenue")
 

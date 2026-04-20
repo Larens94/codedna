@@ -1,12 +1,13 @@
 """razor.py — CodeDNA v0.9 adapter for Razor templates (.cshtml, .razor).
 
-exports: _MODEL_RE | _INJECT_RE | _USING_RE | _PARTIAL_TAG_RE | _COMPONENT_TAG_RE | _SECTION_RE | _RENDER_SECTION_RE | class RazorAdapter
+exports: _MODEL_RE | _INJECT_RE | _PARTIAL_TAG_RE | _COMPONENT_TAG_RE | _SECTION_RE | _RENDER_SECTION_RE | class RazorAdapter
 used_by: codedna_tool/languages/__init__.py → RazorAdapter
 rules:   regex-based only — no .NET SDK required.
 Uses @* *@ comment syntax for the CodeDNA header.
 Detects @model, @inject, @using as structural info.
 Detects <partial>, <component> tag helpers as deps.
 agent:   claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | initial Razor template adapter
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | remove unused _USING_RE regex global (dead declaration) — CodeQL #1660
 """
 
 from __future__ import annotations
@@ -18,7 +19,6 @@ from .base import LanguageAdapter, LangFileInfo
 
 _MODEL_RE = re.compile(r"^@model\s+([\w.]+)", re.MULTILINE)
 _INJECT_RE = re.compile(r"^@inject\s+([\w.]+)\s+(\w+)", re.MULTILINE)
-_USING_RE = re.compile(r"^@using\s+([\w.]+)", re.MULTILINE)
 _PARTIAL_TAG_RE = re.compile(r"<partial\s+name=['\"]([^'\"]+)['\"]", re.MULTILINE)
 _COMPONENT_TAG_RE = re.compile(r"<component\s+type=['\"]typeof\((\w+)\)['\"]", re.MULTILINE)
 _SECTION_RE = re.compile(r"@section\s+(\w+)", re.MULTILINE)

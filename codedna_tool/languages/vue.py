@@ -1,6 +1,6 @@
 """vue.py — CodeDNA v0.9 adapter for Vue SFC and Svelte components.
 
-exports: _DEFINE_PROPS_RE | _DEFINE_EMITS_RE | _DEFINE_EXPOSE_RE | _PROPS_RE | _IMPORT_RE | _COMPONENTS_RE | _SVELTE_EXPORT_RE | _SVELTE_SLOT_RE | class VueAdapter | class SvelteAdapter
+exports: _DEFINE_PROPS_RE | _DEFINE_EMITS_RE | _DEFINE_EXPOSE_RE | _PROPS_RE | _IMPORT_RE | _SVELTE_EXPORT_RE | _SVELTE_SLOT_RE | class VueAdapter | class SvelteAdapter
 used_by: codedna_tool/languages/__init__.py → SvelteAdapter, VueAdapter
 rules:   regex-based only — no Node.js required.
 Uses <!-- --> HTML comment syntax for the CodeDNA header.
@@ -8,6 +8,7 @@ Vue SFC: detects defineProps, defineEmits, import statements.
 Svelte: detects export let, import statements.
 Header is placed BEFORE the first <template>/<script>/<style> tag.
 agent:   claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | initial Vue SFC and Svelte adapter
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | remove unused _COMPONENTS_RE regex global (dead declaration) — CodeQL #1661
 """
 
 from __future__ import annotations
@@ -27,9 +28,6 @@ _PROPS_RE = re.compile(r"props\s*:\s*[\[{]", re.MULTILINE)
 
 # Common: import ... from '...'
 _IMPORT_RE = re.compile(r"""(?:import|from)\s+['"]([^'"]+)['"]""", re.MULTILINE)
-
-# Component registration
-_COMPONENTS_RE = re.compile(r"components\s*:\s*\{([^}]+)\}", re.MULTILINE)
 
 # Svelte: export let foo
 _SVELTE_EXPORT_RE = re.compile(r"export\s+let\s+(\w+)", re.MULTILINE)

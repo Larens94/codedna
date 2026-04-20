@@ -10,6 +10,7 @@ clone_repo() returns None on failure — main() must check and skip the repo.
 agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_004 | moved to labs/benchmark/, updated paths
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_bench | fix annotate_task: remove partial codedna/ on timeout/CalledProcessError; switch clone to --filter=blob:none + broken-cache detection; clone_repo now returns None on failure
 claude-opus-4-7 | anthropic | 2026-04-17 | s_20260417_opus47 | added --task-id flag to filter specific SWE-bench instance_ids (bare number or full id); enables targeted download of our 5 benchmark tasks
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_unused | remove unused os import (CodeQL #1671)
 USAGE:
 # Step 1: List available tasks
 python setup_benchmark.py --list --repo django/django
@@ -28,7 +29,6 @@ python setup_benchmark.py --repo django/django --n-tasks 50 --force
 
 import argparse
 import json
-import os
 import shutil
 import subprocess
 import sys
