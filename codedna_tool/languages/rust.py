@@ -9,6 +9,7 @@ impl blocks are not traversed — only top-level pub items are captured.
 inject_function_rules() uses /// line comments (Rust doc convention, NOT /** */).
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | initial Rust adapter
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | add inject_function_rules() — injects /// Rules: above pub fn; handles existing /// doc block and no-doc cases
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_secfix | fix ReDoS in _USE_RE — removed nested quantifier (::[...]+)+ (CodeQL #1094)
 """
 
 from __future__ import annotations
@@ -27,7 +28,7 @@ _PUB_CONST_RE  = re.compile(r"^pub\s+(?:const|static)\s+(\w+)", re.MULTILINE)
 _MOD_RE        = re.compile(r"^pub\s+mod\s+(\w+)", re.MULTILINE)
 
 # use declarations (internal — path starting with crate:: or super::)
-_USE_RE = re.compile(r"^use\s+(crate|super)(::[\w:{}*]+)+\s*;", re.MULTILINE)
+_USE_RE = re.compile(r"^use\s+(crate|super)::[\w:{}*]+\s*;", re.MULTILINE)
 
 
 class RustAdapter(LanguageAdapter):

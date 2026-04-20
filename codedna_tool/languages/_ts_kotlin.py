@@ -11,10 +11,10 @@ inject_header() delegated to KotlinAdapter (// comment after package declaration
 Visibility: no modifiers OR public modifier → include; private/protected/internal → skip.
 has_doc: block_comment prev_named_sibling starting with /** (KDoc).
 Return type: first user_type or nullable_type named child of function_declaration.
-agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | initial tree-sitter Kotlin adapter
-claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | add object_declaration and companion_object function capture
+agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | add object_declaration and companion_object function capture
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | GATE 3: add funcs (LangFuncInfo) extraction — visibility filter, params, return type, KDoc has_doc via _has_doc_block_above
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_msg | _resolve_kotlin_import(): com.example.UserService → com/example/UserService.kt; star imports dropped
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_secfix | fix potentially uninitialized n in class_declaration walker — always assign n via _t(id_node) if id_node else "" (CodeQL #1700)
 """
 
 from __future__ import annotations
@@ -151,16 +151,15 @@ class TreeSitterKotlinAdapter(TreeSitterAdapter):
                 id_node = next(
                     (c for c in node.named_children if c.type == "identifier"), None
                 )
-                if id_node:
-                    n = _t(id_node)
-                    if n not in exports:
-                        exports.append(n)
+                n = _t(id_node) if id_node else ""
+                if n and n not in exports:
+                    exports.append(n)
                 # Capture public methods in class body as ClassName.fn
                 body = next(
                     (c for c in node.named_children if c.type == "class_body"), None
                 )
                 if body:
-                    _capture_fns_in_body(body, n if id_node else "")
+                    _capture_fns_in_body(body, n)
                 return  # body already handled — don't recurse into class_body
 
             elif node.type == "object_declaration":

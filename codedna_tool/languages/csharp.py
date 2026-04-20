@@ -11,6 +11,7 @@ inject_function_rules uses /// XML doc comments — has_doc inserts <remarks>Rul
 agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed class detection inside namespace blocks: allow indented class/interface/enum/struct/record
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | fixed inject_header: header now inserted before namespace declaration, not between 'namespace Foo' and its '{'; also fixed leading blank line
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | GATE 3: add inject_function_rules() — C# XML doc comments (///); has_doc appends <remarks>Rules:, no-doc inserts new <summary>Rules: block
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_secfix | fix ReDoS in _METHOD_RE — nested quantifier (?:[\\w<>\\[\\]?,\\s]+\\s+)+ replaced with non-greedy single group (CodeQL #1099, #1098)
 """
 
 from __future__ import annotations
@@ -27,7 +28,7 @@ _CLASS_RE  = re.compile(
 )
 _METHOD_RE = re.compile(
     r"^\s+public\s+(?:static\s+|virtual\s+|override\s+|abstract\s+|async\s+)*"
-    r"(?:[\w<>\[\]?,\s]+\s+)+(\w+)\s*[(<]",
+    r"[\w<>\[\]?,\s]+?\s+(\w+)\s*[(<]",
     re.MULTILINE,
 )
 _PROP_RE   = re.compile(

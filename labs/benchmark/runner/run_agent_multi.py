@@ -7,11 +7,11 @@ Only the LLM client changes — comparison is clean.
 Two conditions: control (no annotations), codedna (curated).
 trace: is ordered and timestamped — DO NOT sort or reorder entries.
 session_id format: bench_<model>_<task_short>_<condition>_<YYYYMMDD_HHMMSS>
-agent:   claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | added --local-model and --base-url for Ollama/vLLM support
-claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_bench | fix token tracking in run_openai_compat (DeepSeek/GPT); smarter extract_proposed_files with proposal markers; add redundant_reads/nav_efficiency/tokens_per_gt_file/first_hit metrics to build_result; add --projects-dir and --tasks-file CLI args so labs/benchmark/projects can be used directly
+agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_bench | fix token tracking in run_openai_compat (DeepSeek/GPT); smarter extract_proposed_files with proposal markers; add redundant_reads/nav_efficiency/tokens_per_gt_file/first_hit metrics to build_result; add --projects-dir and --tasks-file CLI args so labs/benchmark/projects can be used directly
 claude-opus-4-7 | anthropic | 2026-04-17 | s_20260417_001 | register claude-opus-4-7 in _ANTHROPIC_COSTS and MODELS dict; same pricing as opus-4-6 pending official announcement
 claude-opus-4-7 | anthropic | 2026-04-17 | s_20260417_opus47 | Opus 4.7 deprecates temperature param — wrap in _NO_TEMPERATURE_MODELS gate; build extra_kwargs dynamically
 claude-opus-4-7 | anthropic | 2026-04-17 | s_20260417_infra | forked from benchmark_agent/swebench — labs-dedicated runner. Raised READ_FILE_LIMIT 12000→40000 per validator (2026-unrealistic at 1M ctx). Upgraded CODEDNA_PROMPT to v0.8 with L2 Rules guidance. Plan: port robust path parser inline, add matched_control + shuffled_placebo conditions, capture run_manifest.json per run.
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_secfix | fix file handle leak in _save_results — wrap open() in with-statement (CodeQL #1708)
 message: "reasoning still not captured — trace has tool sequence + timestamps but not
 model chain-of-thought. Worth capturing in a future pass."
 Usage:
@@ -1093,7 +1093,8 @@ def main():
             existing = []
             if out_file.exists():
                 try:
-                    existing = json.load(open(out_file))
+                    with open(out_file) as f:
+                        existing = json.load(f)
                 except json.JSONDecodeError:
                     existing = []
             for new_entry in new_entries:

@@ -12,6 +12,7 @@ inject_function_rules() uses // line comments (NOT /** */ blocks — Go has no b
 agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_001 | initial Go adapter with regex-based extraction
 claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_002 | CodeDNA v0.9 compliance pass: added session_id to agent: field, added Rules: docstrings to extract_info and inject_header
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | add inject_function_rules() — injects // Rules: above exported Go functions/methods; handles existing godoc block and no-doc cases
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_secfix | remove dead walk-upward loop in inject_function_rules — insert_before/idx/stripped were unused (CodeQL #1699, #1701)
 """
 
 from __future__ import annotations
@@ -153,24 +154,8 @@ class GoAdapter(LanguageAdapter):
 
         rules_line = f"{pad}// Rules:   {rules_text}\n"
 
-        if func.has_doc:
-            # Find the last // comment line of the existing godoc block above the function.
-            # Walk upward from method_idx-1 while lines are // comments at the same indent.
-            insert_before = method_idx
-            idx = method_idx - 1
-            while idx >= 0:
-                stripped = lines[idx].strip()
-                if stripped.startswith("//"):
-                    insert_before = idx
-                    idx -= 1
-                else:
-                    break
-            # Insert Rules: at insert_before (start of existing comment block) is wrong —
-            # we want to append at the END of the block, just before func.start_line.
-            # So insert just before method_idx (after the last // comment line).
-            lines = lines[:method_idx] + [rules_line] + lines[method_idx:]
-        else:
-            # No existing doc — insert a single // Rules: line above the function
-            lines = lines[:method_idx] + [rules_line] + lines[method_idx:]
+        # Both has_doc and no-doc cases insert just before method_idx
+        # (end of any existing // block, since method_idx is the func declaration line).
+        lines = lines[:method_idx] + [rules_line] + lines[method_idx:]
 
         return "".join(lines)
