@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """cli.py — CodeDNA v0.9 annotation tool: init, update, check, install.
 
-exports: class FuncInfo | class FileInfo | scan_file(path, repo_root) | scan_file_lang(path, repo_root, adapter) | build_used_by(infos) | build_ast_skeleton(source, rel) | class LLM | _EXPORTS_CAP | build_module_docstring(info, ub, rules, model_id) | inject_module_docstring(source, docstring) | inject_function_rules(source, func, rules_text) | collect_files(target, exclude, extensions) | run_lang_files(target, extensions, repo_root, exclude, model, dry_run, force, no_llm, verbose, api_key) | run(target, levels, model, dry_run, exclude, force, no_llm, only_public, verbose, api_key, repo_root, extensions) | cmd_refresh(target, repo_root, exclude, dry_run, verbose) | cmd_check(target, repo_root, exclude, verbose, extensions) | _TOOL_FILES | _HOOK_TOOLS | _TOOL_HOOKS_MAP | _HOOKS_BASE_MAP | _PRE_COMMIT_HOOK | (+7 more)
+exports: class FuncInfo | class FileInfo | scan_file(path, repo_root) | scan_file_lang(path, repo_root, adapter) | build_used_by(infos) | build_ast_skeleton(source, rel) | class LLM | _EXPORTS_CAP | build_module_docstring(info, ub, rules, model_id) | inject_module_docstring(source, docstring) | inject_function_rules(source, func, rules_text) | collect_files(target, exclude, extensions) | run_lang_files(target, extensions, repo_root, exclude, model, dry_run, force, no_llm, verbose, api_key) | run(target, levels, model, dry_run, exclude, force, no_llm, only_public, verbose, api_key, repo_root, extensions) | cmd_refresh(target, repo_root, exclude, dry_run, verbose) | cmd_check(target, repo_root, exclude, verbose, extensions) | _TOOL_FILES | _TOOL_HOOKS_MAP | _HOOKS_BASE_MAP | _PRE_COMMIT_HOOK | (+7 more)
 used_by: tests/test_cli.py → FileInfo, build_module_docstring
 rules:   L2 (function Rules:) applies Python AST only; language adapters are L1-only.
 LLM calls are capped at 2 per Python file; --no-llm skips all LLM calls.
@@ -14,6 +14,7 @@ claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_msg | add message: field
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_sessions | _write_codedna() rolling window: keeps last 10 agent_sessions — prevents unbounded .codedna growth (was 22+ sessions / 688 lines)
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | _detect_project_meta(): reads go.mod/package.json/pom.xml/settings.gradle(.kts)/build.gradle(.kts)/Gemfile/Cargo.toml; integrated into cmd_install() + cmd_manifest(); README language count 11→9, L2 coverage updated
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | add explanatory comments to 9 empty except blocks (scan_file ValueError for outside-repo paths, JSON repair fallback, _detect_project_meta OSError per-file) — CodeQL py/empty-except alerts #1689, #1696-1698, #1702-1707
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql2 | remove unused _HOOK_TOOLS set (never referenced — _TOOL_HOOKS_MAP.values() supersedes it) — CodeQL #1664
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -1664,16 +1665,6 @@ _TOOL_FILES = {
     "windsurf": (".windsurfrules", ".windsurfrules"),
     "opencode": ("AGENTS.md",   "AGENTS.md"),
     "agents":   (".agents/workflows/codedna.md", ".agents/workflows/codedna.md"),
-}
-
-# Hook-based integrations: tool name -> (list of (remote_path, local_path), settings_template)
-# These require script files + settings.json, not just a prompt file.
-_HOOK_TOOLS = {
-    "claude-hooks",
-    "cursor-hooks",
-    "copilot-hooks",
-    "cline-hooks",
-    "opencode-hooks",
 }
 
 # Maps base tool name to its -hooks variant for auto-detect

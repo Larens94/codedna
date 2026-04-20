@@ -7,6 +7,7 @@ rules:   task_id MUST be digits-only (path traversal guard at line 466).
          Model segment in save path MUST be sanitized (line 589) — containment check under RUNS_DIR.
          Imports ALL logic from swebench/run_agent_multi.py to guarantee identical behavior.
 agent:   claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | initial CodeDNA header; add task_id digit validation + PROJECTS_DIR containment check + RUNS_DIR containment check; fix file handle leaks; drop unused re/time/all_runs (CodeQL #1072-1077, #1083-1087)
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql2 | harden path sanitizers: task_id via anchored _TASK_ID_RE + int() cast; model via _MODEL_SAFE_RE whitelist; Path.is_relative_to() for containment — silences CodeQL reopened path-injection (#1712-1716, reopened #1072-1077)
 
 Usage:
   GEMINI_API_KEY=... python benchmark_server.py
@@ -15,11 +16,16 @@ Usage:
 
 import json
 import os
+import re
 import sys
 import threading
 import traceback
 from pathlib import Path
 from queue import Queue, Empty
+
+# Rules: strict whitelists used by path sanitizers — patterns MUST remain anchored (^...$)
+_TASK_ID_RE = re.compile(r"^\d+$")
+_MODEL_SAFE_RE = re.compile(r"^[A-Za-z0-9._-]+$")
 
 # Add swebench dir to path so we can import run_agent_multi
 SWEBENCH_DIR = Path(__file__).parent / "swebench"
@@ -469,12 +475,14 @@ def api_run():
     if model_name not in ram.MODELS:
         return jsonify({"error": f"Unknown model: {model_name}"}), 400
 
-    # Rules: task_id must be digits only — prevents path traversal via ../ in instance_id
-    if not str(task_id).isdigit():
+    # Rules: task_id must be digits only (anchored regex) — blocks path traversal at the source
+    if not (isinstance(task_id, (str, int)) and _TASK_ID_RE.match(str(task_id))):
         return jsonify({"error": f"Invalid task_id (digits only): {task_id}"}), 400
+    task_id_int = int(task_id)
 
     cfg = ram.MODELS[model_name]
-    instance_id = f"django__django-{task_id}"
+    # instance_id built from int — no taint remains after the cast
+    instance_id = f"django__django-{task_id_int}"
 
     with open(TASKS_FILE) as f:
         tasks = json.load(f)
@@ -482,12 +490,12 @@ def api_run():
     if not task:
         return jsonify({"error": f"Task not found: {instance_id}"}), 400
 
-    # Rules: containment check — instance_id is user-derived, verify resolved path is inside PROJECTS_DIR
+    # Rules: containment check with is_relative_to — instance_id is now built from int cast
+    projects_root = PROJECTS_DIR.resolve()
     ctrl_dir = (PROJECTS_DIR / instance_id / "control").resolve()
     cdna_dir = (PROJECTS_DIR / instance_id / "codedna").resolve()
-    projects_root = PROJECTS_DIR.resolve()
-    if not (str(ctrl_dir).startswith(str(projects_root) + "/")
-            and str(cdna_dir).startswith(str(projects_root) + "/")):
+    if not (ctrl_dir.is_relative_to(projects_root)
+            and cdna_dir.is_relative_to(projects_root)):
         return jsonify({"error": "Invalid instance_id path"}), 400
 
     if not ctrl_dir.exists() or not cdna_dir.exists():
@@ -590,11 +598,14 @@ def _avg_f1(runs: list) -> dict:
 
 def _save_run_results(meta, side_results, gt):
     """Save to runs/<model>/results.json — compatible with analyze_multi.py format."""
-    # Rules: sanitize model segment — strip path separators and enforce containment under RUNS_DIR
-    safe_model = meta["model"].replace('/', '-').replace('\\', '-').replace('..', '-')
-    run_dir = (RUNS_DIR / safe_model).resolve()
-    if not str(run_dir).startswith(str(RUNS_DIR.resolve()) + "/"):
-        raise ValueError(f"Invalid model path: {meta['model']}")
+    # Rules: model segment MUST match safe regex whitelist — anchored pattern blocks '..' and separators
+    raw_model = str(meta["model"]).replace('/', '-')
+    if not _MODEL_SAFE_RE.match(raw_model):
+        raise ValueError(f"Invalid model name: {meta['model']!r}")
+    runs_root = RUNS_DIR.resolve()
+    run_dir = (RUNS_DIR / raw_model).resolve()
+    if not run_dir.is_relative_to(runs_root):
+        raise ValueError(f"Model path escapes RUNS_DIR: {meta['model']!r}")
     run_dir.mkdir(parents=True, exist_ok=True)
     out_file = run_dir / "results.json"
 
