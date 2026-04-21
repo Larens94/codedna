@@ -1,12 +1,13 @@
 """test_refresh.py — Tests for codedna refresh command and relative import resolution.
 
-exports: PYTHON | run_codedna() | class TestRefresh | class TestRelativeImports | class TestReducedHeader | class TestHasCodednaHeader
+exports: PYTHON | run_codedna() | class TestRefresh | class TestRelativeImports | class TestReducedHeader | class TestHasCodednaHeader | class TestRelatedField | class TestWikiField
 used_by: none
 rules:   Tests verify that refresh updates exports/used_by without touching rules/agent/message.
 Tests also verify Python relative imports (from .module) are resolved correctly.
 agent:   claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_003 | initial refresh + relative import tests
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | updated TestReducedHeader: all languages now emit full headers (exports+used_by+rules+agent); updated validator test to require full PHP header
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | remove .rs from TestReducedHeader ext list — Rust removed from registry
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | add TestWikiField — 4 tests for the experimental wiki: pointer field (parse, rebuild, refresh preservation, opt-in absence)
 """
 
 from __future__ import annotations
@@ -332,3 +333,77 @@ class TestRelatedField:
 
         src = "// main.go — entry.\n//\n// related: other.go — shares logic\n\npackage main\n"
         assert adapter.has_codedna_header(src)
+
+
+class TestWikiField:
+    """Tests for the wiki: field (experimental v0.9) — Karpathy LLM-wiki pointer."""
+
+    def test_parser_recognizes_wiki(self):
+        from codedna_tool.cli import _parse_existing_docstring
+
+        doc = (
+            '"""test.py — test.\n\n'
+            'exports: foo()\n'
+            'used_by: bar.py → baz\n'
+            'wiki:    docs/wiki/test.md\n'
+            'rules:   none\n'
+            'agent:   test | anthropic | 2026-04-21 | s_001 | test\n'
+            '"""'
+        )
+        fields = _parse_existing_docstring(doc)
+        assert "wiki" in fields
+        assert "docs/wiki/test.md" in fields["wiki"]
+
+    def test_rebuild_preserves_wiki(self):
+        from codedna_tool.cli import _parse_existing_docstring, _rebuild_docstring
+
+        doc = (
+            '"""test.py — test.\n\n'
+            'exports: foo()\n'
+            'used_by: bar.py → baz\n'
+            'related: other.py — shares logic\n'
+            'wiki:    docs/wiki/test.md\n'
+            'rules:   none\n'
+            'agent:   test | anthropic | 2026-04-21 | s_001 | test\n'
+            '"""'
+        )
+        fields = _parse_existing_docstring(doc)
+        rebuilt = _rebuild_docstring(fields, "new_foo()", "new_bar.py → new_baz")
+        assert "wiki:" in rebuilt
+        assert "docs/wiki/test.md" in rebuilt
+        # Order check: wiki must come after related, before rules
+        assert rebuilt.index("related:") < rebuilt.index("wiki:") < rebuilt.index("rules:")
+
+    def test_refresh_preserves_wiki(self, tmp_path):
+        """codedna refresh must not strip wiki: when updating used_by."""
+        (tmp_path / "utils.py").write_text(
+            '"""utils.py — utils.\n\n'
+            'exports: helper()\n'
+            'used_by: none\n'
+            'wiki:    docs/wiki/utils.md\n'
+            'rules:   none\n'
+            'agent:   test | anthropic | 2026-04-21 | s_001 | test\n'
+            '"""\n\ndef helper(): return "ok"\n'
+        )
+        (tmp_path / "app.py").write_text('from utils import helper\ndef main(): return helper()\n')
+        run_codedna("init", str(tmp_path), "--no-llm")
+        run_codedna("refresh", str(tmp_path))
+
+        utils = (tmp_path / "utils.py").read_text()
+        assert "wiki:    docs/wiki/utils.md" in utils
+        assert "app.py" in utils  # used_by was updated
+
+    def test_wiki_is_optional(self):
+        """Missing wiki: must never trigger an error — it's opt-in."""
+        from codedna_tool.cli import _parse_existing_docstring
+
+        doc = (
+            '"""test.py — test.\n\n'
+            'exports: foo()\n'
+            'used_by: none\n'
+            'rules:   none\n'
+            'agent:   test | anthropic | 2026-04-21 | s_001 | test\n'
+            '"""'
+        )
+        fields = _parse_existing_docstring(doc)
+        assert "wiki" not in fields  # absent, not empty

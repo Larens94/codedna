@@ -56,3 +56,10 @@ nlnet_publish.md
 paper/zenodo/codedna_paper_licenza1.pdf
 .claude/worktrees/
 dev_notes/
+
+# Wiki — auto-generated per-file vault (use `codedna wiki bootstrap` to regenerate)
+# Curated pages (manual approfondimenti, e.g. docs/wiki/cli.md) are whitelisted below.
+docs/wiki/*
+!docs/wiki/cli.md
+!docs/wiki/wiki.md
+.obsidian/

@@ -3,6 +3,7 @@
 
 exports: class FuncInfo | class FileInfo | scan_file(path, repo_root) | scan_file_lang(path, repo_root, adapter) | build_used_by(infos) | build_ast_skeleton(source, rel) | class LLM | _EXPORTS_CAP | build_module_docstring(info, ub, rules, model_id) | inject_module_docstring(source, docstring) | inject_function_rules(source, func, rules_text) | collect_files(target, exclude, extensions) | run_lang_files(target, extensions, repo_root, exclude, model, dry_run, force, no_llm, verbose, api_key) | run(target, levels, model, dry_run, exclude, force, no_llm, only_public, verbose, api_key, repo_root, extensions) | cmd_refresh(target, repo_root, exclude, dry_run, verbose) | cmd_check(target, repo_root, exclude, verbose, extensions) | _TOOL_FILES | _TOOL_HOOKS_MAP | _HOOKS_BASE_MAP | _PRE_COMMIT_HOOK | (+7 more)
 used_by: tests/test_cli.py → FileInfo, build_module_docstring
+wiki:    docs/wiki/cli.md
 rules:   L2 (function Rules:) applies Python AST only; language adapters are L1-only.
 LLM calls are capped at 2 per Python file; --no-llm skips all LLM calls.
 _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
@@ -15,6 +16,7 @@ claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_sessions | _write_codedn
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | _detect_project_meta(): reads go.mod/package.json/pom.xml/settings.gradle(.kts)/build.gradle(.kts)/Gemfile/Cargo.toml; integrated into cmd_install() + cmd_manifest(); README language count 11→9, L2 coverage updated
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | add explanatory comments to 9 empty except blocks (scan_file ValueError for outside-repo paths, JSON repair fallback, _detect_project_meta OSError per-file) — CodeQL py/empty-except alerts #1689, #1696-1698, #1702-1707
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql2 | remove unused _HOOK_TOOLS set (never referenced — _TOOL_HOOKS_MAP.values() supersedes it) — CodeQL #1664
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | add optional wiki: field to Python + lang header parsers and rebuilders — opt-in pointer to deeper markdown doc (experimental v0.9 — Karpathy LLM-wiki pattern)
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -1177,7 +1179,7 @@ def _parse_existing_docstring(docstring: str) -> dict[str, str]:
             continue
 
         # Check if line starts a new field
-        for field_name in ("exports:", "used_by:", "related:", "rules:", "agent:", "message:"):
+        for field_name in ("exports:", "used_by:", "related:", "wiki:", "rules:", "agent:", "message:"):
             if stripped.startswith(field_name):
                 if current_field:
                     fields[current_field] = "\n".join(current_lines)
@@ -1196,13 +1198,15 @@ def _parse_existing_docstring(docstring: str) -> dict[str, str]:
 
 
 def _rebuild_docstring(fields: dict[str, str], new_exports: str, new_used_by: str) -> str:
-    """Rebuild a CodeDNA docstring with updated exports/used_by, preserving related/rules/agent/message.
+    """Rebuild a CodeDNA docstring with updated exports/used_by, preserving related/wiki/rules/agent/message.
 
-    Rules:   Must preserve the exact related:, rules: and agent: (including message: sub-fields).
+    Rules:   Must preserve the exact related:, wiki:, rules: and agent: (including message: sub-fields).
              Only exports: and used_by: are replaced.
+             wiki: is an optional pointer to a deeper markdown doc (experimental v0.9 field).
     """
     first_line = fields.get("first_line", "module — unknown.")
     related = fields.get("related", "")
+    wiki = fields.get("wiki", "")
     rules = fields.get("rules", "rules:   none")
     agent = fields.get("agent", "agent:   unknown")
     message = fields.get("message", "message: ")
@@ -1215,6 +1219,8 @@ def _rebuild_docstring(fields: dict[str, str], new_exports: str, new_used_by: st
     ]
     if related:
         lines.append(related)
+    if wiki:
+        lines.append(wiki)
     lines.extend([rules, agent, message, '"""'])
     return "\n".join(lines) + "\n"
 
@@ -1244,7 +1250,7 @@ def _parse_lang_header(source: str, comment_prefix: str) -> dict[str, str] | Non
 
         # First line of header (filename — purpose)
         if not header_started:
-            if any(content.startswith(f) for f in ("exports:", "used_by:", "related:", "rules:", "agent:")):
+            if any(content.startswith(f) for f in ("exports:", "used_by:", "related:", "wiki:", "rules:", "agent:")):
                 header_started = True
                 fields["first_line"] = ""
             elif " — " in content or content.endswith("."):
@@ -1258,7 +1264,7 @@ def _parse_lang_header(source: str, comment_prefix: str) -> dict[str, str] | Non
         header_line_indices.append(i)
 
         # Check if line starts a new field
-        for field_name in ("exports:", "used_by:", "related:", "rules:", "agent:", "message:"):
+        for field_name in ("exports:", "used_by:", "related:", "wiki:", "rules:", "agent:", "message:"):
             if content.startswith(field_name):
                 if current_field:
                     fields[current_field] = "\n".join(current_lines)
@@ -1287,13 +1293,15 @@ def _rebuild_lang_header(fields: dict[str, str], new_exports: str, new_used_by: 
                          comment_prefix: str) -> str:
     """Rebuild a non-Python CodeDNA comment header with updated exports/used_by.
 
-    Rules:   Preserves related:, rules:, agent:, message: exactly as-is.
+    Rules:   Preserves related:, wiki:, rules:, agent:, message: exactly as-is.
              Only exports: and used_by: are replaced.
              Multi-line used_by entries are indented with the comment prefix.
+             wiki: is an optional one-line pointer to a deeper markdown doc (v0.9 experimental).
     """
     p = comment_prefix
     first_line = fields.get("first_line", "module.")
     related = fields.get("related", "")
+    wiki = fields.get("wiki", "")
     rules = fields.get("rules", "rules:   none")
     agent = fields.get("agent", "agent:   unknown")
     message = fields.get("message", "")
@@ -1315,6 +1323,11 @@ def _rebuild_lang_header(fields: dict[str, str], new_exports: str, new_used_by: 
         lines.append(f"{p} related: {r_lines[0]}")
         for r in r_lines[1:]:
             lines.append(f"{p}          {r}")
+
+    # Preserve wiki: if present (experimental v0.9 — pointer to deeper markdown doc)
+    if wiki:
+        wiki_content = wiki.replace("wiki:", "").strip() if wiki.startswith("wiki:") else wiki
+        lines.append(f"{p} wiki:    {wiki_content}")
 
     # Multi-line rules
     rules_content = rules.replace("rules:", "").strip() if rules.startswith("rules:") else rules
@@ -2854,6 +2867,42 @@ def main():
     manifest_p.add_argument("-v", "--verbose", action="store_true",
                             help="Show per-package details")
 
+    # ── wiki ─────────────────────────────────────────────────────────────────
+    wiki_p = subs.add_parser(
+        "wiki",
+        help="Generate an Obsidian-compatible wiki vault from CodeDNA annotations (experimental)",
+        description=(
+            "Emit a flat markdown vault where each annotated source file becomes a page\n"
+            "with [[wikilinks]] derived from used_by: and related: graphs.\n\n"
+            "The vault is auto-generated — preserves the '<!-- AGENT NOTES -->' section\n"
+            "on re-runs so agents can attach durable per-file observations.\n\n"
+            "Opt-in enrichment: set wiki: docs/wiki/<file>.md in a docstring to signal\n"
+            "that a file has curated extra content beyond the auto page."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    wiki_sub = wiki_p.add_subparsers(dest="wiki_command", metavar="WIKI_COMMAND")
+
+    wiki_boot = wiki_sub.add_parser("bootstrap",
+                                    help="Scaffold the wiki vault under --out (default docs/wiki)")
+    wiki_boot.add_argument("path", type=Path, nargs="?", default=Path("."),
+                           help="Repo root to scan (default: current dir)")
+    wiki_boot.add_argument("--out", type=Path, default=Path("docs/wiki"),
+                           help="Output directory for the vault (default: docs/wiki)")
+    wiki_boot.add_argument(
+        "--extensions", nargs="*", default=None, metavar="EXT",
+        help="Limit to these extensions (default: every annotated file)",
+    )
+
+    wiki_sync = wiki_sub.add_parser(
+        "sync",
+        help="Regenerate docs/codedna-wiki.md (narrative project wiki, workingfm template)",
+    )
+    wiki_sync.add_argument("path", type=Path, nargs="?", default=Path("."),
+                           help="Repo root (default: current dir)")
+    wiki_sync.add_argument("--out", type=Path, default=Path("docs/codedna-wiki.md"),
+                           help="Output file (default: docs/codedna-wiki.md)")
+
     args = p.parse_args()
 
     # ── dispatch ──────────────────────────────────────────────────────────────
@@ -2958,6 +3007,28 @@ def main():
             return 1
         repo_root = args.repo_root.resolve() if args.repo_root else None
         return cmd_refresh(target, repo_root, list(args.exclude), args.dry_run, args.verbose)
+
+    if args.command == "wiki":
+        sub = getattr(args, "wiki_command", None)
+        if sub == "bootstrap":
+            from codedna_tool.wiki import build_wiki_vault
+            repo_root = args.path.resolve()
+            out_dir = (args.out if args.out.is_absolute() else repo_root / args.out).resolve()
+            n = build_wiki_vault(repo_root, out_dir,
+                                 extensions=args.extensions)
+            print(f"✓ Wiki vault generated: {n} pages written to {out_dir}")
+            print("  Open the directory in Obsidian to browse the graph.")
+            return 0
+        if sub == "sync":
+            from codedna_tool.wiki import build_project_wiki
+            repo_root = args.path.resolve()
+            out_file = (args.out if args.out.is_absolute() else repo_root / args.out).resolve()
+            build_project_wiki(repo_root, out_file)
+            print(f"✓ Project wiki synced → {out_file}")
+            print("  AGENT NOTES section preserved (if any).")
+            return 0
+        wiki_p.print_help()
+        return 1
 
     if args.command == "check":
         target = args.path.resolve()

@@ -234,6 +234,15 @@ codedna check ./         # coverage report, no changes
 
 Cost: ~$1–3 for a Django-sized project using the default Haiku model.
 
+### Optional: wiki layer *(v0.9 experimental)*
+
+```bash
+codedna wiki bootstrap ./   # per-file Obsidian vault under docs/wiki/
+codedna wiki sync ./        # one narrative docs/codedna-wiki.md (project sky-view)
+```
+
+The vault renders `used_by:` + `related:` as [[wikilinks]] — open `docs/wiki/` in [Obsidian](https://obsidian.md) to browse the graph. The narrative wiki is a 7-section overview (identity, topology, workflows, hotspots, refresh protocol). Wire `codedna wiki sync` to a post-commit hook to keep it current.
+
 ---
 
 ## The Module Docstring (reference)
@@ -243,6 +252,8 @@ Cost: ~$1–3 for a Django-sized project using the default Haiku model.
 
 exports: public_function(arg) -> return_type
 used_by: consumer_file.py → consumer_function
+related: sibling.py — shares same pattern (no import)
+wiki:    docs/wiki/filename.md
 rules:   <hard constraint agents must never violate>
 """
 ```
@@ -252,6 +263,8 @@ rules:   <hard constraint agents must never violate>
 | First line | ✅ | `filename.py — <purpose ≤15 words>` |
 | `exports:` | ✅ | Public API with return type |
 | `used_by:` | ✅ | Who calls this file's exports |
+| `related:` | ⬜ | Semantic siblings — same logic, no import (v0.9) |
+| `wiki:` | ⬜ | Opt-in pointer to a curated markdown under `docs/wiki/` (v0.9 experimental) |
 | `rules:` | ✅ | Hard constraints — the inter-agent communication channel |
 
 ---

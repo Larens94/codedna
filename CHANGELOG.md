@@ -2,6 +2,24 @@
 
 All notable changes to CodeDNA will be documented in this file.
 
+## [0.9.0] — 2026-04-21 *(experimental — on `experiment/wiki-field` branch, not yet merged)*
+
+### Added
+
+- **`wiki:` optional docstring field (v0.9 experimental)** — opt-in pointer from a source file's docstring to a curated markdown under `docs/wiki/`. When present, an agent editing the file must read the pointed markdown first; absence means the docstring is sufficient. *Sparsity is the signal.* Validated by `tools/validate_manifests.py` (path must exist). Parser/rebuilder in `codedna_tool/cli.py` preserve the field across `codedna refresh`.
+- **`codedna wiki bootstrap <path>`** — generate an [Obsidian](https://obsidian.md)-ready per-file vault under `docs/wiki/` (nested layout mirroring the source tree) with `[[wikilinks]]` derived from `used_by:` and `related:` graphs. Preserves AGENT NOTES sections across regeneration.
+- **`codedna wiki sync <path>`** — regenerate a single narrative project wiki at `docs/codedna-wiki.md` following the Karpathy LLM-wiki 7-section template (identity / L0 relationship / semantic topology / workflows / testing / hotspots / refresh protocol). Designed to be wired into a post-commit hook for hard enforcement (avoiding the "agent forgets to update markdown" failure mode).
+- **`AGENTS.md`** — Codex/OpenCode/Aider-compatible mirror of `CLAUDE.md`. Ships full v0.9 protocol including `related:`, `wiki:`, and the inline `# Rules:` / `# message:` annotation patterns. Keep in sync with `CLAUDE.md`.
+
+### Credits
+
+- `codedna-wiki.md` 7-section narrative template and `AGENTS.md` scaffold originally contributed by [@workingfm](https://github.com/workingfm) in [PR #2](https://github.com/Larens94/codedna/pull/2), adapted here to use post-commit hooks instead of the skill/sub-agent scaffolding (agents empirically forget markdown instructions).
+- Pattern inspired by Andrej Karpathy's [LLM-wiki gist](https://gist.github.com/karpathy/442a6bf555914893e9891c11519de94f) — though we interpret *"compile once, maintain forever"* as *"compile deliberately, not everything"*.
+
+### Tests
+
+- 170 total tests passing (was 139); 25 new tests in `tests/test_wiki.py` cover slug generation, wikilink escaping, vault generation, AGENT NOTES preservation, project wiki rendering, and the `wiki:` field opt-in flow.
+
 ## [0.8.2] — 2026-03-30
 
 ### Experimental Results

@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """validate_manifests.py — Validate CodeDNA v0.9 annotations across a codebase.
 
-exports: REQUIRED_FIELDS_FULL | REQUIRED_FIELDS | SKIP_DIRS | COMMENT_PREFIX | _DATE_RE | _PURPOSE_MAX_WORDS | _AGENT_MAX_ENTRIES | class ValidationResult | validate_file(path) | validate_directory(root, extensions) | print_results(results, verbose) | main()
+exports: REQUIRED_FIELDS_FULL | REQUIRED_FIELDS | OPTIONAL_FIELDS | KNOWN_FIELDS | SKIP_DIRS | COMMENT_PREFIX | _DATE_RE | _PURPOSE_MAX_WORDS | _AGENT_MAX_ENTRIES | class ValidationResult | _find_repo_root(start) | _validate_wiki(result, wiki_value, source_path) | validate_file(path) | validate_directory(root, extensions) | print_results(results, verbose) | main()
 used_by: none
 rules:   validates v0.9 format only (exports:/used_by:/rules:/agent: in module docstring).
 Python uses AST; other languages use regex on first 40 lines.
@@ -10,6 +10,8 @@ agent:   claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | fixed _ex
 claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | added .php, .cs, .mjs, .kts to COMMENT_PREFIX — validator now covers all 11 languages
 claude-sonnet-4-6 | anthropic | 2026-04-15 | s_20260415_002 | all languages now require full 4-field header (exports/used_by/rules/agent) — REQUIRED_FIELDS_REDUCED = REQUIRED_FIELDS_FULL, _REDUCED_HEADER_EXTS cleared
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | removed dead REQUIRED_FIELDS_REDUCED and _REDUCED_HEADER_EXTS variables
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | add optional wiki: field validation (experimental v0.9) — _validate_wiki checks path exists relative to repo root; _find_repo_root walks up for .codedna/.git marker
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki6 | fix: _parse_fields was only recognizing REQUIRED_FIELDS so `wiki:`/`related:`/`message:` values were being folded into the previous field. Introduced KNOWN_FIELDS = REQUIRED ∪ OPTIONAL — the wiki path validator now runs on real data.
 Usage:
 python tools/validate_manifests.py [path] [-v] [--extensions py ts go]
 python tools/validate_manifests.py .             # validate current dir (Python only)
@@ -30,6 +32,9 @@ from typing import Optional
 
 REQUIRED_FIELDS_FULL = {"exports", "used_by", "rules", "agent"}  # all languages
 REQUIRED_FIELDS = REQUIRED_FIELDS_FULL
+# Optional fields parsed for reporting / validation but NOT required on every file.
+OPTIONAL_FIELDS = {"related", "wiki", "message"}
+KNOWN_FIELDS = REQUIRED_FIELDS | OPTIONAL_FIELDS
 
 SKIP_DIRS = {"__pycache__", ".git", "venv", ".venv", "node_modules", "dist", "build", "migrations"}
 
@@ -73,19 +78,24 @@ class ValidationResult:
 
 
 def _parse_fields(text: str) -> dict[str, str]:
-    """Parse CodeDNA fields from a docstring or comment block."""
+    """Parse CodeDNA fields from a docstring or comment block.
+
+    Rules:   Recognize both required and optional fields (e.g. `wiki:`, `related:`, `message:`)
+             so downstream validators can act on them. Unknown fields are treated as
+             continuation of the previous field (original behavior).
+    """
     result: dict[str, str] = {}
     current: Optional[str] = None
     for line in text.split("\n"):
         s = line.strip()
         matched = False
-        for key in REQUIRED_FIELDS:
+        for key in KNOWN_FIELDS:
             if s.startswith(f"{key}:"):
                 current = key
                 result[key] = s[len(key) + 1:].strip()
                 matched = True
                 break
-        if not matched and current and s and not any(s.startswith(k + ":") for k in REQUIRED_FIELDS):
+        if not matched and current and s and not any(s.startswith(k + ":") for k in KNOWN_FIELDS):
             result[current] = result[current] + " " + s
     return result
 
@@ -199,12 +209,43 @@ def _validate_agent(result: ValidationResult, agent_text: str) -> None:
             result.err(f"agent: entry missing YYYY-MM-DD date: {entry!r}")
 
 
-def _validate_fields(result: ValidationResult, fields: dict[str, str], ext: str = ".py") -> None:
+def _find_repo_root(start: Path) -> Optional[Path]:
+    """Walk upward from start to find a directory containing .codedna or .git."""
+    for parent in [start, *start.parents]:
+        if (parent / ".codedna").exists() or (parent / ".git").exists():
+            return parent
+    return None
+
+
+def _validate_wiki(result: ValidationResult, wiki_value: str, source_path: Path) -> None:
+    """Check that the wiki: pointer resolves to an existing markdown file.
+
+    Rules:   wiki: value is a single-line path, resolved relative to the repo root
+             (first parent containing .codedna or .git). Must exist and end with .md.
+    """
+    val = wiki_value.replace("wiki:", "").strip()
+    if not val:
+        result.err("wiki: is present but empty")
+        return
+    if not val.endswith(".md"):
+        result.warn(f"wiki: path does not end with .md — got {val!r}")
+    repo_root = _find_repo_root(source_path.parent)
+    if repo_root is None:
+        result.warn(f"wiki: cannot locate repo root from {source_path} — skipping existence check")
+        return
+    candidate = (repo_root / val).resolve()
+    if not candidate.exists():
+        result.err(f"wiki: points to non-existent file: {val}")
+
+
+def _validate_fields(result: ValidationResult, fields: dict[str, str], ext: str = ".py",
+                     source_path: Optional[Path] = None) -> None:
     """Check all required fields are present and non-empty.
 
     Rules:   All languages require the full 4-field header: exports, used_by, rules, agent.
              'none' is a valid value for exports: and used_by: — it signals the field was
              considered and confirmed empty, not accidentally omitted.
+             wiki: is OPTIONAL (experimental v0.9) — if present, its path MUST exist.
     """
     required = REQUIRED_FIELDS_FULL
     for key in required:
@@ -226,6 +267,9 @@ def _validate_fields(result: ValidationResult, fields: dict[str, str], ext: str 
 
     if "agent" in fields:
         _validate_agent(result, fields["agent"])
+
+    if "wiki" in fields and source_path is not None:
+        _validate_wiki(result, fields["wiki"], source_path)
 
 
 # ── Public API ────────────────────────────────────────────────────────────────
@@ -267,7 +311,7 @@ def validate_file(path: Path) -> ValidationResult:
         return result
 
     result.fields_found = set(fields.keys())
-    _validate_fields(result, fields, ext=ext)
+    _validate_fields(result, fields, ext=ext, source_path=path)
     return result
 
 
