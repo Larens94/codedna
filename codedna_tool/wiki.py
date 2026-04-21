@@ -1,6 +1,6 @@
 """wiki.py — Generate an Obsidian-compatible wiki vault from CodeDNA annotations.
 
-exports: SKIP_DIRS | build_wiki_vault(repo_root, out_dir, extensions) | _wikilink(rel) | _slug_for_rel(rel) | _extract_fields(path) | _page_markdown(rel, fields) | _generate_index(repo_root, out_dir, rel_paths) | _generate_log(repo_root, out_dir) | _read_project_name(repo_root) | _list_top_level_dirs(repo_root) | render_project_wiki(project_name, repo_root) | build_project_wiki(repo_root, out_path)
+exports: SKIP_DIRS | build_wiki_vault(repo_root, out_dir, extensions) | _wikilink(rel) | _slug_for_rel(rel) | _extract_fields(path) | _page_markdown(rel, fields) | _generate_index(repo_root, out_dir, rel_paths) | _generate_log(repo_root, out_dir) | _read_project_name(repo_root) | _list_top_level_dirs(repo_root) | render_project_wiki(project_name, repo_root) | build_project_wiki(repo_root, out_path) | _escape_obsidian_hashtags(text)
 used_by: codedna_tool/cli.py → build_wiki_vault (wiki subcommand)
 wiki:    docs/wiki/wiki.md
 rules:   The output vault is an artifact — rigenerato ad ogni `codedna wiki bootstrap`.
@@ -10,6 +10,7 @@ rules:   The output vault is an artifact — rigenerato ad ogni `codedna wiki bo
          Do NOT parse YAML — use regex/line parsing like cli.py does.
 agent:   claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | initial wiki vault generator — Python docstring + non-Python lang header → markdown page with [[wikilinks]] from used_by/related; preserves AGENT NOTES section across re-runs
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki2 | add render_project_wiki + build_project_wiki (narrative wiki, 7-section template adapted from @workingfm PR #2); strip sub-agent/skill scaffolding in favor of hook-based enforcement
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki3 | fix Obsidian graph pollution — wrap numeric hashtags (e.g. `#1072-1077`) in backticks via _escape_obsidian_hashtags so they render as inline code, not tag nodes
 """
 
 from __future__ import annotations
@@ -116,6 +117,19 @@ def _field_value(fields: dict, key: str) -> str:
     return raw.strip()
 
 
+_HASHTAG_NUMBER_RE = re.compile(r"#\d[\d-]*")
+
+
+def _escape_obsidian_hashtags(text: str) -> str:
+    """Wrap #123, #123-456 in backticks so Obsidian doesn't treat them as tags.
+
+    Rules:   Obsidian parses `#<digits>` as a tag → spurious graph nodes.
+             We want those numbers rendered as plain text (issue / CodeQL refs).
+             Only numeric hashtags are touched — alphabetic tags like #feature stay untouched.
+    """
+    return _HASHTAG_NUMBER_RE.sub(lambda m: f"`{m.group(0)}`", text)
+
+
 def _render_bullets(entries: list[str]) -> list[str]:
     """Render a list of entries as Markdown bullets, skipping blanks."""
     out = []
@@ -191,7 +205,7 @@ def _page_markdown(rel: str, fields: dict) -> str:
         for r in rules.split("\n"):
             r = r.strip()
             if r:
-                lines.append(f"- {r}")
+                lines.append(f"- {_escape_obsidian_hashtags(r)}")
         lines.append("")
 
     agent = _field_value(fields, "agent")
@@ -203,7 +217,7 @@ def _page_markdown(rel: str, fields: dict) -> str:
             lines.append("## Agent history")
             lines.append("")
             for entry in agent_entries:
-                lines.append(f"- {entry}")
+                lines.append(f"- {_escape_obsidian_hashtags(entry)}")
             lines.append("")
 
     message = _field_value(fields, "message")
