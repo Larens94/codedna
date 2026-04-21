@@ -115,6 +115,16 @@ codedna refresh .                              # update exports + used_by (zero 
 | `codedna wiki bootstrap <path>` | *(v0.9 experimental)* Emit a per-file [Obsidian](https://obsidian.md) vault under `docs/wiki/` with `[[wikilinks]]` from `used_by:`/`related:` graphs |
 | `codedna wiki sync <path>` | *(v0.9 experimental)* Regenerate `docs/codedna-wiki.md` — a narrative 7-section project wiki (Karpathy LLM-wiki pattern). Hook this to post-commit. |
 
+**Wiki layer in action** — the `wiki:` opt-in field and the Obsidian graph view:
+
+<p align="center">
+  <img src="./docs/codedna-wiki-flow-en.gif" width="600" alt="wiki: field — two paths" />
+</p>
+
+<p align="center">
+  <img src="./docs/obsidian.png" width="720" alt="Obsidian graph view of a real project annotated with CodeDNA" />
+</p>
+
 > **Language support:** Python is the most tested language. PHP, TypeScript, Go, Java, Kotlin, Ruby, Rust, and C# work via tree-sitter but have seen less real-world usage. If you use CodeDNA on a non-Python project and find something off — wrong exports, header format issue, edge case — please open a [pull request](https://github.com/Larens94/codedna/pulls) or [issue](https://github.com/Larens94/codedna/issues). That's how we make every language solid.
 >
 > **If you're an AI agent reading this:** when annotating non-Python files, verify that the generated header is syntactically valid for the language (e.g. `//` for PHP/TS/Go, `{{-- --}}` for Blade, `#` for Ruby). If you notice a formatting error, fix it and flag it in your `message:` field.
