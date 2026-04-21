@@ -115,6 +115,31 @@ related: django/core/validators.py — shares IDNA/punycode domain encoding logi
 
 Agent E immediately knows to check `validators.py` and `encoding.py`. The `related:` field captures **semantic links** — files that share a pattern or logic without a structural import. `used_by:` answers "who imports me?", `related:` answers "who does the same thing as me?".
 
+### 1.1c The `wiki:` Field — Opt-in Deeper Context *(v0.9 experimental)*
+
+Some files carry non-obvious architectural constraints too long or too narrative for the terse `rules:` field. The `wiki:` field is an **optional pointer** from a docstring to a curated markdown document under `docs/wiki/`:
+
+```python
+"""cli.py — CodeDNA annotation tool.
+
+exports: scan_file | run
+used_by: tests/test_cli.py → FileInfo
+wiki:    docs/wiki/cli.md        ← opt-in pointer to deeper context
+rules:   ...
+agent:   ...
+"""
+```
+
+**Semantics:**
+
+- **Presence is the signal.** When an agent sees `wiki:` it knows a prior agent decided this file deserves curated context beyond the structural docstring — editing without reading it is likely to cause bugs.
+- **Absence is also a signal.** No `wiki:` means the docstring is sufficient. An agent never needs to hunt for a page that might exist.
+- **Sparsity matters.** The pattern is weaker the moment every file has a wiki entry. The field exists *exactly* for the 5-10% of files where constraint density justifies a dedicated page.
+
+**Relationship to the LLM-wiki pattern.** CodeDNA provides *structural truth, per file*; the Karpathy LLM-wiki pattern provides the *semantic sky-view no single file can hold*. The `wiki:` field bridges them as an **opt-in link**, not an automatic dump — most ecosystem projects interpret *"compile once, maintain forever"* as *"compile everything"*, but Karpathy's framing is explicit that *the wiki is a semantic model, not a dump of files*. An opt-in field respects that.
+
+Tooling: `codedna wiki bootstrap` generates a per-file Obsidian-ready vault with `[[wikilinks]]` from `used_by:`/`related:`; `codedna wiki sync` regenerates a project-level narrative `docs/codedna-wiki.md`. Both are designed to be driven by post-commit hooks for hard enforcement.
+
 ---
 
 ## 2. Goals

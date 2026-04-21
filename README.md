@@ -111,6 +111,8 @@ codedna refresh .                              # update exports + used_by (zero 
 | `codedna manifest <path>` | Generate `.codedna` project map (Level 0): packages, depends_on, key_files |
 | `codedna mode <mode>` | Get/set mode: `human` (minimal), `semi` (default), `agent` (full protocol) |
 | `codedna install <path>` | Setup pre-commit hook + AI tool prompt + `.codedna` manifest |
+| `codedna wiki bootstrap <path>` | *(v0.9 experimental)* Emit a per-file [Obsidian](https://obsidian.md) vault under `docs/wiki/` with `[[wikilinks]]` from `used_by:`/`related:` graphs |
+| `codedna wiki sync <path>` | *(v0.9 experimental)* Regenerate `docs/codedna-wiki.md` — a narrative 7-section project wiki (Karpathy LLM-wiki pattern). Hook this to post-commit. |
 
 > **Language support:** Python is the most tested language. PHP, TypeScript, Go, Java, Kotlin, Ruby, Rust, and C# work via tree-sitter but have seen less real-world usage. If you use CodeDNA on a non-Python project and find something off — wrong exports, header format issue, edge case — please open a [pull request](https://github.com/Larens94/codedna/pulls) or [issue](https://github.com/Larens94/codedna/issues). That's how we make every language solid.
 >
@@ -144,6 +146,7 @@ used_by: api/reports.py → revenue_route
          api/serializers.py → Schema [cascade]
 related: billing/currency.py — shares multi-currency
          conversion logic (no import link)
+wiki:    docs/wiki/revenue.md
 rules:   get_invoices() returns ALL tenants
          — MUST filter is_suspended() BEFORE sum
 agent:   claude-sonnet | 2026-03-10
@@ -163,6 +166,8 @@ agent:   gemini-2.5-pro | 2026-03-18
 **`used_by:`** — 2 files depend on me. One is `[cascade]` — must update if I change.
 
 **`related:`** — another file shares my currency logic but doesn't import me. Check it too.
+
+**`wiki:`** — opt-in pointer to a curated markdown with deeper context. If present, a prior agent decided this file deserves extended notes; read it before editing.
 
 **`rules:`** — upstream function returns all tenants. I must filter.
 

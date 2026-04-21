@@ -24,6 +24,7 @@ Every new Python source file **must begin** with a CodeDNA module docstring:
 exports: public_function(arg) -> return_type
 used_by: consumer_file.py → consumer_function
 related: other_file.py — shares same pattern/logic (no import link)
+wiki:    docs/wiki/filename.md
 rules:   <hard constraint agents must never violate>
 agent:   <your-model-id> | <provider> | <YYYY-MM-DD> | <session_id> | <what you implemented and what you noticed>
          message: "<open hypothesis or observation for the next agent>"
@@ -38,6 +39,7 @@ Field guide:
 | `exports:` | ✅ | Public API with return type |
 | `used_by:` | ✅ | Who calls this file's exports (structural link via import) |
 | `related:` | ⬜ | Files that share the same logic/pattern without importing each other (semantic link) |
+| `wiki:` | ⬜ | Opt-in pointer to a deeper markdown doc under `docs/wiki/` (experimental v0.9 — see below) |
 | `rules:` | ✅ | Architectural truth — specific, actionable constraints (see examples below) |
 | `agent:` | ✅ | Session narrative — rolling window of last 5 entries; drop the oldest when adding a 6th |
 | `message:` | ⬜ | Inter-agent channel — open hypotheses, unverified observations (v0.8) |
@@ -172,6 +174,51 @@ def my_function():
 ```
 
 **Lifecycle:** a `message:` is either promoted to `rules:` (reply `"@prev: promoted to rules:"`) or dismissed (`"@prev: verified, not applicable because..."`). Always append-only — never delete.
+
+## `wiki:` — Opt-in deeper context *(v0.9 experimental)*
+
+The `wiki:` field is an **optional pointer** from a source file's docstring to a curated markdown document. It is **the signal, not the dump** — it exists only when a prior agent decided this file deserves context beyond what the terse docstring can hold.
+
+**In the docstring:**
+```python
+"""cli.py — CodeDNA annotation tool.
+
+exports: scan_file | run
+used_by: tests/test_cli.py → FileInfo
+wiki:    docs/wiki/cli.md        ← opt-in pointer
+rules:   ...
+agent:   ...
+"""
+```
+
+**Agent workflow:**
+
+- **Before editing a file, check its docstring for `wiki:`**
+  - **Present** → read the pointed markdown. A prior agent put it there because editing this file without that context leads to bugs.
+  - **Absent** → the docstring is sufficient; no extra read required.
+
+**When to add `wiki:` yourself:**
+
+- You discovered non-obvious architectural constraints that don't fit in `rules:` (too long, too narrative)
+- You want to leave a history of decisions ("why we chose X over Y") for the next agent
+- You have extension-point notes ("to add a new language, see section 4")
+- Obvious: don't add `wiki:` for routine files. **Sparsity is the signal.**
+
+**File layout:**
+
+- Curated pages live under `docs/wiki/` (same tree as the source, e.g. `docs/wiki/codedna_tool/cli.md`)
+- A single `<!-- AGENT NOTES -->` marker at the end of each auto-generated page preserves human/agent additions across regeneration
+- The `codedna wiki` commands manage the vault (see below)
+
+## `codedna wiki` — Commands *(v0.9 experimental)*
+
+Two complementary subcommands:
+
+- **`codedna wiki bootstrap [path] --out docs/wiki`** — generates one markdown page per annotated source file with `[[wikilinks]]` derived from `used_by:` and `related:` graphs. Open `docs/wiki/` in [Obsidian](https://obsidian.md) for a navigable graph. **Primarily a human tool**: agents already have the same info in the docstring.
+
+- **`codedna wiki sync [path] --out docs/codedna-wiki.md`** — regenerates a single narrative project wiki (7 sections: identity, topology, workflows, hotspots, …). **Useful for agents entering the project cold** — they read this first to get the semantic sky-view that no single file contains.
+
+Wire `codedna wiki sync` to a post-commit hook so the project wiki stays current without relying on an agent to remember.
 
 ## Planning across multiple files
 
