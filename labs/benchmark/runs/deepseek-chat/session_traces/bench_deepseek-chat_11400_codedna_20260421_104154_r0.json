@@ -1,0 +1,266 @@
+{
+  "session_id": "bench_deepseek-chat_11400_codedna_20260421_104154_r0",
+  "model": "deepseek-chat",
+  "provider": "openai",
+  "task": "django__django-11400",
+  "condition": "codedna",
+  "ground_truth": [
+    "django/contrib/admin/filters.py",
+    "django/db/models/fields/__init__.py",
+    "django/db/models/fields/reverse_related.py"
+  ],
+  "metrics_read": {
+    "recall": 0.6666666666666666,
+    "precision": 0.4,
+    "f1": 0.5
+  },
+  "trace": [
+    {
+      "t": 4.06,
+      "tool": "list_files",
+      "args": {
+        "directory": "."
+      },
+      "result_len": 299
+    },
+    {
+      "t": 8.24,
+      "tool": "list_files",
+      "args": {
+        "directory": "django"
+      },
+      "result_len": 255
+    },
+    {
+      "t": 12.05,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/contrib"
+      },
+      "result_len": 240
+    },
+    {
+      "t": 16.09,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/contrib/admin"
+      },
+      "result_len": 348
+    },
+    {
+      "t": 26.67,
+      "tool": "read_file",
+      "args": {
+        "path": "django/contrib/admin/filters.py"
+      },
+      "result_len": 17994
+    },
+    {
+      "t": 34.34,
+      "tool": "grep",
+      "args": {
+        "pattern": "def field_choices",
+        "directory": "django/contrib/admin"
+      },
+      "result_len": 332
+    },
+    {
+      "t": 40.82,
+      "tool": "read_file",
+      "args": {
+        "path": "django/contrib/admin/filters.py"
+      },
+      "result_len": 17994
+    },
+    {
+      "t": 62.17,
+      "tool": "grep",
+      "args": {
+        "pattern": "def get_choices",
+        "directory": "django"
+      },
+      "result_len": 438
+    },
+    {
+      "t": 66.52,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/fields/__init__.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 72.53,
+      "tool": "grep",
+      "args": {
+        "pattern": "def get_choices",
+        "directory": "django/db/models/fields"
+      },
+      "result_len": 438
+    },
+    {
+      "t": 78.17,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/fields/__init__.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 84.39,
+      "tool": "grep",
+      "args": {
+        "pattern": "def get_choices\" -A 20",
+        "directory": "django/db/models/fields"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 90.43,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/fields/__init__.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 101.65,
+      "tool": "grep",
+      "args": {
+        "pattern": "class Meta",
+        "directory": "django/db/models"
+      },
+      "result_len": 371
+    },
+    {
+      "t": 107.91,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/options.py"
+      },
+      "result_len": 35575
+    },
+    {
+      "t": 154.09,
+      "tool": "grep",
+      "args": {
+        "pattern": "RelatedFieldListFilter",
+        "directory": "tests"
+      },
+      "result_len": 181
+    },
+    {
+      "t": 160.36,
+      "tool": "read_file",
+      "args": {
+        "path": "tests/admin_filters/tests.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 168.04,
+      "tool": "read_file",
+      "args": {
+        "path": "tests/admin_filters/tests.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 176.8,
+      "tool": "grep",
+      "args": {
+        "pattern": "def get_ordering",
+        "directory": "django/contrib/admin"
+      },
+      "result_len": 613
+    },
+    {
+      "t": 183.29,
+      "tool": "read_file",
+      "args": {
+        "path": "django/contrib/admin/options.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 202.78,
+      "tool": "grep",
+      "args": {
+        "pattern": "RelatedOnlyFieldListFilter",
+        "directory": "django"
+      },
+      "result_len": 1484
+    },
+    {
+      "t": 208.78,
+      "tool": "grep",
+      "args": {
+        "pattern": "test.*ordering.*RelatedFieldListFilter",
+        "directory": "tests"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 215.44,
+      "tool": "grep",
+      "args": {
+        "pattern": "ordering.*RelatedFieldListFilter",
+        "directory": "tests"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 279.75,
+      "tool": "grep",
+      "args": {
+        "pattern": "field.get_choices",
+        "directory": "django/contrib/admin"
+      },
+      "result_len": 545
+    },
+    {
+      "t": 286.36,
+      "tool": "read_file",
+      "args": {
+        "path": "django/contrib/admin/options.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 299.26,
+      "tool": "grep",
+      "args": {
+        "pattern": "test_relatedfieldlistfilter",
+        "directory": "tests"
+      },
+      "result_len": 832
+    },
+    {
+      "t": 306.26,
+      "tool": "read_file",
+      "args": {
+        "path": "tests/admin_filters/tests.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 324.15,
+      "tool": "grep",
+      "args": {
+        "pattern": "test_relatedonlyfieldlistfilter",
+        "directory": "tests"
+      },
+      "result_len": 506
+    },
+    {
+      "t": 358.92,
+      "tool": "grep",
+      "args": {
+        "pattern": "\\.get_choices.*ordering",
+        "directory": "django"
+      },
+      "result_len": 619
+    }
+  ],
+  "note_missing": "reasoning/chain-of-thought not captured \u2014 trace contains tool sequence + timestamps only"
+}
