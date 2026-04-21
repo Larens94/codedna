@@ -1,12 +1,13 @@
 """test_wiki.py — Tests for codedna_tool.wiki (Obsidian vault bootstrap + project wiki).
 
-exports: class TestWikilink | class TestSlug | class TestPageMarkdown | class TestBuildVault | class TestAgentNotesPreservation | class TestProjectWiki
+exports: class TestWikilink | class TestSlug | class TestPageMarkdown | class TestBuildVault | class TestAgentNotesPreservation | class TestProjectWiki | class TestWikiFieldTarget
 used_by: none
 rules:   Tests must never require network or LLM access.
          Vault generation uses tmp_path only — never touches the real repo.
 agent:   claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | initial test suite for wiki vault generator — wikilinks, slug, markdown rendering, AGENT NOTES preservation
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki2 | add TestProjectWiki — 4 tests for render_project_wiki + build_project_wiki (workingfm template integration)
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki4 | update tests for nested vault layout — slug preserves folders, wikilinks use `path|display` format, build_vault mirrors source hierarchy
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki5 | add TestWikiFieldTarget + page render tests for the wiki: opt-in field — covers callout layout and missing-field behavior
 """
 
 from __future__ import annotations
@@ -21,6 +22,7 @@ from codedna_tool.wiki import (
     _PROJECT_WIKI_MARKER_AGENT,
     _read_project_name,
     _slug_for_rel,
+    _wiki_field_target,
     _wikilink,
     build_project_wiki,
     render_project_wiki,
@@ -137,6 +139,42 @@ class TestPageMarkdown:
         page = _page_markdown("foo.py", fields)
         assert "real entry" in page
         assert "trailing prose" not in page
+
+    def test_page_renders_wiki_field_as_callout(self):
+        """When wiki: is present, render a clickable [[wikilink]] to the curated page."""
+        fields = {"first_line": "test — test.", "exports": "exports: foo()",
+                  "used_by": "used_by: none",
+                  "wiki": "wiki: docs/wiki/cli.md",
+                  "rules": "rules:   none",
+                  "agent": "agent:   m | p | 2026-04-21 | s_001 | init"}
+        page = _page_markdown("foo.py", fields)
+        assert "📖 Extended documentation" in page
+        assert "[[cli|docs/wiki/cli.md]]" in page
+        assert "Read it **before editing**" in page
+
+    def test_page_skips_wiki_section_when_field_absent(self):
+        """If wiki: is not in the fields, the section must not appear."""
+        fields = {"first_line": "test — test.", "exports": "exports: foo()",
+                  "used_by": "used_by: none", "rules": "rules:   none",
+                  "agent": "agent:   m | p | 2026-04-21 | s_001 | init"}
+        page = _page_markdown("foo.py", fields)
+        assert "Extended documentation" not in page
+
+
+class TestWikiFieldTarget:
+    def test_strips_vault_prefix_and_extension(self):
+        assert _wiki_field_target("docs/wiki/cli.md") == "cli"
+
+    def test_preserves_nested_path(self):
+        assert _wiki_field_target("docs/wiki/codedna_tool/cli.md") == "codedna_tool/cli"
+
+    def test_returns_empty_when_not_markdown(self):
+        """Non-.md paths are an invalid wiki: value — skip rendering."""
+        assert _wiki_field_target("docs/wiki/cli.txt") == ""
+
+    def test_handles_value_without_vault_prefix(self):
+        """If the field uses a path not starting with docs/wiki/, still strip .md."""
+        assert _wiki_field_target("other/place/foo.md") == "other/place/foo"
 
 
 class TestBuildVault:

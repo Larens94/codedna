@@ -1,6 +1,6 @@
 """wiki.py — Generate an Obsidian-compatible wiki vault from CodeDNA annotations.
 
-exports: SKIP_DIRS | build_wiki_vault(repo_root, out_dir, extensions) | _wikilink(rel) | _slug_for_rel(rel) | _extract_fields(path) | _page_markdown(rel, fields) | _generate_index(repo_root, out_dir, rel_paths) | _generate_log(repo_root, out_dir) | _read_project_name(repo_root) | _list_top_level_dirs(repo_root) | render_project_wiki(project_name, repo_root) | build_project_wiki(repo_root, out_path) | _escape_obsidian_hashtags(text)
+exports: SKIP_DIRS | build_wiki_vault(repo_root, out_dir, extensions) | _wikilink(rel) | _slug_for_rel(rel) | _wiki_field_target(wiki_value) | _extract_fields(path) | _page_markdown(rel, fields) | _generate_index(repo_root, out_dir, rel_paths) | _generate_log(repo_root, out_dir) | _read_project_name(repo_root) | _list_top_level_dirs(repo_root) | render_project_wiki(project_name, repo_root) | build_project_wiki(repo_root, out_path) | _escape_obsidian_hashtags(text)
 used_by: codedna_tool/cli.py → build_wiki_vault (wiki subcommand)
 wiki:    docs/wiki/wiki.md
 rules:   The output vault is an artifact — rigenerato ad ogni `codedna wiki bootstrap`.
@@ -12,6 +12,7 @@ agent:   claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | initial wi
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki2 | add render_project_wiki + build_project_wiki (narrative wiki, 7-section template adapted from @workingfm PR #2); strip sub-agent/skill scaffolding in favor of hook-based enforcement
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki3 | fix Obsidian graph pollution — wrap numeric hashtags (e.g. `#1072-1077`) in backticks via _escape_obsidian_hashtags so they render as inline code, not tag nodes
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki4 | switch vault to nested layout — `_slug_for_rel` preserves folder hierarchy; wikilinks use "relative path to file" format; handles duplicate basenames (e.g. __init__.py)
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki5 | render the wiki: field in generated pages — emits a "📖 Extended documentation" callout with a clickable [[wikilink]] to the curated .md; the graph now shows the arc between auto-generated and curated pages (the opt-in pattern made visible)
 """
 
 from __future__ import annotations
@@ -126,6 +127,23 @@ def _field_value(fields: dict, key: str) -> str:
 _HASHTAG_NUMBER_RE = re.compile(r"#\d[\d-]*")
 
 
+def _wiki_field_target(wiki_value: str) -> str:
+    """Convert a wiki: pointer (e.g. 'docs/wiki/cli.md') to an Obsidian wikilink target.
+
+    Rules:   Strips a leading 'docs/wiki/' prefix (the vault root) so the target is
+             interpreted relative to the vault, not the repo.
+             Strips the trailing .md because Obsidian auto-appends it.
+             Returns an empty string when the pointer doesn't end with .md — in that
+             case the caller should skip rendering to avoid generating a broken link.
+    """
+    val = wiki_value.strip()
+    if not val.endswith(".md"):
+        return ""
+    if val.startswith("docs/wiki/"):
+        val = val[len("docs/wiki/"):]
+    return val[: -len(".md")]
+
+
 def _escape_obsidian_hashtags(text: str) -> str:
     """Wrap #123, #123-456 in backticks so Obsidian doesn't treat them as tags.
 
@@ -203,6 +221,21 @@ def _page_markdown(rel: str, fields: dict) -> str:
             else:
                 lines.append(f"- {_wikilink(entry)}")
         lines.append("")
+
+    # Opt-in deeper context: the wiki: field signals "a prior agent curated extra info here".
+    # We render it as a callout + a [[wikilink]] so Obsidian shows the arc in the graph.
+    wiki_ptr = _field_value(fields, "wiki")
+    if wiki_ptr:
+        target = _wiki_field_target(wiki_ptr)
+        if target:
+            lines.append("## 📖 Extended documentation")
+            lines.append("")
+            lines.append(
+                f"> A prior agent curated deeper context for this file: [[{target}|{wiki_ptr}]]"
+            )
+            lines.append(">")
+            lines.append("> Read it **before editing** — it contains information deemed important enough to preserve outside the structural docstring.")
+            lines.append("")
 
     rules = _field_value(fields, "rules")
     if rules and rules != "none":
