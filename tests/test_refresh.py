@@ -9,6 +9,7 @@ claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | updated TestReduce
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | remove .rs from TestReducedHeader ext list — Rust removed from registry
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | add TestWikiField — 4 tests for the experimental wiki: pointer field (parse, rebuild, refresh preservation, opt-in absence)
 claude-sonnet-4-6 | anthropic | 2026-04-22 | s_20260422_refresh | add TestRefreshPreservesLLMAnnotations — 3 regression tests for bug where refresh degraded real annotations to "none" on PHP config + Python files with no AST importers
+claude-sonnet-4-6 | anthropic | 2026-04-22 | s_20260422_matrix | add TestRefreshPreserveMatrix — exhaustive 14-case matrix covering Python+PHP paths, all combinations of old/new exports/used_by values (preserve vs update vs no-change)
 """
 
 from __future__ import annotations
@@ -327,6 +328,238 @@ class TestRefreshPreservesLLMAnnotations:
         content = (tmp_path / "utils.py").read_text()
         assert "app.py" in content, "used_by was not updated when AST found a real importer"
         assert "old_caller.py" not in content, "stale used_by value was not replaced"
+
+
+class TestRefreshPreserveMatrix:
+    """Exhaustive matrix of preserve-vs-update behaviour in cmd_refresh.
+
+    Axes:
+      - file type: Python (AST path) vs non-Python/PHP (lang-header path)
+      - old exports: real value | "none" | empty
+      - old used_by: real value | "none" | empty
+      - new exports computed by parser: real | "none" (parser blind)
+      - new used_by computed by parser: real | "none" (no importers found)
+
+    Expected outcome rule:
+      - new=real, old=anything  → UPDATE (parser found evidence)
+      - new="none", old=real    → PRESERVE (parser found nothing; trust LLM)
+      - new="none", old="none"  → keep "none" (both agree — no update printed)
+      - new="none", old=empty   → write "none" (no prior knowledge to protect)
+    """
+
+    # ── helpers ──────────────────────────────────────────────────────────────
+
+    @staticmethod
+    def _py_file(exports: str, used_by: str) -> str:
+        return (
+            f'"""mod.py — Module.\n\n'
+            f'exports: {exports}\n'
+            f'used_by: {used_by}\n'
+            f'rules:   none\n'
+            f'agent:   test | anthropic | 2026-04-22 | s_001 | test\n'
+            f'"""\n\ndef foo(): pass\n'
+        )
+
+    @staticmethod
+    def _php_file(exports: str, used_by: str) -> str:
+        return (
+            "<?php\n"
+            "// config.php — Config.\n//\n"
+            f"// exports: {exports}\n"
+            f"// used_by: {used_by}\n"
+            "// rules:   none\n"
+            "// agent:   test | anthropic | 2026-04-22 | s_001 | test\n"
+            "\nreturn [];\n"
+        )
+
+    # ── Python path ───────────────────────────────────────────────────────────
+
+    def test_py_preserve_exports_when_parser_blind(self, tmp_path):
+        """Python: parser finds no public symbols → keep LLM exports value.
+
+        Only private functions (underscore prefix) → AST returns [] → _fmt_exports="none".
+        The fix must preserve the existing LLM-annotated value.
+        """
+        (tmp_path / "mod.py").write_text(
+            '"""mod.py — Module.\n\n'
+            'exports: MyClass | my_fn()\n'
+            'used_by: caller.py → use_it\n'
+            'rules:   none\n'
+            'agent:   test | anthropic | 2026-04-22 | s_001 | test\n'
+            '"""\n\n# intentionally no public symbols — simulates a config/constants module\n'
+            'def _private_impl(): pass\n'
+        )
+        run_codedna("refresh", str(tmp_path))
+        content = (tmp_path / "mod.py").read_text()
+        assert "MyClass" in content, "exports: was zeroed out"
+
+    def test_py_preserve_used_by_when_no_importers(self, tmp_path):
+        """Python: no files import this module → keep LLM used_by."""
+        (tmp_path / "mod.py").write_text(
+            self._py_file("foo()", "external/app.py → boot")
+        )
+        run_codedna("refresh", str(tmp_path))
+        content = (tmp_path / "mod.py").read_text()
+        assert "external/app.py" in content, "used_by: was zeroed out"
+
+    def test_py_update_used_by_when_importer_exists(self, tmp_path):
+        """Python: real importer found → used_by IS updated."""
+        (tmp_path / "mod.py").write_text(
+            self._py_file("foo()", "stale_caller.py → old")
+        )
+        (tmp_path / "caller.py").write_text("from mod import foo\nfoo()\n")
+        run_codedna("refresh", str(tmp_path))
+        content = (tmp_path / "mod.py").read_text()
+        assert "caller.py" in content, "used_by was not updated"
+        assert "stale_caller.py" not in content, "stale value not removed"
+
+    def test_py_update_exports_when_ast_finds_real(self, tmp_path):
+        """Python: AST finds a public function → exports IS updated."""
+        (tmp_path / "mod.py").write_text(
+            self._py_file("none", "none")
+        )
+        # overwrite with a file that has a real public function
+        (tmp_path / "mod.py").write_text(
+            '"""mod.py — Module.\n\n'
+            'exports: none\n'
+            'used_by: none\n'
+            'rules:   none\n'
+            'agent:   test | anthropic | 2026-04-22 | s_001 | test\n'
+            '"""\n\ndef my_real_function(): pass\n'
+        )
+        run_codedna("refresh", str(tmp_path))
+        content = (tmp_path / "mod.py").read_text()
+        assert "my_real_function" in content, "exports not updated from none→real"
+
+    def test_py_both_none_old_both_none_no_change(self, tmp_path):
+        """Python: old=none, parser=none → exports/used_by stay none.
+
+        File with only private symbols → AST finds nothing → "none".
+        Old value is already "none" → no update needed.
+        """
+        (tmp_path / "mod.py").write_text(
+            '"""mod.py — Module.\n\n'
+            'exports: none\n'
+            'used_by: none\n'
+            'rules:   none\n'
+            'agent:   test | anthropic | 2026-04-22 | s_001 | test\n'
+            '"""\n\ndef _internal(): pass\n'
+        )
+        run_codedna("refresh", str(tmp_path))
+        content = (tmp_path / "mod.py").read_text()
+        assert "exports: none" in content, "exports was unexpectedly changed"
+        assert "used_by: none" in content, "used_by was unexpectedly changed"
+
+    def test_py_preserve_only_exports_when_used_by_updated(self, tmp_path):
+        """Python: exports parser-blind (no public symbols) but used_by found → preserve exports, update used_by."""
+        (tmp_path / "mod.py").write_text(
+            '"""mod.py — Module.\n\n'
+            'exports: LLM annotated export list\n'
+            'used_by: old_caller.py → fn\n'
+            'rules:   none\n'
+            'agent:   test | anthropic | 2026-04-22 | s_001 | test\n'
+            '"""\n\ndef _internal(): pass\n'
+        )
+        (tmp_path / "real_caller.py").write_text("from mod import _internal\n")
+        run_codedna("refresh", str(tmp_path))
+        content = (tmp_path / "mod.py").read_text()
+        assert "LLM annotated export list" in content, "exports was zeroed while used_by was updated"
+        assert "real_caller.py" in content, "used_by was not updated"
+
+    def test_py_preserve_rules_and_agent_always(self, tmp_path):
+        """Python: rules: and agent: must never be touched by refresh."""
+        (tmp_path / "mod.py").write_text(
+            '"""mod.py — Module.\n\n'
+            'exports: foo()\n'
+            'used_by: none\n'
+            'rules:   amount is cents not euros — divide by 100 before display\n'
+            'agent:   my-model | anthropic | 2026-04-22 | s_001 | critical business rule here\n'
+            '"""\n\ndef foo(): pass\n'
+        )
+        run_codedna("refresh", str(tmp_path))
+        content = (tmp_path / "mod.py").read_text()
+        assert "amount is cents not euros" in content, "rules: was modified"
+        assert "critical business rule here" in content, "agent: was modified"
+
+    # ── Non-Python / PHP path ─────────────────────────────────────────────────
+
+    @pytest.mark.skipif(not _has_treesitter_php(), reason="tree-sitter-php not installed")
+    def test_php_preserve_exports_when_parser_blind(self, tmp_path):
+        """PHP: tree-sitter finds no exports → keep LLM value."""
+        (tmp_path / "config.php").write_text(
+            self._php_file("config array for app.name, app.env", "Laravel via config('app.*')")
+        )
+        run_codedna("refresh", str(tmp_path))
+        content = (tmp_path / "config.php").read_text()
+        assert "config array for app.name" in content, "exports: was overwritten"
+
+    @pytest.mark.skipif(not _has_treesitter_php(), reason="tree-sitter-php not installed")
+    def test_php_preserve_used_by_when_no_importers(self, tmp_path):
+        """PHP: no PHP file imports this one in the tmp dir → keep LLM used_by."""
+        (tmp_path / "config.php").write_text(
+            self._php_file("config array", "external/app.php → bootstrap")
+        )
+        run_codedna("refresh", str(tmp_path))
+        content = (tmp_path / "config.php").read_text()
+        assert "external/app.php" in content, "used_by: was overwritten"
+
+    @pytest.mark.skipif(not _has_treesitter_php(), reason="tree-sitter-php not installed")
+    def test_php_update_used_by_when_importer_exists(self, tmp_path):
+        """PHP: real importer found via Laravel PSR-4 layout → used_by IS updated.
+
+        _resolve_use maps App\\Models\\User → app/Models/User.php (lowercase first segment).
+        The files must mirror that layout for the resolver to find them.
+        """
+        model_dir = tmp_path / "app" / "Models"
+        model_dir.mkdir(parents=True)
+        ctrl_dir = tmp_path / "app" / "Http" / "Controllers"
+        ctrl_dir.mkdir(parents=True)
+
+        (model_dir / "User.php").write_text(
+            "<?php\n"
+            "// User.php — User model.\n//\n"
+            "// exports: User\n"
+            "// used_by: stale.php → old\n"
+            "// rules:   none\n"
+            "// agent:   test | anthropic | 2026-04-22 | s_001 | test\n"
+            "\nnamespace App\\Models;\nclass User {}\n"
+        )
+        (ctrl_dir / "UserController.php").write_text(
+            "<?php\n"
+            "namespace App\\Http\\Controllers;\n"
+            "use App\\Models\\User;\n"
+            "class UserController { public function show() { return new User(); } }\n"
+        )
+        run_codedna("refresh", str(tmp_path))
+        content = (model_dir / "User.php").read_text()
+        assert "UserController" in content or "Controllers" in content, "used_by not updated"
+        assert "stale.php" not in content, "stale value not removed"
+
+    @pytest.mark.skipif(not _has_treesitter_php(), reason="tree-sitter-php not installed")
+    def test_php_none_to_none_no_change(self, tmp_path):
+        """PHP: old=none, parser=none → file unchanged."""
+        source = self._php_file("none", "none")
+        (tmp_path / "config.php").write_text(source)
+        run_codedna("refresh", str(tmp_path))
+        content = (tmp_path / "config.php").read_text()
+        assert content == source, "file was modified when nothing changed"
+
+    @pytest.mark.skipif(not _has_treesitter_php(), reason="tree-sitter-php not installed")
+    def test_php_preserve_rules_and_agent_always(self, tmp_path):
+        """PHP: rules: and agent: must never be touched by refresh."""
+        (tmp_path / "Foo.php").write_text(
+            "<?php\n"
+            "// Foo.php — Foo.\n//\n"
+            "// exports: Foo\n"
+            "// used_by: none\n"
+            "// rules:   soft-delete only — NEVER use DELETE\n"
+            "// agent:   my-model | anthropic | 2026-04-22 | s_001 | critical\n"
+            "\nclass Foo {}\n"
+        )
+        run_codedna("refresh", str(tmp_path))
+        content = (tmp_path / "Foo.php").read_text()
+        assert "soft-delete only" in content, "rules: was modified"
+        assert "critical" in content, "agent: was modified"
 
 
 class TestHasCodednaHeader:
