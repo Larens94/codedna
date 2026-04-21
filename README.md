@@ -55,6 +55,7 @@ Install the plugin, then run `/codedna:init` — it guides you through everythin
 | Agent | Install command |
 |-------|---------|
 | **Claude Code** | `claude plugin marketplace add Larens94/codedna && claude plugin install codedna@codedna` |
+| **Codex / OpenCode / Aider** | No install needed — read [AGENTS.md](./AGENTS.md) at the repo root. These runtimes auto-load it. |
 | **Cursor** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) cursor-hooks` |
 | **Copilot** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) copilot-hooks` |
 | **Cline** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) cline-hooks` |
@@ -432,6 +433,7 @@ codedna mode agent    # full protocol
 | | |
 |---|---|
 | [SPEC.md](./SPEC.md) | Protocol specification v0.9 |
+| [AGENTS.md](./AGENTS.md) | Protocol v0.9 for Codex, OpenCode, Aider, and other runtimes |
 | [docs/languages.md](docs/languages.md) | 9 languages, template engines, framework awareness |
 | [docs/benchmark.md](docs/benchmark.md) | SWE-bench results, annotation integrity |
 | [docs/agent-tests.md](docs/agent-tests.md) | Real AI agent sessions — control vs CodeDNA on SWE-bench tasks |
