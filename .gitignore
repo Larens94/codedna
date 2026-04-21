@@ -61,4 +61,5 @@ dev_notes/
 # Curated pages (manual approfondimenti, e.g. docs/wiki/cli.md) are whitelisted below.
 docs/wiki/*
 !docs/wiki/cli.md
+!docs/wiki/wiki.md
 .obsidian/
