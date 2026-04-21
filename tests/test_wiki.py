@@ -6,6 +6,7 @@ rules:   Tests must never require network or LLM access.
          Vault generation uses tmp_path only — never touches the real repo.
 agent:   claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | initial test suite for wiki vault generator — wikilinks, slug, markdown rendering, AGENT NOTES preservation
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki2 | add TestProjectWiki — 4 tests for render_project_wiki + build_project_wiki (workingfm template integration)
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki4 | update tests for nested vault layout — slug preserves folders, wikilinks use `path|display` format, build_vault mirrors source hierarchy
 """
 
 from __future__ import annotations
@@ -60,16 +61,17 @@ def write_annotated(project: Path, rel: str, exports: str, used_by: str,
 
 
 class TestSlug:
-    def test_slug_replaces_slash_and_dot(self):
-        assert _slug_for_rel("foo/bar.py") == "foo-bar-py"
+    def test_slug_strips_extension_preserves_folders(self):
+        assert _slug_for_rel("foo/bar.py") == "foo/bar"
 
     def test_slug_deterministic(self):
         assert _slug_for_rel("a/b/c.py") == _slug_for_rel("a/b/c.py")
 
-    def test_slug_no_path_separators(self):
-        slug = _slug_for_rel("deep/nested/path.py")
-        assert "/" not in slug
-        assert slug == "deep-nested-path-py"
+    def test_slug_handles_compound_blade_php(self):
+        assert _slug_for_rel("resources/views/show.blade.php") == "resources/views/show"
+
+    def test_slug_handles_nested_paths(self):
+        assert _slug_for_rel("deep/nested/path.py") == "deep/nested/path"
 
 
 class TestWikilink:
@@ -77,19 +79,19 @@ class TestWikilink:
         link = _wikilink("foo/bar.py")
         assert link.startswith("[[")
         assert link.endswith("]]")
-        assert "foo-bar-py" in link
-        assert "foo/bar.py" in link
+        assert "foo/bar" in link  # nested target (without .py)
+        assert "|foo/bar.py]]" in link  # display keeps original path
 
     def test_wikilink_extracts_path_from_arrow_entry(self):
         """used_by entries like 'foo.py → bar' should strip after the arrow."""
         link = _wikilink("foo.py → some_symbol")
-        assert "[[foo-py|foo.py]]" in link
+        assert "[[foo|foo.py]]" in link
         assert "some_symbol" not in link
 
     def test_wikilink_extracts_path_from_dash_entry(self):
         """related entries like 'foo.py — note' should strip after the dash."""
         link = _wikilink("foo.py — shares logic")
-        assert "[[foo-py|foo.py]]" in link
+        assert "[[foo|foo.py]]" in link
         assert "shares logic" not in link
 
 
@@ -114,7 +116,7 @@ class TestPageMarkdown:
                   "rules": "rules:   none",
                   "agent": "agent:   m | p | 2026-04-21 | s_001 | init"}
         page = _page_markdown("foo.py", fields)
-        assert "[[app-py|app.py]]" in page
+        assert "[[app|app.py]]" in page
 
     def test_page_uses_wikilinks_for_related(self):
         fields = {"first_line": "test — test.", "exports": "exports: foo()",
@@ -123,7 +125,7 @@ class TestPageMarkdown:
                   "rules": "rules:   none",
                   "agent": "agent:   m | p | 2026-04-21 | s_001 | init"}
         page = _page_markdown("foo.py", fields)
-        assert "[[other-py|other.py]]" in page
+        assert "[[other|other.py]]" in page
         assert "shares pattern" in page
 
     def test_page_filters_non_agent_lines_from_agent_field(self):
@@ -144,16 +146,16 @@ class TestBuildVault:
         out = tmp_path / "vault"
         n = build_wiki_vault(tmp_path, out, extensions=[".py"])
         assert n == 2
-        assert (out / "src-a-py.md").exists()
-        assert (out / "src-b-py.md").exists()
+        assert (out / "src" / "a.md").exists()
+        assert (out / "src" / "b.md").exists()
 
-    def test_vault_is_flat(self, tmp_path):
+    def test_vault_mirrors_source_hierarchy(self, tmp_path):
         write_annotated(tmp_path, "deep/nested/file.py", "f()", "none")
         out = tmp_path / "vault"
         build_wiki_vault(tmp_path, out, extensions=[".py"])
-        assert (out / "deep-nested-file-py.md").exists()
-        # No nested dirs — vault is flat
-        assert not (out / "deep").exists()
+        assert (out / "deep" / "nested" / "file.md").exists()
+        # Hierarchy mirrors source layout
+        assert (out / "deep" / "nested").is_dir()
 
     def test_index_and_log_are_generated(self, tmp_path):
         write_annotated(tmp_path, "a.py", "a()", "none")
@@ -177,7 +179,7 @@ class TestAgentNotesPreservation:
         out = tmp_path / "vault"
         build_wiki_vault(tmp_path, out, extensions=[".py"])
 
-        page_path = out / "a-py.md"
+        page_path = out / "a.md"
         original = page_path.read_text(encoding="utf-8")
         # Append agent notes below the marker
         augmented = original + "\n## My note\n\nThis is a durable observation.\n"
