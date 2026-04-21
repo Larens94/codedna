@@ -1,6 +1,6 @@
 """wiki.py — Generate an Obsidian-compatible wiki vault from CodeDNA annotations.
 
-exports: SKIP_DIRS | build_wiki_vault(repo_root, out_dir, extensions) | _wikilink(rel) | _slug_for_rel(rel) | _wiki_field_target(wiki_value) | _extract_fields(path) | _page_markdown(rel, fields) | _generate_index(repo_root, out_dir, rel_paths) | _generate_log(repo_root, out_dir) | _read_project_name(repo_root) | _list_top_level_dirs(repo_root) | render_project_wiki(project_name, repo_root) | build_project_wiki(repo_root, out_path) | _escape_obsidian_hashtags(text)
+exports: SKIP_DIRS | build_wiki_vault(repo_root, out_dir, extensions) | _wikilink(rel) | _slug_for_rel(rel) | _wiki_field_target(wiki_value) | _is_placeholder(value) | _extract_fields(path) | _page_markdown(rel, fields) | _generate_index(repo_root, out_dir, rel_paths) | _generate_log(repo_root, out_dir) | _read_project_name(repo_root) | _list_top_level_dirs(repo_root) | render_project_wiki(project_name, repo_root) | build_project_wiki(repo_root, out_path) | _escape_obsidian_hashtags(text) | _escape_inline_wikilinks(text)
 used_by: codedna_tool/cli.py → build_wiki_vault (wiki subcommand)
 wiki:    docs/wiki/wiki.md
 rules:   The output vault is an artifact — rigenerato ad ogni `codedna wiki bootstrap`.
@@ -13,6 +13,8 @@ claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki2 | add render_project
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki3 | fix Obsidian graph pollution — wrap numeric hashtags (e.g. `#1072-1077`) in backticks via _escape_obsidian_hashtags so they render as inline code, not tag nodes
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki4 | switch vault to nested layout — `_slug_for_rel` preserves folder hierarchy; wikilinks use "relative path to file" format; handles duplicate basenames (e.g. __init__.py)
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki5 | render the wiki: field in generated pages — emits a "📖 Extended documentation" callout with a clickable [[wikilink]] to the curated .md; the graph now shows the arc between auto-generated and curated pages (the opt-in pattern made visible)
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki6 | drop spurious graph nodes — _is_placeholder detects values like "none (entry-point script)" and renders them as inline code instead of [[wikilinks]]
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki7 | escape literal [[...]] mentions in Rules/Agent bullets via _escape_inline_wikilinks so docs talking ABOUT wikilinks don't spawn phantom graph nodes
 """
 
 from __future__ import annotations
@@ -125,6 +127,29 @@ def _field_value(fields: dict, key: str) -> str:
 
 
 _HASHTAG_NUMBER_RE = re.compile(r"#\d[\d-]*")
+_INLINE_WIKILINK_RE = re.compile(r"\[\[[^\[\]]+\]\]")
+
+
+def _escape_inline_wikilinks(text: str) -> str:
+    """Wrap any [[...]] in backticks so Obsidian treats them as text, not live links.
+
+    Rules:   Rules: / agent: entries often mention [[wikilink]] as example syntax;
+             without this escape Obsidian creates phantom graph nodes from them.
+             Only touches double-bracket sequences; the real wikilinks we emit come
+             from _wikilink() and bypass this function (they're already in a link list).
+    """
+    return _INLINE_WIKILINK_RE.sub(lambda m: f"`{m.group(0)}`", text)
+
+
+def _is_placeholder(value: str) -> bool:
+    """Return True if the entry is a human-readable placeholder, not a real file path.
+
+    Rules:   Prevents spurious Obsidian nodes like "none (entry-point script)" by
+             detecting common placeholder prefixes/values before they reach _wikilink.
+             Match is case-insensitive on the leading token.
+    """
+    lead = value.strip().lower()
+    return lead.startswith(("none", "n/a", "tbd", "todo"))
 
 
 def _wiki_field_target(wiki_value: str) -> str:
@@ -198,11 +223,15 @@ def _page_markdown(rel: str, fields: dict) -> str:
         lines.append("")
         for entry in used_by.split("\n"):
             entry = entry.strip()
-            if not entry:
+            if not entry or _is_placeholder(entry):
                 continue
             if "→" in entry:
                 p, sym = entry.split("→", 1)
-                lines.append(f"- {_wikilink(p.strip())} → {sym.strip()}")
+                p = p.strip()
+                if _is_placeholder(p):
+                    lines.append(f"- `{p}` → {sym.strip()}")
+                else:
+                    lines.append(f"- {_wikilink(p)} → {sym.strip()}")
             else:
                 lines.append(f"- {_wikilink(entry)}")
         lines.append("")
@@ -213,11 +242,15 @@ def _page_markdown(rel: str, fields: dict) -> str:
         lines.append("")
         for entry in related.split("\n"):
             entry = entry.strip()
-            if not entry:
+            if not entry or _is_placeholder(entry):
                 continue
             if "—" in entry:
                 p, note = entry.split("—", 1)
-                lines.append(f"- {_wikilink(p.strip())} — {note.strip()}")
+                p = p.strip()
+                if _is_placeholder(p):
+                    lines.append(f"- `{p}` — {note.strip()}")
+                else:
+                    lines.append(f"- {_wikilink(p)} — {note.strip()}")
             else:
                 lines.append(f"- {_wikilink(entry)}")
         lines.append("")
@@ -244,7 +277,7 @@ def _page_markdown(rel: str, fields: dict) -> str:
         for r in rules.split("\n"):
             r = r.strip()
             if r:
-                lines.append(f"- {_escape_obsidian_hashtags(r)}")
+                lines.append(f"- {_escape_inline_wikilinks(_escape_obsidian_hashtags(r))}")
         lines.append("")
 
     agent = _field_value(fields, "agent")
@@ -256,7 +289,7 @@ def _page_markdown(rel: str, fields: dict) -> str:
             lines.append("## Agent history")
             lines.append("")
             for entry in agent_entries:
-                lines.append(f"- {_escape_obsidian_hashtags(entry)}")
+                lines.append(f"- {_escape_inline_wikilinks(_escape_obsidian_hashtags(entry))}")
             lines.append("")
 
     message = _field_value(fields, "message")
