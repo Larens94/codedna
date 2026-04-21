@@ -17,6 +17,7 @@ claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | _detect_project
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | add explanatory comments to 9 empty except blocks (scan_file ValueError for outside-repo paths, JSON repair fallback, _detect_project_meta OSError per-file) — CodeQL py/empty-except alerts #1689, #1696-1698, #1702-1707
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql2 | remove unused _HOOK_TOOLS set (never referenced — _TOOL_HOOKS_MAP.values() supersedes it) — CodeQL #1664
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | add optional wiki: field to Python + lang header parsers and rebuilders — opt-in pointer to deeper markdown doc (experimental v0.9 — Karpathy LLM-wiki pattern)
+claude-sonnet-4-6 | anthropic | 2026-04-22 | s_20260422_refresh | fix cmd_refresh: never degrade a real annotation to "none" — if tree-sitter/AST returns no exports or no importers, preserve the existing LLM-annotated value (bug: PHP config + TSX @/ alias files were zeroed out)
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -1456,6 +1457,13 @@ def cmd_refresh(target: Path, repo_root: Optional[Path], exclude: list[str],
             old_exp_val = old_exp.replace("exports:", "").strip() if old_exp else ""
             old_ub_val = old_ub.replace("used_by:", "").strip() if old_ub else ""
 
+            # Rules: never degrade a real annotation to "none" — if the parser
+            # finds nothing, trust the existing LLM-annotated value.
+            if new_exports == "none" and old_exp_val and old_exp_val != "none":
+                new_exports = old_exp_val
+            if new_used_by == "none" and old_ub_val and old_ub_val != "none":
+                new_used_by = old_ub_val
+
             if old_exp_val == new_exports and old_ub_val == new_used_by:
                 if verbose:
                     print(f"  unchanged          {rel}")
@@ -1491,6 +1499,13 @@ def cmd_refresh(target: Path, repo_root: Optional[Path], exclude: list[str],
         # Normalize for comparison
         old_exp_val = old_exports_raw.replace("exports:", "").strip() if old_exports_raw else ""
         old_ub_val = old_used_by_raw.replace("used_by:", "").strip() if old_used_by_raw else ""
+
+        # Rules: never degrade a real annotation to "none" — if the parser
+        # finds nothing, trust the existing LLM-annotated value.
+        if new_exports == "none" and old_exp_val and old_exp_val != "none":
+            new_exports = old_exp_val
+        if new_used_by == "none" and old_ub_val and old_ub_val != "none":
+            new_used_by = old_ub_val
 
         if old_exp_val == new_exports and old_ub_val == new_used_by:
             if verbose:

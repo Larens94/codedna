@@ -8,6 +8,7 @@ agent:   claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_003 | initial ref
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | updated TestReducedHeader: all languages now emit full headers (exports+used_by+rules+agent); updated validator test to require full PHP header
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | remove .rs from TestReducedHeader ext list — Rust removed from registry
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | add TestWikiField — 4 tests for the experimental wiki: pointer field (parse, rebuild, refresh preservation, opt-in absence)
+claude-sonnet-4-6 | anthropic | 2026-04-22 | s_20260422_refresh | add TestRefreshPreservesLLMAnnotations — 3 regression tests for bug where refresh degraded real annotations to "none" on PHP config + Python files with no AST importers
 """
 
 from __future__ import annotations
@@ -261,6 +262,71 @@ class TestCrossLanguageRefresh:
         assert "NEVER delete" in content, "rules: was modified"
         assert "my-model" in content, "agent: was modified"
         assert "important" in content, "agent narrative was modified"
+
+
+class TestRefreshPreservesLLMAnnotations:
+    """Regression tests for the bug where refresh degraded real annotations to 'none'.
+
+    Root cause: tree-sitter/AST returning empty results (e.g. unresolved @/ aliases
+    in TSX, or PHP config files with no structural importers) caused _fmt_exports /
+    _fmt_used_by to emit "none", overwriting LLM-annotated values.
+
+    Fix: if new value is "none" and old value is real, keep the old value.
+    """
+
+    def test_refresh_preserves_llm_exports_when_parser_finds_nothing(self, tmp_path):
+        """If tree-sitter can't resolve exports, keep the existing LLM-annotated value."""
+        (tmp_path / "config.php").write_text(
+            "<?php\n"
+            "// config.php — App configuration.\n//\n"
+            "// exports: config array for app.name, app.env, app.debug\n"
+            "// used_by: Laravel framework via config('app.*')\n"
+            "// rules:   none\n"
+            "// agent:   my-model | anthropic | 2026-04-22 | s_001 | LLM annotated\n"
+            "\nreturn ['name' => 'App', 'env' => 'production'];\n"
+        )
+        rc, out, _ = run_codedna("refresh", str(tmp_path))
+        assert rc == 0
+        content = (tmp_path / "config.php").read_text()
+        assert "config array for app.name" in content, \
+            f"exports: was overwritten with 'none':\n{content}"
+        assert "Laravel framework" in content, \
+            f"used_by: was overwritten with 'none':\n{content}"
+
+    def test_refresh_preserves_python_llm_exports_when_no_imports_found(self, tmp_path):
+        """If AST finds no importers for a Python file, keep the existing used_by value."""
+        (tmp_path / "constants.py").write_text(
+            '"""constants.py — Shared constants.\n\n'
+            'exports: MAX_RETRIES | TIMEOUT_SECONDS | DEFAULT_LOCALE\n'
+            'used_by: services/billing.py → charge | services/email.py → send\n'
+            'rules:   none\n'
+            'agent:   my-model | anthropic | 2026-04-22 | s_001 | LLM annotated\n'
+            '"""\n\n'
+            'MAX_RETRIES = 3\nTIMEOUT_SECONDS = 30\nDEFAULT_LOCALE = "en"\n'
+        )
+        # No files import constants.py in this tmp dir — AST would compute used_by: none
+        rc, out, _ = run_codedna("refresh", str(tmp_path))
+        assert rc == 0
+        content = (tmp_path / "constants.py").read_text()
+        assert "services/billing.py" in content, \
+            f"used_by: was overwritten with 'none':\n{content}"
+
+    def test_refresh_still_updates_when_parser_finds_real_data(self, tmp_path):
+        """When AST does find importers, used_by SHOULD be updated normally."""
+        (tmp_path / "utils.py").write_text(
+            '"""utils.py — Utilities.\n\n'
+            'exports: helper()\n'
+            'used_by: old_caller.py → old_fn\n'
+            'rules:   none\n'
+            'agent:   my-model | anthropic | 2026-04-22 | s_001 | test\n'
+            '"""\n\ndef helper(): return "ok"\n'
+        )
+        (tmp_path / "app.py").write_text('from utils import helper\ndef main(): return helper()\n')
+        rc, out, _ = run_codedna("refresh", str(tmp_path))
+        assert rc == 0
+        content = (tmp_path / "utils.py").read_text()
+        assert "app.py" in content, "used_by was not updated when AST found a real importer"
+        assert "old_caller.py" not in content, "stale used_by value was not replaced"
 
 
 class TestHasCodednaHeader:
