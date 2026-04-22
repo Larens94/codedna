@@ -1,0 +1,276 @@
+{
+  "session_id": "bench_deepseek-chat_15629_control_20260421_095632_r2",
+  "model": "deepseek-chat",
+  "provider": "openai",
+  "task": "django__django-15629",
+  "condition": "control",
+  "ground_truth": [
+    "django/db/backends/base/schema.py",
+    "django/db/backends/oracle/features.py",
+    "django/db/backends/sqlite3/schema.py",
+    "django/db/models/fields/related.py"
+  ],
+  "metrics_read": {
+    "recall": 0.25,
+    "precision": 0.3333333333333333,
+    "f1": 0.28571428571428575
+  },
+  "trace": [
+    {
+      "t": 4.3,
+      "tool": "list_files",
+      "args": {
+        "directory": "."
+      },
+      "result_len": 302
+    },
+    {
+      "t": 8.37,
+      "tool": "list_files",
+      "args": {
+        "directory": "django"
+      },
+      "result_len": 245
+    },
+    {
+      "t": 12.86,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db"
+      },
+      "result_len": 98
+    },
+    {
+      "t": 18.82,
+      "tool": "grep",
+      "args": {
+        "pattern": "db_collation",
+        "directory": "django"
+      },
+      "result_len": 2736
+    },
+    {
+      "t": 24.69,
+      "tool": "grep",
+      "args": {
+        "pattern": "ADD CONSTRAINT.*FOREIGN KEY",
+        "directory": "django"
+      },
+      "result_len": 364
+    },
+    {
+      "t": 29.75,
+      "tool": "grep",
+      "args": {
+        "pattern": "MODIFY.*COLLATE",
+        "directory": "django"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 34.14,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/mysql/schema.py"
+      },
+      "result_len": 7235
+    },
+    {
+      "t": 38.04,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/schema.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 44.75,
+      "tool": "grep",
+      "args": {
+        "pattern": "_alter_column_collation_sql",
+        "directory": "django"
+      },
+      "result_len": 726
+    },
+    {
+      "t": 50.69,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/schema.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 57.51,
+      "tool": "grep",
+      "args": {
+        "pattern": "def _alter_column_collation_sql",
+        "directory": "django/db/backends/base/schema.py"
+      },
+      "result_len": 91
+    },
+    {
+      "t": 62.88,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/schema.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 70.02,
+      "tool": "grep",
+      "args": {
+        "pattern": "_alter_column_collation_sql.*:",
+        "directory": "django/db/backends/base/schema.py"
+      },
+      "result_len": 91
+    },
+    {
+      "t": 75.17,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/schema.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 81.63,
+      "tool": "grep",
+      "args": {
+        "pattern": "def _alter_column_collation_sql\" -A 10",
+        "directory": "django/db/backends/base/schema.py"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 86.8,
+      "tool": "grep",
+      "args": {
+        "pattern": "_alter_column_collation_sql",
+        "directory": "django/db/backends/mysql"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 92.36,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/oracle/schema.py"
+      },
+      "result_len": 10724
+    },
+    {
+      "t": 99.85,
+      "tool": "grep",
+      "args": {
+        "pattern": "_create_fk_sql",
+        "directory": "django/db/backends/base/schema.py"
+      },
+      "result_len": 362
+    },
+    {
+      "t": 105.74,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/schema.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 112.85,
+      "tool": "grep",
+      "args": {
+        "pattern": "def _alter_column_collation_sql\" -B 5 -A 15",
+        "directory": "django/db/backends"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 119.78,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/schema.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 126.96,
+      "tool": "grep",
+      "args": {
+        "pattern": "_alter_column_collation_sql.*return",
+        "directory": "django/db/backends"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 133.06,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/schema.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 141.36,
+      "tool": "grep",
+      "args": {
+        "pattern": "def _alter_column_collation_sql\" -A 5",
+        "directory": "django"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 147.32,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/schema.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 155.94,
+      "tool": "grep",
+      "args": {
+        "pattern": "_collate_sql",
+        "directory": "django/db/backends"
+      },
+      "result_len": 638
+    },
+    {
+      "t": 162.31,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/schema.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 170.58,
+      "tool": "grep",
+      "args": {
+        "pattern": "_alter_column_collation_sql.*:\" -A 10",
+        "directory": "django/db/backends/base/schema.py"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 177.74,
+      "tool": "grep",
+      "args": {
+        "pattern": "post_actions",
+        "directory": "django/db/backends/base/schema.py"
+      },
+      "result_len": 161
+    },
+    {
+      "t": 185.5,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/schema.py"
+      },
+      "result_len": 40000
+    }
+  ],
+  "note_missing": "reasoning/chain-of-thought not captured \u2014 trace contains tool sequence + timestamps only"
+}

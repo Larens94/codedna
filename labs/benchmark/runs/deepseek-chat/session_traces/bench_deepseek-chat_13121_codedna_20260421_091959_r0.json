@@ -1,0 +1,265 @@
+{
+  "session_id": "bench_deepseek-chat_13121_codedna_20260421_091959_r0",
+  "model": "deepseek-chat",
+  "provider": "openai",
+  "task": "django__django-13121",
+  "condition": "codedna",
+  "ground_truth": [
+    "django/db/backends/base/operations.py",
+    "django/db/backends/mysql/operations.py",
+    "django/db/backends/sqlite3/operations.py",
+    "django/db/models/expressions.py"
+  ],
+  "metrics_read": {
+    "recall": 1.0,
+    "precision": 0.6666666666666666,
+    "f1": 0.8
+  },
+  "trace": [
+    {
+      "t": 3.67,
+      "tool": "list_files",
+      "args": {
+        "directory": "."
+      },
+      "result_len": 281
+    },
+    {
+      "t": 6.66,
+      "tool": "list_files",
+      "args": {
+        "directory": "django"
+      },
+      "result_len": 255
+    },
+    {
+      "t": 20.54,
+      "tool": "grep",
+      "args": {
+        "pattern": "\\.codedna",
+        "directory": "."
+      },
+      "result_len": 12
+    },
+    {
+      "t": 25.42,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/operations.py"
+      },
+      "result_len": 27919
+    },
+    {
+      "t": 31.19,
+      "tool": "grep",
+      "args": {
+        "pattern": "convert_durationfield_value",
+        "directory": "django/db/backends/base/operations.py"
+      },
+      "result_len": 78
+    },
+    {
+      "t": 36.11,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/operations.py"
+      },
+      "result_len": 27919
+    },
+    {
+      "t": 42.15,
+      "tool": "grep",
+      "args": {
+        "pattern": "def convert_durationfield_value",
+        "directory": "django"
+      },
+      "result_len": 188
+    },
+    {
+      "t": 47.16,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/operations.py"
+      },
+      "result_len": 27919
+    },
+    {
+      "t": 54.63,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/mysql/operations.py"
+      },
+      "result_len": 16260
+    },
+    {
+      "t": 59.44,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/sqlite3/operations.py"
+      },
+      "result_len": 15247
+    },
+    {
+      "t": 68.24,
+      "tool": "grep",
+      "args": {
+        "pattern": "convert_durationfield_value",
+        "directory": "django/db/backends"
+      },
+      "result_len": 188
+    },
+    {
+      "t": 76.52,
+      "tool": "read_file",
+      "args": {
+        "path": "tests/expressions/tests.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 82.77,
+      "tool": "grep",
+      "args": {
+        "pattern": "test_duration_expressions",
+        "directory": "tests"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 87.58,
+      "tool": "grep",
+      "args": {
+        "pattern": "duration.*expression",
+        "directory": "tests/expressions/tests.py"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 93.8,
+      "tool": "read_file",
+      "args": {
+        "path": "tests/expressions/tests.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 101.21,
+      "tool": "grep",
+      "args": {
+        "pattern": "def test.*duration",
+        "directory": "tests"
+      },
+      "result_len": 2425
+    },
+    {
+      "t": 107.25,
+      "tool": "read_file",
+      "args": {
+        "path": "tests/expressions/tests.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 116.66,
+      "tool": "read_file",
+      "args": {
+        "path": "tests/expressions/tests.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 125.72,
+      "tool": "read_file",
+      "args": {
+        "path": "tests/expressions/tests.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 135.12,
+      "tool": "grep",
+      "args": {
+        "pattern": "test_duration_expressions",
+        "directory": "tests"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 141.17,
+      "tool": "grep",
+      "args": {
+        "pattern": "duration.*expression",
+        "directory": "tests"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 152.6,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/operations.py"
+      },
+      "result_len": 27919
+    },
+    {
+      "t": 169.13,
+      "tool": "grep",
+      "args": {
+        "pattern": "duration.*field",
+        "directory": "django/db"
+      },
+      "result_len": 2018
+    },
+    {
+      "t": 175.17,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/features.py"
+      },
+      "result_len": 12843
+    },
+    {
+      "t": 182.42,
+      "tool": "grep",
+      "args": {
+        "pattern": "has_native_duration_field",
+        "directory": "django/db/backends"
+      },
+      "result_len": 453
+    },
+    {
+      "t": 191.55,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/expressions.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 201.31,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/expressions.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 215.59,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/expressions.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 237.83,
+      "tool": "grep",
+      "args": {
+        "pattern": "decimal.Decimal.*1000000",
+        "directory": "django"
+      },
+      "result_len": 12
+    }
+  ],
+  "note_missing": "reasoning/chain-of-thought not captured \u2014 trace contains tool sequence + timestamps only"
+}

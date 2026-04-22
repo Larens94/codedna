@@ -1,0 +1,261 @@
+{
+  "session_id": "bench_deepseek-chat_15629_codedna_20260421_100050_r2",
+  "model": "deepseek-chat",
+  "provider": "openai",
+  "task": "django__django-15629",
+  "condition": "codedna",
+  "ground_truth": [
+    "django/db/backends/base/schema.py",
+    "django/db/backends/oracle/features.py",
+    "django/db/backends/sqlite3/schema.py",
+    "django/db/models/fields/related.py"
+  ],
+  "metrics_read": {
+    "recall": 0.25,
+    "precision": 0.3333333333333333,
+    "f1": 0.28571428571428575
+  },
+  "trace": [
+    {
+      "t": 4.35,
+      "tool": "list_files",
+      "args": {
+        "directory": "."
+      },
+      "result_len": 302
+    },
+    {
+      "t": 13.82,
+      "tool": "list_files",
+      "args": {
+        "directory": "django"
+      },
+      "result_len": 245
+    },
+    {
+      "t": 18.29,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db"
+      },
+      "result_len": 98
+    },
+    {
+      "t": 26.3,
+      "tool": "grep",
+      "args": {
+        "pattern": "db_collation",
+        "directory": "django"
+      },
+      "result_len": 2736
+    },
+    {
+      "t": 31.66,
+      "tool": "grep",
+      "args": {
+        "pattern": "ForeignKey.*collation|collation.*ForeignKey",
+        "directory": "django"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 35.61,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db/models"
+      },
+      "result_len": 320
+    },
+    {
+      "t": 39.33,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db/models/fields"
+      },
+      "result_len": 173
+    },
+    {
+      "t": 43.8,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db/migrations"
+      },
+      "result_len": 267
+    },
+    {
+      "t": 48.21,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db/migrations/operations"
+      },
+      "result_len": 80
+    },
+    {
+      "t": 52.75,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/fields/__init__.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 59.08,
+      "tool": "grep",
+      "args": {
+        "pattern": "class CharField",
+        "directory": "django/db/models/fields"
+      },
+      "result_len": 690
+    },
+    {
+      "t": 65.04,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/fields/__init__.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 71.33,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/fields/__init__.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 78.26,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/fields/__init__.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 84.67,
+      "tool": "grep",
+      "args": {
+        "pattern": "^class CharField\"",
+        "directory": "django/db/models/fields"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 89.26,
+      "tool": "grep",
+      "args": {
+        "pattern": "class CharField\\(",
+        "directory": "django/db/models/fields"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 94.27,
+      "tool": "grep",
+      "args": {
+        "pattern": "class CharField",
+        "directory": "django/db/models/fields"
+      },
+      "result_len": 690
+    },
+    {
+      "t": 100.4,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/fields/__init__.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 106.84,
+      "tool": "grep",
+      "args": {
+        "pattern": "class UUIDField",
+        "directory": "django/db/models/fields"
+      },
+      "result_len": 137
+    },
+    {
+      "t": 113.11,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/fields/__init__.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 120.65,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/fields/__init__.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 128.92,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/fields/related.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 136.49,
+      "tool": "grep",
+      "args": {
+        "pattern": "rel_db_type",
+        "directory": "django/db/models"
+      },
+      "result_len": 939
+    },
+    {
+      "t": 143.15,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/fields/__init__.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 155.07,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/fields/__init__.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 164.31,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/models/fields/__init__.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 172.22,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db/backends"
+      },
+      "result_len": 152
+    },
+    {
+      "t": 177.47,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db/backends/mysql"
+      },
+      "result_len": 180
+    },
+    {
+      "t": 184.38,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/mysql/schema.py"
+      },
+      "result_len": 7604
+    }
+  ],
+  "note_missing": "reasoning/chain-of-thought not captured \u2014 trace contains tool sequence + timestamps only"
+}

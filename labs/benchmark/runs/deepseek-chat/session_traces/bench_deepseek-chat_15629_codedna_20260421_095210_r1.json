@@ -1,0 +1,263 @@
+{
+  "session_id": "bench_deepseek-chat_15629_codedna_20260421_095210_r1",
+  "model": "deepseek-chat",
+  "provider": "openai",
+  "task": "django__django-15629",
+  "condition": "codedna",
+  "ground_truth": [
+    "django/db/backends/base/schema.py",
+    "django/db/backends/oracle/features.py",
+    "django/db/backends/sqlite3/schema.py",
+    "django/db/models/fields/related.py"
+  ],
+  "metrics_read": {
+    "recall": 0.25,
+    "precision": 0.3333333333333333,
+    "f1": 0.28571428571428575
+  },
+  "trace": [
+    {
+      "t": 4.97,
+      "tool": "list_files",
+      "args": {
+        "directory": "."
+      },
+      "result_len": 302
+    },
+    {
+      "t": 14.76,
+      "tool": "list_files",
+      "args": {
+        "directory": "django"
+      },
+      "result_len": 245
+    },
+    {
+      "t": 19.59,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db"
+      },
+      "result_len": 98
+    },
+    {
+      "t": 24.24,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db/migrations"
+      },
+      "result_len": 267
+    },
+    {
+      "t": 27.91,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db/migrations/operations"
+      },
+      "result_len": 80
+    },
+    {
+      "t": 31.82,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db/models"
+      },
+      "result_len": 320
+    },
+    {
+      "t": 35.58,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db/models/fields"
+      },
+      "result_len": 173
+    },
+    {
+      "t": 41.36,
+      "tool": "grep",
+      "args": {
+        "pattern": "db_collation",
+        "directory": "django"
+      },
+      "result_len": 2736
+    },
+    {
+      "t": 48.57,
+      "tool": "grep",
+      "args": {
+        "pattern": "AlterField",
+        "directory": "django"
+      },
+      "result_len": 4000
+    },
+    {
+      "t": 53.72,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/migrations/operations/fields.py"
+      },
+      "result_len": 12692
+    },
+    {
+      "t": 58.82,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db/backends"
+      },
+      "result_len": 152
+    },
+    {
+      "t": 62.89,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/db/backends/mysql"
+      },
+      "result_len": 180
+    },
+    {
+      "t": 67.06,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/mysql/schema.py"
+      },
+      "result_len": 7604
+    },
+    {
+      "t": 72.61,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/schema.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 79.88,
+      "tool": "grep",
+      "args": {
+        "pattern": "_alter_column_collation_sql",
+        "directory": "django"
+      },
+      "result_len": 726
+    },
+    {
+      "t": 86.2,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/schema.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 94.05,
+      "tool": "grep",
+      "args": {
+        "pattern": "def _alter_column_collation_sql",
+        "directory": "django"
+      },
+      "result_len": 395
+    },
+    {
+      "t": 99.77,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/schema.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 107.68,
+      "tool": "grep",
+      "args": {
+        "pattern": "_alter_column_collation_sql.*:",
+        "directory": "django"
+      },
+      "result_len": 395
+    },
+    {
+      "t": 113.3,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/schema.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 122.02,
+      "tool": "grep",
+      "args": {
+        "pattern": "def _alter_column_collation_sql\" -A 10",
+        "directory": "django"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 127.8,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/schema.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 135.29,
+      "tool": "grep",
+      "args": {
+        "pattern": "_alter_column_collation_sql.*return",
+        "directory": "django"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 142.65,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/mysql/schema.py"
+      },
+      "result_len": 7604
+    },
+    {
+      "t": 157.76,
+      "tool": "grep",
+      "args": {
+        "pattern": "_create_fk_sql",
+        "directory": "django"
+      },
+      "result_len": 1085
+    },
+    {
+      "t": 164.59,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/schema.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 173.37,
+      "tool": "grep",
+      "args": {
+        "pattern": "_create_fk_sql.*new_rel",
+        "directory": "django"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 179.92,
+      "tool": "read_file",
+      "args": {
+        "path": "django/db/backends/base/schema.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 189.14,
+      "tool": "grep",
+      "args": {
+        "pattern": "post_actions.*extend",
+        "directory": "django"
+      },
+      "result_len": 157
+    }
+  ],
+  "note_missing": "reasoning/chain-of-thought not captured \u2014 trace contains tool sequence + timestamps only"
+}

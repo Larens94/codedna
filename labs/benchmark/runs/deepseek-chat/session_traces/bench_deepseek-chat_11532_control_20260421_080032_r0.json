@@ -1,0 +1,279 @@
+{
+  "session_id": "bench_deepseek-chat_11532_control_20260421_080032_r0",
+  "model": "deepseek-chat",
+  "provider": "openai",
+  "task": "django__django-11532",
+  "condition": "control",
+  "ground_truth": [
+    "django/core/mail/message.py",
+    "django/core/mail/utils.py",
+    "django/core/validators.py",
+    "django/utils/encoding.py",
+    "django/utils/html.py"
+  ],
+  "metrics_read": {
+    "recall": 0.4,
+    "precision": 0.6666666666666666,
+    "f1": 0.5
+  },
+  "trace": [
+    {
+      "t": 3.39,
+      "tool": "list_files",
+      "args": {
+        "directory": "."
+      },
+      "result_len": 281
+    },
+    {
+      "t": 7.03,
+      "tool": "list_files",
+      "args": {
+        "directory": "django"
+      },
+      "result_len": 255
+    },
+    {
+      "t": 10.41,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/core"
+      },
+      "result_len": 250
+    },
+    {
+      "t": 13.61,
+      "tool": "list_files",
+      "args": {
+        "directory": "django/core/mail"
+      },
+      "result_len": 64
+    },
+    {
+      "t": 16.73,
+      "tool": "list_files",
+      "args": {
+        "directory": "tests"
+      },
+      "result_len": 4255
+    },
+    {
+      "t": 19.37,
+      "tool": "list_files",
+      "args": {
+        "directory": "tests/mail"
+      },
+      "result_len": 101
+    },
+    {
+      "t": 23.07,
+      "tool": "read_file",
+      "args": {
+        "path": "django/core/mail/message.py"
+      },
+      "result_len": 16788
+    },
+    {
+      "t": 27.29,
+      "tool": "read_file",
+      "args": {
+        "path": "django/core/mail/utils.py"
+      },
+      "result_len": 452
+    },
+    {
+      "t": 30.85,
+      "tool": "read_file",
+      "args": {
+        "path": "tests/mail/tests.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 35.8,
+      "tool": "grep",
+      "args": {
+        "pattern": "test_unicode_dns",
+        "directory": "tests/mail"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 39.91,
+      "tool": "grep",
+      "args": {
+        "pattern": "unicode.*dns",
+        "directory": "tests/mail"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 43.56,
+      "tool": "read_file",
+      "args": {
+        "path": "tests/mail/tests.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 51.02,
+      "tool": "grep",
+      "args": {
+        "pattern": "Message-ID",
+        "directory": "tests/mail"
+      },
+      "result_len": 847
+    },
+    {
+      "t": 60.34,
+      "tool": "grep",
+      "args": {
+        "pattern": "DNS_NAME",
+        "directory": "."
+      },
+      "result_len": 1264
+    },
+    {
+      "t": 66.44,
+      "tool": "read_file",
+      "args": {
+        "path": "django/core/mail/message.py"
+      },
+      "result_len": 16788
+    },
+    {
+      "t": 78.26,
+      "tool": "grep",
+      "args": {
+        "pattern": "make_msgid",
+        "directory": "django/core/mail"
+      },
+      "result_len": 644
+    },
+    {
+      "t": 84.16,
+      "tool": "read_file",
+      "args": {
+        "path": "django/core/mail/utils.py"
+      },
+      "result_len": 452
+    },
+    {
+      "t": 100.25,
+      "tool": "grep",
+      "args": {
+        "pattern": "xn--p8s937b",
+        "directory": "."
+      },
+      "result_len": 12
+    },
+    {
+      "t": 106.78,
+      "tool": "grep",
+      "args": {
+        "pattern": "patch.*DNS_NAME",
+        "directory": "."
+      },
+      "result_len": 12
+    },
+    {
+      "t": 112.72,
+      "tool": "grep",
+      "args": {
+        "pattern": "idna",
+        "directory": "."
+      },
+      "result_len": 847
+    },
+    {
+      "t": 123.53,
+      "tool": "grep",
+      "args": {
+        "pattern": "DNS_NAME",
+        "directory": "django"
+      },
+      "result_len": 1264
+    },
+    {
+      "t": 160.39,
+      "tool": "grep",
+      "args": {
+        "pattern": "idna.*encode",
+        "directory": "django"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 183.35,
+      "tool": "grep",
+      "args": {
+        "pattern": "from.*DNS_NAME",
+        "directory": "."
+      },
+      "result_len": 462
+    },
+    {
+      "t": 188.83,
+      "tool": "grep",
+      "args": {
+        "pattern": "\u00e9xample",
+        "directory": "tests"
+      },
+      "result_len": 493
+    },
+    {
+      "t": 194.07,
+      "tool": "read_file",
+      "args": {
+        "path": "tests/mail/tests.py"
+      },
+      "result_len": 40000
+    },
+    {
+      "t": 203.45,
+      "tool": "grep",
+      "args": {
+        "pattern": "\u6b63\u5b97",
+        "directory": "."
+      },
+      "result_len": 12
+    },
+    {
+      "t": 210.16,
+      "tool": "grep",
+      "args": {
+        "pattern": "\u6f22\u5b57",
+        "directory": "."
+      },
+      "result_len": 12
+    },
+    {
+      "t": 217.43,
+      "tool": "grep",
+      "args": {
+        "pattern": "hostname.*unicode",
+        "directory": "tests"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 224.96,
+      "tool": "grep",
+      "args": {
+        "pattern": "assertIn.*xn--",
+        "directory": "tests"
+      },
+      "result_len": 12
+    },
+    {
+      "t": 266.25,
+      "tool": "grep",
+      "args": {
+        "pattern": "CachedDnsName",
+        "directory": "."
+      },
+      "result_len": 592
+    }
+  ],
+  "note_missing": "reasoning/chain-of-thought not captured \u2014 trace contains tool sequence + timestamps only"
+}
