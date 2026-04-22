@@ -2,7 +2,22 @@
 
 All notable changes to CodeDNA will be documented in this file.
 
-## [0.9.0] — 2026-04-21 *(experimental — on `experiment/wiki-field` branch, not yet merged)*
+## [0.9.1] — 2026-04-22
+
+### Added
+
+- **DeepSeek benchmark expanded to 10 tasks** — 6 new Django tasks (13121, 15629, 16263, 11400, 11883, 11808) independently replicated by [@fabioscialanga](https://github.com/fabioscialanga), integrated in [a9ddde6](https://github.com/Larens94/codedna/commit/a9ddde6) with co-authorship. Combined result: **+17.1pp F1 mean** (was +11pp on 6 tasks), Wilcoxon exact **p=0.0009765625**, wins/losses/ties = **10/0/0**. Two tasks (11808, 13121) show CodeDNA std=0.00 across 3 runs vs 0.20–0.25 for control — stability, not just mean.
+
+### Fixed
+
+- **`codedna refresh` no longer degrades real annotations to `"none"`** — when tree-sitter/AST returns no exports or no importers (e.g. PHP config files, TSX with unresolved `@/` aliases), the existing LLM-annotated value is preserved instead of being overwritten. Regression bug reported against a Laravel+Inertia project where 107 files had their `exports:`/`used_by:` zeroed out. Fix applies to both Python (AST) and non-Python (tree-sitter) paths.
+- **`tools/validate_manifests.py` now recognises optional fields** — parser was iterating over `REQUIRED_FIELDS` only, silently folding `wiki:`/`related:`/`message:` values into the previous field. The `wiki:` path-existence check was therefore never executed in practice.
+
+### Tests
+
+- 173 total tests passing (was 170); 17 new regression tests in `TestRefreshPreserveMatrix` and `TestRefreshPreservesLLMAnnotations` — exhaustive preserve-vs-update matrix across Python+PHP paths, all combinations of old/new exports/used_by values.
+
+## [0.9.0] — 2026-04-21
 
 ### Added
 
@@ -72,7 +87,7 @@ All notable changes to CodeDNA will be documented in this file.
 ### Changed
 - `agent:` format extended: `model | provider | YYYY-MM-DD | session_id | description`
 - `.codedna` `agent_sessions:` format extended with `provider`, `session_id`, `visited` fields
-- Benchmark results updated: final multi-model results with Wilcoxon signed-rank tests. Gemini 2.5 Flash: +13pp F1, p=0.040 ✅. DeepSeek Chat: +9pp, p=0.11. Gemini 2.5 Pro: +9pp, p=0.11.
+- Benchmark results updated: final multi-model results with Wilcoxon signed-rank tests. Gemini 2.5 Flash: +13pp F1, p=0.040 ✅. DeepSeek Chat: +9pp, p=0.11 *(later expanded to 10 tasks in 0.9.1: +17pp, p=0.001)*. Gemini 2.5 Pro: +9pp, p=0.11.
 - B1/B2 custom benchmarks removed from all papers — only SWE-bench results remain.
 - All integration files (`.cursorrules`, `.windsurfrules`, `.clinerules`, `copilot-instructions.md`, `.agents/workflows/codedna.md`) aligned to v0.8.
 
