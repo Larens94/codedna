@@ -412,9 +412,9 @@ img { max-width: 100%; height: auto; }
 <!-- STATS ROW -->
 <div class="stats-row">
   <div class="stat-cell">
-    <div class="stat-number">+13pp</div>
+    <div class="stat-number">+17pp</div>
     <div class="stat-label" data-i18n="stat1Label">F1 improvement</div>
-    <div class="stat-note" data-i18n="stat1Note">Gemini 2.5 Flash, p=0.040</div>
+    <div class="stat-note" data-i18n="stat1Note">DeepSeek Chat · 10 tasks · p=0.001</div>
   </div>
   <div class="stat-cell">
     <div class="stat-number">3</div>
@@ -457,7 +457,7 @@ img { max-width: 100%; height: auto; }
         <div class="prob-accent"></div>
         <div class="prob-title" data-i18n="prob3Title">The Solution: CodeDNA</div>
         <div class="prob-text" data-i18n="prob3Text">Context lives in the file itself — not in an external document. Each snippet the AI reads carries architectural constraints for that module.</div>
-        <span class="prob-verdict pv-good" data-i18n="prob3Verdict">+13pp F1 on SWE-bench (Gemini 2.5 Flash, p=0.040)</span>
+        <span class="prob-verdict pv-good" data-i18n="prob3Verdict">+17pp F1 on SWE-bench (DeepSeek Chat · 10 tasks · p=0.001)</span>
       </div>
     </div>
   </div>
@@ -789,7 +789,7 @@ agent:   gemini-2.5-pro | 2026-03-18 | Added annual_summary.
   <div class="section-inner">
     <div class="eyebrow" data-i18n="mmEyebrow">Multi-Model SWE-bench</div>
     <h2 data-i18n="mmH2">Tested across multiple LLMs.</h2>
-    <p class="section-lead" data-i18n-html="mmLead">5 real Django issues from <strong>SWE-bench</strong>, tested across multiple LLMs. Same prompt, same tools, same tasks. <strong>Gemini 2.5 Flash: +13pp F1, p=0.040 · DeepSeek Chat: +9pp F1, p=0.11 · Gemini 2.5 Pro: +9pp F1, p=0.11. All 3 models improve.</strong></p>
+    <p class="section-lead" data-i18n-html="mmLead">Django issues from <strong>SWE-bench</strong>, tested across multiple LLMs. Same prompt, same tools, same tasks. <strong>DeepSeek Chat: +17pp F1, p=0.001, 10/0/0 · Gemini 2.5 Flash: +13pp F1, p=0.040 · Gemini 2.5 Pro: +9pp F1. All 3 models improve.</strong></p>
 
     <div class="chart-pair">
       <div class="chart-card" style="grid-column: span 2;">
@@ -826,7 +826,7 @@ agent:   gemini-2.5-pro | 2026-03-18 | Added annual_summary.
       </div>
       <div class="sc-card">
         <div class="sc-tag">DeepSeek Chat</div>
-        <div class="sc-title" data-i18n="mmSurpTitle">DeepSeek Chat — +9pp F1 (p=0.11)</div>
+        <div class="sc-title" data-i18n="mmSurpTitle">DeepSeek Chat — +17pp F1 (p=0.001 · 10/0/0)</div>
         <div class="sc-body" data-i18n="mmSurpBody">From 50% to 60%. Wins 4/5 tasks. Notable: +35pp on cross-cutting task 11808 — opposite direction from Gemini Flash (−1pp). Task 13495 anomaly (−9pp) under investigation. Not statistically significant.</div>
         <div class="sc-scores">
           <div class="sc-score bad">Control<strong>50%</strong></div>
@@ -844,7 +844,7 @@ agent:   gemini-2.5-pro | 2026-03-18 | Added annual_summary.
     </div>
 
     <p style="margin-top:1.75rem; font-size:0.8rem; color:var(--gray-600); padding:1rem 1.25rem; background:var(--white); border:1px solid var(--gray-200); border-radius:var(--radius);" data-i18n-html="mmMethod">
-      🔬 <strong style="color:var(--black)">Methodology:</strong> 5 SWE-bench Django tasks × 3 models (Gemini 2.5 Flash ✓, DeepSeek Chat ✓, Gemini 2.5 Pro ✓). 5 runs/task at T=0.1. Identical system prompt, same 3 tools (read_file, list_files, grep), max 30 turns. Metric: File Localization F1 (ground-truth files from patch). Statistical test: Wilcoxon signed-rank (one-tailed). Script: <code>benchmark_agent/swebench/run_agent_multi.py</code>.
+      🔬 <strong style="color:var(--black)">Methodology:</strong> SWE-bench Django tasks × 3 models (Gemini 2.5 Flash ✓, DeepSeek Chat 10 tasks ✓, Gemini 2.5 Pro ✓). 3–5 runs/task at T=0.1. Identical system prompt, same 3 tools (read_file, list_files, grep), max 30 turns. Metric: File Localization F1 (ground-truth files from patch). Statistical test: Wilcoxon signed-rank (one-tailed). 6 DeepSeek tasks independently replicated by <a href="https://github.com/fabioscialanga" target="_blank">@fabioscialanga</a>. Script: <code>benchmark_agent/swebench/run_agent_multi.py</code>.
     </p>
   </div>
 </div>
@@ -881,7 +881,7 @@ agent:   gemini-2.5-pro | 2026-03-18 | Added annual_summary.
       <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Level 3 — Semantic Naming + CONTEXT_BUDGET (v0.3)</div><div class="rm-sub" data-i18n-html="rm3Sub">Naming <code>&lt;type&gt;_&lt;shape&gt;_&lt;domain&gt;_&lt;origin&gt;</code>. Manifest-Only Planner Read.</div></div></div>
       <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">LLM-Optimised Format (v0.5)</div><div class="rm-sub" data-i18n="rm4Sub">Python-native module docstring (L1) + function-level Rules: docstrings (L2). Maximises LLM comprehension trained on Python corpora.</div></div></div>
       <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm5Title">Enterprise Benchmark — 105-file, 3 bugs, 48 distractors</div><div class="rm-sub" data-i18n="rm5Sub">−29% tool calls, 0 incorrect root-cause identifications (vs 1 Control). Replicable on disk.</div></div></div>
-      <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm6Title">Multi-Model SWE-bench Benchmark — 5 tasks, 5 runs/task</div><div class="rm-sub" data-i18n="rm6Sub">Gemini 2.5 Flash: ctrl=60%, DNA=72%, Δ=+13pp, p=0.040 · DeepSeek Chat: ctrl=50%, DNA=60%, Δ=+9pp, p=0.11 · Gemini 2.5 Pro: ctrl=60%, DNA=69%, Δ=+9pp, p=0.11</div></div></div>
+      <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm6Title">Multi-Model SWE-bench Benchmark — up to 10 tasks, 3 runs/task</div><div class="rm-sub" data-i18n="rm6Sub">DeepSeek Chat: ctrl=51%, DNA=68%, Δ=+17pp, p=0.001, 10/0/0 · Gemini 2.5 Flash: ctrl=60%, DNA=72%, Δ=+13pp, p=0.040 · Gemini 2.5 Pro: ctrl=60%, DNA=69%, Δ=+9pp</div></div></div>
       <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title" data-i18n="rm7Title">White Paper / arXiv preprint</div><div class="rm-sub" data-i18n="rm7Sub">Formal study with reproducible methodology, DNA analogy, and comparison against SWE-bench, LoCoBench-Agent, ETH Zurich (2026).</div></div></div>
       <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">Redundancy Audit (v0.9) ✦ Current</div><div class="rm-sub">Header reduced to 3 fields: exports, used_by, rules. rules: promoted to required — the inter-agent communication channel. Python-only focus.</div></div></div>
       <div class="rm-row"><div class="rm-indicator"><div class="rm-dot done"></div><span class="rm-badge rb-done" data-i18n="badgeDone">Done</span></div><div><div class="rm-title">M1 — CLI &amp; Auto-Annotation</div><div class="rm-sub">AST skeleton extraction · <code>codedna init</code>, <code>codedna update</code>, <code>codedna check</code> · pip installable · Claude Code Challenge: 7/7 patch files in ~8 min vs 6/7 in ~10–11 min (control). <a href="https://github.com/Larens94/codedna/tree/main/benchmark_agent/claude_code_challenge" target="_blank" style="color:var(--black);">Results →</a></div></div></div>
@@ -915,7 +915,7 @@ const IT = {
   h1:'Il codice che si<br><em>spiega da solo.</em>',
   heroSub:'Gli AI che modificano il tuo codice commettono errori perch\u00e9 <strong>non hanno contesto</strong>. CodeDNA lo incorpora direttamente nei file \u2014 come il DNA in ogni cellula. Zero RAG. Deriva minima.',
   heroCta1:'Vedi le prove \u2192', heroCta2:'Leggi la Spec',
-  stat1Label:'Miglioramento F1', stat1Note:'Gemini 2.5 Flash, p=0.040 \u2705',
+  stat1Label:'Miglioramento F1', stat1Note:'DeepSeek Chat · 10 task · p=0.001 ✅',
   stat2Label:'LLM testati', stat2Note:'\u0394 positivo su tutti e 3 i modelli',
   stat3Label:'Riduzione rischio retry', stat3Note:'run ad alto rischio: 52% → 25%',
   stat4Label:'Infrastruttura richiesta', stat4Note:'niente RAG, niente vector DB',
@@ -923,7 +923,7 @@ const IT = {
   probLead:"Immagina di affidare la ristrutturazione di un appartamento a un artigiano, senza mostrargli la planimetria. Stesso problema con gli AI che modificano il tuo codice. CodeDNA \u00e8 la planimetria.",
   prob1Title:'Finestra Scorrevole', prob1Text:'Gli AI leggono il codice a \"finestre\" di 50\u201360 righe. Se una regola critica \u00e8 definita 200 righe pi\u00f9 in alto, non la vedono \u2014 e la violano.', prob1Verdict:'\u274c Scenario S4: viola MAX_DISCOUNT_RATE',
   prob2Title:'Effetto Cascata', prob2Text:"Cambi una funzione. Altre 3 parti del sistema dipendono da lei. Senza una mappa, l'AI aggiorna solo il file che vede e lascia il resto rotto.", prob2Verdict:'\u274c Scenario S5: KeyError a runtime in main.py',
-  prob3Title:'La Soluzione: CodeDNA', prob3Text:"Il contesto vive nel file stesso \u2014 non in un documento esterno. Ogni frammento che l'AI legge porta con s\u00e9 i vincoli architetturali del modulo.", prob3Verdict:'\u2705 +13pp F1 su SWE-bench (Gemini 2.5 Flash, p=0.040)',
+  prob3Title:'La Soluzione: CodeDNA', prob3Text:"Il contesto vive nel file stesso — non in un documento esterno. Ogni frammento che l'AI legge porta con sé i vincoli architetturali del modulo.", prob3Verdict:'✅ +17pp F1 su SWE-bench (DeepSeek Chat, p=0.001)',
   howEyebrow:'Come Funziona', howH2:'Tre livelli. Ogni frammento \u00e8 autonomo.',
   howLead:"Come il DNA biologico: tagliarne metà produce due frammenti che portano ancora l'informazione completa. Con CodeDNA, 10 righe estratte a caso da qualsiasi punto del file bastano all'AI per agire correttamente.",
   l1Num:'Livello 1', l1Desc:"Una module docstring Python-nativa all'inizio di ogni file. L'AI la legge prima del codice e conosce gi\u00e0 scopo, API pubblica, chi dipende da questo file e regole. Formato nativo Python \u2014 massimizza la comprensione dei modelli addestrati su corpus Python.",

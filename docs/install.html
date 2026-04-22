@@ -634,7 +634,15 @@ ANTHROPIC_API_KEY=sk-... codedna init /path/to/project --model claude-haiku-4-5-
       <tr><td><span class="ic">codedna check PATH</span></td><td>Coverage report without modifying files. Exit code 1 if incomplete — works in CI.</td></tr>
       <tr><td><span class="ic">codedna manifest PATH</span></td><td>Generate <span class="ic">.codedna</span> project map (Level 0): packages, depends_on, key_files</td></tr>
       <tr><td><span class="ic">codedna mode MODE</span></td><td>Get/set mode: <span class="ic">human</span> (minimal), <span class="ic">semi</span> (default), <span class="ic">agent</span> (full protocol)</td></tr>
+      <tr><td><span class="ic">codedna wiki bootstrap PATH</span></td><td><em>(v0.9 experimental)</em> Generate a per-file <a href="https://obsidian.md" target="_blank">Obsidian</a> vault under <span class="ic">docs/wiki/</span> with <span class="ic">[[wikilinks]]</span> from <span class="ic">used_by:</span>/<span class="ic">related:</span> graphs</td></tr>
+      <tr><td><span class="ic">codedna wiki sync PATH</span></td><td><em>(v0.9 experimental)</em> Regenerate <span class="ic">docs/codedna-wiki.md</span> — a narrative 7-section project wiki. Hook to post-commit to keep it current.</td></tr>
     </table></div>
+
+    <div class="callout callout-blue" style="margin-top:1.5rem;">
+      <strong>Wiki layer in action</strong> — the <span class="ic">wiki:</span> opt-in field and the Obsidian graph view:<br><br>
+      <img src="../docs/codedna-wiki-flow-en.gif" alt="wiki: field — two paths" style="max-width:560px;width:100%;border-radius:8px;margin-bottom:1rem;display:block;">
+      <img src="../docs/obsidian.png" alt="Obsidian graph view of a project annotated with CodeDNA" style="max-width:680px;width:100%;border-radius:8px;display:block;">
+    </div>
 
     <h3>Supported models</h3>
     <div class="table-wrap"><table>

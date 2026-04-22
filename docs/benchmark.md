@@ -1,18 +1,18 @@
 # Benchmark Results — SWE-bench Multi-Model
 
-5 real Django issues from [SWE-bench](https://github.com/princeton-nlp/SWE-bench), tested across multiple LLMs. Same prompt, same tools, same tasks. **Only difference: CodeDNA annotations.**
+Django issues from [SWE-bench](https://github.com/princeton-nlp/SWE-bench), tested across multiple LLMs. Same prompt, same tools, same tasks. **Only difference: CodeDNA annotations.**
 
 > **Metric: File Localization F1** — harmonic mean of recall and precision on files read vs ground truth. Isolates the navigation bottleneck that precedes code generation.
 
-> **Statistical test:** Wilcoxon signed-rank test (one-tailed, H1: CodeDNA > Control) over F1 pairs across 5 tasks. N=5 with ≥5 runs per task at T=0.1.
+> **Statistical test:** Wilcoxon signed-rank test (one-tailed, H1: CodeDNA > Control).
 
-| Model | Ctrl F1 | DNA F1 | **Δ F1** | p-value | Tasks Won |
-|---|---|---|---|---|---|
-| **Gemini 2.5 Flash** | 60% | **72%** | **+13%** | 0.040* | 4/5 |
-| **DeepSeek Chat** | 50% | **60%** | **+9%** | 0.11 | 4/5 |
-| **Gemini 2.5 Pro** | 60% | **69%** | **+9%** | 0.11 | 3/5 |
+| Model | Tasks | Ctrl F1 | DNA F1 | **Δ F1** | p-value | Tasks Won |
+|---|---|---|---|---|---|---|
+| **Gemini 2.5 Flash** | 5 | 60% | **72%** | **+13%** | 0.040* | 4/5 |
+| **DeepSeek Chat** | 10 | 51% | **68%** | **+17%** | 0.001** | 10/10 |
+| **Gemini 2.5 Pro** | 5 | 60% | **69%** | **+9%** | 0.11 | 3/5 |
 
-> Gemini 2.5 Flash: W+=14, N=5, p=0.040 ✅ significant. DeepSeek Chat: W+=12, N=5, p=0.11. Gemini 2.5 Pro: W+=12, N=5, p=0.11. All runs: 5 tasks × 3–5 runs at T=0.1.
+> Gemini 2.5 Flash: W+=14, N=5, p=0.040 ✅. DeepSeek Chat: W+=55, N=10, p=0.001 ✅ (6 tasks independently replicated by [@fabioscialanga](https://github.com/fabioscialanga)). Gemini 2.5 Pro: W+=12, N=5, p=0.11.
 
 ---
 

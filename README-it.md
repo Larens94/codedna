@@ -38,7 +38,7 @@ Un protocollo di comunicazione in-source dove gli agenti AI inseriscono il conte
 Nessuna infrastruttura. Nessuna pipeline di retrieval. Nessuna memoria esterna. Il codice porta con sé il proprio contesto.
 
 ```diff
-+  ACCURATEZZA NAVIGAZIONE  ████████████░░░░   +13pp F1     SWE-bench · 3 modelli
++  ACCURATEZZA NAVIGAZIONE  ████████████████   +17pp F1     SWE-bench · 3 modelli · 10/0/0 DeepSeek
 +  QUALITÀ FIX              ████████████████   7 / 7        Django #13495 · Claude Sonnet
 +  VELOCITÀ TEAM            █████████████░░░   1.6×         team 5 agenti · DeepSeek R1
 +  ADOZIONE PROTOCOLLO      ███████████████░   98.2%        SaaS multi-agente · senza istruzioni
@@ -185,15 +185,17 @@ Nessun grep. Nessuna lettura di 18 file. Nessuna riscoperta di vincoli.
 
 ### Gli agenti trovano i file giusti più velocemente
 
-SWE-bench, 6 bug Django, 3 run per condizione. Stesso prompt, stessi tool. **Unica differenza: annotazioni CodeDNA.**
+SWE-bench, bug Django, 3 run per condizione. Stesso prompt, stessi tool. **Unica differenza: annotazioni CodeDNA.**
 
 | Modello | Senza | Con CodeDNA | Delta |
 |---|---|---|---|
 | Gemini 2.5 Flash (5 task) | 60% F1 | **72% F1** | **+13pp** (p=0.040) |
-| DeepSeek Chat (6 task, 3 run) | 60% F1 | **71% F1** | **+11pp** (p=0.014, Wilcoxon) |
+| DeepSeek Chat (10 task, 3 run) | 51% F1 | **68% F1** | **+17pp** (p=0.001, Wilcoxon · 10/0/0) |
 | Gemini 2.5 Pro (5 task) | 60% F1 | **69% F1** | **+9pp** |
 
-**Stabilità più che fortuna.** Su DeepSeek il vantaggio non è solo media più alta — è varianza più bassa. Su due task (11138, 11808) la std di control su 3 run è 0.22–0.25 F1 (l'agente a volte indovina, a volte no), mentre con CodeDNA la std scende a 0.00–0.06. Tutti i 6/6 task favoriscono CodeDNA, nessuna inversione. L'agente con annotazioni lavora per **comprensione strutturale**, non per caso.
+**Stabilità più che fortuna.** Su DeepSeek il vantaggio non è solo media più alta — è varianza più bassa. Sui task 11808 e 13121, la std di CodeDNA su 3 run è 0.00 (stesso risultato ogni volta), mentre quella del control è 0.20–0.25 (l'agente a volte indovina, a volte no). Tutti i 10/10 task favoriscono CodeDNA, nessuna inversione. L'agente con annotazioni lavora per **comprensione strutturale**, non per caso.
+
+> 6 dei 10 task DeepSeek (13121, 15629, 16263, 11400, 11883, 11808) sono stati eseguiti in modo indipendente da [@fabioscialanga](https://github.com/fabioscialanga) e contribuiti via PR. Replica indipendente su macchina separata con lo stesso protocollo.
 
 ### Gli agenti correggono il pattern giusto
 
@@ -447,7 +449,7 @@ Tutti i componenti sono funzionanti e testati ma **sperimentali** — il protoco
 |---|---|---|
 | **Protocollo v0.9** | `exports:` `used_by:` `related:` `rules:` `agent:` `message:` — tutti i campi implementati | Auto-generazione `related:` via LLM, rilevamento annotazioni stale |
 | **CLI** | `init` `update` `refresh` `check` `manifest` `mode` `install` — 9 linguaggi via tree-sitter | Pubblicazione PyPI, `codedna verify` per riferimenti stale, pass 2 cross-cutting |
-| **Benchmark** | 6 task Django, +13pp F1 (DeepSeek), +13pp (Gemini Flash p=0.040) | Condizione placebo, effect size, 20+ task, 5+ modelli |
+| **Benchmark** | 10 task Django (DeepSeek +17pp p=0.001), +13pp (Gemini Flash p=0.040) | Condizione placebo, effect size, 20+ task, 5+ modelli |
 | **Integrazioni** | Plugin Claude Code, Cursor, Copilot, Cline, OpenCode, Windsurf hooks | Estensione VS Code, GitHub Action per CI |
 | **Linguaggi** | Python, PHP, TypeScript, Go, Java, Kotlin, Ruby, Rust, C# + 7 template engine | Più test su progetti reali non-Python |
 | **Ricerca** | Esperimenti multi-agente (98.2% adozione, 1.6x più veloce), benchmark SWE-bench | Preprint arXiv, studio placebo + ablazione |
