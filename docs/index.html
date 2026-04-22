@@ -747,6 +747,51 @@ agent:   gemini-2.5-pro | 2026-03-18 | Added annual_summary.
   </div>
 </div>
 
+<!-- WIKI LAYER -->
+<div class="section section-alt" id="wiki-layer">
+  <div class="section-inner">
+    <div class="eyebrow">v0.9 Feature</div>
+    <h2><code>wiki:</code> — LLM-Wiki Layer for your Codebase</h2>
+    <p class="section-lead">The <code>wiki:</code> opt-in field in a docstring points to a curated markdown page with deeper context. When present, a prior agent decided this file deserves notes beyond what the terse header can hold. The next agent reads it before editing. Two commands turn your annotations into a navigable knowledge graph.</p>
+
+    <div class="levels-list">
+      <div class="level-item">
+        <div class="level-meta">
+          <div class="level-num">Two commands</div>
+          <div class="level-name">codedna wiki bootstrap · codedna wiki sync</div>
+          <div class="level-desc">
+            <strong><code>codedna wiki bootstrap .</code></strong> — generates one markdown page per source file under <code>docs/wiki/</code>, with <code>[[wikilinks]]</code> derived from the <code>used_by:</code> and <code>related:</code> graphs. Open in <a href="https://obsidian.md" target="_blank">Obsidian</a> to browse the dependency graph visually.<br><br>
+            <strong><code>codedna wiki sync .</code></strong> — regenerates <code>docs/codedna-wiki.md</code>, a narrative 7-section project wiki (identity, topology, workflows, hotspots…). Hook it to post-commit so it stays current without relying on an agent to remember.<br><br>
+            <strong>The <code>wiki:</code> field is the signal, not the dump.</strong> Only files where a prior agent decided the docstring is insufficient get a pointer. Sparsity is the signal — if you open a file and see <code>wiki:</code>, read it first.
+          </div>
+        </div>
+        <div class="level-code">
+          <div class="code-block">
+            <div class="code-bar"><div class="dot" style="background:#ff5f57"></div><div class="dot" style="background:#febc2e"></div><div class="dot" style="background:#28c840"></div><span class="code-filename">revenue.py — wiki: opt-in field</span></div>
+            <pre class="code-pre"><span class="th">"""revenue.py — Monthly revenue aggregation.
+
+exports: monthly_revenue(year, month) -> dict
+used_by: api/reports.py → revenue_route
+related: billing/currency.py — shares multi-currency logic
+<span style="background:rgba(99,102,241,0.12);border-radius:3px;padding:0 2px">wiki:    docs/wiki/revenue.md</span>
+rules:   get_invoices() returns ALL tenants
+         — MUST filter is_suspended() BEFORE sum
+agent:   claude-sonnet-4-6 | 2026-03-10 | ...
+"""</span></pre>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div style="margin-top:2rem; text-align:center;">
+      <p style="font-size:0.8rem;color:var(--gray-500);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">Wiki layer in action</p>
+      <img src="codedna-wiki-flow-en.gif" alt="wiki: field — two paths: wiki present → agent reads curated context; absent → docstring is sufficient" style="max-width:580px;width:100%;border-radius:var(--radius);border:1px solid var(--gray-200);margin-bottom:1.5rem;display:block;margin-left:auto;margin-right:auto;">
+      <p style="font-size:0.8rem;color:var(--gray-500);margin-bottom:0.75rem;text-transform:uppercase;letter-spacing:0.08em;font-weight:600;">Obsidian graph — real project annotated with CodeDNA</p>
+      <img src="obsidian.png" alt="Obsidian graph view of a real project annotated with CodeDNA — nodes are files, edges are used_by/related links" style="max-width:720px;width:100%;border-radius:var(--radius);border:1px solid var(--gray-200);display:block;margin-left:auto;margin-right:auto;">
+    </div>
+  </div>
+</div>
+
 <!-- BENCHMARK -->
 <div class="section" id="benchmark">
   <div class="section-inner">
