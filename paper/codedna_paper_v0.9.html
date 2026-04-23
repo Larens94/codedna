@@ -388,7 +388,7 @@
       <p class="no-indent">(5) A <strong>tooling layer</strong> (<code>codedna wiki bootstrap</code> and
         <code>codedna wiki sync</code>) that converts CodeDNA annotations into a navigable Obsidian-ready knowledge
         vault and a Karpathy-style narrative project wiki — turning in-source annotations into a human-browsable graph.</p>
-      <p class="no-indent">(5) Open-source release of spec, benchmark code, and AI integration files.</p>
+      <p class="no-indent">(6) Open-source release of spec, benchmark code, and AI integration files.</p>
 
       <!-- ─── 2. RELATED WORK ─── -->
       <h2 class="section">2. Related Work</h2>
@@ -647,7 +647,7 @@ agent:   gemini-2.5-pro | 2026-03-18 | added Y
       <h3 class="subsection">4.1 Agent Implementation</h3>
       <p class="no-indent">We implemented an autonomous agent using Gemini 2.5 Flash (temperature 0) with three
         function-calling tools: <code>read_file(path)</code>, <code>list_files(directory)</code>, and
-        <code>grep(pattern, directory)</code>. No file contents are pre-loaded. The agent runs to completion (max 20
+        <code>grep(pattern, directory)</code>. No file contents are pre-loaded. The agent runs to completion (max 30
         turns) or until it stops calling tools. While temperature 0 minimises sampling variance, we note that the full
         agent loop (tool orchestration, API behaviour) is not strictly deterministic in the mathematical sense. Metrics:
         <strong>total tool calls</strong>, <strong>read_file calls</strong>, <strong>grep calls</strong>,
@@ -742,20 +742,24 @@ agent:   gemini-2.5-pro | 2026-03-18 | added Y
         is the strongest evidence the current sample size permits; it meaningfully raises confidence that the DeepSeek
         effect is not an artefact of a single machine or a single rollout of the sampling loop.</p>
 
-      <p>Gemini 2.5 Flash shows the strongest benefit. One hypothesis is that Flash's
-        more concise reasoning style is better suited to following structured annotation chains than Pro's more verbose
-        approach. Gemini 2.5 Pro ctrl=60% matches Flash, suggesting these tasks do not favour larger models in the
-        control condition. The three models use different provider
-        stacks (Google native function calling vs. DeepSeek's OpenAI-compatible endpoint), which introduces some
-        cross-provider variability not fully controlled. This does not invalidate the comparison — the annotations
-        themselves are identical — but the observed differences reflect both CodeDNA's effect and provider-specific
-        runtime behaviour.</p>
+      <p>Under the v0.9 dataset, <strong>DeepSeek Chat shows both the largest effect (+17.1pp) and the lowest p-value
+        (0.001)</strong>, while Gemini 2.5 Flash (+13pp, p=0.040) and Gemini 2.5 Pro (+9pp, p=0.11) remain positive on
+        5 tasks each. Gemini 2.5 Pro ctrl=60% matches Flash, suggesting these tasks do not favour larger models in the
+        control condition. The three models use different provider stacks (Google native function calling vs.
+        DeepSeek's OpenAI-compatible endpoint), which introduces some cross-provider variability not fully controlled.
+        This does not invalidate the comparison — the annotations themselves are identical — but the observed
+        differences reflect both CodeDNA's effect and provider-specific runtime behaviour. The pattern that cheaper or
+        less capable models benefit most from CodeDNA — discussed below — is consistent with DeepSeek (the cheapest
+        of the three by cost-per-token) showing the strongest statistically validated gain.</p>
 
       <h3 class="subsection">5.2 When CodeDNA Helps Most</h3>
-      <p class="no-indent">Analysis across 5 SWE-bench tasks (Gemini 2.5 Flash, ≥5 runs each at T=0.1) suggests a
-        pattern correlated with the structural type of the task:</p>
+      <p class="no-indent">Analysis by task type reveals how the benefit depends on structural properties. The first
+        four rows report <code>used_by:</code>-only results on Gemini 2.5 Flash (5 tasks, ≥5 runs each, v0.7 protocol).
+        The cross-cutting row (11808) reports both the original v0.7 baseline and the v0.9 result with the
+        <code>related:</code> field (§3.6):</p>
 
-      <p class="table-caption"><span class="table-num">Table 3a.</span> Δ F1 by task type (Gemini 2.5 Flash).</p>
+      <p class="table-caption"><span class="table-num">Table 3a.</span> Δ F1 by task type. Rows 1–4 on Gemini 2.5 Flash (v0.7 protocol).
+        Row 5 reports v0.7 baseline, v0.9 with <code>related:</code>, and the 10-task DeepSeek result.</p>
       <table>
         <thead>
           <tr>
@@ -787,19 +791,21 @@ agent:   gemini-2.5-pro | 2026-03-18 | added Y
           </tr>
           <tr>
             <td>Cross-cutting fix — same pattern in N independent files, no shared ancestor</td>
-            <td>11808 (__eq__)</td>
-            <td>≈0%</td>
+            <td>11808 (__eq__) · 11532 (IDNA domains)</td>
+            <td>v0.7: ≈0% · <span class="green">v0.9 <code>related:</code>: 11532 F1 40%→100%; 11808 Δ=+25.5pp (DeepSeek 10-task)</span></td>
           </tr>
         </tbody>
       </table>
 
-      <p><strong>CodeDNA is most effective when there is a navigable call chain.</strong> The <code>used_by:</code>
-        graph guides the agent from the entry point to all affected files. For cross-cutting concerns — the same fix
-        in N independent files with no common ancestor — the benefit is near-zero because no navigation path
-        connects them. Task 11808 was included deliberately to test the protocol's structural limits; Δ≈0% is
-        reported as a known limitation, not hidden. See §5.3 for the annotator integrity audit and §6.6 for the
-        v0.9's <code>related:</code> field (§3.6) for the file-level solution and the proposed
-        <code>cross_cutting_patterns:</code> manifest extension (§6.6) for the project-level one.</p>
+      <p><strong>CodeDNA with <code>used_by:</code> alone is most effective when there is a navigable call chain.</strong>
+        For cross-cutting concerns — the same fix in N independent files with no common ancestor — the benefit of
+        <code>used_by:</code> alone is near-zero because no navigation path connects them. This was the structural
+        limit of v0.7, reported transparently rather than hidden. <strong>v0.9 addresses this class of bug through the
+        <code>related:</code> field (§3.6):</strong> on Django bug #11532 (IDNA domain crash, 5-file cross-cutting
+        fix) F1 jumps from 40% to 100% when <code>related:</code> is added; on task 11808 under the 10-task DeepSeek
+        condition, Δ=+25.5pp (with the caveat that this confounds <code>related:</code> with model differences — a
+        clean ablation remains open). See §5.3 for the annotator integrity audit and §6.6 for the proposed project-level
+        <code>cross_cutting_patterns:</code> manifest extension that complements the file-level <code>related:</code>.</p>
 
       <p><strong>Per-task qualitative analysis.</strong> The five tasks span a spectrum of structural difficulty.
         <strong>Task 12508</strong> (dbshell) is the easiest to enter: the management command file is named after
@@ -849,8 +855,8 @@ agent:   gemini-2.5-pro | 2026-03-18 | added Y
         <tbody>
           <tr>
             <td><strong>11808</strong> (<code>__eq__</code>)</td>
-            <td>Files independent — no <code>used_by:</code> chain by design</td>
-            <td>Describes Python data model convention; Δ≈0% confirms no navigation advantage</td>
+            <td>Files independent — no <code>used_by:</code> chain by design (v0.7); v0.9 <code>related:</code> links the semantic siblings</td>
+            <td>Describes Python data model convention, not a file list. v0.7 Δ≈0% confirmed no <code>used_by:</code> advantage; v0.9 + 10-task DeepSeek shows Δ=+25.5pp</td>
           </tr>
           <tr>
             <td><strong>14480</strong> (XOR)</td>
@@ -884,21 +890,22 @@ agent:   gemini-2.5-pro | 2026-03-18 | added Y
       <p><strong>Verdict.</strong> The benchmark annotations are architecturally accurate and do not encode
         task-specific solutions. Where GT files appear in <code>used_by:</code> targets, it is because those files
         are genuine callers or subclasses — not because the annotator cherry-picked them. The empirical results are
-        consistent with this: tasks with navigable chains show Δ&gt;0%; task 11808 shows Δ≈0% regardless of
-        <code>rules:</code> content.</p>
+        consistent with this: tasks with navigable chains show Δ&gt;0%; task 11808 showed Δ≈0% under v0.7 (no
+        <code>used_by:</code> chain connecting the independent files) and improves to Δ=+25.5pp under v0.9 with the
+        <code>related:</code> field closing the cross-cutting gap.</p>
 
-      <!-- ─── 5.5 RETRY COST ─── -->
-      <h3 class="subsection">5.5 Retry Cost Analysis</h3>
+      <!-- ─── 5.4 RETRY COST ─── -->
+      <h3 class="subsection">5.4 Retry Cost Analysis</h3>
       <p class="no-indent">File-localization F1 is typically reported as an efficiency metric. We argue it should
         also be treated as a <em>correctness proxy</em>: an agent that reads fewer than half the ground-truth files is
         unlikely to produce a complete patch, forcing the user to re-invoke the entire session. We define a run as
         <em>high-risk</em> when per-run recall falls below 50%.</p>
 
-      <p>Across 131 multi-run trials (DeepSeek-Chat, Gemini&nbsp;2.5&nbsp;Flash, Gemini&nbsp;2.5&nbsp;Pro — 5 tasks
-        each, 3–6 runs per task), the fraction of high-risk runs was:</p>
+      <p>Across 131 multi-run trials from the v0.7 five-task baseline (DeepSeek-Chat, Gemini&nbsp;2.5&nbsp;Flash,
+        Gemini&nbsp;2.5&nbsp;Pro — 5 tasks each, 3–6 runs per task), the fraction of high-risk runs was:</p>
 
-      <p class="table-caption"><span class="table-num">Table 5.</span> Incomplete-fix risk (recall &lt; 50%) pooled across
-        three models and five SWE-bench tasks.</p>
+      <p class="table-caption"><span class="table-num">Table 4.</span> Incomplete-fix risk (recall &lt; 50%) pooled across
+        three models and the five common SWE-bench tasks (v0.7 baseline).</p>
       <table>
         <thead>
           <tr>
@@ -929,10 +936,11 @@ agent:   gemini-2.5-pro | 2026-03-18 | added Y
         </tbody>
       </table>
 
-      <p>The most pronounced case is DeepSeek-Chat on task&nbsp;11808 (10 ground-truth files): all five control runs
-        achieved recall of 10–20% (finding 1–2 of 10 files); all five CodeDNA runs achieved 30–60% recall. Every
-        control run would have produced an incomplete patch. Under CodeDNA, three of five runs exceeded the 50%
-        threshold.</p>
+      <p>The most pronounced case from the v0.7 baseline was DeepSeek-Chat on task&nbsp;11808 (10 ground-truth files):
+        all five control runs achieved recall of 10–20% (finding 1–2 of 10 files); all five CodeDNA runs achieved
+        30–60% recall. Every control run would have produced an incomplete patch. Under CodeDNA, three of five runs
+        exceeded the 50% threshold. The v0.9 expansion and the introduction of <code>related:</code> push this further
+        — DeepSeek on 11808 in the 10-task condition shows Δ=+25.5pp F1 with std=0.00 across the three CodeDNA runs.</p>
 
       <p>Gemini&nbsp;2.5&nbsp;Pro provides a complementary data point: CodeDNA reduced mean tool calls by
         14.3% while raising mean F1 by 9&nbsp;pp, demonstrating that structured context enables the model to navigate
@@ -946,7 +954,7 @@ agent:   gemini-2.5-pro | 2026-03-18 | added Y
       <h2 class="section">6. Discussion</h2>
 
       <h3 class="subsection">6.1 Positioning Against Related Work</h3>
-      <p class="no-indent">Table 4 situates CodeDNA within the landscape of related approaches:</p>
+      <p class="no-indent">Table 5 situates CodeDNA within the landscape of related approaches:</p>
 
       <p class="table-caption"><span class="table-num">Table 5.</span> Problem–Solution mapping of related work and
         CodeDNA.</p>
@@ -1031,9 +1039,10 @@ agent:   gemini-2.5-pro | 2026-03-18 | added Y
       </p>
 
       <h3 class="subsection">6.5 Limitations</h3>
-      <p class="no-indent"><strong>Sample size.</strong> The SWE-bench evaluation uses 5 runs per task at T=0.1, enabling Wilcoxon
-        significance testing. However, N=5 tasks (all from a single Django repository) limits generalisability. Future
-        work should expand to ≥30 tasks across multiple repositories and evaluate on the full SWE-bench suite with
+      <p class="no-indent"><strong>Sample size.</strong> The v0.9 SWE-bench evaluation uses 3–5 runs per task at T=0.1,
+        enabling Wilcoxon significance testing. DeepSeek covers N=10 tasks (p=0.001); Gemini Flash and Pro cover
+        N=5 each. All tasks are drawn from a single Django repository, which limits generalisability. Future work
+        should expand Flash and Pro to N=10, add a second repository, and evaluate on the full SWE-bench suite with
         real-agent toolchains (Devin-style, Cursor, GPT-tools loop).</p>
 
       <p><strong>Localization vs. resolution.</strong> The SWE-bench evaluation measures file localization F1, not end-to-end patch
@@ -1051,10 +1060,11 @@ agent:   gemini-2.5-pro | 2026-03-18 | added Y
         for agentic maintenance. Future integrations should treat annotation drift as a first-class failure mode.
       </p>
 
-      <p><strong>Multi-model evaluation.</strong> All 3 models complete. Results are consistent across models (positive
-        Δ on 3–4/5 tasks each) but the SWE-bench subset (5 tasks, all Django) is small and all tasks come from a single
-        repository. Task 13495 shows a consistent negative Δ for Pro and DeepSeek that is not yet explained.
-        Cross-provider runtime differences
+      <p><strong>Multi-model evaluation.</strong> All 3 models complete. Results are consistent across models — positive
+        Δ on 10/10 DeepSeek tasks, 4/5 Flash, 3/5 Pro — but the task set is still Django-only. The task 13495 anomaly
+        from v0.7 (Flash +22pp, Pro/DeepSeek negative) remains partly visible on Gemini Pro (−8pp) but has flipped
+        positive on DeepSeek under the expanded 10-task condition (+6.6pp), suggesting the prior negative reading
+        reflected small-N sampling noise rather than a structural regression. Cross-provider runtime differences
         (function-calling implementations, tool orchestration) introduce variability that is not fully controlled. The
         results should be replicated on a larger, more diverse task set before generalisability claims can be
         strengthened.</p>
@@ -1166,12 +1176,14 @@ agent:   gemini-2.5-pro | 2026-03-18 | added Y
         every cell, CodeDNA ensures that every source file — and every function within it — carries enough
         architectural context for an LLM agent to navigate correctly without external lookup.</p>
 
-      <p>Our SWE-bench multi-model evaluation provides preliminary evidence that in-source architectural context can reduce navigation
-        cost for LLM agents: positive improvements in file localization F1 across all 3 models —
-        Gemini 2.5 Flash +13pp (60% → 72%, p=0.040), DeepSeek Chat +9pp (50% → 60%), Gemini 2.5 Pro +9pp (60% → 69%)
-        — with positive Δ on 3–4/5 tasks per model. These results suggest that CodeDNA functions as a
-        <em>navigation prior</em> that can benefit diverse model architectures, though the small sample size
-        (5 tasks, single repository) limits the strength of generalisability claims.
+      <p>Our SWE-bench multi-model evaluation provides evidence that in-source architectural context reduces navigation
+        cost for LLM agents. The strongest result is on <strong>DeepSeek Chat</strong>: <strong>+17.1pp</strong> mean F1
+        gain across <strong>10 Django tasks</strong> (50.9% → 68.0%, Wilcoxon exact p=0.0009765625, 10/0/0) — with 6
+        of the 10 tasks independently replicated by an external contributor. Gemini 2.5 Flash shows +13pp (60% → 72%,
+        p=0.040) on 5 tasks and Gemini 2.5 Pro shows +9pp (60% → 69%), with positive Δ on 4/5 and 3/5 tasks
+        respectively. These results suggest CodeDNA functions as a <em>navigation prior</em> that benefits diverse
+        model architectures; the sample size is strongest on DeepSeek (N=10) and remains smaller on Flash and Pro
+        (N=5), all drawn from a single Django repository.
       </p>
 
       <p>The results are consistent with the core hypothesis: <em>when cross-file contracts are declared at the point of

@@ -345,7 +345,7 @@
         <code>codedna wiki sync</code>) che converte le annotazioni CodeDNA in un vault di conoscenza navigabile
         compatibile con Obsidian e in una wiki narrativa di progetto in stile Karpathy — trasformando le annotazioni
         in-source in un grafo browsabile dall'umano.</p>
-      <p class="ni">(5) Rilascio open-source di spec, codice benchmark e file di integrazione AI.</p>
+      <p class="ni">(6) Rilascio open-source di spec, codice benchmark e file di integrazione AI.</p>
 
       <!-- 2. LAVORI CORRELATI -->
       <h2 class="section">2. Lavori Correlati</h2>
@@ -574,7 +574,7 @@ agent:   gemini-2.5-pro | 2026-03-18 | aggiunto Y
       <p class="ni">Abbiamo implementato un agente autonomo con Gemini 2.5 Flash (temperatura 0, deterministico) con tre
         strumenti function-calling: <code>read_file(path)</code>, <code>list_files(directory)</code> e
         <code>grep(pattern, directory)</code>. Nessun contenuto di file viene pre-caricato. L'agente gira fino al
-        completamento (max 20 turni). Metriche: <strong>chiamate agli strumenti totali</strong>,
+        completamento (max 30 turni). Metriche: <strong>chiamate agli strumenti totali</strong>,
         <strong>read_file</strong>, <strong>grep</strong>, <strong>turni di conversazione</strong>, e
         <strong>found_correct</strong> (booleano).
       </p>
@@ -701,7 +701,7 @@ agent:   gemini-2.5-pro | 2026-03-18 | aggiunto Y
         difficilmente produrrà una patch completa, costringendo l'utente a ripetere l'intera sessione. Definiamo un
         run <em>ad alto rischio</em> quando il recall per-run scende sotto il 50%.</p>
 
-      <p class="ni">Su 131 run multi-esecuzione (DeepSeek-Chat, Gemini&nbsp;2.5&nbsp;Flash,
+      <p class="ni">Sui 131 run multi-esecuzione del baseline v0.7 (DeepSeek-Chat, Gemini&nbsp;2.5&nbsp;Flash,
         Gemini&nbsp;2.5&nbsp;Pro — 5 task ciascuno, 3–6 run per task):</p>
 
       <p class="tcap"><span class="tnum">Tabella 4.</span> Rischio di fix incompleto (recall &lt; 50%) aggregato su tre
@@ -736,11 +736,13 @@ agent:   gemini-2.5-pro | 2026-03-18 | aggiunto Y
         </tbody>
       </table>
 
-      <p class="ni">Il caso più marcato è DeepSeek-Chat sul task&nbsp;11808 (10 file ground-truth): tutti e cinque i
-        run di controllo hanno ottenuto un recall del 10–20% (1–2 file su 10); tutti e cinque i run CodeDNA hanno
-        ottenuto recall del 30–60%. Ogni run di controllo avrebbe prodotto una patch incompleta. Gemini&nbsp;2.5&nbsp;Pro
-        offre un dato complementare: CodeDNA ha ridotto le chiamate medie agli strumenti del 14,3% aumentando
-        contemporaneamente l'F1 medio di 9&nbsp;pp — meno chiamate, maggiore accuratezza.</p>
+      <p class="ni">Il caso più marcato del baseline v0.7 era DeepSeek-Chat sul task&nbsp;11808 (10 file ground-truth):
+        tutti e cinque i run di controllo hanno ottenuto un recall del 10–20% (1–2 file su 10); tutti e cinque i run
+        CodeDNA hanno ottenuto recall del 30–60%. Ogni run di controllo avrebbe prodotto una patch incompleta.
+        L'espansione v0.9 e l'introduzione di <code>related:</code> rafforzano ulteriormente il risultato — DeepSeek
+        sul task 11808 nella condizione a 10 task mostra Δ=+25.5pp F1 con std=0.00 sui tre run CodeDNA.
+        Gemini&nbsp;2.5&nbsp;Pro offre un dato complementare: CodeDNA ha ridotto le chiamate medie agli strumenti
+        del 14,3% aumentando contemporaneamente l'F1 medio di 9&nbsp;pp — meno chiamate, maggiore accuratezza.</p>
 
       <p class="ni">Questi risultati supportano un approccio <em>accuracy-first</em> per i protocolli di
         annotazione: anche se CodeDNA fosse neutro in termini di tool call, dimezzare il tasso di navigazione
@@ -826,13 +828,14 @@ agent:   gemini-2.5-pro | 2026-03-18 | aggiunto Y
         <code>Depends:</code>) non richiedono nuova sintassi — vivono dentro docstring Python-native. Molte codebase
         hanno già docstring; CodeDNA aggiunge <em>intenzione di navigazione</em> alla documentazione già esistente. La
         distinzione tra una docstring standard e una CodeDNA non è sintattica ma semantica: quest'ultima deve essere
-        <em>machine-oriented e navigation-oriented</em>, non solo human-readable.
+        <em>machine-oriented e navigation-oriented</em>, non solo human-readable.</p>
 
       <h3 class="subsection">6.5 Limitazioni</h3>
-      <p class="ni"><strong>Dimensione del campione.</strong> La temperatura 0 garantisce il determinismo, ma i
-        risultati su singola esecuzione per bug limitano la confidenza statistica. I lavori futuri dovrebbero variare i
-        seed, i tipi di bug e valutare su task SWE-bench completi con toolchain agentiche reali (Devin-style, Cursor,
-        GPT-tools loop).</p>
+      <p class="ni"><strong>Dimensione del campione.</strong> La valutazione v0.9 usa 3–5 run per task a T=0.1,
+        abilitando il test Wilcoxon. DeepSeek copre N=10 task (p=0.001); Gemini Flash e Pro N=5 ciascuno. Tutti i task
+        provengono da un singolo repository Django, il che limita la generalizzabilità. I lavori futuri dovrebbero
+        estendere Flash e Pro a N=10, aggiungere un secondo repository e valutare su task SWE-bench completi con
+        toolchain agentiche reali (Devin-style, Cursor, GPT-tools loop).</p>
       <p><strong>Sincronizzazione delle annotazioni.</strong> La sfida di manutenzione principale non è la
         <em>scrittura</em> delle annotazioni (in workflow agentici il costo è quasi zero) ma garantire che rimangano
         <em>consistenti</em> col codice nel tempo. Se un agente modifica una funzione senza aggiornare i campi
@@ -840,14 +843,14 @@ agent:   gemini-2.5-pro | 2026-03-18 | aggiunto Y
         annotazione. Questo sposta il problema di ricerca dal costo di produzione all'<em>enforcement della
           consistenza</em>: pre-commit hook, validazione CI e obblighi di ri-annotazione lato agente sono le mitigazioni
         corrette. Le future integrazioni dovrebbero trattare l'annotation drift come modalità di fallimento di primo
-        livello.
-      </p>
-      <p><strong>Valutazione multi-modello.</strong> Il Benchmark 3 estende la valutazione a 3 modelli su 5 task
-        SWE-bench con 5 esecuzioni/task a T=0.1. I risultati sono consistenti tra i modelli (Δ positivo su 3–4/5 task
-        ciascuno), ma il subset (5 task, tutti Django, singolo repository) limita la generalizzabilità. Il task 13495
-        mostra un Δ negativo consistente per Pro e DeepSeek non ancora spiegato. Le differenze di runtime
-        cross-provider introducono variabilità non completamente controllata. I risultati dovrebbero essere replicati
-        su un set di task più ampio e diversificato prima di rafforzare i claim di generalizzabilità.</p>
+        livello.</p>
+      <p><strong>Valutazione multi-modello.</strong> Tutti e 3 i modelli sono completati. I risultati sono consistenti
+        tra i modelli — Δ positivo su 10/10 task DeepSeek, 4/5 Flash, 3/5 Pro — ma il set di task è ancora solo Django.
+        L'anomalia del task 13495 emersa in v0.7 (Flash +22pp, Pro/DeepSeek negativi) resta parzialmente visibile su
+        Gemini Pro (−8pp) ma è diventata positiva su DeepSeek sotto la condizione estesa a 10 task (+6.6pp),
+        suggerendo che la lettura negativa precedente riflettesse rumore di campionamento su N piccolo piuttosto che
+        una regressione strutturale. Le differenze di runtime cross-provider (implementazioni di function calling,
+        orchestrazione degli strumenti) introducono variabilità non completamente controllata.</p>
       <p><strong>Complessità dei bug.</strong> I task SWE-bench valutati richiedono la comprensione di uno o due contratti
         cross-file. I bug che si estendono su cinque o più layer architetturali potrebbero amplificare ulteriormente il
         vantaggio — un'ipotesi che richiede una valutazione su scala più ampia per essere testata.</p>

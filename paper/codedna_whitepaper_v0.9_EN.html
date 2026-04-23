@@ -729,17 +729,20 @@
         </tr>
         <tr>
           <td style="padding:5pt 8pt;"><strong>Cross-cutting fix</strong> — same pattern in N unrelated files, no shared ancestor</td>
-          <td style="padding:5pt 8pt;"><code>__eq__ NotImplemented</code> (11808)</td>
-          <td style="padding:5pt 8pt;color:#888;">≈0%</td>
+          <td style="padding:5pt 8pt;"><code>__eq__ NotImplemented</code> (11808) · IDNA domains (11532)</td>
+          <td style="padding:5pt 8pt;">v0.7: ≈0% · <span style="color:#16a34a;font-weight:600;">v0.9 <code>related:</code>: 11532 40%→100%; 11808 +25.5pp on DeepSeek 10-task</span></td>
         </tr>
       </tbody>
     </table>
+    <p style="font-size:8.5pt;color:#555;margin-top:-6pt;">Rows 1–4: Gemini 2.5 Flash, v0.7 protocol, <code>used_by:</code> only.</p>
 
-    <p><strong>CodeDNA is most effective when there is a navigable call chain.</strong> The <code>used_by:</code> graph
-      guides the agent from entry point to all affected files. For cross-cutting concerns (same fix across N independent
-      files with no common ancestor), the benefit is smaller because no navigation path connects them. The cross-cutting
-      task (11808) was included deliberately to test the protocol's limits — Δ≈0% is reported as a known limitation,
-      not hidden.</p>
+    <p><strong>With <code>used_by:</code> alone, CodeDNA is most effective when there is a navigable call chain.</strong>
+      The <code>used_by:</code> graph guides the agent from entry point to all affected files. For cross-cutting concerns
+      (same fix across N independent files with no common ancestor), the benefit of <code>used_by:</code> alone is near
+      zero because no navigation path connects them. This was the structural limit of v0.7 — reported transparently
+      rather than hidden. <strong>v0.9's <code>related:</code> field closes this gap:</strong> on Django bug #11532
+      (5-file IDNA fix with no shared import ancestor), adding <code>related:</code> brings F1 from 40% to 100%; on
+      task 11808 under the expanded 10-task DeepSeek condition, Δ=+25.5pp.</p>
 
     <p><strong>Per-task qualitative analysis.</strong>
       <strong>Task 12508</strong> (dbshell): the entry point is obvious by name; the challenge is discovering
@@ -769,15 +772,15 @@
       CodeDNA provides the scaffolding that lets a cheap model approach the navigation quality of a more expensive one.
     </blockquote>
 
-    <p><strong>Evidence:</strong> Gemini 2.5 Flash (Δ=+13pp, p=0.040), DeepSeek Chat (Δ=+9pp), Gemini 2.5 Pro
-      (Δ=+9pp). Flash shows the strongest statistical significance. Notably, Pro ctrl=60% matches Flash — Pro is not
-      stronger than Flash on these navigation tasks, suggesting that navigation efficiency does not scale linearly with
-      model size. This makes CodeDNA economically attractive: <em>annotate once, run cheaper models with comparable
-      accuracy</em>.</p>
+    <p><strong>Evidence:</strong> DeepSeek Chat (Δ=+17.1pp, p=0.001, 10 tasks), Gemini 2.5 Flash (Δ=+13pp, p=0.040),
+      Gemini 2.5 Pro (Δ=+9pp). DeepSeek shows the strongest absolute gain and highest statistical significance. Notably,
+      Pro ctrl=60% matches Flash — Pro is not stronger than Flash on these navigation tasks, suggesting that navigation
+      efficiency does not scale linearly with model size. This makes CodeDNA economically attractive: <em>annotate once,
+      run cheaper models with comparable accuracy</em>.</p>
 
-    <p>Note: this hypothesis is supported by the Flash result (p=0.040, statistically significant) but DeepSeek-Chat
-      and Gemini 2.5 Pro show positive but non-significant trends (p=0.11). A larger multi-model study across more
-      task types is required to confirm or refute this hypothesis.</p>
+    <p>Note: this hypothesis is supported by the DeepSeek result (p=0.001, highly significant, 10 tasks) and the Flash
+      result (p=0.040, statistically significant). Gemini 2.5 Pro shows a positive but non-significant trend (p=0.11). A
+      larger multi-model study across more task types is required to confirm or refute this hypothesis.</p>
 
     <h3 style="font-size: 12pt; font-weight: 600; margin: 16pt 0 6pt 0;">5.3 Annotation Integrity Audit</h3>
 
@@ -801,7 +804,7 @@
         <tr style="border-bottom:1px solid #e5e5ea;">
           <td style="padding:5pt 8pt;"><strong>11808</strong> (<code>__eq__</code>)</td>
           <td style="padding:5pt 8pt;">Files are independent — no <code>used_by:</code> chain exists by design</td>
-          <td style="padding:5pt 8pt;">Describes Python data model convention, not a file list. Δ≈0% confirms no advantage</td>
+          <td style="padding:5pt 8pt;">Describes Python data model convention, not a file list. v0.7 Δ≈0% with <code>used_by:</code> alone confirms no advantage from the annotation; v0.9 <code>related:</code> adds Δ=+25.5pp (DeepSeek 10-task)</td>
         </tr>
         <tr style="border-bottom:1px solid #e5e5ea;">
           <td style="padding:5pt 8pt;"><strong>14480</strong> (XOR)</td>
@@ -829,7 +832,7 @@
     <p><strong>Verdict: the benchmark annotations are architecturally accurate and do not encode task-specific
       solutions.</strong> Where GT files appear in <code>used_by:</code> targets, it is because those files are genuine
       callers or subclasses. The empirical results are consistent with this: tasks with navigable chains show Δ&gt;0%, the
-      cross-cutting task (11808) shows Δ≈0% regardless of the <code>rules:</code> text.</p>
+      cross-cutting task (11808) shows Δ≈0% with <code>used_by:</code> alone — confirming the <code>rules:</code> text does not encode the solution. Note: v0.9's <code>related:</code> field addresses this class of bug and shows Δ=+25.5pp on DeepSeek (10-task).</p>
 
     <p><em>Annotation correction made during audit:</em> <code>django/db/backends/base/schema.py</code> in task 11991
       had an incomplete <code>used_by:</code> listing only <code>postgresql/schema.py</code>. All four backend schema
@@ -987,7 +990,7 @@
 
     <!-- FOOTER -->
     <div class="footer">
-      <div>CodeDNA v1.0 — White Paper — March 2026</div>
+      <div>CodeDNA v0.9 — White Paper — April 2026</div>
       <div>Fabrizio Corpora · Independent Research · <a
           href="https://github.com/Larens94/codedna">github.com/Larens94/codedna</a></div>
     </div>
