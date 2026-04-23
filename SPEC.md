@@ -226,11 +226,11 @@ The correct navigation model:
 3. Read the problem description — understand the task domain
 4. **Reason** — open only the consumers that are architecturally relevant to the task
 
-This is why CodeDNA improves both F1 and efficiency simultaneously. Empirically (SWE-bench, 5 tasks, Gemini 2.5 Flash, ≥5 runs/task): CodeDNA runs achieve P=100% on dependency-chain tasks while Control runs scatter across irrelevant files.
+This is why CodeDNA improves both F1 and efficiency simultaneously. Empirically (SWE-bench, DeepSeek Chat, 10 tasks, 3 runs/task, Wilcoxon exact p=0.0009765625): CodeDNA wins on all 10 tasks with +17.1pp mean F1 gain. On Gemini 2.5 Flash (5 tasks, p=0.040) CodeDNA runs achieve P=100% on dependency-chain tasks while Control runs scatter across irrelevant files.
 
 ### When `used_by:` Navigation Is Most Effective
 
-Benchmark results across 5 SWE-bench tasks reveal that CodeDNA's navigation benefit is task-type dependent:
+Benchmark results across SWE-bench tasks reveal that CodeDNA's navigation benefit is task-type dependent:
 
 - **Dependency chain tasks** (A→B→C call path, one entry point): CodeDNA Δ = +14% to +27%. The agent follows `used_by:` links from the entry point to all affected files along the chain.
 - **Cross-cutting tasks** (same fix in N unrelated files): CodeDNA Δ ≈ 0%. No natural chain exists; the agent must discover all files by pattern rather than by navigation. `used_by:` graphs with no shared ancestor do not help.
@@ -243,9 +243,9 @@ The SWE-bench task set used in this benchmark deliberately includes one cross-cu
 
 **The benchmark annotations for 11808 do NOT include any cross-cutting pattern hints** — no list of affected files in `.codedna`, no `rules:` enumerating all 10 classes. The annotations describe only the local architectural context of each file (`__eq__` must follow Python data model conventions). The agent must discover all 10 files by reasoning, not by reading a list.
 
-This is the honest baseline: CodeDNA v0.7 as currently specified shows **Δ ≈ 0%** on cross-cutting tasks. This result is reported transparently in the benchmark.
+This was the honest baseline in v0.7: the protocol as then specified showed **Δ ≈ 0%** on cross-cutting tasks. v0.9 addresses this class of bug via the `related:` field (see §1, Core Fields): each file points to its semantic siblings outside the import graph. On Django bug #11532 (IDNA domain handling, 5-file cross-cutting fix), adding `related:` brings file-localization F1 from 40% to 100%. Under the expanded DeepSeek 10-task condition, task 11808 now shows Δ=+25.5pp — but this confounds `related:` with model differences, so a clean ablation remains open.
 
-**The proposed extension for v0.9:** a `cross_cutting_patterns:` section in the `.codedna` manifest, written by agents as they encounter such patterns during development — not pre-populated for evaluation tasks. Example:
+**A further proposed extension for a future version:** a project-level `cross_cutting_patterns:` section in the `.codedna` manifest, complementing the file-level `related:`, written by agents as they encounter such patterns during development — not pre-populated for evaluation tasks. Example:
 
 ```yaml
 cross_cutting_patterns:
@@ -1146,7 +1146,7 @@ Pre-commit hook available in `tools/pre-commit`.
 
 ## 10. Versioning
 
-The version of the standard is tracked in the repo tag (`v0.7`).
+The version of the standard is tracked in the repo tag (`v0.9`).
 
 ---
 

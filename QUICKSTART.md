@@ -316,7 +316,7 @@ bool_is_admin_from_db        = user["role"] == "admin"
 
 ## Scientific Paper
 
-→ [`paper/codedna_paper_v0.7.pdf`](./paper/codedna_paper_v0.7.pdf) (v0.9 paper in preparation)
+→ [`paper/codedna_paper_v0.9.html`](./paper/codedna_paper_v0.9.html) (v0.9, April 2026 — English + [Italian](./paper/codedna_paper_v0.9_IT.html)) · [v0.7 on Zenodo](https://doi.org/10.5281/zenodo.19158336)
 
 ## Benchmark Code
 

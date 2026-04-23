@@ -1,6 +1,6 @@
 # CodeDNA — AI System Prompts
 
-Ready-to-paste system prompts that configure any AI coding assistant to follow the **CodeDNA v0.7 Annotation Standard** (Python-native format).
+Ready-to-paste system prompts that configure any AI coding assistant to follow the **CodeDNA v0.9 Annotation Standard** (Python-native format).
 
 ---
 
@@ -9,7 +9,7 @@ Ready-to-paste system prompts that configure any AI coding assistant to follow t
 Paste into your AI assistant's system prompt or project instructions:
 
 ```
-You are operating under the CodeDNA v0.7 Annotation Standard (Python-native format).
+You are operating under the CodeDNA v0.9 Annotation Standard (Python-native format).
 Full spec: github.com/Larens94/codedna/blob/main/SPEC.md
 
 READING FILES:
@@ -43,7 +43,7 @@ EDITING FILES:
 In your project's **agent configuration** or **system prompt settings**:
 
 ```
-You follow the CodeDNA v0.7 Annotation Standard (github.com/Larens94/codedna).
+You follow the CodeDNA v0.9 Annotation Standard (github.com/Larens94/codedna).
 
 ON READ: parse the module docstring first (first 8–12 lines). Check `rules:` before
 writing. Check `used_by:` for impact. Read `Rules:` in function docstrings
@@ -71,7 +71,7 @@ all `used_by` callers.
 Create `.cursorrules` at your repo root (or copy from `integrations/.cursorrules`):
 
 ```
-# CodeDNA Annotation Standard v0.7
+# CodeDNA Annotation Standard v0.9
 
 ## Module Docstring (required in every Python file)
 Every source file must begin with:
@@ -106,7 +106,7 @@ def fn(arg: type) -> type:
 Create `CLAUDE.md` at your repo root (or copy from `integrations/CLAUDE.md`):
 
 ```
-Project uses CodeDNA v0.7 Annotation Standard (Python-native format).
+Project uses CodeDNA v0.9 Annotation Standard (Python-native format).
 Full spec: github.com/Larens94/codedna
 
 On READ: parse module docstring first. Respect `rules:` as absolute constraints.
@@ -128,7 +128,7 @@ If you discover a constraint, update `rules:` for the next agent.
 Create `.github/copilot-instructions.md` (or copy from `integrations/copilot-instructions.md`):
 
 ```markdown
-# CodeDNA v0.7
+# CodeDNA v0.9
 
 This codebase uses the CodeDNA Annotation Standard (Python-native format).
 Full spec: github.com/Larens94/codedna
@@ -154,7 +154,7 @@ Required at the top of every Python file: exports / used_by / rules.
 Create `.windsurfrules` at your repo root:
 
 ```
-# CodeDNA v0.7
+# CodeDNA v0.9
 
 ON READ: parse module docstring first. Respect `rules:`. Read `Rules:` in functions.
 ON WRITE: begin new files with module docstring (exports/used_by/rules).
@@ -171,7 +171,7 @@ NEVER rename `exports:` without updating all `used_by` callers.
 In **Custom Instructions** → "What would you like ChatGPT to know?" or a Project instruction:
 
 ```
-This project uses CodeDNA v0.7 Annotation Standard (Python-native format).
+This project uses CodeDNA v0.9 Annotation Standard (Python-native format).
 Spec: github.com/Larens94/codedna
 
 Rules:
@@ -192,7 +192,7 @@ Rules:
 In **System Instructions** field:
 
 ```
-You are working on a project that follows the CodeDNA v0.7 Annotation Standard.
+You are working on a project that follows the CodeDNA v0.9 Annotation Standard.
 Spec: github.com/Larens94/codedna/blob/main/SPEC.md
 
 BEFORE READING CODE: parse the module docstring at the top of each Python file.
