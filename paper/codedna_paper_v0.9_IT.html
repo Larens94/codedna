@@ -1,0 +1,978 @@
+<!DOCTYPE html>
+<html lang="it">
+
+<head>
+  <meta charset="UTF-8">
+  <style>
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: "Times New Roman", Times, serif;
+      font-size: 10pt;
+      line-height: 1.5;
+      color: #000;
+      background: white;
+    }
+
+    .page {
+      width: 210mm;
+      margin: 0 auto;
+      padding: 20mm 18mm;
+    }
+
+    /* TITLE */
+    .title-block {
+      text-align: center;
+      margin-bottom: 16pt;
+      padding-bottom: 10pt;
+      border-bottom: 1px solid #aaa;
+    }
+
+    h1.paper-title {
+      font-size: 15pt;
+      font-weight: bold;
+      line-height: 1.3;
+      margin-bottom: 10pt;
+    }
+
+    .authors {
+      font-size: 10.5pt;
+      margin-bottom: 4pt;
+    }
+
+    .affiliation {
+      font-size: 8.5pt;
+      color: #444;
+    }
+
+    .date {
+      font-size: 8.5pt;
+      color: #555;
+      margin-top: 4pt;
+      font-style: italic;
+    }
+
+    /* ABSTRACT */
+    .abstract-block {
+      margin: 12pt 24pt;
+      font-size: 9pt;
+      line-height: 1.5;
+    }
+
+    .abstract-title {
+      font-weight: bold;
+      font-size: 9.5pt;
+      display: block;
+      text-align: center;
+      margin-bottom: 5pt;
+      font-variant: small-caps;
+    }
+
+    /* TWO-COLUMN */
+    .two-col {
+      column-count: 2;
+      column-gap: 16pt;
+      margin-top: 14pt;
+      text-align: justify;
+      hyphens: auto;
+    }
+
+    /* HEADINGS */
+    h2.section {
+      font-size: 10pt;
+      font-weight: bold;
+      font-variant: small-caps;
+      margin-top: 11pt;
+      margin-bottom: 4pt;
+    }
+
+    h3.subsection {
+      font-size: 9.5pt;
+      font-weight: bold;
+      font-style: italic;
+      margin-top: 7pt;
+      margin-bottom: 3pt;
+    }
+
+    p {
+      margin-bottom: 5pt;
+      text-indent: 10pt;
+    }
+
+    p.ni {
+      text-indent: 0;
+    }
+
+    /* CODE */
+    pre,
+    code {
+      font-family: "Courier New", Courier, monospace;
+      font-size: 7.5pt;
+      background: #f8f8f8;
+      border: 1px solid #ddd;
+      border-radius: 2px;
+    }
+
+    pre {
+      padding: 5pt 7pt;
+      margin: 5pt 0;
+      white-space: pre-wrap;
+      word-break: break-word;
+      line-height: 1.4;
+      break-inside: avoid;
+    }
+
+    code {
+      padding: 0 2pt;
+    }
+
+    /* TABLES */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      font-size: 8pt;
+      margin: 7pt 0;
+      break-inside: avoid;
+    }
+
+    th {
+      border-top: 1.5px solid #000;
+      border-bottom: 1px solid #000;
+      padding: 3pt 5pt;
+      font-weight: bold;
+      background: #f5f5f5;
+    }
+
+    td {
+      padding: 2.5pt 5pt;
+      border-bottom: 0.5px solid #ccc;
+    }
+
+    tr:last-child td {
+      border-bottom: 1.5px solid #000;
+    }
+
+    .tcap {
+      font-size: 8pt;
+      font-style: italic;
+      text-align: center;
+      margin-bottom: 4pt;
+      text-indent: 0;
+    }
+
+    .tnum {
+      font-weight: bold;
+      font-style: normal;
+    }
+
+    /* BOX */
+    .result-box {
+      border: 1px solid #ccc;
+      border-radius: 3px;
+      padding: 6pt 8pt;
+      margin: 5pt 0;
+      background: #fafafa;
+      font-size: 8pt;
+      break-inside: avoid;
+    }
+
+    .key-result {
+      background: #f0f4ff;
+      border-left: 3px solid #3730a3;
+      padding: 4pt 6pt;
+      margin: 5pt 0;
+      font-size: 8.5pt;
+      break-inside: avoid;
+    }
+
+    .dna-box {
+      border: 1.5px solid #3730a3;
+      border-radius: 4px;
+      padding: 7pt 9pt;
+      margin: 7pt 0;
+      background: #f0f4ff;
+      font-size: 8pt;
+      break-inside: avoid;
+    }
+
+    .dna-title {
+      font-weight: bold;
+      font-size: 8.5pt;
+      color: #3730a3;
+      display: block;
+      margin-bottom: 5pt;
+      text-indent: 0;
+    }
+
+    .dna-row {
+      display: flex;
+      gap: 6pt;
+      margin-bottom: 3pt;
+      font-size: 7.5pt;
+    }
+
+    .dna-l {
+      flex: 1;
+      font-weight: bold;
+    }
+
+    .dna-r {
+      flex: 2;
+    }
+
+    /* REFS */
+    .references {
+      font-size: 8pt;
+      line-height: 1.4;
+      column-count: 2;
+      column-gap: 14pt;
+    }
+
+    .ref-item {
+      padding-left: 14pt;
+      text-indent: -14pt;
+      margin-bottom: 4pt;
+    }
+
+    .green {
+      color: #15803d;
+      font-weight: bold;
+    }
+
+    .red {
+      color: #dc2626;
+      font-weight: bold;
+    }
+
+    hr.sr {
+      border: none;
+      border-top: 1px solid #ccc;
+      margin: 8pt 0;
+    }
+
+    sup {
+      font-size: 6pt;
+      vertical-align: super;
+    }
+  </style>
+</head>
+
+<body>
+  <div class="page">
+
+    <!-- TITOLO -->
+    <div class="title-block">
+      <h1 class="paper-title">CodeDNA: un protocollo di comunicazione in-source<br>per agenti AI di coding <span style="font-weight:normal;font-size:13pt;color:#444;">(v0.9)</span></h1>
+      <div class="authors">Fabrizio Corpora</div>
+      <div class="affiliation">Ricerca indipendente · <em>fabrizio.corpora@gmail.com</em></div>
+      <div class="date">Zenodo preprint · Aprile 2026 · Aggiornamento di <a href="https://doi.org/10.5281/zenodo.19158336">doi:10.5281/zenodo.19158336</a> (v0.7, Marzo 2026)</div>
+    </div>
+
+    <!-- ABSTRACT -->
+    <div class="abstract-block">
+      <span class="abstract-title">Sommario</span>
+      Gli agenti LLM che modificano autonomamente codebase di produzione soffrono di <em>cecità contestuale</em>:
+      modificano una funzione senza consapevolezza delle dipendenze tra file, producendo bug silenziosi e cascate di
+      errori. Le soluzioni esistenti — RAG, file di regole a livello di progetto (CLAUDE.md, AGENTS.md), o iniezione di
+      contesto long-context — impongono latenza di recupero, sovraccarico di manutenzione o costi di infrastruttura.
+      Un'indagine recente (ETH Zurigo, 2026) dimostra che i file di contesto generati da LLM possono <em>degradare</em>
+      il tasso di successo del compito del 3% e aumentare i costi di inferenza di oltre il 20%. Presentiamo
+      <strong>CodeDNA</strong>, uno standard di annotazione in-source che incorpora grafi di dipendenza, contratti
+      pubblici, vincoli per gli agenti e convenzioni di naming semantico direttamente nei file sorgente. Il nome
+      richiama la sua analogia biologica: come il DNA codifica il progetto completo dell'organismo in ogni cellula,
+      CodeDNA garantisce che ogni frammento di codice porti sufficiente contesto architetturale perché un agente agisca
+      correttamente in isolamento. Valutiamo CodeDNA v0.9 con una <strong>valutazione SWE-bench multi-modello estesa</strong>
+      su 3 LLM (Gemini 2.5 Flash, DeepSeek Chat, Gemini 2.5 Pro) — <strong>CodeDNA migliora la file localization F1
+      su tutti e tre i modelli</strong>, con il risultato più forte e statisticamente robusto su
+      <strong>DeepSeek Chat</strong>: <strong>+17.1 punti percentuali</strong> di guadagno medio F1 su
+      <strong>10 task Django</strong> (50.9% → 68.0%, Wilcoxon esatto <strong>p=0.0009765625</strong>,
+      vittorie/sconfitte/pareggi = 10/0/0). 6 dei 10 task DeepSeek sono stati <strong>replicati indipendentemente</strong>
+      da un contributore esterno su una macchina separata, rafforzando la riproducibilità. Gemini 2.5 Flash mostra +13pp
+      (60% → 72%, p=0.040) su 5 task e Gemini 2.5 Pro mostra +9pp (60% → 69%). Il protocollo v0.9 introduce tre
+      nuovi campi — <code>related:</code> (link semantici cross-cutting), <code>wiki:</code> (puntatore opt-in a
+      contesto curato più approfondito) e <code>message:</code> (layer conversazionale inter-agente) — insieme a un
+      layer di tooling che trasforma le annotazioni in un vault di conoscenza navigabile compatibile con Obsidian.
+      CodeDNA non richiede build step, sistemi esterni né latenza di recupero.
+    </div>
+
+    <!-- CORPO A DUE COLONNE -->
+    <div class="two-col">
+
+      <!-- 1. INTRODUZIONE -->
+      <h2 class="section">1. Introduzione</h2>
+
+      <p class="ni">L'adozione di agenti LLM nei flussi di lavoro di produzione ha esposto una classe di fallimento che
+        i benchmark su singolo file non colgono sistematicamente: la <em>cecità contestuale cross-file</em>. Quando un
+        agente legge una funzione in isolamento — perché opera in modalità sliding-window o perché il contratto
+        rilevante si trova in un altro modulo — non può osservare i vincoli architetturali che governano il
+        comportamento corretto.</p>
+
+      <p>SWE-bench [1], il principale benchmark multi-file del settore, ha dimostrato nel 2024 che i modelli allo stato
+        dell'arte riuscivano a risolvere solo l'1,96% delle issue reali di GitHub. La modalità di fallimento dominante
+        non era la qualità del ragionamento, ma il <em>costo di navigazione</em>: trovare i file giusti richiedeva
+        troppe interazioni con gli strumenti. Lavori successivi confermano il pattern: LoCoBench-Agent [2] (2025) misura
+        l'efficienza nell'uso degli strumenti in flussi di lavoro long-context e rileva una sistematica
+        sovraesplorazione; PRDBench [3] (2025) riferisce che gli agenti spendono la maggior parte del loro budget token
+        in navigazione piuttosto che nella riparazione.</p>
+
+      <p>Le soluzioni attuali condividono una debolezza strutturale: <em>il contesto vive fuori dal codice</em>.
+        CLAUDE.md e CursorRules sono file a livello di sessione invisibili agli agenti in modalità sliding-window. I
+        sistemi RAG [6] introducono latenza di recupero e richiedono infrastrutture di embedding. Lo studio ETH Zurigo
+        2026 [4] ha riscontrato che i file di contesto generati da LLM (AGENTS.md) peggiorano il successo del compito
+        del 3% e aumentano i costi di oltre il 20%, mentre i file scritti da umani offrono solo un guadagno del 4%.</p>
+
+      <p>Proponiamo un approccio complementare: incorporare il contesto <em>dentro il codice</em>, a ogni livello, in
+        modo che qualsiasi frammento letto da un agente sia già autosufficiente.</p>
+
+      <p class="ni"><strong>Contributi:</strong></p>
+      <p class="ni">(1) Il <strong>CodeDNA Communication Protocol v0.9</strong>: un protocollo di comunicazione in-source a
+        quattro livelli (Level 0–3), language-agnostic, che estende v0.7 con tre nuovi campi — <code>related:</code>
+        (link semantici cross-cutting che bypassano il grafo degli import), <code>wiki:</code> (puntatore opt-in a
+        markdown curato più approfondito del terse header), e <code>message:</code> (layer conversazionale inter-agente
+        per osservazioni non ancora abbastanza certe da diventare <code>rules:</code>).</p>
+      <p class="ni">(2) Un'analogia biologica che motiva il principio di ridondanza olografica dello standard.</p>
+      <p class="ni">(3) Una <strong>valutazione multi-modello SWE-bench</strong> su 3 LLM con una condizione DeepSeek
+        estesa (10 task, 3 esecuzioni ciascuno), che dimostra miglioramenti ampiamente benefici nella file localization F1.</p>
+      <p class="ni">(4) Evidenza di <strong>+17.1pp di guadagno medio F1</strong> su DeepSeek Chat attraverso 10 task
+        (Wilcoxon esatto p=0.0009765625, vittorie/sconfitte/pareggi 10/0/0), <strong>+13pp</strong> su Gemini 2.5 Flash
+        (p=0.040), e <strong>+9pp</strong> su Gemini 2.5 Pro — con 6 dei 10 task DeepSeek
+        <strong>replicati indipendentemente</strong> da un contributore esterno su una macchina separata.</p>
+      <p class="ni">(5) Un <strong>layer di tooling</strong> (<code>codedna wiki bootstrap</code> e
+        <code>codedna wiki sync</code>) che converte le annotazioni CodeDNA in un vault di conoscenza navigabile
+        compatibile con Obsidian e in una wiki narrativa di progetto in stile Karpathy — trasformando le annotazioni
+        in-source in un grafo browsabile dall'umano.</p>
+      <p class="ni">(5) Rilascio open-source di spec, codice benchmark e file di integrazione AI.</p>
+
+      <!-- 2. LAVORI CORRELATI -->
+      <h2 class="section">2. Lavori Correlati</h2>
+
+      <h3 class="subsection">2.1 Benchmark Multi-File per Agenti</h3>
+      <p class="ni"><strong>SWE-bench</strong> [1] valuta gli LLM su 2.294 issue GitHub reali su 12 repository Python,
+        stabilendo che il coordinamento multi-file è il collo di bottiglia principale. <strong>LoCoBench-Agent</strong>
+        [2] (novembre 2025) offre il parallelo metodologico più prossimo al nostro lavoro: valuta agenti in scenari di
+        ingegneria del software long-context con 8.000 task e misura esplicitamente l'<em>efficienza nell'uso degli
+          strumenti</em> — la stessa metrica di CodeDNA. <strong>PRDBench</strong> [3] (ottobre 2025, AAMAS 2026) usa 50
+        progetti Python reali con Product Requirement Documents e Agent-as-a-Judge, confermando che gli agenti
+        sovraesplorano quando la struttura del codebase è opaca. <strong>HumanEval</strong> [5] misura la sintesi di
+        singole funzioni da docstring: il suo <em>pass@k</em> è ortogonale alla navigazione cross-file, non competitivo.
+      </p>
+
+      <h3 class="subsection">2.2 Gestione del Contesto per Agenti LLM</h3>
+      <p class="ni"><strong>RAG</strong> [6] recupera chunk rilevanti da un vector store a tempo di inferenza. Applicato
+        al codice, la qualità del recupero dipende dalla similarità degli embedding, che può non allinearsi alla
+        rilevanza architetturale. I <strong>file di regole</strong> (CLAUDE.md [10], CursorRules, AGENTS.md) impongono
+        convenzioni a livello di progetto ma sono invisibili agli agenti in modalità sliding-window. Lo studio ETH
+        Zurigo [4] fornisce la prova più forte contro l'approccio a file esterni. <strong>MemGPT</strong> [7] mantiene
+        una memoria compressa tra i turni, ma una cronologia di letture precedenti non dice a un agente cosa leggere
+        <em>dopo</em>. Gli approcci basati su knowledge graph (Tongyi Lingma [11]) usano la traversata del grafo per
+        esporre le relazioni cross-modulo, ma richiedono infrastrutture esterne. <strong>Il differenziatore chiave di
+          CodeDNA</strong>: il grafo di navigazione è co-locato con il codice stesso, non richiede sistemi di recupero e
+        sopravvive in qualsiasi finestra sliding.
+      </p>
+
+      <h3 class="subsection">2.3 Standard di Annotazione e Documentazione</h3>
+      <p class="ni">Gli standard di documentazione (docstring, JSDoc, Doxygen, Literate Programming [8]) si concentrano
+        sulla leggibilità umana e non codificano semantica di navigazione cross-file né vincoli specifici per gli
+        agenti. I sistemi di annotazione dei tipi (PEP 484, TypeScript) codificano contratti di tipo ma non
+        architetturali. CodeDNA si distingue progettando le annotazioni come un <em>protocollo di navigazione
+          machine-readable</em> che punta ai fail mode degli agenti LLM, non ai lettori umani.</p>
+
+      <!-- 3. LO STANDARD CODEDNA -->
+      <h2 class="section">3. Il Protocollo di Comunicazione CodeDNA v0.9</h2>
+
+      <h3 class="subsection">3.1 Analogia Biologica</h3>
+
+      <p class="ni">Il nome <em>CodeDNA</em> cattura il principio di design dello standard attraverso un'analogia con la
+        biologia molecolare. Il DNA biologico codifica il progetto completo dell'organismo in <em>ogni cellula</em>:
+        ogni nucleo cellulare contiene il genoma completo, non solo le istruzioni per la funzione specializzata della
+        cellula stessa. Questa ridondanza significa che ogni cellula — indipendentemente dalla sua posizione o contesto
+        — può essere letta dalla giusta macchinaria e fornire informazioni architetturali sull'intero organismo.</p>
+
+      <p>CodeDNA applica lo stesso principio al software: ogni file sorgente codifica non solo la propria logica, ma
+        anche la propria <em>posizione nell'organismo architetturale</em> — da cosa dipende, chi dipende da esso, quali
+        contratti deve rispettare. Il protocollo comprende quattro livelli (0–3): il Livello 0 è il manifest di
+        progetto (<code>.codedna</code>), che opera a scala di repository. I Livelli 1–3 operano a scala di file,
+        funzione e variabile, e rispecchiano tre scale di codifica biologica:</p>
+
+      <div class="dna-box">
+        <span class="dna-title">Tabella A. Analogia DNA biologico ↔ CodeDNA</span>
+        <div class="dna-row"><span class="dna-l">Concetto biologico</span><span class="dna-r"><strong>Equivalente
+              CodeDNA</strong></span></div>
+        <div class="dna-row"><span class="dna-l">Genoma completo in ogni cellula</span><span class="dna-r">Module header
+            L1: posizione architetturale completa in ogni file</span></div>
+        <div class="dna-row"><span class="dna-l">Gene = unità funzionale locale</span><span class="dna-r">Docstring di
+            funzione L2: contratto locale + dipendenze cross-file</span></div>
+        <div class="dna-row"><span class="dna-l">Codone = unità minima di codifica</span><span class="dna-r">Commento
+            inline L3: 1 riga di contesto nel punto di rischio</span></div>
+        <div class="dna-row"><span class="dna-l">Ridondanza olografica</span><span class="dna-r">Qualsiasi estratto di
+            10 righe porta contesto sufficiente per navigare</span></div>
+        <div class="dna-row"><span class="dna-l">Nessuna consultazione esterna</span><span class="dna-r">Zero latenza di
+            recupero; il contesto viaggia con il codice</span></div>
+      </div>
+
+      <p>La proprietà olografica — tagliare un ologramma a metà produce due immagini complete più piccole, non due metà
+        — spiega la robustezza di CodeDNA alla sliding-window: anche quando un LLM legge solo le righe 50–80 di un file,
+        incontra docstring di funzione L2 e commenti inline L3 che riaffermano le regole architetturali critiche
+        esattamente nel punto di rischio.</p>
+
+      <h3 class="subsection">3.2 Livello 1 — Module Header</h3>
+      <p class="ni">Una module docstring Python-nativa che deve essere il primo contenuto in ogni file. Codifica la
+        posizione architetturale completa del file in circa 70 token.</p>
+
+      <pre>"""analytics/revenue.py — Aggregazione ricavi mensili.
+
+deps:    payments/models.py → get_invoices_for_period
+         tenants/models.py → is_suspended
+exports: monthly_revenue(year,month)->dict
+used_by: api/reports.py → revenue_route
+tables:  invoices(tenant_id, amount_cents, status)
+         tenants(suspended_at, deleted_at)
+rules:   get_invoices_for_period() restituisce TUTTI i tenant,
+         NESSUN filtro sospensione → DEVE chiamare is_suspended()
+         PRIMA di aggregare i ricavi
+"""</pre>
+
+      <p>L'uso del formato triple-quote nativo di Python (invece di un blocco di commenti personalizzato) massimizza la
+        comprensione degli LLM: i modelli addestrati su miliardi di file Python applicano il pattern-matching esistente
+        alla struttura della docstring, invece di analizzare un protocollo non familiare.</p>
+
+      <p>Il campo <code>rules</code> codifica vincoli rigidi che si applicano a ogni modifica nel file. A differenza
+        delle annotazioni inline (a livello di funzione), <code>rules</code> si applica globalmente, agendo come il
+        genoma della cellula: disponibile ovunque nel file senza richiedere al lettore di navigare verso una funzione
+        specifica.</p>
+
+      <h3 class="subsection">3.3 Livello 2 — Annotazioni Sliding-Window</h3>
+      <p class="ni">Gli agenti spesso estraggono 50–100 righe dal mezzo di un file, bypassando il module header. Il
+        Livello 2 incorpora cues di navigazione a livello di funzione attraverso due sotto-livelli.</p>
+
+      <p><strong>Livello 2a — Docstring di funzione</strong> (stile Google):</p>
+      <pre>def monthly_revenue(year: int, month: int) -> dict:
+    """Aggrega le fatture pagate nei totali mensili.
+
+    Dipende: payments.models.get_invoices_for_period
+             — restituisce TUTTE le fatture, NESSUN filtro.
+    Regole:  DEVE filtrare is_suspended() PRIMA di sommare.
+    """</pre>
+
+      <p><strong>Livello 2b — Commento inline al sito di chiamata</strong> (ultima linea di difesa):</p>
+      <pre>    # include tenant sospesi — filtrare sotto
+    raw = get_invoices_for_period(year, month)
+    # ZONA BUG: fatture sospesi incluse nel totale
+    total = sum(i['amount_cents'] for i in raw)</pre>
+
+      <p>Il commento al sito di chiamata garantisce che anche una finestra di 10 righe centrata sulla chiamata
+        pericolosa porti il contesto critico. Questa è la codifica a livello di codone: l'unità più piccola che
+        trasmette ancora significato architetturale.</p>
+
+      <h3 class="subsection">3.4 Livello 3 — Naming Semantico</h3>
+      <p class="ni">I nomi delle variabili codificano tipo, shape, dominio e origine. Formato:
+        <code>&lt;tipo&gt;_&lt;shape&gt;_&lt;dominio&gt;_&lt;origine&gt;</code>.
+      </p>
+
+      <pre># ❌ Standard — l'agente deve tracciare per capire
+data  = get_users()
+price = request.json["price"]
+
+# ✅ CodeDNA — leggibile in qualsiasi finestra di contesto
+list_dict_users_from_db  = get_users()
+int_cents_price_from_req = request.json["price"]</pre>
+
+      <h3 class="subsection">3.5 Il campo <code>related:</code> (v0.9)</h3>
+      <p class="ni">Il grafo <code>used_by:</code> cattura le dipendenze <em>strutturali</em> — chi importa chi. Molti
+        bug reali, tuttavia, coinvolgono file che <em>condividono un pattern</em> senza alcun link di import: helper
+        di codifica IDNA sparsi fra <code>validators</code>, <code>encoding</code>, <code>html</code> e
+        <code>mail.utils</code>; gestione timezone duplicata fra moduli backend; idiom di equality check ripetuti
+        in classi non correlate. Per queste <em>preoccupazioni cross-cutting</em>, nessuna catena di edge
+        <code>used_by:</code> collega i file che l'agente deve modificare. Il protocollo v0.7 mostrava Δ≈0% su questa
+        classe di task (si veda §6.5).</p>
+
+      <p>La versione 0.9 introduce il campo opzionale <code>related:</code> — un link <em>semantico</em> catturato
+        accanto a quello strutturale:</p>
+
+      <pre>"""mail/utils.py — helper email.
+
+exports: class CachedDnsName | DNS_NAME
+used_by: mail/message.py → DNS_NAME
+related: core/validators.py — condivide logica
+                              IDNA/punycode
+         utils/encoding.py — utility di encoding
+                             per domini non-ASCII
+rules:   get_fqdn() ritorna unicode raw — i caller
+         devono gestire non-ASCII
+"""</pre>
+
+      <p>Empiricamente, sul bug Django #11532 (crash per dominio unicode, fix su 5 file senza alcun antenato di import
+        condiviso): un'annotazione CodeDNA che usa solo <code>used_by:</code> trova 2 file su 5 (F1=40%, equivalente
+        al baseline di controllo). Aggiungendo <code>related:</code> l'agente arriva a <strong>5 file su 5</strong>
+        (F1=100%). Il link semantico chiude il gap cross-cutting identificato come limite strutturale di v0.7.</p>
+
+      <h3 class="subsection">3.6 Il campo <code>wiki:</code> opt-in e il layer knowledge-vault (v0.9)</h3>
+      <p class="ni">Una singola riga <code>rules:</code> non può trasportare contesto narrativo — storia delle
+        decisioni, extension point, invarianti sottili che richiedono un paragrafo. Scaricare tutto nel docstring
+        gonfia il module header che la sliding window deve attraversare. v0.9 aggiunge il campo opzionale
+        <code>wiki:</code>, un puntatore a una pagina markdown curata sotto <code>docs/wiki/</code>:</p>
+
+      <pre>"""cli.py — tool di annotazione CodeDNA.
+
+exports: scan_file | run
+used_by: tests/test_cli.py → FileInfo
+wiki:    docs/wiki/cli.md       ← opt-in
+rules:   ...
+"""</pre>
+
+      <p><em>La sparsità è il segnale.</em> Il workflow dell'agente è: se <code>wiki:</code> è presente, leggere prima
+        il markdown puntato; se assente, il docstring è sufficiente. Un agente precedente ha lasciato il puntatore solo
+        quando ha deciso che l'header terse era insufficiente. Diversamente dall'approccio "compila una wiki per ogni
+        file", questo preserva il principio "ogni frammento porta il tutto" al default economico e fa opt-in in contesto
+        più profondo solo dove serve.</p>
+
+      <p>Il tooling complementare — <code>codedna wiki bootstrap</code> e <code>codedna wiki sync</code> — converte il
+        grafo di annotazioni in due artefatti complementari. <strong>Bootstrap</strong> emette un vault Obsidian
+        annidato (una pagina markdown per file, con struttura che rispecchia l'albero sorgente, e <code>[[wikilink]]</code>
+        derivati da <code>used_by:</code> e <code>related:</code>) — un grafo browsabile dall'umano senza alcuno sforzo
+        di annotazione aggiuntivo. <strong>Sync</strong> rigenera una singola wiki narrativa di progetto
+        (<code>docs/codedna-wiki.md</code>) seguendo un template di sette sezioni (identità, topologia, workflow,
+        hotspot e protocollo di refresh) — progettata per agenti che entrano a freddo in una repository. Entrambi sono
+        deterministici e idempotenti; collegati a un post-commit hook restano aggiornati senza dipendere dal fatto che
+        l'agente ricordi di aggiornarli.</p>
+
+      <h3 class="subsection">3.7 Il canale inter-agente <code>message:</code> (v0.9)</h3>
+      <p class="ni">Ogni entry <code>agent:</code> può trasportare un sub-field <code>message:</code> — un layer
+        conversazionale per osservazioni non ancora abbastanza certe da diventare <code>rules:</code>, domande aperte
+        o note soft di handoff per il prossimo agente. Il campo vive a due livelli: dentro i module header (Livello 1)
+        per agenti che leggono l'intero file, e dentro i docstring di funzione (Livello 2) per agenti che operano in
+        sliding-window mode e non vedono mai l'header.</p>
+
+      <pre>agent:   claude-sonnet-4-6 | 2026-03-10 | impl X
+         message: "edge case di arrotondamento
+                  multi-valuta — non sono sicuro
+                  debba diventare una rule"
+
+agent:   gemini-2.5-pro | 2026-03-18 | aggiunto Y
+         message: "@prev: confermato → promosso
+                  a rules:"</pre>
+
+      <p>Un <code>message:</code> è append-only — un agente successivo o lo <em>promuove</em> a <code>rules:</code>
+        (con <code>@prev: promosso a rules:</code>) o lo <em>respinge</em> con una ragione esplicita
+        (<code>@prev: non applicabile perché...</code>). Entrambi gli esiti preservano il trail di audit completo.
+        Nell'esperimento multi-agente SaaS AgentHub (DeepSeek R1, 5 agenti, 83 minuti), <code>message:</code> è stato
+        adottato spontaneamente in 54 dei 55 file annotati (<strong>98.2%</strong>) senza alcun reminder a metà
+        sessione — gli agenti lo hanno usato per note di handoff, annotazioni di gap per funzione e propagazione di
+        vincoli cross-file.</p>
+
+      <!-- 4. DESIGN DEL BENCHMARK -->
+      <h2 class="section">4. Design del Benchmark</h2>
+
+      <p class="ni">Misuriamo l'<em>efficienza di navigazione</em> — quante interazioni con gli strumenti richiede un
+        agente autonomo per localizzare correttamente la causa radice di un bug in un codebase multi-file.</p>
+
+      <h3 class="subsection">4.1 Implementazione dell'Agente</h3>
+      <p class="ni">Abbiamo implementato un agente autonomo con Gemini 2.5 Flash (temperatura 0, deterministico) con tre
+        strumenti function-calling: <code>read_file(path)</code>, <code>list_files(directory)</code> e
+        <code>grep(pattern, directory)</code>. Nessun contenuto di file viene pre-caricato. L'agente gira fino al
+        completamento (max 20 turni). Metriche: <strong>chiamate agli strumenti totali</strong>,
+        <strong>read_file</strong>, <strong>grep</strong>, <strong>turni di conversazione</strong>, e
+        <strong>found_correct</strong> (booleano).
+      </p>
+
+      <!-- 5. RISULTATI -->
+      <h2 class="section">5. Risultati</h2>
+
+      <h3 class="subsection">5.1 Valutazione Multi-Modello SWE-bench</h3>
+      <p class="ni">Per verificare se il beneficio di CodeDNA si generalizza a diverse architetture LLM, abbiamo
+        valutato 3 modelli su 5 issue Django reali da SWE-bench. Ogni modello ha ricevuto strumenti identici
+        (<code>read_file</code>, <code>list_files</code>, <code>grep</code>), lo stesso system prompt e un massimo
+        di 30 turni. Ogni condizione è stata ripetuta 5 volte per task a T=0.1 per ottenere stime medie stabili;
+        la significatività statistica è valutata con il test di Wilcoxon signed-rank (unilaterale,
+        H1: CodeDNA &gt; Control) sulle 5 coppie di F1 medie per task. La metrica primaria è la
+        <strong>file localization F1</strong>: la media armonica di precision (frazione di file letti presenti nel
+        ground truth del patch) e recall (frazione di file ground truth effettivamente letti dall'agente). Questa
+        metrica misura l'<em>accuratezza di navigazione</em>, non la correttezza del patch, isolando il
+        collo di bottiglia specificamente affrontato da CodeDNA.</p>
+
+      <p class="tcap"><span class="tnum">Tabella 3.</span> File localization F1 multi-modello, Control vs. CodeDNA.
+        DeepSeek copre 10 task; Gemini Flash e Pro coprono 5 task ciascuno. 3–5 esecuzioni per task a T=0.1.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Modello</th>
+            <th>Task</th>
+            <th>Ctrl F1</th>
+            <th>DNA F1</th>
+            <th>Δ F1</th>
+            <th>p-value</th>
+            <th>Task Vinti</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>DeepSeek Chat</td>
+            <td>10</td>
+            <td>50.9%</td>
+            <td>68.0%</td>
+            <td class="green">+17.1pp</td>
+            <td>0.001**</td>
+            <td>10 / 10</td>
+          </tr>
+          <tr>
+            <td>Gemini 2.5 Flash</td>
+            <td>5</td>
+            <td>60%</td>
+            <td>72%</td>
+            <td class="green">+13pp</td>
+            <td>0.040*</td>
+            <td>4 / 5</td>
+          </tr>
+          <tr>
+            <td>Gemini 2.5 Pro</td>
+            <td>5</td>
+            <td>60%</td>
+            <td>69%</td>
+            <td class="green">+9pp</td>
+            <td>0.11</td>
+            <td>3 / 5</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <div class="key-result">
+        <strong>Risultato chiave:</strong> DeepSeek Chat (10 task, W+=55, N=10) raggiunge una forte significatività
+        statistica a <strong>p=0.0009765625</strong> (Wilcoxon esatto, one-tailed), con CodeDNA che vince su tutti
+        i 10 task — nessuna inversione, nessun pareggio. Gemini 2.5 Flash (5 task, W+=14, N=5) raggiunge p=0.040
+        (Δ=+13pp). Gemini 2.5 Pro (5 task, W+=12, N=5) mostra Δ=+9pp a p=0.11. Il task 13495 mantiene la sua
+        anomalia model-dependent — Flash beneficia fortemente (+22pp) mentre Pro regredisce (−8pp) — ma sotto la
+        condizione DeepSeek estesa il Δ su 13495 è ora positivo (+6.6pp), suggerendo che la lettura negativa
+        precedente riflettesse rumore di campionamento su N piccolo piuttosto che una regressione strutturale.
+      </div>
+
+      <h3 class="subsection">5.1.1 Replica indipendente su DeepSeek Chat</h3>
+      <p class="ni">Fra la sottomissione v0.7 e questa revisione, un contributore esterno (@fabioscialanga) ha eseguito
+        indipendentemente 6 task DeepSeek aggiuntivi (13121, 15629, 16263, 11400, 11883, 11808) su una macchina separata,
+        usando lo stesso runner, gli stessi prompt e le stesse definizioni di task dei 4 task originali. Le session trace
+        raw sono state integrate nel repository (<code>labs/benchmark/runs/deepseek-chat/session_traces/</code>) e
+        l'analisi combinata sui 10 task rigenerata con lo script di analisi del repository. Il risultato è un dataset
+        unico e coerente con provenienza trasparente: ogni session trace riporta il commit git e il run manifest della
+        macchina di origine. Tutti i 10 task favoriscono CodeDNA. Due task (11808 e 13121) esibiscono un pattern di
+        stabilità notevole — la deviazione standard di F1 fra tre run CodeDNA è <strong>0.00</strong> (l'agente produce
+        la stessa decisione di file-localization ogni volta), mentre la std di controllo è 0.20–0.25. Il vantaggio non
+        è meramente una media più alta; è una riduzione dell'imprevedibilità run-to-run che conta per i deployment di
+        produzione. La replica indipendente su hardware eterogeneo con protocollo identico è la prova più forte che
+        la dimensione corrente del campione consente; aumenta in modo significativo la fiducia che l'effetto DeepSeek
+        non sia un artefatto di una singola macchina o di un singolo rollout del loop di campionamento.</p>
+
+      <p>I risultati supportano un'ipotesi di lavoro: <em>i modelli meno capaci e meno costosi beneficiano
+        maggiormente di CodeDNA</em>. Un modello frontier naviga codebase complessi bene per ragionamento
+        generale. Un modello più economico senza guida strutturale si perde, entra in loop o si ferma presto.
+        CodeDNA fornisce l'impalcatura che permette a un modello economico di avvicinarsi alla qualità di
+        navigazione di uno più costoso. Questo rende CodeDNA economicamente attraente: <em>annotare una volta,
+        usare modelli più economici con accuratezza comparabile</em>.</p>
+
+      <p>Nota: questa ipotesi è supportata dal risultato di Flash (p=0,040, statisticamente significativo), ma
+        DeepSeek-Chat e Gemini 2.5 Pro mostrano Δ positivi ma non significativi (p=0,11). È necessario uno studio
+        multi-modello più ampio per confermare o confutare questa ipotesi.</p>
+
+      <p><strong>Analisi qualitativa per task.</strong> I cinque task coprono uno spettro di difficoltà strutturale.
+        <strong>Task 12508</strong> (dbshell): il punto di ingresso è ovvio dal nome del file; la difficoltà è
+        scoprire i quattro client backend — <code>used_by:</code> lo gestisce in modo affidabile (+9pp).
+        <strong>Task 11991</strong> (INCLUDE): <code>schema.py</code> è trovabile via grep; <code>used_by:</code>
+        enumera esplicitamente tutti e quattro i backend schema editor (+17pp).
+        <strong>Task 14480</strong> (Q() XOR): richiede di seguire una catena multi-livello ORM→SQL→backend su
+        7 file — esattamente la navigazione che <code>used_by:</code> abilita (+17–18pp).
+        <strong>Task 13495</strong> (Trunc tzinfo): il task con la maggiore divergenza tra modelli. Flash guadagna
+        +22pp; DeepSeek e Pro regrediscono di 8–9pp. Seguire le catene <code>used_by:</code> verso i file backend
+        sembra introdurre una trappola di precisione per i modelli meno capaci — un'anomalia strutturale in fase
+        di indagine.
+        <strong>Task 11808</strong> (<code>__eq__</code>): identificato in v0.7 come limite strutturale del
+        protocollo — il punto di ingresso <code>models/base.py</code> (847 righe) è un file generico senza catena
+        navigabile verso le cinque sottoclassi interessate. v0.9 affronta questa classe di bug tramite il campo
+        <code>related:</code> (§3.5), che permette a un file di puntare ai suoi fratelli semantici fuori dal grafo
+        degli import. Sotto la condizione DeepSeek estesa sui 10 task, 11808 mostra ora Δ=+25.5pp — ma questo
+        miglioramento mescola l'effetto di <code>related:</code> con differenze di modello. Un'ablation pulita
+        (con/senza il campo <code>related:</code> sullo stesso modello) resta un'indagine aperta.</p>
+
+      <!-- 5.2 COSTO DEL RETRY -->
+      <h3 class="subsection">5.2 Analisi del Costo di Retry</h3>
+      <p class="ni">L'F1 di file-localization è tipicamente presentato come metrica di efficienza. Proponiamo di
+        trattarlo anche come <em>proxy di correttezza</em>: un agente che legge meno della metà dei file ground-truth
+        difficilmente produrrà una patch completa, costringendo l'utente a ripetere l'intera sessione. Definiamo un
+        run <em>ad alto rischio</em> quando il recall per-run scende sotto il 50%.</p>
+
+      <p class="ni">Su 131 run multi-esecuzione (DeepSeek-Chat, Gemini&nbsp;2.5&nbsp;Flash,
+        Gemini&nbsp;2.5&nbsp;Pro — 5 task ciascuno, 3–6 run per task):</p>
+
+      <p class="tcap"><span class="tnum">Tabella 4.</span> Rischio di fix incompleto (recall &lt; 50%) aggregato su tre
+        modelli e cinque task SWE-bench.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Condizione</th>
+            <th>Run ad alto rischio</th>
+            <th>Run totali</th>
+            <th>Tasso di rischio</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Control</td>
+            <td>34</td>
+            <td>66</td>
+            <td><strong>52%</strong></td>
+          </tr>
+          <tr>
+            <td>CodeDNA</td>
+            <td>16</td>
+            <td>65</td>
+            <td><strong>25%</strong></td>
+          </tr>
+          <tr>
+            <td>Riduzione</td>
+            <td colspan="2"></td>
+            <td><strong>−27&nbsp;pp (−52% relativo)</strong></td>
+          </tr>
+        </tbody>
+      </table>
+
+      <p class="ni">Il caso più marcato è DeepSeek-Chat sul task&nbsp;11808 (10 file ground-truth): tutti e cinque i
+        run di controllo hanno ottenuto un recall del 10–20% (1–2 file su 10); tutti e cinque i run CodeDNA hanno
+        ottenuto recall del 30–60%. Ogni run di controllo avrebbe prodotto una patch incompleta. Gemini&nbsp;2.5&nbsp;Pro
+        offre un dato complementare: CodeDNA ha ridotto le chiamate medie agli strumenti del 14,3% aumentando
+        contemporaneamente l'F1 medio di 9&nbsp;pp — meno chiamate, maggiore accuratezza.</p>
+
+      <p class="ni">Questi risultati supportano un approccio <em>accuracy-first</em> per i protocolli di
+        annotazione: anche se CodeDNA fosse neutro in termini di tool call, dimezzare il tasso di navigazione
+        incompleta giustificherebbe la sua adozione dimezzando il numero di sessioni che l'utente deve ripetere.</p>
+
+      <!-- 6. DISCUSSIONE -->
+      <h2 class="section">6. Discussione</h2>
+
+      <h3 class="subsection">6.1 Posizionamento rispetto ai Lavori Correlati</h3>
+      <p class="tcap"><span class="tnum">Tabella 4.</span> Mappatura Problema–Soluzione.</p>
+      <table>
+        <thead>
+          <tr>
+            <th>Lavoro</th>
+            <th>Problema esposto</th>
+            <th>Risposta CodeDNA</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>SWE-bench [1]</td>
+            <td>Navigazione multi-file è il collo di bottiglia</td>
+            <td>Riduce il costo di navigazione via grafo embedded</td>
+          </tr>
+          <tr>
+            <td>LoCoBench [2]</td>
+            <td>Inefficienza nell'uso strumenti</td>
+            <td>Riduce le chiamate agli strumenti su task con catene di dipendenza (−14% su Gemini 2.5 Pro con +9pp F1)</td>
+          </tr>
+          <tr>
+            <td>PRDBench [3]</td>
+            <td>Sovraesplorazione su codebase opachi</td>
+            <td>Struttura trasparente elimina l'esplorazione cieca</td>
+          </tr>
+          <tr>
+            <td>ETH Zurigo [4]</td>
+            <td>File di contesto esterni degradano −3%, costi +20%</td>
+            <td>Contesto embedded viaggia con il codice</td>
+          </tr>
+          <tr>
+            <td>MemGPT [7]</td>
+            <td>LLM dimentica contesto tra i turni</td>
+            <td>Nessuna memoria necessaria: contesto è nel codice</td>
+          </tr>
+          <tr>
+            <td>RAG [6]</td>
+            <td>Latenza di recupero e infrastruttura embedding</td>
+            <td>Zero recupero: contesto è già al momento della lettura</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <h3 class="subsection">6.2 Perché l'Annotazione In-Source Funziona</h3>
+      <p class="ni">Il meccanismo rispecchia l'intuizione biologica: quando il contratto che governa una funzione è
+        dichiarato <em>alla funzione</em>, gli agenti capaci non hanno bisogno di recuperarlo dalla sua definizione
+        originale. Quando un campo <code>rules</code> propaga il contratto a valle, nel luogo esatto in cui è violato,
+        l'agente può diagnosticare il problema correttamente senza risalire alla definizione originale.</p>
+
+      <p>La scoperta ETH Zurigo [4] che i file di contesto generati da LLM <em>degradano</em> le performance motiva
+        precisamente questo approccio: se i file di contesto esterni causano sovraesplorazione, la soluzione non è file
+        migliori ma contesto embedded che arriva <em>con il codice che l'agente avrebbe comunque letto</em>.</p>
+
+      <h3 class="subsection">6.3 Razionale del Formato</h3>
+      <p class="ni">La scelta di module docstring Python-native (invece di blocchi di commenti personalizzati) per il
+        Livello 1 è stata validata empiricamente: i modelli addestrati su corpora Python applicano il pattern-matching
+        esistente alla struttura <code>deps:</code> / <code>exports:</code> / <code>rules:</code>. Il formato
+        personalizzato <code># === CODEDNA:0.5 ===</code>, pur essendo parsabile dalla macchina, richiedeva al modello
+        di processare un schema sintattico non familiare, producendo catene di ragionamento marginalmente più lunghe.
+      </p>
+
+      <h3 class="subsection">6.4 Overhead di Annotazione e il Framing Agentico</h3>
+      <p class="ni">Un'obiezione comune agli standard di annotazione è il costo di scrittura e manutenzione. Per
+        CodeDNA, questa obiezione deve essere valutata nel contesto corretto. CodeDNA è progettato per <em>workflow di
+          code generation agentica</em> — ambienti in cui un agente LLM genera e modifica i file sorgente. In questo
+        contesto, l'agente stesso produce i module header e le function docstring come sottoprodotto naturale della
+        generazione. Lo sviluppatore umano non annota 500 file manualmente: l'agente di coding lascia la propria memoria
+        architetturale nel codice mentre scrive. Il costo marginale dell'annotazione si avvicina a zero.</p>
+      <p>Questo framing ridefinisce anche cosa <em>è</em> CodeDNA: non uno standard che chiede agli sviluppatori di
+        scrivere più commenti, ma una convenzione che dà agli agenti un formato strutturato in cui registrare la propria
+        comprensione architetturale locale. Lo standard trasforma il codice generato dall'agente da output passivo in un
+        grafo di navigazione attivo e auto-descrittivo per l'agente successivo che lo leggerà.</p>
+      <p>Un'osservazione secondaria: i campi strutturati di CodeDNA (<code>deps:</code>, <code>rules:</code>,
+        <code>Depends:</code>) non richiedono nuova sintassi — vivono dentro docstring Python-native. Molte codebase
+        hanno già docstring; CodeDNA aggiunge <em>intenzione di navigazione</em> alla documentazione già esistente. La
+        distinzione tra una docstring standard e una CodeDNA non è sintattica ma semantica: quest'ultima deve essere
+        <em>machine-oriented e navigation-oriented</em>, non solo human-readable.
+
+      <h3 class="subsection">6.5 Limitazioni</h3>
+      <p class="ni"><strong>Dimensione del campione.</strong> La temperatura 0 garantisce il determinismo, ma i
+        risultati su singola esecuzione per bug limitano la confidenza statistica. I lavori futuri dovrebbero variare i
+        seed, i tipi di bug e valutare su task SWE-bench completi con toolchain agentiche reali (Devin-style, Cursor,
+        GPT-tools loop).</p>
+      <p><strong>Sincronizzazione delle annotazioni.</strong> La sfida di manutenzione principale non è la
+        <em>scrittura</em> delle annotazioni (in workflow agentici il costo è quasi zero) ma garantire che rimangano
+        <em>consistenti</em> col codice nel tempo. Se un agente modifica una funzione senza aggiornare i campi
+        <code>rules:</code> o <code>Depends:</code>, l'annotazione diventa fuorviante — potenzialmente peggio di nessuna
+        annotazione. Questo sposta il problema di ricerca dal costo di produzione all'<em>enforcement della
+          consistenza</em>: pre-commit hook, validazione CI e obblighi di ri-annotazione lato agente sono le mitigazioni
+        corrette. Le future integrazioni dovrebbero trattare l'annotation drift come modalità di fallimento di primo
+        livello.
+      </p>
+      <p><strong>Valutazione multi-modello.</strong> Il Benchmark 3 estende la valutazione a 3 modelli su 5 task
+        SWE-bench con 5 esecuzioni/task a T=0.1. I risultati sono consistenti tra i modelli (Δ positivo su 3–4/5 task
+        ciascuno), ma il subset (5 task, tutti Django, singolo repository) limita la generalizzabilità. Il task 13495
+        mostra un Δ negativo consistente per Pro e DeepSeek non ancora spiegato. Le differenze di runtime
+        cross-provider introducono variabilità non completamente controllata. I risultati dovrebbero essere replicati
+        su un set di task più ampio e diversificato prima di rafforzare i claim di generalizzabilità.</p>
+      <p><strong>Complessità dei bug.</strong> I task SWE-bench valutati richiedono la comprensione di uno o due contratti
+        cross-file. I bug che si estendono su cinque o più layer architetturali potrebbero amplificare ulteriormente il
+        vantaggio — un'ipotesi che richiede una valutazione su scala più ampia per essere testata.</p>
+
+      <h3 class="subsection">6.6 Lavori Futuri</h3>
+
+      <p class="ni"><strong>Copertura estesa del benchmark.</strong>
+        La valutazione v0.9 copre 20 coppie F1 per-modello-task attraverso 3 LLM (10 DeepSeek + 5 Flash + 5 Pro).
+        Le direzioni prioritarie includono: estendere Flash e Pro a 10 task ciascuno per eguagliare la dimensione
+        del campione DeepSeek, aggiungere una condizione placebo (un header che sembra CodeDNA ma popolato con
+        annotazioni plausibili ma false) per isolare la <em>correttezza</em> delle annotazioni dalla mera presenza
+        di testo strutturato nell'header, e metriche di correttezza end-to-end della patch che complementino la
+        F1 di navigazione (che questo paper misura in isolamento per design).</p>
+
+      <p><strong>Generazione LLM-assistita di <code>related:</code>.</strong>
+        Il campo <code>related:</code> chiude il gap cross-cutting empiricamente (§3.5, §6.5), ma la popolazione
+        oggi è manuale o rule-based. Un'estensione proposta usa un singolo passaggio LLM per file per suggerire
+        link semantici dall'intero corpus — rilevando pattern condivisi fra file non correlati — con l'agente
+        che mantiene autorità di veto.</p>
+
+      <p><strong>Telemetria agente tramite git trailer.</strong>
+        Git è già immutabile, append-only e diff-completo. Un'estensione proposta incorpora i metadati di sessione
+        AI direttamente nei messaggi di commit usando <em>git trailer</em> — la stessa convenzione di
+        <code>Co-Authored-By:</code>, riconosciuta nativamente da GitHub. I campi proposti: <code>AI-Agent:</code>,
+        <code>AI-Provider:</code>, <code>AI-Session:</code>, <code>AI-Visited:</code> (file letti durante la
+        sessione, che git non traccia nativamente), e <code>AI-Message:</code>. Combinati con il log
+        <code>.codedna</code> e il campo <code>agent:</code> nel file, creano un'<em>architettura di audit a tre
+        livelli</em> collegata da un <code>session_id</code> condiviso: git (diff e metadati autorevoli),
+        <code>.codedna</code> (sommario di sessione navigabile per la pianificazione dell'agente), e
+        <code>agent:</code> nel file (one-liner sicuro in modalità sliding-window).</p>
+
+      <p><strong>Pattern cross-cutting a livello di progetto (<code>cross_cutting_patterns:</code>).</strong>
+        Il campo <code>related:</code> (§3.5) affronta le preoccupazioni cross-cutting a livello di <em>file</em>:
+        ciascun file punta individualmente ai suoi fratelli semantici. Una direzione complementare è un'estensione
+        Level 0 che aggiunge un campo <code>cross_cutting_patterns:</code> al manifest <code>.codedna</code>,
+        popolato da un agente <em>post-fix</em> come conoscenza accumulata a livello di progetto. Sotto la
+        condizione DeepSeek estesa, il task 11808 mostra ora Δ=+25.5pp — ma questo miglioramento confonde l'effetto
+        di <code>related:</code> con differenze di modello, quindi un'ablation pulita resta aperta.</p>
+
+      <p><strong>CodeDNA come corpus di addestramento auto-generante.</strong>
+        La seguente sezione descrive una direzione futura speculativa che non ha ancora ricevuto validazione empirica.
+        Una proprietà consequenziale del protocollo è che una codebase annotata con CodeDNA con utilizzo attivo
+        degli agenti costituisce un <em>corpus di addestramento auto-generante</em> a tre livelli:
+        (a) <em>SFT</em> — il campo <code>agent:</code> append-only accumula un log ordinato di decisioni di
+        navigazione corrette; (b) <em>DPO/RLHF</em> — la git history con trailer AI produce coppie
+        <em>(rejected, chosen)</em> naturali quando Agent B corregge Agent A e aggiorna <code>rules:</code>;
+        (c) <em>PRM</em> — l'infrastruttura di tracciamento delle sessioni registra l'intera sequenza di tool call
+        per sessione come traiettoria di ragionamento etichettata. Questi tre livelli si autopotenziano
+        costituendo un <em>data flywheel</em>: ogni sessione agente che scrive o corregge un'annotazione CodeDNA
+        migliora il segnale di addestramento disponibile a tutte le generazioni future di modelli — senza
+        ulteriore etichettatura umana. La codebase è contemporaneamente l'ambiente, il protocollo e il dataset
+        di addestramento.</p>
+
+      <p><strong>Agenti di verifica.</strong>
+        Il rischio di sincronizzazione delle annotazioni identificato in §6.5 motiva una classe di
+        <em>agenti di verifica</em> che periodicamente confrontano le annotazioni con la codebase reale. Poiché
+        le annotazioni sono strutturate e machine-readable, questa manutenzione è essa stessa automatizzabile:
+        verifica della correttezza della navigazione (<code>used_by:</code>), compliance delle regole
+        (<code>rules:</code>), accuratezza delle API pubbliche (<code>exports:</code>) e ciclo di vita delle
+        osservazioni (<code>message:</code>).</p>
+
+      <!-- 7. CONCLUSIONE -->
+      <h2 class="section">7. Conclusione</h2>
+
+      <p class="ni">Abbiamo presentato CodeDNA, un protocollo di comunicazione in-source a quattro livelli (Level 0–3)
+        il cui design è radicato in un'analogia biologica: come il DNA codifica il progetto completo di un organismo
+        in ogni cellula, CodeDNA garantisce che ogni file sorgente — e ogni funzione al suo interno — porti sufficiente
+        contesto architetturale perché un agente LLM navighi correttamente senza lookup esterni.</p>
+
+      <p>La nostra valutazione SWE-bench multi-modello fornisce evidenza che il contesto architetturale in-source
+        riduce il costo di navigazione per gli agenti LLM. Il risultato più forte è su <strong>DeepSeek Chat</strong>:
+        <strong>+17.1pp</strong> di guadagno medio F1 attraverso <strong>10 task</strong> Django (50.9% → 68.0%,
+        Wilcoxon esatto p=0.0009765625, 10/0/0) — con 6 dei 10 task replicati indipendentemente da un contributore
+        esterno. Gemini 2.5 Flash mostra +13pp (60% → 72%, p=0.040) e Gemini 2.5 Pro +9pp (60% → 69%), con
+        Δ positivo su tutti e 3 i modelli.</p>
+
+      <p>Il risultato valida l'ipotesi centrale: <em>quando i contratti cross-file sono dichiarati nel punto d'uso,
+          gli agenti possono navigare più efficientemente senza risalire al contratto alla sua sorgente.</em>
+        v0.9 introduce tre feature — <code>related:</code>, <code>wiki:</code> e <code>message:</code> — che
+        affrontano le tre limitazioni più rilevanti di v0.7 (preoccupazioni cross-cutting, contesto narrativo oltre
+        l'header, memoria inter-agente). Le direzioni aperte rimanenti includono: fine-tuning su corpus annotati
+        con CodeDNA così che i modelli trattino i campi strutturati come segnali nativi di navigazione; un manifest
+        <code>cross_cutting_patterns:</code> a livello di progetto che complementi il <code>related:</code> a livello
+        di file; un benchmark longitudinale di <code>message:</code> attraverso molte sessioni sulla stessa codebase.</p>
+
+      <p>La specifica (v0.9), il codice del benchmark, le session trace raw (inclusi i run DeepSeek replicati
+        indipendentemente) e i file di integrazione AI sono disponibili su:</p>
+      <p class="ni" style="text-align:center; font-weight:bold; margin: 6pt 0;">github.com/Larens94/codedna</p>
+
+      <hr class="sr">
+
+    </div><!-- fine due colonne -->
+
+    <!-- RIFERIMENTI -->
+    <hr class="sr">
+    <h2 class="section" style="column-span:all; margin-top:8pt;">Riferimenti</h2>
+    <div class="references">
+      <div class="ref-item">[1] Jimenez, C., et al. (2024). <em>SWE-bench: Can Language Models Resolve Real-World GitHub
+          Issues?</em> ICLR 2024. arXiv:2310.06770.</div>
+      <div class="ref-item">[2] <em>LoCoBench-Agent: An Interactive Benchmark for LLM Agents in Long-Context Software
+          Engineering.</em> arXiv:2511.13998, novembre 2025.</div>
+      <div class="ref-item">[3] <em>PRDBench: Automatically Benchmarking LLM Code Agents through Agent-Driven Annotation
+          and Evaluation.</em> arXiv, ottobre 2025. Presentato ad AAMAS 2026.</div>
+      <div class="ref-item">[4] ETH Zurigo / Univ. Berna (2026). <em>Context File Provision in LLM Coding Agents: When
+          More Context Is Less.</em> arXiv:2602.11988.</div>
+      <div class="ref-item">[5] Chen, M., et al. (2021). <em>Evaluating Large Language Models Trained on Code
+          (HumanEval).</em> arXiv:2107.03374.</div>
+      <div class="ref-item">[6] Lewis, P., et al. (2020). <em>Retrieval-Augmented Generation for Knowledge-Intensive NLP
+          Tasks.</em> NeurIPS 2020. arXiv:2005.11401.</div>
+      <div class="ref-item">[7] Packer, C., et al. (2023). <em>MemGPT: Towards LLMs as Operating Systems.</em>
+        arXiv:2310.08560.</div>
+      <div class="ref-item">[8] Knuth, D. E. (1984). Literate Programming. <em>The Computer Journal</em>, 27(2), 97–111.
+      </div>
+      <div class="ref-item">[9] GitHub Copilot. (2024). <em>Custom instructions for GitHub Copilot.</em>
+        docs.github.com.</div>
+      <div class="ref-item">[10] Anthropic. (2024). <em>Claude's memory: CLAUDE.md.</em> docs.anthropic.com.</div>
+      <div class="ref-item">[11] Tongyi Lingma Team (2025). <em>Repository-Level Code Understanding via Knowledge Graph
+          Traversal.</em> Alibaba DAMO Academy preprint.</div>
+      <div class="ref-item">[12] Karpathy, A. (2025). <em>LLM-wiki: compilare una codebase in un grafo di conoscenza
+          navigabile.</em> GitHub Gist. gist.github.com/karpathy/442a6bf555914893e9891c11519de94f.</div>
+      <div class="ref-item">[13] Corpora, F. (2026). <em>CodeDNA v0.7 — preprint originale.</em> Zenodo.
+        doi:10.5281/zenodo.19158336.</div>
+    </div>
+
+  </div><!-- fine pagina -->
+</body>
+
+</html>
