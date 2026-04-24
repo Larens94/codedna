@@ -112,8 +112,8 @@ codedna refresh .                              # update exports + used_by (zero 
 | `codedna manifest <path>` | Generate `.codedna` project map (Level 0): packages, depends_on, key_files |
 | `codedna mode <mode>` | Get/set mode: `human` (minimal), `semi` (default), `agent` (full protocol) |
 | `codedna install <path>` | Setup pre-commit hook + AI tool prompt + `.codedna` manifest |
-| `codedna wiki bootstrap <path>` | *(v0.9 experimental)* Emit a per-file [Obsidian](https://obsidian.md) vault under `docs/wiki/` with `[[wikilinks]]` from `used_by:`/`related:` graphs |
-| `codedna wiki sync <path>` | *(v0.9 experimental)* Regenerate `docs/codedna-wiki.md` — a narrative 7-section project wiki (Karpathy LLM-wiki pattern). Hook this to post-commit. |
+| `codedna wiki bootstrap <path>` | Emit a per-file [Obsidian](https://obsidian.md) vault under `docs/wiki/` with `[[wikilinks]]` from `used_by:`/`related:` graphs |
+| `codedna wiki sync <path>` | Regenerate `docs/codedna-wiki.md` — a narrative 7-section project wiki (Karpathy LLM-wiki pattern). Hook this to post-commit. |
 
 **Wiki layer in action** — the `wiki:` opt-in field and the Obsidian graph view:
 
@@ -456,7 +456,7 @@ codedna mode agent    # full protocol
 
 ## Roadmap
 
-All components are functional and tested but **experimental** — the protocol, CLI, and benchmark are actively evolving based on real-world usage and research feedback.
+All components are functional and tested — the protocol, CLI, and benchmark are actively evolving based on real-world usage and research feedback.
 
 | Area | What works | What's next |
 |---|---|---|

@@ -39,10 +39,10 @@ Field guide:
 | `exports:` | ✅ | Public API with return type |
 | `used_by:` | ✅ | Who calls this file's exports (structural link via import) |
 | `related:` | ⬜ | Files that share the same logic/pattern without importing each other (semantic link) |
-| `wiki:` | ⬜ | Opt-in pointer to a deeper markdown doc under `docs/wiki/` (experimental v0.9 — see below) |
+| `wiki:` | ⬜ | Opt-in pointer to a deeper markdown doc under `docs/wiki/` (see below) |
 | `rules:` | ✅ | Architectural truth — specific, actionable constraints (see examples below) |
 | `agent:` | ✅ | Session narrative — rolling window of last 5 entries; drop the oldest when adding a 6th |
-| `message:` | ⬜ | Inter-agent channel — open hypotheses, unverified observations (v0.8) |
+| `message:` | ⬜ | Inter-agent channel — open hypotheses, unverified observations |
 
 ## Writing good `rules:`
 
@@ -153,7 +153,7 @@ AI-Message:  <one-line summary of what was found or left open>
 
 Git is the authoritative audit log. The `.codedna` entry and file-level `agent:` fields are lightweight caches for agent navigation — git trailers are the source of truth for history and verification.
 
-## `message:` — Agent Chat Layer *(v0.8 experimental)*
+## `message:` — Agent Chat Layer
 
 The `message:` sub-field adds a conversational layer to `agent:` entries. Use it for observations not yet certain enough to become `rules:`, open questions, and notes for the next agent.
 
@@ -175,7 +175,7 @@ def my_function():
 
 **Lifecycle:** a `message:` is either promoted to `rules:` (reply `"@prev: promoted to rules:"`) or dismissed (`"@prev: verified, not applicable because..."`). Always append-only — never delete.
 
-## `wiki:` — Opt-in deeper context *(v0.9 experimental)*
+## `wiki:` — Opt-in deeper context
 
 The `wiki:` field is an **optional pointer** from a source file's docstring to a curated markdown document. It is **the signal, not the dump** — it exists only when a prior agent decided this file deserves context beyond what the terse docstring can hold.
 
@@ -210,7 +210,7 @@ agent:   ...
 - A single `<!-- AGENT NOTES -->` marker at the end of each auto-generated page preserves human/agent additions across regeneration
 - The `codedna wiki` commands manage the vault (see below)
 
-## `codedna wiki` — Commands *(v0.9 experimental)*
+## `codedna wiki` — Commands
 
 Two complementary subcommands:
 

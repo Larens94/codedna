@@ -10,14 +10,12 @@ _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
 scan_file handles 3 import patterns: (1) from .mod import X, (2) from . import X
 (submodule-first then __init__.py symbol), (3) from pkg import X (tries pkg/X.py
 before falling back to pkg/__init__.py). All 3 were previously under-resolved.
-agent:   claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php2 | GATE 2+3: used_by graph for non-Python; lang_function_rules_batch() for LLM L2 on non-Python; run_lang_files L2 pass via adapter.inject_function_rules()
-claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_msg | add message: field to build_module_docstring() (Python) — present in all L1 headers now, empty by default, visible to next agent
-claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_sessions | _write_codedna() rolling window: keeps last 10 agent_sessions — prevents unbounded .codedna growth (was 22+ sessions / 688 lines)
+agent:   claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_sessions | _write_codedna() rolling window: keeps last 10 agent_sessions — prevents unbounded .codedna growth (was 22+ sessions / 688 lines)
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | _detect_project_meta(): reads go.mod/package.json/pom.xml/settings.gradle(.kts)/build.gradle(.kts)/Gemfile/Cargo.toml; integrated into cmd_install() + cmd_manifest(); README language count 11→9, L2 coverage updated
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | add explanatory comments to 9 empty except blocks (scan_file ValueError for outside-repo paths, JSON repair fallback, _detect_project_meta OSError per-file) — CodeQL py/empty-except alerts #1689, #1696-1698, #1702-1707
-claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql2 | remove unused _HOOK_TOOLS set (never referenced — _TOOL_HOOKS_MAP.values() supersedes it) — CodeQL #1664
-claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | add optional wiki: field to Python + lang header parsers and rebuilders — opt-in pointer to deeper markdown doc (experimental v0.9 — Karpathy LLM-wiki pattern)
+claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | add optional wiki: field to Python + lang header parsers and rebuilders — opt-in pointer to deeper markdown doc (Karpathy LLM-wiki pattern)
 claude-sonnet-4-6 | anthropic | 2026-04-22 | s_20260422_refresh | fix cmd_refresh: never degrade a real annotation to "none" — if tree-sitter/AST returns no exports or no importers, preserve the existing LLM-annotated value (bug: PHP config + TSX @/ alias files were zeroed out)
+claude-sonnet-4-6 | anthropic | 2026-04-24 | s_20260424_stable | remove all "experimental" labels from wiki/message/related fields — these are stable v0.9 features; stripped from help text, comments, and docstrings
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -1203,7 +1201,7 @@ def _rebuild_docstring(fields: dict[str, str], new_exports: str, new_used_by: st
 
     Rules:   Must preserve the exact related:, wiki:, rules: and agent: (including message: sub-fields).
              Only exports: and used_by: are replaced.
-             wiki: is an optional pointer to a deeper markdown doc (experimental v0.9 field).
+             wiki: is an optional pointer to a deeper markdown doc.
     """
     first_line = fields.get("first_line", "module — unknown.")
     related = fields.get("related", "")
@@ -1297,7 +1295,7 @@ def _rebuild_lang_header(fields: dict[str, str], new_exports: str, new_used_by: 
     Rules:   Preserves related:, wiki:, rules:, agent:, message: exactly as-is.
              Only exports: and used_by: are replaced.
              Multi-line used_by entries are indented with the comment prefix.
-             wiki: is an optional one-line pointer to a deeper markdown doc (v0.9 experimental).
+             wiki: is an optional one-line pointer to a deeper markdown doc.
     """
     p = comment_prefix
     first_line = fields.get("first_line", "module.")
@@ -1325,7 +1323,7 @@ def _rebuild_lang_header(fields: dict[str, str], new_exports: str, new_used_by: 
         for r in r_lines[1:]:
             lines.append(f"{p}          {r}")
 
-    # Preserve wiki: if present (experimental v0.9 — pointer to deeper markdown doc)
+    # Preserve wiki: if present (pointer to deeper markdown doc)
     if wiki:
         wiki_content = wiki.replace("wiki:", "").strip() if wiki.startswith("wiki:") else wiki
         lines.append(f"{p} wiki:    {wiki_content}")
@@ -2885,7 +2883,7 @@ def main():
     # ── wiki ─────────────────────────────────────────────────────────────────
     wiki_p = subs.add_parser(
         "wiki",
-        help="Generate an Obsidian-compatible wiki vault from CodeDNA annotations (experimental)",
+        help="Generate an Obsidian-compatible wiki vault from CodeDNA annotations",
         description=(
             "Emit a flat markdown vault where each annotated source file becomes a page\n"
             "with [[wikilinks]] derived from used_by: and related: graphs.\n\n"

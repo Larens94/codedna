@@ -107,7 +107,7 @@ This path depends on remote template fetches from GitHub raw URLs.
 - build reverse dependency graph
 - write L1 / L2 annotations
 
-### Wiki flow (experimental v0.9)
+### Wiki flow
 
 - `codedna wiki sync` regenerates this file (`docs/codedna-wiki.md`) from `.codedna` + repo structure
 - `codedna wiki bootstrap` generates the per-file Obsidian vault under `docs/wiki/`

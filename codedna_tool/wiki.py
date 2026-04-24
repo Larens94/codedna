@@ -15,6 +15,7 @@ claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki4 | switch vault to ne
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki5 | render the wiki: field in generated pages — emits a "📖 Extended documentation" callout with a clickable [[wikilink]] to the curated .md; the graph now shows the arc between auto-generated and curated pages (the opt-in pattern made visible)
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki6 | drop spurious graph nodes — _is_placeholder detects values like "none (entry-point script)" and renders them as inline code instead of [[wikilinks]]
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki7 | escape literal [[...]] mentions in Rules/Agent bullets via _escape_inline_wikilinks so docs talking ABOUT wikilinks don't spawn phantom graph nodes
+claude-sonnet-4-6 | anthropic | 2026-04-24 | s_20260424_stable | remove "v0.9 experimental" label from wiki section in render_project_wiki — wiki is a stable v0.9 feature
 """
 
 from __future__ import annotations
@@ -561,7 +562,7 @@ and where agents should start reading.
 - **Setup** — `codedna install` wires CLAUDE.md / AGENTS.md, optional pre-commit hook, starter `.codedna`
 - **Annotate** — `codedna init` writes L1/L2 headers; `codedna update` fills in missing ones
 - **Maintain** — `codedna refresh` repairs structural drift; `codedna check` measures coverage
-- **Wiki (v0.9 experimental)** — `codedna wiki sync` rewrites this file; `codedna wiki bootstrap` emits the per-file vault under `docs/wiki/`
+- **Wiki** — `codedna wiki sync` rewrites this file; `codedna wiki bootstrap` emits the per-file vault under `docs/wiki/`
 
 ## Testing and validation model
 
