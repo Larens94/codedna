@@ -111,8 +111,8 @@ codedna refresh .                              # aggiorna exports + used_by (zer
 | `codedna manifest <path>` | Genera la mappa `.codedna` del progetto (Livello 0): packages, depends_on, key_files |
 | `codedna mode <mode>` | Legge/imposta la modalità: `human` (minimale), `semi` (default), `agent` (protocollo completo) |
 | `codedna install <path>` | Setup pre-commit hook + prompt per il tool AI + manifesto `.codedna` |
-| `codedna wiki bootstrap <path>` | *(v0.9 sperimentale)* Genera un vault [Obsidian](https://obsidian.md) per-file sotto `docs/wiki/` con `[[wikilinks]]` derivati dai grafi `used_by:`/`related:` |
-| `codedna wiki sync <path>` | *(v0.9 sperimentale)* Rigenera `docs/codedna-wiki.md` — wiki narrativo di progetto a 7 sezioni (pattern LLM-wiki di Karpathy). Da agganciare al post-commit. |
+| `codedna wiki bootstrap <path>` | Genera un vault [Obsidian](https://obsidian.md) per-file sotto `docs/wiki/` con `[[wikilinks]]` derivati dai grafi `used_by:`/`related:` |
+| `codedna wiki sync <path>` | Rigenera `docs/codedna-wiki.md` — wiki narrativo di progetto a 7 sezioni (pattern LLM-wiki di Karpathy). Da agganciare al post-commit. |
 
 > **Supporto linguaggi:** Python è il linguaggio più testato. PHP, TypeScript, Go, Java, Kotlin, Ruby, Rust e C# funzionano via tree-sitter ma hanno avuto meno utilizzo reale. Se usi CodeDNA su un progetto non-Python e trovi qualcosa che non va — export sbagliati, formato header errato, caso limite — apri una [pull request](https://github.com/Larens94/codedna/pulls) o una [issue](https://github.com/Larens94/codedna/issues). Ogni segnalazione ci aiuta a rendere solido il supporto per ogni linguaggio.
 >
@@ -443,7 +443,7 @@ codedna mode agent    # protocollo completo
 
 ## Roadmap
 
-Tutti i componenti sono funzionanti e testati ma **sperimentali** — il protocollo, la CLI e il benchmark sono in evoluzione attiva basata sull'utilizzo reale e il feedback della ricerca.
+Tutti i componenti sono funzionanti e testati — il protocollo, la CLI e il benchmark sono in evoluzione attiva basata sull'utilizzo reale e il feedback della ricerca.
 
 | Area | Cosa funziona | Prossimi passi |
 |---|---|---|

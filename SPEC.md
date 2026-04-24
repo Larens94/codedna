@@ -115,7 +115,7 @@ related: django/core/validators.py — shares IDNA/punycode domain encoding logi
 
 Agent E immediately knows to check `validators.py` and `encoding.py`. The `related:` field captures **semantic links** — files that share a pattern or logic without a structural import. `used_by:` answers "who imports me?", `related:` answers "who does the same thing as me?".
 
-### 1.1c The `wiki:` Field — Opt-in Deeper Context *(v0.9 experimental)*
+### 1.1c The `wiki:` Field — Opt-in Deeper Context
 
 Some files carry non-obvious architectural constraints too long or too narrative for the terse `rules:` field. The `wiki:` field is an **optional pointer** from a docstring to a curated markdown document under `docs/wiki/`:
 
@@ -557,9 +557,7 @@ agent:   gemini-2.5-pro    | 2026-03-18 | Added annual_summary. Reused monthly_r
 
 ---
 
-### 4.7 `message:` — The Agent Chat Layer *(v0.8 — Experimental, not yet tested)*
-
-> **Status:** design proposal. Not validated in benchmark. Behaviour and format may change before finalisation.
+### 4.7 `message:` — The Agent Chat Layer
 
 The `agent:` field is a **narrative log** — what the agent did and what it noticed. The `message:` sub-field extends this with a **conversational layer**: observations not yet certain enough to become `rules:`, open questions, and explicit forward-looking notes for the next agent.
 
@@ -620,9 +618,7 @@ An agent reading only lines 55–90 receives both the `Rules:` constraint and th
 
 ---
 
-### 4.8 Agent Telemetry via Git Trailers *(v0.8 — Experimental, not yet tested)*
-
-> **Status:** design proposal. Not validated in benchmark conditions. Format may change before finalisation.
+### 4.8 Agent Telemetry via Git Trailers
 
 #### Design principle: git is the audit log
 
@@ -687,7 +683,7 @@ The file-level `agent:` field gains `provider` and `session_id` to enable cross-
 # v0.7
 agent:   claude-sonnet-4-6 | 2026-03-10 | Implemented monthly_revenue.
 
-# v0.8 proposed
+# v0.9
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-10 | s_a1b2c3 | Implemented monthly_revenue.
          message: "rounding edge case in multi-currency — investigate before next release"
 ```
@@ -905,9 +901,7 @@ This is analogous to code review for comments: the cost of reviewing is justifie
 - On a periodic schedule (e.g., weekly for active codebases)
 - When an agent's edit produces unexpected failures
 
-#### 8.6.1 Git Telemetry as Verification Input *(v0.8 — Experimental, not yet tested)*
-
-> **Status:** design proposal. Not validated in benchmark conditions.
+#### 8.6.1 Git Telemetry as Verification Input
 
 The git trailer convention described in §4.8 transforms verification agents from reactive (checking annotations after the fact) to **proactive** — able to audit agent behaviour systematically using structured telemetry from every AI session.
 
