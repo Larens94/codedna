@@ -10,12 +10,11 @@ _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
 scan_file handles 3 import patterns: (1) from .mod import X, (2) from . import X
 (submodule-first then __init__.py symbol), (3) from pkg import X (tries pkg/X.py
 before falling back to pkg/__init__.py). All 3 were previously under-resolved.
-agent:   claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_sessions | _write_codedna() rolling window: keeps last 10 agent_sessions — prevents unbounded .codedna growth (was 22+ sessions / 688 lines)
-claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | _detect_project_meta(): reads go.mod/package.json/pom.xml/settings.gradle(.kts)/build.gradle(.kts)/Gemfile/Cargo.toml; integrated into cmd_install() + cmd_manifest(); README language count 11→9, L2 coverage updated
-claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | add explanatory comments to 9 empty except blocks (scan_file ValueError for outside-repo paths, JSON repair fallback, _detect_project_meta OSError per-file) — CodeQL py/empty-except alerts #1689, #1696-1698, #1702-1707
+agent:   claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | add explanatory comments to 9 empty except blocks (scan_file ValueError for outside-repo paths, JSON repair fallback, _detect_project_meta OSError per-file) — CodeQL py/empty-except alerts #1689, #1696-1698, #1702-1707
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | add optional wiki: field to Python + lang header parsers and rebuilders — opt-in pointer to deeper markdown doc (Karpathy LLM-wiki pattern)
 claude-sonnet-4-6 | anthropic | 2026-04-22 | s_20260422_refresh | fix cmd_refresh: never degrade a real annotation to "none" — if tree-sitter/AST returns no exports or no importers, preserve the existing LLM-annotated value (bug: PHP config + TSX @/ alias files were zeroed out)
 claude-sonnet-4-6 | anthropic | 2026-04-24 | s_20260424_stable | remove all "experimental" labels from wiki/message/related fields — these are stable v0.9 features; stripped from help text, comments, and docstrings
+claude-opus-4-7 | anthropic | 2026-04-29 | s_20260429_selfupdate | add cmd_self_update() + 'self-update' subcommand: runs pip install --upgrade --force-reinstall from main; detects editable/dev checkouts via pyproject.toml + .git presence and refuses to clobber them unless --force; uses sys.executable so pip targets the same interpreter running the CLI
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -24,6 +23,7 @@ install        Setup CodeDNA in a project (pre-commit hook + AI tool prompt + .c
 init   PATH    First-time annotation of every source file under PATH
 update PATH    Annotate only files missing CodeDNA headers (incremental)
 check  PATH    Report annotation coverage without modifying files
+self-update    Upgrade the CodeDNA CLI itself via pip from the GitHub repo
 LLM calls: max 2 per Python file (1 module skeleton rules + 1 function batch).
 0 calls if file already annotated (skipped by init/update).
 Non-Python files: 1 LLM call per file for rules: (or none with --no-llm).
@@ -2718,6 +2718,68 @@ def cmd_manifest(
     return 0
 
 
+_SELF_UPDATE_REPO_URL = "git+https://github.com/Larens94/codedna.git"
+
+
+def cmd_self_update(*, force: bool = False, check_only: bool = False) -> int:
+    """Upgrade the CodeDNA CLI in-place via pip from the GitHub repo.
+
+    Rules:   Detect editable installs (dev checkout) and refuse to overwrite them
+             unless --force is passed — pip --force-reinstall on an editable install
+             would clobber the dev environment with the released version.
+             Use sys.executable to invoke pip from the same interpreter that is
+             running the CLI — avoids upgrading a different Python installation.
+    """
+    import subprocess
+    try:
+        from importlib.metadata import PackageNotFoundError, version  # py3.8+
+    except ImportError:  # pragma: no cover
+        from importlib_metadata import PackageNotFoundError, version  # type: ignore
+
+    try:
+        current = version("codedna")
+    except PackageNotFoundError:
+        current = "unknown"
+
+    pkg_dir = Path(__file__).resolve().parent.parent
+    is_editable = (pkg_dir / "pyproject.toml").exists() and (pkg_dir / ".git").exists()
+
+    print(f"Current version: {current}")
+
+    if check_only:
+        print(f"Run 'codedna self-update' to upgrade to the latest commit on main.")
+        return 0
+
+    if is_editable and not force:
+        print()
+        print(f"CodeDNA appears to be installed in editable/dev mode at:")
+        print(f"  {pkg_dir}")
+        print()
+        print(f"Refusing to overwrite a dev checkout. Options:")
+        print(f"  - pull latest from the dev checkout:  cd {pkg_dir} && git pull")
+        print(f"  - force pip upgrade anyway:           codedna self-update --force")
+        return 1
+
+    cmd = [sys.executable, "-m", "pip", "install", "--upgrade",
+           "--force-reinstall", _SELF_UPDATE_REPO_URL]
+    print(f"Running: {' '.join(cmd)}")
+    print()
+    result = subprocess.run(cmd)
+    if result.returncode != 0:
+        print(f"\npip exited with code {result.returncode}", file=sys.stderr)
+        return result.returncode
+
+    try:
+        new_version = version("codedna")
+    except PackageNotFoundError:
+        new_version = "unknown"
+
+    print()
+    print(f"✓ CodeDNA updated: {current} → {new_version}")
+    print(f"  Restart your shell session to use the new version.")
+    return 0
+
+
 def main():
     p = argparse.ArgumentParser(
         prog="codedna",
@@ -2916,6 +2978,24 @@ def main():
     wiki_sync.add_argument("--out", type=Path, default=Path("docs/codedna-wiki.md"),
                            help="Output file (default: docs/codedna-wiki.md)")
 
+    # ── self-update ──────────────────────────────────────────────────────────
+    self_update_p = subs.add_parser(
+        "self-update",
+        help="Upgrade the CodeDNA CLI itself via pip from the GitHub repo",
+        description=(
+            "Runs `pip install --upgrade --force-reinstall git+https://github.com/Larens94/codedna.git`\n"
+            "using the same Python interpreter that is running this CLI.\n\n"
+            "If CodeDNA is installed in editable/dev mode (a git checkout with pyproject.toml),\n"
+            "self-update refuses to overwrite it unless --force is passed.\n\n"
+            "This is distinct from `codedna update`, which annotates files missing CodeDNA headers."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    self_update_p.add_argument("--check", action="store_true",
+                               help="Show the current installed version and exit (no upgrade)")
+    self_update_p.add_argument("--force", action="store_true",
+                               help="Run pip even on an editable/dev checkout (will clobber it)")
+
     args = p.parse_args()
 
     # ── dispatch ──────────────────────────────────────────────────────────────
@@ -3020,6 +3100,9 @@ def main():
             return 1
         repo_root = args.repo_root.resolve() if args.repo_root else None
         return cmd_refresh(target, repo_root, list(args.exclude), args.dry_run, args.verbose)
+
+    if args.command == "self-update":
+        return cmd_self_update(force=args.force, check_only=args.check)
 
     if args.command == "wiki":
         sub = getattr(args, "wiki_command", None)

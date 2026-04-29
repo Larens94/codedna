@@ -592,3 +592,35 @@ agent_sessions:
       Added module_rules_raw() using raw source snippet. Also: skip *_test.go, cap exports
       at 20, fix provider always "unknown", normalize multi-line rules with comment prefix.
       Tested on gin (59 files, 56 LLM calls) and sinatra (7 files, 6 LLM calls).
+
+  - agent: claude-opus-4-7
+    provider: anthropic
+    date: 2026-04-29
+    session_id: s_20260429_selfupdate
+    task: "add 'codedna self-update' subcommand to upgrade the CLI itself via pip"
+    changed:
+      - codedna_tool/cli.py
+    visited:
+      - codedna_tool/cli.py
+      - codedna_tool/wiki.py
+      - codedna-plugin/README.md
+      - codedna-plugin/commands/init.md
+      - codedna-plugin/commands/manifest.md
+      - codedna-plugin/commands/check.md
+      - codedna-plugin/commands/impact.md
+      - codedna-plugin/.claude-plugin/plugin.json
+      - QUICKSTART.md
+    message: >
+      Added cmd_self_update() + 'self-update' subcommand. Resolves a UX confusion:
+      users seeing 'codedna update' thought it upgraded the package, but it just
+      annotates new files. Now 'codedna update' keeps its annotation meaning and
+      'codedna self-update' is the dedicated upgrade path. Implementation uses
+      sys.executable -m pip so the upgrade always targets the same Python that is
+      running the CLI. Detects editable/dev checkouts (pyproject.toml + .git
+      present in package parent) and refuses pip --force-reinstall unless --force
+      is explicitly passed — prevents clobbering dev environments. --check shows
+      installed version without running pip. Tested in a clean venv: editable
+      detection works, pip is invoked correctly with the right interpreter, the
+      remote install actually replaces the local package. Plugin-side wiki.md
+      command was started but reverted on user request — they prefer keeping the
+      wiki layer CLI-only for now.
