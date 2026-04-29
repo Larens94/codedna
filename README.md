@@ -61,6 +61,7 @@ Install the plugin, then run `/codedna:init` — it guides you through everythin
 | **Cline** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) cline-hooks` |
 | **OpenCode** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) opencode` |
 | **Windsurf** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) windsurf` |
+| **Antigravity** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) agents` — installs `.agents/workflows/codedna.md` (auto-loaded by Antigravity workflows) |
 
 > **Important:** After installing the plugin, start a **new session** (close and reopen Claude Code, or run `/clear`). The plugin's slash commands (`/codedna:init`, `/codedna:check`, etc.) are only available after restarting.
 
@@ -114,6 +115,7 @@ codedna refresh .                              # update exports + used_by (zero 
 | `codedna install <path>` | Setup pre-commit hook + AI tool prompt + `.codedna` manifest |
 | `codedna wiki bootstrap <path>` | Emit a per-file [Obsidian](https://obsidian.md) vault under `docs/wiki/` with `[[wikilinks]]` from `used_by:`/`related:` graphs |
 | `codedna wiki sync <path>` | Regenerate `docs/codedna-wiki.md` — a narrative 7-section project wiki (Karpathy LLM-wiki pattern). Hook this to post-commit. |
+| `codedna self-update` | Upgrade the CLI itself via `pip install --upgrade --force-reinstall git+...`. Refuses to clobber editable/dev checkouts unless `--force`. Use `--check` to see the installed version. |
 
 **Wiki layer in action** — the `wiki:` opt-in field and the Obsidian graph view:
 

@@ -60,6 +60,7 @@ Installa il plugin, poi esegui `/codedna:init` — ti guida in tutto in modo int
 | **Cline** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) cline-hooks` |
 | **OpenCode** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) opencode` |
 | **Windsurf** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) windsurf` |
+| **Antigravity** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) agents` — installa `.agents/workflows/codedna.md` (caricato automaticamente dai workflow Antigravity) |
 
 > **Importante:** Dopo aver installato il plugin, avvia una **nuova sessione** (chiudi e riapri Claude Code, oppure esegui `/clear`). I comandi slash (`/codedna:init`, `/codedna:check`, ecc.) sono disponibili solo dopo il riavvio.
 
@@ -113,6 +114,7 @@ codedna refresh .                              # aggiorna exports + used_by (zer
 | `codedna install <path>` | Setup pre-commit hook + prompt per il tool AI + manifesto `.codedna` |
 | `codedna wiki bootstrap <path>` | Genera un vault [Obsidian](https://obsidian.md) per-file sotto `docs/wiki/` con `[[wikilinks]]` derivati dai grafi `used_by:`/`related:` |
 | `codedna wiki sync <path>` | Rigenera `docs/codedna-wiki.md` — wiki narrativo di progetto a 7 sezioni (pattern LLM-wiki di Karpathy). Da agganciare al post-commit. |
+| `codedna self-update` | Aggiorna il CLI stesso via `pip install --upgrade --force-reinstall git+...`. Rifiuta di sovrascrivere checkout editable/dev se non passi `--force`. Usa `--check` per vedere la versione installata. |
 
 > **Supporto linguaggi:** Python è il linguaggio più testato. PHP, TypeScript, Go, Java, Kotlin, Ruby, Rust e C# funzionano via tree-sitter ma hanno avuto meno utilizzo reale. Se usi CodeDNA su un progetto non-Python e trovi qualcosa che non va — export sbagliati, formato header errato, caso limite — apri una [pull request](https://github.com/Larens94/codedna/pulls) o una [issue](https://github.com/Larens94/codedna/issues). Ogni segnalazione ci aiuta a rendere solido il supporto per ogni linguaggio.
 >
