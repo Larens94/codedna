@@ -15,6 +15,7 @@ claude-sonnet-4-6 | anthropic | 2026-04-22 | s_20260422_refresh | fix cmd_refres
 claude-sonnet-4-6 | anthropic | 2026-04-24 | s_20260424_stable | remove all "experimental" labels from wiki/message/related fields — these are stable v0.9 features; stripped from help text, comments, and docstrings
 claude-opus-4-7 | anthropic | 2026-04-29 | s_20260429_selfupdate | add cmd_self_update() + 'self-update' subcommand: runs pip install --upgrade --force-reinstall from main; detects editable/dev checkouts via pyproject.toml + .git presence and refuses to clobber them unless --force; uses sys.executable so pip targets the same interpreter running the CLI
 claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_antigravity | fix Antigravity integration: rename .agents/ → .agent/ (singular per official docs), make 'agents' tool install AGENTS.md + .agent/workflows/codedna.md (multi-file via list-of-tuples in _TOOL_FILES), add to _detect_ai_tools and --tools help text. Antigravity v1.20.3 reads AGENTS.md from repo root.
+claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_init_dataloss | fix #10 (yuzi-co): build_module_docstring now preserves the existing multi-line docstring body. Pre-fix `init` discarded everything below the summary line — silent data loss reported on a real 745-file repo (migration docs, architectural notes, pipeline diagrams erased). New _extract_docstring_body() helper extracts the prose body and strips out any pre-existing CodeDNA fields (so init --force doesn't duplicate them). 4 regression tests in TestBuildDocstring + 1 E2E in TestInit reproducing the reporter's exact case.
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -39,6 +40,7 @@ import ast
 import fnmatch
 import json
 import os
+import re
 import sys
 from dataclasses import dataclass
 from datetime import date
@@ -660,6 +662,55 @@ def _purpose(rel: str, existing: Optional[str]) -> str:
     return f"Package init for {parent}" if stem == "__init__" else f"{stem} module"
 
 
+# Field markers that must be filtered from a preserved docstring body so that
+# `init --force` over an already-annotated file doesn't emit duplicate fields.
+_CODEDNA_FIELD_RE = re.compile(
+    r"^\s*(exports|used_by|related|wiki|rules|agent|message)\s*:",
+    re.IGNORECASE,
+)
+
+
+def _extract_docstring_body(existing: Optional[str]) -> str:
+    """Return the prose body of an existing module docstring (everything after
+    the summary line), stripping CodeDNA field lines and their continuations.
+
+    Rules:   Single-line docstrings have no body — return ''.
+             CodeDNA field lines (exports:/used_by:/related:/wiki:/rules:/agent:/message:)
+             AND their indented continuation lines are dropped, otherwise an
+             `init --force` over an annotated file would emit duplicate fields.
+             All other content (prose, ASCII tables, indented code examples,
+             section underlines) is preserved verbatim — it is the user's
+             documentation and must NOT be reformatted.
+             Strips leading/trailing blank lines so the caller controls the layout.
+    """
+    if not existing:
+        return ""
+    lines = existing.split("\n")
+    if len(lines) <= 1:
+        return ""
+
+    body_lines = lines[1:]
+    filtered: list[str] = []
+    skipping_field = False
+    for line in body_lines:
+        if _CODEDNA_FIELD_RE.match(line):
+            skipping_field = True
+            continue
+        if skipping_field:
+            # Continuation = non-empty indented line right after a field line.
+            if line.startswith((" ", "\t")) and line.strip():
+                continue
+            skipping_field = False
+        filtered.append(line)
+
+    while filtered and not filtered[0].strip():
+        filtered.pop(0)
+    while filtered and not filtered[-1].strip():
+        filtered.pop()
+
+    return "\n".join(filtered)
+
+
 def build_module_docstring(info: FileInfo, ub: dict, rules: str, model_id: str) -> str:
     today = date.today().isoformat()
     provider = (
@@ -667,16 +718,27 @@ def build_module_docstring(info: FileInfo, ub: dict, rules: str, model_id: str) 
         if model_id == "codedna-cli (no-llm)"
         else LLM._detect_provider(model_id)
     )
+    # Issue #10: preserve any existing prose body BELOW the summary line so we
+    # don't silently destroy hand-authored module documentation (multi-paragraph
+    # descriptions, examples, notes, ASCII diagrams). CodeDNA fields already in
+    # the original body get stripped to avoid duplication on `init --force`.
+    str_preserved_body = _extract_docstring_body(info.docstring)
+
     lines = [
         f'"""{info.rel} — {_purpose(info.rel, info.docstring)}.',
         "",
+    ]
+    if str_preserved_body:
+        lines.append(str_preserved_body)
+        lines.append("")
+    lines.extend([
         f"exports: {_fmt_exports(info.exports)}",
         f"used_by: {_fmt_used_by(ub)}",
         f"rules:   {rules}",
         f"agent:   {model_id} | {provider} | {today} | codedna-cli | initial CodeDNA annotation pass",
         "message: ",
         '"""',
-    ]
+    ])
     return "\n".join(lines) + "\n"
 
 

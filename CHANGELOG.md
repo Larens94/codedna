@@ -6,6 +6,7 @@ All notable changes to CodeDNA will be documented in this file.
 
 ### Fixed
 
+- **`codedna init` no longer destroys multi-line module docstrings (#10).** Reported by @yuzi-co — on a real 745-file repo `init` had silently erased migration documentation, architectural notes, test prerequisites and pipeline diagrams across hundreds of files. Pre-fix `build_module_docstring` only kept the first (summary) line of the existing docstring via `_purpose()`; everything else was dropped when `inject_module_docstring` replaced the original triple-quoted block. New helper `_extract_docstring_body()` now extracts the prose body and splices it between the summary line and the CodeDNA fields. Pre-existing CodeDNA fields in the body are stripped so `init --force` over an annotated file does not duplicate them.
 - **`codedna wiki bootstrap` no longer OOMs on large non-source files (#9).** Pre-fix, `_extract_fields` did `path.read_text()` which loaded each file fully into memory before checking for a CodeDNA header. On repos containing GGUF model weights, datasets, or any multi-GB binary, this raised `MemoryError` (reported by @DATEx2 — confirmed via traceback). The function now reads only the first 16 KB of each file, runs a cheap `"exports:" in head` pre-check to skip files without an L1 annotation, and falls back to a regex extraction of the leading triple-quoted string if the truncated head breaks AST parsing. Wiki content is unchanged (still L1-only — used_by/related/rules/agent/wiki/message). Smoke-tested with a 50 MB binary in the repo root: peak memory ~180 MB, vault generates correctly.
 - **Antigravity integration: directory renamed `.agents/` → `.agent/`** (singular per [official docs](https://antigravity.google/docs/rules-workflows)). The previous path was never read by the IDE, so `bash install.sh agents` was effectively a no-op for end users. Affects [integrations/install.sh](integrations/install.sh), [codedna_tool/cli.py](codedna_tool/cli.py) `_TOOL_FILES["agents"]`, and the source workflow file at [integrations/.agent/workflows/codedna.md](integrations/.agent/workflows/codedna.md).
 
@@ -17,7 +18,7 @@ All notable changes to CodeDNA will be documented in this file.
 
 ### Tests
 
-- 187 total tests passing (was 185); 2 new regression tests in `TestBuildVault`: `test_large_non_source_file_does_not_crash` (5 MB binary in repo doesn't OOM) and `test_python_with_long_body_after_docstring` (Python file with body > 16 KB still has its header extracted via regex fallback).
+- 191 total tests passing (was 185); 4 new regression tests for #10 in `TestBuildDocstring` + `TestInit` (multi-line body preserved, CodeDNA fields not duplicated on `--force`, single-line behaviour unchanged, E2E reproduces the reporter's exact case) and 2 new for #9 in `TestBuildVault` (5 MB binary in repo doesn't OOM, Python file with body > 16 KB still has its header extracted via regex fallback).
 
 ## [0.9.1] — 2026-04-22
 

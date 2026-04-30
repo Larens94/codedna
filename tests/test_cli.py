@@ -7,6 +7,7 @@ Each test uses tmp_path for isolation — never touches real project files.
 agent:   claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_002 | initial CLI test suite
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | add TestDetectProjectMeta: 12 unit tests for go.mod/package.json/pom.xml/settings.gradle/Cargo.toml parsing
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_unused | remove unused json/pytest imports (CodeQL #1673, #1674)
+claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_init_dataloss | add 4 regression tests for #10 (yuzi-co) — multi-line docstring body must be preserved by build_module_docstring + init E2E. Pre-fix tests fail (red) showing the data-loss bug exactly: lines like "Detailed multi-paragraph description", "Example", "Notes", "This content is critical" disappear from the rebuilt docstring.
 """
 
 from __future__ import annotations
@@ -96,6 +97,54 @@ class TestInit:
         ts_content = (mini_project / "app.ts").read_text()
         assert "exports:" in ts_content or "// app.ts" in ts_content
 
+    def test_init_preserves_multiline_docstring_body(self, tmp_path):
+        """Regression for #10 (yuzi-co): `init` must NOT silently delete the
+        body of an existing multi-line module docstring when inserting the
+        CodeDNA header.
+
+        Pre-fix on a 745-file repo this erased migration docs, architectural
+        notes, and pipeline diagrams. We replicate the reporter's exact repro.
+        """
+        path = tmp_path / "example.py"
+        path.write_text(
+            '"""Short summary line.\n'
+            "\n"
+            "Detailed multi-paragraph description that documents\n"
+            "the module's contract, invariants, and usage examples.\n"
+            "\n"
+            "Example\n"
+            "-------\n"
+            "    from example import compute\n"
+            "    compute(2, 3)  # -> 5\n"
+            "\n"
+            "Notes\n"
+            "-----\n"
+            "This content is critical and must NOT be lost.\n"
+            '"""\n'
+            "\n"
+            "def compute(a, b):\n"
+            "    return a + b\n",
+            encoding="utf-8",
+        )
+        rc, out, err = run_codedna("init", str(tmp_path), "--no-llm")
+        assert rc == 0
+        after = path.read_text(encoding="utf-8")
+        # CodeDNA header was injected.
+        assert "exports:" in after
+        assert "compute(a, b)" in after
+        # Original body lines all survive.
+        for must in [
+            "Detailed multi-paragraph description",
+            "the module's contract, invariants",
+            "Example",
+            "-------",
+            "from example import compute",
+            "Notes",
+            "-----",
+            "This content is critical and must NOT be lost",
+        ]:
+            assert must in after, f"data loss — line missing after init: {must!r}"
+
 
 # ── codedna check ────────────────────────────────────────────────────────────
 
@@ -166,6 +215,123 @@ class TestBuildDocstring:
         doc = build_module_docstring(info, {}, "none", "codedna-cli (no-llm)")
         assert "codedna-cli (no-llm)" in doc
         assert "haiku" not in doc
+
+    def test_multiline_docstring_body_is_preserved(self):
+        """Regression for #10: multi-line docstring body must NOT be silently dropped.
+
+        Pre-fix `build_module_docstring` only kept the first line of the existing
+        docstring (via `_purpose`) and discarded everything else.
+        """
+        from codedna_tool.cli import build_module_docstring, FileInfo
+
+        existing = (
+            "Short summary line.\n"
+            "\n"
+            "Detailed multi-paragraph description that documents\n"
+            "the module's contract, invariants, and usage examples.\n"
+            "\n"
+            "Example\n"
+            "-------\n"
+            "    from example import compute\n"
+            "    compute(2, 3)  # -> 5\n"
+            "\n"
+            "Notes\n"
+            "-----\n"
+            "This content is critical and must NOT be lost."
+        )
+        info = FileInfo(
+            path=Path("/tmp/example.py"),
+            rel="example.py",
+            exports=["compute(a, b)"],
+            deps={},
+            docstring=existing,
+            has_codedna=False,
+            funcs=[],
+            parseable=True,
+        )
+        doc = build_module_docstring(info, {}, "none", "test-model")
+        # Each non-summary body line must survive verbatim.
+        for must in [
+            "Detailed multi-paragraph description",
+            "the module's contract, invariants",
+            "Example",
+            "-------",
+            "from example import compute",
+            "Notes",
+            "-----",
+            "This content is critical and must NOT be lost",
+        ]:
+            assert must in doc, f"body line missing from rebuilt docstring: {must!r}"
+        # CodeDNA fields still present.
+        assert "exports: compute(a, b)" in doc
+        assert "agent:" in doc
+
+    def test_single_line_docstring_has_no_body_added(self):
+        """A single-line existing docstring has no body to preserve — output stays minimal."""
+        from codedna_tool.cli import build_module_docstring, FileInfo
+
+        info = FileInfo(
+            path=Path("/tmp/oneliner.py"),
+            rel="oneliner.py",
+            exports=["foo()"],
+            deps={},
+            docstring="Just one line.",
+            has_codedna=False,
+            funcs=[],
+            parseable=True,
+        )
+        doc = build_module_docstring(info, {}, "none", "test-model")
+        # First line carries the summary.
+        assert '"""oneliner.py — Just one line.' in doc
+        # Body section should be empty — exports must come right after the
+        # blank line that follows the summary.
+        lines = doc.split("\n")
+        # Find the blank line after the first """; the next non-blank must be exports:
+        for i, line in enumerate(lines):
+            if line.startswith('"""'):
+                # next blank
+                assert lines[i + 1] == ""
+                assert lines[i + 2].startswith("exports:")
+                break
+
+    def test_codedna_fields_in_existing_docstring_are_not_duplicated(self):
+        """If an existing docstring already contains CodeDNA fields (e.g. on
+        `init --force`), they MUST be stripped from the preserved body to avoid
+        duplicating exports:/used_by:/etc. in the rebuilt docstring.
+        """
+        from codedna_tool.cli import build_module_docstring, FileInfo
+
+        existing = (
+            "test.py — old summary.\n"
+            "\n"
+            "Some prose worth keeping.\n"
+            "\n"
+            "exports: old_func()\n"
+            "used_by: caller.py → old_func\n"
+            "rules:   old rule\n"
+            "agent:   old-agent | x | 2026-01-01 | s_old | old"
+        )
+        info = FileInfo(
+            path=Path("/tmp/test.py"),
+            rel="test.py",
+            exports=["new_func()"],
+            deps={},
+            docstring=existing,
+            has_codedna=True,
+            funcs=[],
+            parseable=True,
+        )
+        doc = build_module_docstring(info, {}, "none", "test-model")
+        # New fields present.
+        assert "exports: new_func()" in doc
+        # Old prose preserved.
+        assert "Some prose worth keeping." in doc
+        # Old CodeDNA fields stripped — they would have been duplicated.
+        assert "old_func()" not in doc
+        assert "caller.py → old_func" not in doc
+        assert "old rule" not in doc
+        assert "old-agent" not in doc
+        assert "s_old" not in doc
 
 
 # ── _detect_project_meta ─────────────────────────────────────────────────────

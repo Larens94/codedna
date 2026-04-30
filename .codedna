@@ -706,3 +706,36 @@ agent_sessions:
       Smoke test on a 50 MB random binary: peak memory 177 MB, vault correct.
       L2 (function Rules:) is not extracted by wiki bootstrap — confirmed by
       reading _page_markdown which renders only L1 fields.
+
+  - agent: claude-opus-4-7
+    provider: anthropic
+    date: 2026-04-30
+    session_id: s_20260430_init_dataloss
+    task: "fix #10: codedna init silently destroyed multi-line module docstrings"
+    changed:
+      - codedna_tool/cli.py
+      - tests/test_cli.py
+      - CHANGELOG.md
+    visited:
+      - codedna_tool/cli.py
+      - tests/test_cli.py
+      - CHANGELOG.md
+    message: >
+      Test-first: 4 failing tests (TestBuildDocstring + TestInit) reproducing
+      reporter's exact case (yuzi-co), then fix. Pre-fix build_module_docstring
+      called _purpose(info.docstring) which extracted only the first line; the
+      rest of the docstring was discarded. inject_module_docstring then replaced
+      the entire existing string-statement with the new (truncated) docstring,
+      so prose / examples / notes / ASCII diagrams below the summary line were
+      lost silently. Reporter said this erased migration docs and architectural
+      notes across ~745 Python files in their repo. Fix: new internal helper
+      _extract_docstring_body() returns the body verbatim (everything after the
+      first line), stripping any CodeDNA field lines (exports/used_by/related/
+      wiki/rules/agent/message) and their indented continuations so init
+      --force over an annotated file doesn't emit duplicate fields. Body is
+      spliced between the summary line and the CodeDNA fields. Smoke-tested on
+      reporter's repro: file goes from 17 → 23 lines (was 17 → 6 pre-fix), all
+      6 critical body lines preserved verbatim. 191 passed / 0 failed.
+      Note: had to add `import re` at module top — _CODEDNA_FIELD_RE regex
+      needed it. First test run after fix initially failed because of that
+      missing import; spotted via NameError in the traceback and corrected.
