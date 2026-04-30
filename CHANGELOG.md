@@ -25,7 +25,7 @@ All notable changes to CodeDNA will be documented in this file.
 
 ### Tests
 
-- 193 total tests passing (was 185); 2 new regression tests for #11 in new `TestManifest` class (`test_exclude_pattern_matches_root_level_dir`, `test_go_only_directory_becomes_its_own_package`); 4 new for #10 in `TestBuildDocstring` + `TestInit` (multi-line body preserved, CodeDNA fields not duplicated on `--force`, single-line behaviour unchanged, E2E reproduces the reporter's exact case); 2 new for #9 in `TestBuildVault` (5 MB binary in repo doesn't OOM, Python file with body > 16 KB still has its header extracted via regex fallback).
+- 204 total tests passing (was 185); the `LLM` routing layer is now under CI for the first time — 11 new tests in `TestLLM` (offline, monkey-patch `_litellm`/`_anthropic`) covering provider detection for all 6 prefixes, litellm routing with kwargs verification, anthropic fallback with timeout, ImportError when neither backend is installed, and api_key env-var injection (positive + negative). 2 new regression tests for #11 in new `TestManifest` class (`test_exclude_pattern_matches_root_level_dir`, `test_go_only_directory_becomes_its_own_package`); 4 new for #10 in `TestBuildDocstring` + `TestInit` (multi-line body preserved, CodeDNA fields not duplicated on `--force`, single-line behaviour unchanged, E2E reproduces the reporter's exact case); 2 new for #9 in `TestBuildVault` (5 MB binary in repo doesn't OOM, Python file with body > 16 KB still has its header extracted via regex fallback).
 
 ## [0.9.1] — 2026-04-22
 

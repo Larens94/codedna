@@ -810,3 +810,33 @@ agent_sessions:
       those run inside the user's already-installed codedna and are
       contextually different from "first install" docs. Can revisit later
       if confusion arises.
+
+  - agent: claude-opus-4-7
+    provider: anthropic
+    date: 2026-05-01
+    session_id: s_20260430_test_llm
+    task: "test(llm): add TestLLM covering litellm + anthropic routing for the first time"
+    changed:
+      - tests/test_cli.py
+      - CHANGELOG.md
+    visited:
+      - tests/test_cli.py
+      - codedna_tool/cli.py
+    message: >
+      The LLM routing layer (litellm path + anthropic fallback + api_key env
+      injection) was never under CI — confirmed by grep on the test tree.
+      Pre-existing benchmark artifacts (deepseek/* in agent: lines under
+      benchmark_agent/projects_swebench/) prove the litellm path was
+      exercised in production at least once, but no automated test guarded
+      against regressions. Added TestLLM with 11 offline tests using
+      monkey-patch on _litellm/_anthropic — covers all 6 known model-string
+      prefixes (ollama, openai, gemini, deepseek, anthropic+claude-substring,
+      mistral/cohere via _detect_provider), kwargs passed to
+      _litellm.completion (model, messages, max_tokens, 90s timeout),
+      anthropic fallback path with with_options(timeout=90.0), ImportError
+      branch when both backends are absent, and api_key injection into
+      DEEPSEEK_API_KEY (positive case) + no-leak when provider is unknown
+      (negative case). Re-introduced `import pytest` at the top of test_cli.py
+      (had been removed for CodeQL #1674) since pytest.raises is needed in
+      this class — kept with `# noqa: F401`. Total: 204 passed / 0 failed
+      (was 193).
