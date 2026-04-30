@@ -40,7 +40,13 @@ EDITING FILES:
 
 ## Antigravity
 
-In your project's **agent configuration** or **system prompt settings**:
+Recommended: run `codedna install --tools agents` (writes `AGENTS.md` at repo root + `.agent/workflows/codedna.md`). For a manual setup, drop the protocol into one of the paths Antigravity v1.20.3+ reads:
+
+- `<project>/AGENTS.md` — always-on, cross-vendor (also read by OpenCode/Cursor/Claude Code)
+- `~/.gemini/GEMINI.md` — always-on, global, highest priority
+- `<project>/.agent/rules/codedna.md` — always-on, Antigravity-specific (note: `.agent/` is **singular**)
+
+Paste in the chosen file:
 
 ```
 You follow the CodeDNA v0.9 Annotation Standard (github.com/Larens94/codedna).

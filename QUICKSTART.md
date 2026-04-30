@@ -68,9 +68,16 @@ All modes include L1 headers + L2 function Rules: + `rules:` + `agent:`.
 
 ## Step 1 — Install for your AI tool
 
-### Antigravity (this tool)
+### Antigravity
 
-Add to your **system prompt** or your project's agent configuration:
+The one-line installer (`agents` option) writes:
+
+- `AGENTS.md` at repo root — always-on rules (Antigravity v1.20.3+, also read by OpenCode, Cursor, Claude Code)
+- `.agent/workflows/codedna.md` — workflow triggered with `/codedna` in agent chat
+
+Note: Antigravity's directory is `.agent/` (singular). See the [official docs](https://antigravity.google/docs/rules-workflows).
+
+Manual fallback — paste the following in `~/.gemini/GEMINI.md`, `<project>/AGENTS.md`, or `<project>/.agent/rules/codedna.md`:
 
 ```
 You follow the CodeDNA v0.9 Annotation Standard (github.com/Larens94/codedna).

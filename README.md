@@ -61,7 +61,7 @@ Install the plugin, then run `/codedna:init` — it guides you through everythin
 | **Cline** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) cline-hooks` |
 | **OpenCode** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) opencode` |
 | **Windsurf** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) windsurf` |
-| **Antigravity** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) agents` — installs `.agents/workflows/codedna.md` (auto-loaded by Antigravity workflows) |
+| **Antigravity** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) agents` — installs `AGENTS.md` (always-on rules, v1.20.3+) + `.agent/workflows/codedna.md` (workflow triggered with `/codedna`) |
 
 > **Important:** After installing the plugin, start a **new session** (close and reopen Claude Code, or run `/clear`). The plugin's slash commands (`/codedna:init`, `/codedna:check`, etc.) are only available after restarting.
 

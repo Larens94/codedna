@@ -624,3 +624,53 @@ agent_sessions:
       remote install actually replaces the local package. Plugin-side wiki.md
       command was started but reverted on user request — they prefer keeping the
       wiki layer CLI-only for now.
+
+  - agent: claude-opus-4-7
+    provider: anthropic
+    date: 2026-04-30
+    session_id: s_20260430_antigravity
+    task: "fix Antigravity integration: .agent/ singular + AGENTS.md + .agent/workflows/codedna.md"
+    changed:
+      - codedna_tool/cli.py
+      - integrations/install.sh
+      - integrations/.agent/workflows/codedna.md
+      - integrations/README.md
+      - README.md
+      - README-it.md
+      - docs/install.html
+      - docs/index.html
+      - QUICKSTART.md
+      - tools/system-prompts.md
+      - CHANGELOG.md
+    visited:
+      - codedna_tool/cli.py
+      - codedna_tool/wiki.py
+      - codedna_tool/languages/__init__.py
+      - integrations/install.sh
+      - integrations/AGENTS.md
+      - integrations/.agent/workflows/codedna.md
+      - integrations/README.md
+      - integrations/CLAUDE.md
+      - tools/system-prompts.md
+      - README.md
+      - README-it.md
+      - QUICKSTART.md
+      - CHANGELOG.md
+      - docs/install.html
+      - docs/index.html
+      - tests/test_cli.py
+    message: >
+      Antigravity uses `.agent/` (singular), not `.agents/` — verified on the
+      official docs (antigravity.google/docs/rules-workflows). Pre-fix our
+      install was effectively a no-op for end users since the IDE never read
+      `.agents/workflows/`. Renamed the source dir, switched _TOOL_FILES["agents"]
+      from a single tuple to a list-of-tuples so `codedna install --tools agents`
+      now writes BOTH AGENTS.md (cross-vendor, always-on rules — works on
+      Antigravity v1.20.3+, OpenCode, Cursor, Claude Code) AND
+      .agent/workflows/codedna.md (workflow triggered with /codedna). Auto-detect
+      now recognises Antigravity via .agent/, GEMINI.md, .gemini/. install.sh
+      do_agents() rewritten with skip-if-exists for AGENTS.md so it doesn't
+      clobber an OpenCode setup. Pytest 185 passed/0 failed; CLI E2E and
+      install.sh E2E both verified via local file:// shims. Issue #9 (wiki
+      bootstrap OOM on GGUF/dataset files) is tracked separately, not in this
+      commit.

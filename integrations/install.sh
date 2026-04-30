@@ -14,7 +14,7 @@
 #   1. pip install codedna  — CLI tool with multi-language support (9 languages + templates)
 #   2. codedna install      — pre-commit hook + AI tool prompt + .codedna manifest
 #
-# Supported AI tools: claude claude-hooks cursor cursor-hooks copilot copilot-hooks cline cline-hooks windsurf opencode opencode-hooks
+# Supported AI tools: claude claude-hooks cursor cursor-hooks copilot copilot-hooks cline cline-hooks windsurf opencode opencode-hooks agents
 # Supported languages: Python, TypeScript/JS, Go, PHP, Java, Kotlin, Ruby, Rust, C#
 
 set -euo pipefail
@@ -55,7 +55,19 @@ do_cursor()   { curl -fsSL "$RAW/.cursorrules"             > "$REPO_ROOT/.cursor
 do_copilot()  { mkdir -p "$REPO_ROOT/.github"; curl -fsSL "$RAW/copilot-instructions.md" > "$REPO_ROOT/.github/copilot-instructions.md"; echo "  OK  GitHub Copilot -> .github/copilot-instructions.md"; }
 do_cline()    { curl -fsSL "$RAW/.clinerules"              > "$REPO_ROOT/.clinerules";                        echo "  OK  Cline          -> .clinerules"; }
 do_windsurf() { curl -fsSL "$RAW/.windsurfrules"           > "$REPO_ROOT/.windsurfrules";                     echo "  OK  Windsurf       -> .windsurfrules"; }
-do_agents()   { mkdir -p "$REPO_ROOT/.agents/workflows"; curl -fsSL "$RAW/.agents/workflows/codedna.md" > "$REPO_ROOT/.agents/workflows/codedna.md"; echo "  OK  Antigravity    -> .agents/workflows/codedna.md"; }
+do_agents() {
+    # Antigravity v1.20.3+ reads AGENTS.md (cross-vendor, always-on) from repo root
+    # AND .agent/ (singular) for workflows. See: https://antigravity.google/docs/rules-workflows
+    if [[ ! -f "$REPO_ROOT/AGENTS.md" ]]; then
+        curl -fsSL "$RAW/AGENTS.md" > "$REPO_ROOT/AGENTS.md"
+        echo "  OK  Antigravity    -> AGENTS.md (rules, always-on)"
+    else
+        echo "  SKIP Antigravity   -> AGENTS.md (already exists)"
+    fi
+    mkdir -p "$REPO_ROOT/.agent/workflows"
+    curl -fsSL "$RAW/.agent/workflows/codedna.md" > "$REPO_ROOT/.agent/workflows/codedna.md"
+    echo "  OK  Antigravity    -> .agent/workflows/codedna.md (workflow on-demand)"
+}
 
 do_cline_hooks() {
     mkdir -p "$REPO_ROOT/.clinerules/hooks"
@@ -184,7 +196,7 @@ case "$TOOL" in
     cursor-hooks)   do_cursor; do_cursor_hooks ;;
     opencode-hooks) do_opencode; do_opencode_hooks ;;
     all)            do_claude; do_cursor; do_copilot; do_cline; do_windsurf; do_agents; do_opencode; do_claude_hooks; do_cline_hooks; do_copilot_hooks; do_cursor_hooks; do_opencode_hooks ;;
-    *) echo "Usage: install.sh [claude|claude-hooks|cursor|cursor-hooks|copilot|copilot-hooks|cline|cline-hooks|windsurf|agents|opencode|opencode-hooks|all]"; exit 1 ;;
+    *) echo "Usage: install.sh [claude|claude-hooks|cursor|cursor-hooks|copilot|copilot-hooks|cline|cline-hooks|windsurf|opencode|opencode-hooks|agents|all]"; exit 1 ;;
 esac
 
 echo ""

@@ -367,7 +367,7 @@ tr:last-child td { border-bottom: none; }
       <tr><td><strong>OpenCode</strong></td><td><span class="ic">opencode</span></td><td><span class="badge badge-green">Active</span></td></tr>
       <tr><td>Windsurf</td><td><span class="ic">windsurf</span></td><td><span class="badge badge-amber">Instructions only</span></td></tr>
       <tr><td>Aider</td><td><span class="ic">claude</span></td><td><span class="badge badge-amber">Instructions only</span></td></tr>
-      <tr><td>Antigravity / custom agents</td><td><span class="ic">agents</span></td><td><span class="badge badge-amber">Instructions only</span></td></tr>
+      <tr><td><strong>Antigravity</strong></td><td><span class="ic">agents</span></td><td><span class="badge badge-amber">Instructions only</span> <span style="font-size:11px;color:var(--gray-400)">v1.20.3+</span></td></tr>
     </table>
     </div>
 
@@ -592,8 +592,9 @@ codedna init /path/to/project <span class="c">--no-llm  # free, structural only<
   <!-- ANTIGRAVITY -->
   <section id="antigravity">
     <div class="tool-header">
-      <h2>Antigravity / Custom Agents</h2>
+      <h2>Antigravity</h2>
       <span class="badge badge-amber">Instructions only</span>
+      <span class="badge badge-gray">v1.20.3+</span>
     </div>
 
     <div class="install-box">
@@ -604,7 +605,15 @@ codedna init /path/to/project <span class="c">--no-llm  # free, structural only<
       <button class="cp" onclick="copyText('ag-cmd',this)">copy</button>
     </div>
 
-    <p>Installs <span class="ic">.agents/workflows/codedna.md</span> — Antigravity and compatible agent frameworks read workflow files from <span class="ic">.agents/workflows/</span> automatically.</p>
+    <p><a href="https://antigravity.google" target="_blank" rel="noopener">Antigravity</a> is Google's agentic IDE. CodeDNA targets two of its native extension points so the protocol is loaded automatically <em>and</em> available on demand.</p>
+
+    <div class="table-wrap"><table>
+      <tr><th>File</th><th>Mechanism</th><th>When it loads</th></tr>
+      <tr><td><span class="ic">AGENTS.md</span> (repo root)</td><td>Cross-vendor rules</td><td>Always-on — auto-loaded as system prompt every session (Antigravity v1.20.3+)</td></tr>
+      <tr><td><span class="ic">.agent/workflows/codedna.md</span></td><td>Antigravity workflow</td><td>On-demand — type <span class="ic">/codedna</span> in agent chat</td></tr>
+    </table></div>
+
+    <div class="callout callout-blue"><strong>Note:</strong> Antigravity uses <span class="ic">.agent/</span> (singular), not <span class="ic">.agents/</span>. Precedence inside Antigravity: <span class="ic">GEMINI.md</span> &gt; <span class="ic">AGENTS.md</span> &gt; <span class="ic">.agent/rules/</span>. CodeDNA ships rules in <span class="ic">AGENTS.md</span> for portability across IDEs (Claude Code, OpenCode, Cursor read the same file). See the <a href="https://antigravity.google/docs/rules-workflows" target="_blank" rel="noopener">official rules &amp; workflows docs</a>.</div>
   </section>
 
   <hr>

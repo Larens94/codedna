@@ -10,11 +10,11 @@ _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
 scan_file handles 3 import patterns: (1) from .mod import X, (2) from . import X
 (submodule-first then __init__.py symbol), (3) from pkg import X (tries pkg/X.py
 before falling back to pkg/__init__.py). All 3 were previously under-resolved.
-agent:   claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | add explanatory comments to 9 empty except blocks (scan_file ValueError for outside-repo paths, JSON repair fallback, _detect_project_meta OSError per-file) — CodeQL py/empty-except alerts #1689, #1696-1698, #1702-1707
-claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | add optional wiki: field to Python + lang header parsers and rebuilders — opt-in pointer to deeper markdown doc (Karpathy LLM-wiki pattern)
+agent:   claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | add optional wiki: field to Python + lang header parsers and rebuilders — opt-in pointer to deeper markdown doc (Karpathy LLM-wiki pattern)
 claude-sonnet-4-6 | anthropic | 2026-04-22 | s_20260422_refresh | fix cmd_refresh: never degrade a real annotation to "none" — if tree-sitter/AST returns no exports or no importers, preserve the existing LLM-annotated value (bug: PHP config + TSX @/ alias files were zeroed out)
 claude-sonnet-4-6 | anthropic | 2026-04-24 | s_20260424_stable | remove all "experimental" labels from wiki/message/related fields — these are stable v0.9 features; stripped from help text, comments, and docstrings
 claude-opus-4-7 | anthropic | 2026-04-29 | s_20260429_selfupdate | add cmd_self_update() + 'self-update' subcommand: runs pip install --upgrade --force-reinstall from main; detects editable/dev checkouts via pyproject.toml + .git presence and refuses to clobber them unless --force; uses sys.executable so pip targets the same interpreter running the CLI
+claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_antigravity | fix Antigravity integration: rename .agents/ → .agent/ (singular per official docs), make 'agents' tool install AGENTS.md + .agent/workflows/codedna.md (multi-file via list-of-tuples in _TOOL_FILES), add to _detect_ai_tools and --tools help text. Antigravity v1.20.3 reads AGENTS.md from repo root.
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -1683,6 +1683,10 @@ def _add_common_args(sub):
 
 # ── Install command ───────────────────────────────────────────────────────────
 
+# Each value is either a single (remote, local) tuple or a list of such tuples
+# for tools that ship multiple files (e.g. Antigravity needs AGENTS.md +
+# .agent/workflows/codedna.md). Directory is .agent/ (singular) per Antigravity
+# v1.20.3 convention — see https://antigravity.google/docs/rules-workflows.
 _TOOL_FILES = {
     "claude":   ("CLAUDE.md",   "CLAUDE.md"),
     "cursor":   (".cursorrules", ".cursorrules"),
@@ -1690,7 +1694,8 @@ _TOOL_FILES = {
     "cline":    (".clinerules",  ".clinerules"),
     "windsurf": (".windsurfrules", ".windsurfrules"),
     "opencode": ("AGENTS.md",   "AGENTS.md"),
-    "agents":   (".agents/workflows/codedna.md", ".agents/workflows/codedna.md"),
+    "agents":   [("AGENTS.md", "AGENTS.md"),
+                 (".agent/workflows/codedna.md", ".agent/workflows/codedna.md")],
 }
 
 # Maps base tool name to its -hooks variant for auto-detect
@@ -1838,6 +1843,9 @@ def _detect_ai_tools(repo_root: Path) -> list[str]:
         "cline":    [".clinerules", ".cline"],
         "windsurf": [".windsurfrules", ".windsurf"],
         "opencode": ["AGENTS.md", ".opencode"],
+        # Antigravity uses .agent/ (singular) + GEMINI.md — see
+        # https://antigravity.google/docs/rules-workflows
+        "agents":   [".agent", "GEMINI.md", ".gemini"],
     }
     for tool, paths in checks.items():
         for p in paths:
@@ -2147,23 +2155,29 @@ def cmd_install(repo_root: Path, tools: list[str], skip_hook: bool = False,
                 print(f"  SKIP  {tool} (unknown tool)")
                 continue
 
-            str_remote_name, str_local_path = _TOOL_FILES[tool]
-            path_dest = repo_root / str_local_path
+            # Rules: _TOOL_FILES values are either a single (remote, local)
+            # tuple or a list of such tuples for multi-file tools (e.g. Antigravity
+            # ships AGENTS.md + .agent/workflows/codedna.md).
+            spec = _TOOL_FILES[tool]
+            list_tuple_files = spec if isinstance(spec, list) else [spec]
 
-            if path_dest.exists():
-                print(f"  SKIP  {tool} ({str_local_path} already exists)")
-                continue
+            for str_remote_name, str_local_path in list_tuple_files:
+                path_dest = repo_root / str_local_path
 
-            # Create parent dirs if needed (e.g. .github/)
-            path_dest.parent.mkdir(parents=True, exist_ok=True)
+                if path_dest.exists():
+                    print(f"  SKIP  {tool} ({str_local_path} already exists)")
+                    continue
 
-            str_url = f"{str_raw_base_url}/{str_remote_name}"
-            try:
-                urllib.request.urlretrieve(str_url, str(path_dest))
-                print(f"  OK    {tool} -> {str_local_path}")
-                int_count_installed += 1
-            except Exception as e:
-                print(f"  FAIL  {tool} — could not fetch {str_url}: {e}")
+                # Create parent dirs if needed (e.g. .github/, .agent/workflows/)
+                path_dest.parent.mkdir(parents=True, exist_ok=True)
+
+                str_url = f"{str_raw_base_url}/{str_remote_name}"
+                try:
+                    urllib.request.urlretrieve(str_url, str(path_dest))
+                    print(f"  OK    {tool} -> {str_local_path}")
+                    int_count_installed += 1
+                except Exception as e:
+                    print(f"  FAIL  {tool} — could not fetch {str_url}: {e}")
 
     # 3. .codedna manifest
     path_codedna = repo_root / ".codedna"
@@ -2814,7 +2828,7 @@ def main():
     )
     install_p.add_argument(
         "--tools", nargs="*", default=None,
-        help="AI tools to install prompts/hooks for: claude cursor copilot cline windsurf opencode claude-hooks cursor-hooks copilot-hooks cline-hooks opencode-hooks all (default: auto-detect)",
+        help="AI tools to install prompts/hooks for: claude cursor copilot cline windsurf opencode agents claude-hooks cursor-hooks copilot-hooks cline-hooks opencode-hooks all (default: auto-detect). 'agents' = Antigravity (AGENTS.md + .agent/workflows/codedna.md).",
     )
     install_p.add_argument("--skip-hook", action="store_true", help="Skip pre-commit hook installation")
     install_p.add_argument("--skip-prompt", action="store_true", help="Skip AI tool prompt installation")

@@ -18,7 +18,7 @@ bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integr
 | **Cline** | **`cline-hooks`** | **`.clinerules` + hook scripts in `.clinerules/hooks/`** | ✅ Active (v3.36+) |
 | **OpenCode** | **`opencode`** | **`AGENTS.md` + `.opencode/plugins/codedna.js`** | ✅ Active |
 | Windsurf | `windsurf` | `.windsurfrules` | ⚠️ Instructions only |
-| Antigravity / custom agents | `agents` | `.agents/workflows/codedna.md` | ⚠️ Instructions only |
+| **Antigravity** | `agents` | **`AGENTS.md` + `.agent/workflows/codedna.md`** | ⚠️ Instructions only |
 | Aider | `claude` | `CLAUDE.md` | ⚠️ Instructions only |
 
 > **Active enforcement** = the tool validates annotations automatically on every file write/edit, without relying on the agent remembering to do it.
@@ -262,13 +262,24 @@ system_prompt: CLAUDE.md
 
 ---
 
-## Antigravity / Custom Agents
+## Antigravity
 
 ```bash
 bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) agents
 ```
 
-Installs `.agents/workflows/codedna.md` — Antigravity and compatible agent frameworks read workflow files from `.agents/workflows/` automatically.
+[Antigravity](https://antigravity.google) is Google's agentic IDE. CodeDNA targets two of its native extension points:
+
+| File | Mechanism | When it loads |
+|---|---|---|
+| `AGENTS.md` (repo root) | Cross-vendor rules (read also by OpenCode / Cursor / Claude Code) | **Always-on** — auto-loaded as system prompt every session. Requires Antigravity **v1.20.3+** (March 5, 2026). |
+| `.agent/workflows/codedna.md` | Antigravity workflow | **On-demand** — activated when the user types `/codedna` in agent chat, or when the agent itself decides to follow the workflow. |
+
+Note: Antigravity uses `.agent/` (singular), **not** `.agents/`. See the [official docs](https://antigravity.google/docs/rules-workflows).
+
+**Precedence inside Antigravity:** `GEMINI.md` > `AGENTS.md` > `.agent/rules/*.md`. CodeDNA ships content in `AGENTS.md` because it's portable across IDEs; if you maintain a project-specific `GEMINI.md`, its rules win on conflict.
+
+**Why both files?** `AGENTS.md` gives the agent the protocol always (read, write, edit conventions). The workflow gives it a step-by-step procedure to invoke explicitly when working with CodeDNA-annotated code.
 
 ---
 
