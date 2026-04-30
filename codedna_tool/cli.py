@@ -16,6 +16,7 @@ claude-sonnet-4-6 | anthropic | 2026-04-24 | s_20260424_stable | remove all "exp
 claude-opus-4-7 | anthropic | 2026-04-29 | s_20260429_selfupdate | add cmd_self_update() + 'self-update' subcommand: runs pip install --upgrade --force-reinstall from main; detects editable/dev checkouts via pyproject.toml + .git presence and refuses to clobber them unless --force; uses sys.executable so pip targets the same interpreter running the CLI
 claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_antigravity | fix Antigravity integration: rename .agents/ → .agent/ (singular per official docs), make 'agents' tool install AGENTS.md + .agent/workflows/codedna.md (multi-file via list-of-tuples in _TOOL_FILES), add to _detect_ai_tools and --tools help text. Antigravity v1.20.3 reads AGENTS.md from repo root.
 claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_init_dataloss | fix #10 (yuzi-co): build_module_docstring now preserves the existing multi-line docstring body. Pre-fix `init` discarded everything below the summary line — silent data loss reported on a real 745-file repo (migration docs, architectural notes, pipeline diagrams erased). New _extract_docstring_body() helper extracts the prose body and strips out any pre-existing CodeDNA fields (so init --force doesn't duplicate them). 4 regression tests in TestBuildDocstring + 1 E2E in TestInit reproducing the reporter's exact case.
+claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_manifest_11 | fix #11 (yuzi-co): two manifest bugs. Bug A: --exclude '**/dir/**' did not match root-level dir because fnmatch and pre-3.13 pathlib.match collapse ** to single * — added _expand_exclude() that conservatively also tries the prefix-stripped form. Bug B: _detect_packages only recognised __init__.py as a package marker, so Go-only dirs fell into '(root)'; introduced _is_package_marker() which also accepts .go (Go has no marker file — the directory IS the package). 2 regression tests in TestManifest reproducing both reporter scenarios.
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -841,12 +842,35 @@ def _get_extension(path: Path) -> str:
     return path.suffix.lower()
 
 
+def _expand_exclude(patterns: list[str]) -> list[str]:
+    """Expand exclude globs so leading '**/<dir>/**' also matches root-level <dir>.
+
+    Rules:   fnmatch (and pathlib.match pre-3.13) does NOT treat `**` as a
+             multi-segment glob — it collapses to single `*`, which requires at
+             least one parent segment. Issue #11 (yuzi-co): `**/infrastructure/**`
+             therefore never matched root-level `infrastructure/`. Conservative
+             expansion: when a pattern starts with `**/`, also include the form
+             without that prefix so it matches when <dir> sits at the repo root.
+             Patterns are kept as-is — never removed — so this is purely additive.
+    """
+    out: list[str] = []
+    for p in patterns:
+        out.append(p)
+        if p.startswith("**/"):
+            stripped = p[3:]
+            if stripped and stripped not in out:
+                out.append(stripped)
+    return out
+
+
 def collect_files(target: Path, exclude: list[str], extensions: Optional[list[str]] = None) -> list[Path]:
     """Collect source files under target matching the given extensions.
 
     Rules:   Default extensions = ['.py'] (Python only).
              extensions values must include leading dot (e.g. ['.ts', '.go']).
              Supports compound extensions (e.g. '.blade.php').
+             Exclude globs are expanded so leading '**/<dir>/**' also matches
+             root-level <dir> (issue #11).
     """
     if extensions is None:
         extensions = [".py"]
@@ -859,6 +883,7 @@ def collect_files(target: Path, exclude: list[str], extensions: Optional[list[st
         "dist", "build", ".tox", ".mypy_cache", ".ruff_cache",
         "migrations", "__pypackages__",
     }
+    expanded_exclude = _expand_exclude(exclude)
     files = []
     for f in sorted(target.rglob("*")):
         if not f.is_file():
@@ -871,7 +896,7 @@ def collect_files(target: Path, exclude: list[str], extensions: Optional[list[st
         if f.suffix == ".go" and f.stem.endswith("_test"):
             continue
         rel_str = str(f.relative_to(target))
-        if any(fnmatch.fnmatch(rel_str, p) or f.match(p) for p in exclude):
+        if any(fnmatch.fnmatch(rel_str, p) or f.match(p) for p in expanded_exclude):
             continue
         files.append(f)
     return files
@@ -2284,20 +2309,39 @@ _MANIFEST_SKIP = {"__pycache__", ".git", "venv", ".venv", "node_modules",
 _MANIFEST_PKG_DEPTH = 3
 
 
-def _detect_packages(files: list[Path], root: Path) -> dict[str, list[str]]:
-    """Group source files by nearest ancestor Python package (directory with __init__.py).
+def _is_package_marker(f: Path) -> bool:
+    """Return True if `f` marks its parent directory as a "package".
 
-    Rules:   A 'package' is any directory containing __init__.py, capped at _MANIFEST_PKG_DEPTH
-             path components to avoid explosion in deeply nested monorepos.
+    Rules:   Python: any `__init__.py` is the canonical marker.
+             Go: the directory IS the package (no marker file in Go), so any
+             .go file (excluding *_test.go) promotes its parent dir.
+             Other languages currently fall through to the fallback in
+             _detect_packages — extend here when adding language-specific markers.
+             Issue #11: pre-fix only `__init__.py` counted, so Go-only dirs
+             were silently bucketed under '(root)'.
+    """
+    if f.name == "__init__.py":
+        return True
+    if f.suffix == ".go" and not f.stem.endswith("_test"):
+        return True
+    return False
+
+
+def _detect_packages(files: list[Path], root: Path) -> dict[str, list[str]]:
+    """Group source files by nearest ancestor package directory.
+
+    Rules:   A 'package' is any directory whose marker file is present
+             (see _is_package_marker), capped at _MANIFEST_PKG_DEPTH path
+             components to avoid explosion in deeply nested monorepos.
              Files are assigned to the deepest ancestor package (within depth cap).
              Files with no ancestor package go under '' (root).
              Directories matching _MANIFEST_SKIP are excluded at any depth.
-             Fallback: when no __init__.py exists anywhere (non-Python projects or
+             Fallback: when no marker exists anywhere (non-Python/Go projects or
              codebases without package markers), group by first path segment (legacy behaviour).
     """
     pkg_dirs: set[str] = set()
     for f in files:
-        if f.name != "__init__.py":
+        if not _is_package_marker(f):
             continue
         try:
             parts = f.parent.relative_to(root).parts

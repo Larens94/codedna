@@ -8,6 +8,7 @@ agent:   claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_002 | initial CLI
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | add TestDetectProjectMeta: 12 unit tests for go.mod/package.json/pom.xml/settings.gradle/Cargo.toml parsing
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_unused | remove unused json/pytest imports (CodeQL #1673, #1674)
 claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_init_dataloss | add 4 regression tests for #10 (yuzi-co) — multi-line docstring body must be preserved by build_module_docstring + init E2E. Pre-fix tests fail (red) showing the data-loss bug exactly: lines like "Detailed multi-paragraph description", "Example", "Notes", "This content is critical" disappear from the rebuilt docstring.
+claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_manifest_11 | add TestManifest with 2 regression tests for #11 (yuzi-co) — Bug A: --exclude '**/dir/**' must match root-level dir; Bug B: Go-only directory must become its own package, not bucketed under (root). Both tests fail on pre-fix code, pass after the _expand_exclude + _is_package_marker fixes.
 """
 
 from __future__ import annotations
@@ -173,6 +174,87 @@ class TestRoundTrip:
 
         # After init, all files should have L1 headers
         assert "3/3" in out or "100%" in out or "L1" in out
+
+
+# ── codedna manifest ─────────────────────────────────────────────────────────
+
+class TestManifest:
+    """Regression tests for issue #11 (yuzi-co): manifest exclude glob + Go package detection."""
+
+    def test_exclude_pattern_matches_root_level_dir(self, tmp_path):
+        """Bug A: `--exclude '**/dir/**'` must match a directory at the project root.
+
+        Pre-fix `fnmatch.fnmatch` did not treat `**` as multi-segment glob —
+        it collapsed to a single `*` which requires at least one parent
+        segment, so root-level `infrastructure/` was never excluded.
+        """
+        # Reporter's exact repro structure
+        (tmp_path / "infrastructure" / "vendored" / "sub").mkdir(parents=True)
+        (tmp_path / "infrastructure" / "vendored" / "sub" / "__init__.py").write_text('"""v."""\n')
+        (tmp_path / "infrastructure" / "vendored" / "sub" / "m.py").write_text('"""v."""\n')
+        (tmp_path / "mypkg").mkdir()
+        (tmp_path / "mypkg" / "__init__.py").write_text('"""m."""\n')
+        (tmp_path / "mypkg" / "core.py").write_text('"""c."""\n')
+
+        # First annotate, then run manifest with the buggy exclude pattern
+        run_codedna("init", str(tmp_path), "--no-llm")
+        rc, out, err = run_codedna(
+            "manifest", str(tmp_path), "--no-llm",
+            "--exclude", "**/infrastructure/**",
+        )
+
+        # Expected: only 1 package (mypkg). Pre-fix this was 2.
+        assert "Packages detected: 1" in out, (
+            f"--exclude '**/infrastructure/**' did not exclude root-level dir.\n"
+            f"stdout:\n{out}"
+        )
+        assert "mypkg" in out
+        assert "infrastructure" not in out or "Skipping" in out
+
+    def test_go_only_directory_becomes_its_own_package(self, tmp_path):
+        """Bug B: a directory containing only Go files must be detected as
+        its own package, not bucketed under '(root)'.
+
+        Pre-fix `_detect_packages` only recognised `__init__.py` as a package
+        marker. Go files in `mygoservice/` fell through to '(root)' because
+        Go has no formal package marker file (the directory IS the package).
+        """
+        # Reporter's exact repro structure
+        (tmp_path / "mygoservice").mkdir()
+        (tmp_path / "mygoservice" / "main.go").write_text(
+            "package main\nfunc main() {}\n"
+        )
+        (tmp_path / "mygoservice" / "util.go").write_text(
+            'package main\nfunc H() string { return "" }\n'
+        )
+        (tmp_path / "mypypkg").mkdir()
+        (tmp_path / "mypypkg" / "__init__.py").write_text('"""p."""\n')
+        (tmp_path / "mypypkg" / "core.py").write_text('"""c."""\n')
+
+        run_codedna("init", str(tmp_path), "--no-llm", "--auto")
+        rc, out, err = run_codedna(
+            "manifest", str(tmp_path), "--no-llm", "--extensions", "py", "go",
+        )
+
+        # Expected: mygoservice is its own package, NOT under (root).
+        assert "mygoservice" in out, (
+            f"Go-only directory `mygoservice/` was not promoted to a package.\n"
+            f"stdout:\n{out}"
+        )
+        # The 'mygoservice' line in the package summary must mention it as a
+        # package, and the (root) bucket — if shown — must NOT contain Go files.
+        # Look for the package summary line specifically.
+        # Format: '  mygoservice           2 files' (left-padded name + count)
+        import re as _re
+        pkg_lines = [
+            ln for ln in out.splitlines()
+            if _re.match(r"^\s+\S+\s+\d+\s+files\s*$", ln)
+        ]
+        named_pkgs = [ln.strip().split()[0] for ln in pkg_lines]
+        assert "mygoservice" in named_pkgs, (
+            f"Expected 'mygoservice' among detected packages, got: {named_pkgs}\n"
+            f"stdout:\n{out}"
+        )
 
 
 # ── build_module_docstring ───────────────────────────────────────────────────

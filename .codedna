@@ -739,3 +739,31 @@ agent_sessions:
       Note: had to add `import re` at module top — _CODEDNA_FIELD_RE regex
       needed it. First test run after fix initially failed because of that
       missing import; spotted via NameError in the traceback and corrected.
+
+  - agent: claude-opus-4-7
+    provider: anthropic
+    date: 2026-04-30
+    session_id: s_20260430_manifest_11
+    task: "fix #11: codedna manifest exclude root-level glob + Go package detection"
+    changed:
+      - codedna_tool/cli.py
+      - tests/test_cli.py
+      - CHANGELOG.md
+    visited:
+      - codedna_tool/cli.py
+      - tests/test_cli.py
+      - CHANGELOG.md
+    message: >
+      Two independent manifest bugs reported by yuzi-co. Test-first: 2
+      failing tests in new TestManifest class reproducing both repros, then
+      fix. Bug A (root-level glob): fnmatch and pathlib.match do not treat **
+      as multi-segment in our usage; added _expand_exclude() that, when a
+      pattern starts with **/, ALSO tries the prefix-stripped form. Purely
+      additive — never removes user patterns. Bug B (Go packages): Go has no
+      package marker file (the directory IS the package), so introduced
+      _is_package_marker() which accepts both __init__.py (Python) and any
+      non-test .go file (Go). Other languages currently fall through to the
+      existing root-segment fallback; the helper is the extension point for
+      future languages (Rust Cargo.toml, TS package.json, etc.). 193 passed,
+      0 failed. Smoke test on both reporter repros: Bug A now reports 1
+      package, Bug B shows mygoservice promoted alongside mypypkg.
