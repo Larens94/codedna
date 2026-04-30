@@ -767,3 +767,46 @@ agent_sessions:
       future languages (Rust Cargo.toml, TS package.json, etc.). 193 passed,
       0 failed. Smoke test on both reporter repros: Bug A now reports 1
       package, Bug B shows mygoservice promoted alongside mypypkg.
+
+  - agent: claude-opus-4-7
+    provider: anthropic
+    date: 2026-04-30
+    session_id: s_20260430_pipx_docs
+    task: "docs: recommend pipx install over pip install (#8)"
+    changed:
+      - README.md
+      - README-it.md
+      - QUICKSTART.md
+      - SPEC.md
+      - integrations/CLAUDE.md
+      - integrations/AGENTS.md
+      - integrations/copilot-instructions.md
+      - codedna-plugin/commands/init.md
+      - labs/benchmark/README.md
+      - docs/install.html
+      - docs/install/reports/php-laravel/codedna-install-report.html
+      - CHANGELOG.md
+    visited:
+      - README.md
+      - integrations/CLAUDE.md
+      - integrations/AGENTS.md
+      - codedna_tool/cli.py
+      - pyproject.toml
+    message: >
+      DATEx2 reported that pip install 'codedna[litellm]' broke an existing
+      rembg installation because litellm pinned jsonschema below the version
+      rembg required. The conflict is unrelated to codedna's own code — it's
+      env pollution. Decision: don't drop the [litellm] extra (litellm is
+      what enables Ollama / DeepSeek / Gemini / OpenAI routing — we'd lose
+      free-local-LLM support). Instead, switch every doc snippet from
+      `pip install` to `pipx install`. pipx auto-creates an isolated venv
+      per tool, so codedna's deps never touch the user's global env. Tests:
+      pytest 193 passed (no code change), smoke test pipx install
+      'codedna[litellm] @ git+file:///path' from a clean pipx_host venv —
+      install succeeds and codedna --help works post-install. Final grep
+      shows 0 residuals of `pip install codedna` in target docs and 15 new
+      `pipx install` occurrences. Did NOT change cli.py error messages
+      (e.g. ImportError still says `pip install 'codedna[litellm]'`) —
+      those run inside the user's already-installed codedna and are
+      contextually different from "first install" docs. Can revisit later
+      if confusion arises.

@@ -6,7 +6,7 @@ Benchmark per validare CodeDNA su SWE-bench Verified (500 task, 12 repo Python).
 
 ```bash
 pip install datasets   # per scaricare SWE-bench da HuggingFace
-pip install git+https://github.com/Larens94/codedna.git   # CLI per annotare
+pipx install git+https://github.com/Larens94/codedna.git   # CLI per annotare
 ```
 
 API key (almeno una):

@@ -76,7 +76,7 @@ Dopo l'installazione, esegui `/codedna:init` nel tuo progetto. Il comando:
 Per pipeline CI, scripting, o se preferisci il terminale:
 
 ```bash
-pip install git+https://github.com/Larens94/codedna.git   # richiede Python 3.11+
+pipx install git+https://github.com/Larens94/codedna.git   # richiede Python 3.11+; install isolato (evita conflitti con env globale)
 ```
 
 ```bash

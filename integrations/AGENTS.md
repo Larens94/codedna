@@ -5,7 +5,7 @@ This project uses the **CodeDNA** in-source communication protocol. Follow these
 ## Annotate your project (CLI)
 
 ```bash
-pip install git+https://github.com/Larens94/codedna.git
+pipx install git+https://github.com/Larens94/codedna.git
 export ANTHROPIC_API_KEY=sk-...
 
 codedna init ./          # first-time: annotates every .py file

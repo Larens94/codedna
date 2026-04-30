@@ -4,6 +4,10 @@ All notable changes to CodeDNA will be documented in this file.
 
 ## [Unreleased]
 
+### Changed
+
+- **Recommend `pipx install` over `pip install` everywhere in docs (#8).** Direct `pip install codedna[litellm]` into a polluted global Python environment was causing transitive-dependency conflicts (e.g. with `rembg` requiring `jsonschema>=4.25.1`, while litellm pinned an older version). Reported by @DATEx2. The fix is documentation-only: every `pip install` line for the codedna CLI now reads `pipx install`. pipx auto-isolates each tool in its own venv, so codedna's transitive deps cannot conflict with anything else on the user's machine. `uv tool install` works identically. Files updated: README.md, README-it.md, QUICKSTART.md, SPEC.md, integrations/CLAUDE.md (with explicit `[litellm]`/`[anthropic]` extras blocks), integrations/AGENTS.md, integrations/copilot-instructions.md, codedna-plugin/commands/init.md, labs/benchmark/README.md, docs/install.html (×2), docs/install/reports/php-laravel/codedna-install-report.html. The `[litellm]` extra itself is preserved — Ollama / OpenAI / Gemini / DeepSeek / Mistral / Cohere routing all flows through litellm.
+
 ### Fixed
 
 - **`codedna manifest` two related bugs (#11, yuzi-co).**

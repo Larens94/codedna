@@ -2,7 +2,7 @@
 
 This codebase uses the CodeDNA communication protocol (v0.9). Apply these rules in every suggestion.
 
-> Annotate your project: `pip install git+https://github.com/Larens94/codedna.git` then `codedna init ./`
+> Annotate your project: `pipx install git+https://github.com/Larens94/codedna.git` then `codedna init ./`
 
 ## Module header (required in every Python file)
 

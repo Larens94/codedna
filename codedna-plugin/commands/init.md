@@ -37,7 +37,7 @@ Print this box and wait for the user's answer:
 │                                                 │
 │   [B] Use codedna CLI (tree-sitter + AST)  ✓   │
 │        Fast structural pass, zero LLM cost      │
-│        Requires: pip install git+https://github.com/Larens94/codedna.git │
+│        Requires: pipx install git+https://github.com/Larens94/codedna.git │
 │                                                 │
 └─────────────────────────────────────────────────┘
 
@@ -51,7 +51,7 @@ Do NOT silently fall back to A. Instead print:
 ```
 CodeDNA CLI is required for option B. Install it with:
 
-  pip install git+https://github.com/Larens94/codedna.git
+  pipx install git+https://github.com/Larens94/codedna.git
 
 Requires Python 3.11+. After installing, run /codedna:init again.
 ```

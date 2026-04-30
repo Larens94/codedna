@@ -5,7 +5,7 @@ This project uses the **CodeDNA** in-source communication protocol. Follow these
 ## Annotate your project (CLI)
 
 ```bash
-pip install git+https://github.com/Larens94/codedna.git
+pipx install git+https://github.com/Larens94/codedna.git   # isolated install (avoids global env conflicts)
 
 codedna init .           # annotates all detected languages (auto-detects PHP, TS, Go, etc.)
 codedna init . --no-llm  # free — structural only, no API key needed
@@ -15,13 +15,18 @@ codedna check .          # coverage report, no changes
 For LLM-powered `rules:` annotations:
 
 ```bash
-pip install 'codedna[anthropic]' && export ANTHROPIC_API_KEY=sk-...
+pipx install 'codedna[anthropic]' && export ANTHROPIC_API_KEY=sk-...
 codedna init .
 
 # Or with a local model (free, no API key):
-pip install 'codedna[litellm]'
+pipx install 'codedna[litellm]'
 codedna init . --model ollama/llama3
 ```
+
+> **Why pipx?** It creates an isolated venv per tool, so codedna's transitive
+> dependencies (e.g. via `[litellm]`) don't conflict with packages already
+> installed in your global Python environment (issue #8). `uv tool install`
+> works identically. If you prefer raw `pip`, run it inside a project venv.
 
 ---
 

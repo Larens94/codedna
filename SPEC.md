@@ -435,7 +435,7 @@ agent_sessions:
 ### 3.3 Generation
 
 ```bash
-pip install git+https://github.com/Larens94/codedna.git
+pipx install git+https://github.com/Larens94/codedna.git
 export ANTHROPIC_API_KEY=sk-...
 
 codedna init PATH     # first-time: L1 module headers + L2 Rules: on every .py file

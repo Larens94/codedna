@@ -231,7 +231,7 @@ Ask your AI tool:
 Or annotate an entire codebase automatically with the CLI:
 
 ```bash
-pip install git+https://github.com/Larens94/codedna.git
+pipx install git+https://github.com/Larens94/codedna.git
 export ANTHROPIC_API_KEY=sk-...
 
 codedna init ./          # annotates every .py file (L1 headers + L2 Rules:)
