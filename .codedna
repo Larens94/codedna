@@ -674,3 +674,35 @@ agent_sessions:
       install.sh E2E both verified via local file:// shims. Issue #9 (wiki
       bootstrap OOM on GGUF/dataset files) is tracked separately, not in this
       commit.
+
+  - agent: claude-opus-4-7
+    provider: anthropic
+    date: 2026-04-30
+    session_id: s_20260430_wiki_oom
+    task: "fix #9: codedna wiki bootstrap OOM on large non-source files"
+    changed:
+      - codedna_tool/wiki.py
+      - tests/test_wiki.py
+      - CHANGELOG.md
+    visited:
+      - codedna_tool/wiki.py
+      - codedna_tool/cli.py
+      - codedna_tool/languages/__init__.py
+      - tests/test_wiki.py
+    message: >
+      Pre-fix _extract_fields did path.read_text() which loaded each file fully
+      into RAM before checking for a CodeDNA header. On repos containing GGUF
+      model weights or multi-GB datasets, this raised MemoryError (reported by
+      @DATEx2 in issue #9; traceback showed the crash at wiki.py:87 inside
+      pathlib's read_text → f.read → MemoryError on 5+ GB files). Fix reads
+      only the first 16 KB (HEADER_READ_BYTES) — the L1 header always fits
+      well within that. Adds a cheap "exports:" pre-check to skip files
+      without an annotation before any further work, and a regex fallback for
+      Python files where the 16 KB cut breaks ast.parse() syntax (extracts
+      the leading triple-quoted docstring directly). Wiki output is byte-for-byte
+      unchanged on annotated files (verified by the existing test suite passing
+      unmodified). Two regression tests added: 5 MB binary in repo doesn't
+      crash; Python file with 60 KB body after docstring still gets its header.
+      Smoke test on a 50 MB random binary: peak memory 177 MB, vault correct.
+      L2 (function Rules:) is not extracted by wiki bootstrap — confirmed by
+      reading _page_markdown which renders only L1 fields.

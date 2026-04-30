@@ -8,14 +8,15 @@ rules:   The output vault is an artifact — rigenerato ad ogni `codedna wiki bo
          Every [[wikilink]] must resolve to an existing .md file inside the vault, else the Obsidian
          graph won't connect — so wikilink slugs MUST be deterministic from the source rel path.
          Do NOT parse YAML — use regex/line parsing like cli.py does.
-agent:   claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | initial wiki vault generator — Python docstring + non-Python lang header → markdown page with [[wikilinks]] from used_by/related; preserves AGENT NOTES section across re-runs
-claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki2 | add render_project_wiki + build_project_wiki (narrative wiki, 7-section template adapted from @workingfm PR #2); strip sub-agent/skill scaffolding in favor of hook-based enforcement
-claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki3 | fix Obsidian graph pollution — wrap numeric hashtags (e.g. `#1072-1077`) in backticks via _escape_obsidian_hashtags so they render as inline code, not tag nodes
-claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki4 | switch vault to nested layout — `_slug_for_rel` preserves folder hierarchy; wikilinks use "relative path to file" format; handles duplicate basenames (e.g. __init__.py)
+         _extract_fields reads ONLY the first 16 KB of each file (issue #9): the L1
+         header always fits there. Reading the whole file caused MemoryError on
+         GGUF/dataset binaries — never expand back to read_text() without a guard.
+agent:   claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki4 | switch vault to nested layout — `_slug_for_rel` preserves folder hierarchy; wikilinks use "relative path to file" format; handles duplicate basenames (e.g. __init__.py)
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki5 | render the wiki: field in generated pages — emits a "📖 Extended documentation" callout with a clickable [[wikilink]] to the curated .md; the graph now shows the arc between auto-generated and curated pages (the opt-in pattern made visible)
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki6 | drop spurious graph nodes — _is_placeholder detects values like "none (entry-point script)" and renders them as inline code instead of [[wikilinks]]
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki7 | escape literal [[...]] mentions in Rules/Agent bullets via _escape_inline_wikilinks so docs talking ABOUT wikilinks don't spawn phantom graph nodes
 claude-sonnet-4-6 | anthropic | 2026-04-24 | s_20260424_stable | remove "v0.9 experimental" label from wiki section in render_project_wiki — wiki is a stable v0.9 feature
+claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_wiki_oom | fix #9: _extract_fields now reads only the first 16 KB instead of the entire file. Adds an "exports:" pre-check to skip files without L1 cheaply, and a regex fallback when the 16 KB cut breaks AST syntax. Wiki content is unchanged (still L1-only — used_by/related/rules/agent/wiki/message). Eliminates the MemoryError on GGUF/dataset/binary files reported by @DATEx2.
 """
 
 from __future__ import annotations
@@ -73,30 +74,53 @@ def _slug_for_rel(rel: str) -> str:
     return stem
 
 
+_HEADER_READ_BYTES = 16 * 1024  # CodeDNA L1 header lives in the first ~12 lines
+
+
 def _extract_fields(path: Path) -> dict | None:
     """Extract CodeDNA field dict from a Python or non-Python source file.
 
     Rules:   Returns None if the file has no CodeDNA header.
-             Must never raise — catch and return None on any parse error.
-             Python uses AST to find the docstring; non-Python uses language adapter prefix.
+             Must never raise — catch and return None on any parse/IO error.
+             Reads only the first 16 KB (issue #9): the L1 header always fits there,
+             and full read_text() OOM'd on multi-GB binaries (.gguf, datasets) that
+             slipped past extension filtering.
+             Python: try AST on the truncated head first; if the cut broke syntax,
+             fall back to a regex extraction of the leading triple-quoted string.
+             Non-Python: language adapter walks line-by-line — head is enough.
     """
     from codedna_tool.cli import _parse_existing_docstring, _parse_lang_header
     from codedna_tool.languages import get_adapter
 
     try:
-        source = path.read_text(encoding="utf-8", errors="replace")
-    except OSError:
+        with path.open(encoding="utf-8", errors="replace") as fh:
+            head = fh.read(_HEADER_READ_BYTES)
+    except (OSError, MemoryError):
+        return None
+
+    # Cheap pre-check: any CodeDNA-annotated file has 'exports:' in its header.
+    # Skip every other file (binaries that decoded to garbage, source without
+    # annotations, vendored libs, ...) without further parsing.
+    if "exports:" not in head:
         return None
 
     if path.suffix == ".py":
+        docstring: str | None = None
         try:
-            tree = ast.parse(source)
+            tree = ast.parse(head)
+            docstring = ast.get_docstring(tree, clean=False)
         except SyntaxError:
-            return None
-        docstring = ast.get_docstring(tree, clean=False)
+            # Truncation cut mid-syntax. The CodeDNA docstring is the first
+            # triple-quoted block at the top of the file — extract it directly.
+            m = re.match(r'^(?:#.*\n|\s*\n)*\s*"""([\s\S]*?)"""',
+                         head, re.MULTILINE)
+            if not m:
+                m = re.match(r"^(?:#.*\n|\s*\n)*\s*'''([\s\S]*?)'''",
+                             head, re.MULTILINE)
+            if m:
+                docstring = m.group(1)
         if docstring is None:
             return None
-        # _parse_existing_docstring expects the triple-quoted form
         return _parse_existing_docstring(f'"""{docstring}"""')
 
     # Non-Python: look up an adapter for the extension
@@ -113,7 +137,7 @@ def _extract_fields(path: Path) -> dict | None:
     if adapter is None:
         return None
     prefix = getattr(adapter, "comment_prefix", "//")
-    return _parse_lang_header(source, prefix)
+    return _parse_lang_header(head, prefix)
 
 
 def _field_value(fields: dict, key: str) -> str:

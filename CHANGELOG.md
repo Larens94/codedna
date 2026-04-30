@@ -6,6 +6,7 @@ All notable changes to CodeDNA will be documented in this file.
 
 ### Fixed
 
+- **`codedna wiki bootstrap` no longer OOMs on large non-source files (#9).** Pre-fix, `_extract_fields` did `path.read_text()` which loaded each file fully into memory before checking for a CodeDNA header. On repos containing GGUF model weights, datasets, or any multi-GB binary, this raised `MemoryError` (reported by @DATEx2 — confirmed via traceback). The function now reads only the first 16 KB of each file, runs a cheap `"exports:" in head` pre-check to skip files without an L1 annotation, and falls back to a regex extraction of the leading triple-quoted string if the truncated head breaks AST parsing. Wiki content is unchanged (still L1-only — used_by/related/rules/agent/wiki/message). Smoke-tested with a 50 MB binary in the repo root: peak memory ~180 MB, vault generates correctly.
 - **Antigravity integration: directory renamed `.agents/` → `.agent/`** (singular per [official docs](https://antigravity.google/docs/rules-workflows)). The previous path was never read by the IDE, so `bash install.sh agents` was effectively a no-op for end users. Affects [integrations/install.sh](integrations/install.sh), [codedna_tool/cli.py](codedna_tool/cli.py) `_TOOL_FILES["agents"]`, and the source workflow file at [integrations/.agent/workflows/codedna.md](integrations/.agent/workflows/codedna.md).
 
 ### Added
@@ -13,6 +14,10 @@ All notable changes to CodeDNA will be documented in this file.
 - **Antigravity: `agents` install now writes `AGENTS.md` + `.agent/workflows/codedna.md`** (was workflow-only). `AGENTS.md` is read by Antigravity v1.20.3+ as an always-on rules file (cross-vendor standard, also read by OpenCode/Cursor/Claude Code), giving the agent the CodeDNA protocol every session — not only when the user types `/codedna`.
 - **`_detect_ai_tools()` now detects Antigravity** — checks for `.agent/`, `GEMINI.md`, or `.gemini/` in the repo. Previously `codedna install` (no flags) never auto-installed Antigravity files.
 - **`--tools agents` documented in `codedna install --help`** — was previously accepted but undocumented.
+
+### Tests
+
+- 187 total tests passing (was 185); 2 new regression tests in `TestBuildVault`: `test_large_non_source_file_does_not_crash` (5 MB binary in repo doesn't OOM) and `test_python_with_long_body_after_docstring` (Python file with body > 16 KB still has its header extracted via regex fallback).
 
 ## [0.9.1] — 2026-04-22
 

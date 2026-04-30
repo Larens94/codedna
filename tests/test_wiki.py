@@ -8,6 +8,7 @@ agent:   claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | initial te
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki2 | add TestProjectWiki — 4 tests for render_project_wiki + build_project_wiki (workingfm template integration)
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki4 | update tests for nested vault layout — slug preserves folders, wikilinks use `path|display` format, build_vault mirrors source hierarchy
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki5 | add TestWikiFieldTarget + page render tests for the wiki: opt-in field — covers callout layout and missing-field behavior
+claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_wiki_oom | regression tests for #9: large 5 MB non-source binary in the repo must not OOM bootstrap; Python file with body >16 KB after the docstring still has its header extracted via the regex fallback path
 """
 
 from __future__ import annotations
@@ -209,6 +210,57 @@ class TestBuildVault:
         assert n == 0
         # Index still generated
         assert (out / "README.md").exists()
+
+    def test_large_non_source_file_does_not_crash(self, tmp_path):
+        """Regression for issue #9: a multi-MB binary in the repo must not OOM the bootstrap.
+
+        Pre-fix `_extract_fields` did `path.read_text()` which loaded the entire
+        file into RAM. On GGUF model weights / datasets this raised MemoryError.
+        Fix reads only the first 16 KB and runs a cheap "exports:" pre-check.
+        """
+        write_annotated(tmp_path, "src/a.py", "a()", "none")
+        # Simulate a large non-source file (5 MB of binary noise) — like a
+        # GGUF/dataset that snuck past extension filtering. Without the fix,
+        # the wiki bootstrap would attempt to read all 5 MB before checking
+        # for a CodeDNA header.
+        large = tmp_path / "model.bin"
+        large.write_bytes(b"\x00\xff" * (5 * 1024 * 1024 // 2))  # 5 MB
+        out = tmp_path / "vault"
+        # Walk every extension (None) so the binary path is exercised end-to-end.
+        n = build_wiki_vault(tmp_path, out, extensions=None)
+        assert n == 1  # only the annotated .py file becomes a page
+        assert (out / "src" / "a.md").exists()
+        assert not (out / "model.md").exists()
+
+    def test_python_with_long_body_after_docstring(self, tmp_path):
+        """Header docstring is still extracted when the file is much larger than 16 KB.
+
+        The 16 KB read-cap can cut mid-function. The fix falls back to a regex
+        extraction of the leading triple-quoted string when ast.parse() fails
+        on the truncated head.
+        """
+        rel = "src/big.py"
+        path = tmp_path / rel
+        path.parent.mkdir(parents=True, exist_ok=True)
+        # Annotated header + a body big enough to push past the 16 KB cap.
+        header = '\n'.join([
+            '"""big.py — large file with a CodeDNA header.',
+            "",
+            "exports: noop()",
+            "used_by: none",
+            "rules:   none",
+            "agent:   test | anthropic | 2026-04-30 | s_001 | regression for #9",
+            '"""',
+            "",
+        ])
+        body = "x = 0\n" * 10_000  # ~60 KB of body — well past the 16 KB cap
+        path.write_text(header + body, encoding="utf-8")
+        out = tmp_path / "vault"
+        n = build_wiki_vault(tmp_path, out, extensions=[".py"])
+        assert n == 1
+        page = (out / "src" / "big.md").read_text(encoding="utf-8")
+        assert "noop()" in page
+        assert "test | anthropic | 2026-04-30" in page
 
 
 class TestAgentNotesPreservation:
