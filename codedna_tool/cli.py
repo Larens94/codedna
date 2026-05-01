@@ -1,8 +1,11 @@
 #!/usr/bin/env python3
 """cli.py — CodeDNA v0.9 annotation tool: init, update, check, install.
 
-exports: class FuncInfo | class FileInfo | scan_file(path, repo_root) | scan_file_lang(path, repo_root, adapter) | build_used_by(infos) | build_ast_skeleton(source, rel) | class LLM | _EXPORTS_CAP | build_module_docstring(info, ub, rules, model_id) | inject_module_docstring(source, docstring) | inject_function_rules(source, func, rules_text) | collect_files(target, exclude, extensions) | run_lang_files(target, extensions, repo_root, exclude, model, dry_run, force, no_llm, verbose, api_key) | run(target, levels, model, dry_run, exclude, force, no_llm, only_public, verbose, api_key, repo_root, extensions) | cmd_refresh(target, repo_root, exclude, dry_run, verbose) | cmd_check(target, repo_root, exclude, verbose, extensions) | _TOOL_FILES | _TOOL_HOOKS_MAP | _HOOKS_BASE_MAP | _PRE_COMMIT_HOOK | (+7 more)
-used_by: tests/test_cli.py → FileInfo, build_module_docstring
+exports: class FuncInfo | class FileInfo | scan_file(path, repo_root) | scan_file_lang(path, repo_root, adapter) | build_used_by(infos) | build_ast_skeleton(source, rel) | class LLM | _EXPORTS_CAP | _CODEDNA_FIELD_RE | build_module_docstring(info, ub, rules, model_id) | inject_module_docstring(source, docstring) | inject_function_rules(source, func, rules_text) | _DEFAULT_SKIP_DIRS | collect_files(target, exclude, extensions) | run_lang_files(target, extensions, repo_root, exclude, model, dry_run, force, no_llm, verbose, api_key) | run(target, levels, model, dry_run, exclude, force, no_llm, only_public, verbose, api_key, repo_root, extensions) | cmd_refresh(target, repo_root, exclude, dry_run, verbose) | cmd_check(target, repo_root, exclude, verbose, extensions) | _TOOL_FILES | _TOOL_HOOKS_MAP | (+12 more)
+used_by: codedna_tool/wiki.py → _DEFAULT_SKIP_DIRS, _parse_existing_docstring, _parse_lang_header
+         tests/test_cli.py → FileInfo, LLM, _DEFAULT_SKIP_DIRS, _MANIFEST_SKIP, _detect_project_meta, _parse_exclude_field, build_module_docstring
+         tests/test_language_adapters.py → collect_files
+         tests/test_refresh.py → _parse_existing_docstring, _rebuild_docstring
 wiki:    docs/wiki/cli.md
 rules:   L2 (function Rules:) applies Python AST only; language adapters are L1-only.
 LLM calls are capped at 2 per Python file; --no-llm skips all LLM calls.
@@ -18,6 +21,7 @@ claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_antigravity | fix Antigrav
 claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_init_dataloss | fix #10 (yuzi-co): build_module_docstring now preserves the existing multi-line docstring body. Pre-fix `init` discarded everything below the summary line — silent data loss reported on a real 745-file repo (migration docs, architectural notes, pipeline diagrams erased). New _extract_docstring_body() helper extracts the prose body and strips out any pre-existing CodeDNA fields (so init --force doesn't duplicate them). 4 regression tests in TestBuildDocstring + 1 E2E in TestInit reproducing the reporter's exact case.
 claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_manifest_11 | fix #11 (yuzi-co): two manifest bugs. Bug A: --exclude '**/dir/**' did not match root-level dir because fnmatch and pre-3.13 pathlib.match collapse ** to single * — added _expand_exclude() that conservatively also tries the prefix-stripped form. Bug B: _detect_packages only recognised __init__.py as a package marker, so Go-only dirs fell into '(root)'; introduced _is_package_marker() which also accepts .go (Go has no marker file — the directory IS the package). 2 regression tests in TestManifest reproducing both reporter scenarios.
 claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_skip_drift | fix skip-list drift: collect_files (init), _MANIFEST_SKIP (manifest) and wiki.SKIP_DIRS each maintained their own copy of "dirs to skip" — diverged silently. A real Silicore-style session burned ~25 min and ~$0.30 of LLM calls annotating files inside .claude/worktrees/<wt-id>/ because init's skip set lacked .claude and worktrees (only wiki had them). Introduced canonical _DEFAULT_SKIP_DIRS frozenset (now includes .claude, worktrees, _repo_cache); collect_files uses it directly; _MANIFEST_SKIP becomes a superset (+coverage, +htmlcov). 4 regression tests in TestInit including a drift-guard that asserts wiki.SKIP_DIRS and _MANIFEST_SKIP both contain the canonical baseline.
+claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_json_robust | _parse_json_response now tolerates leading/trailing prose, <think>...</think> reasoning tags, and ```json fences anywhere in the response — not only at the start. New Strategy 3 uses json.JSONDecoder.raw_decode to scan every '{' until one parses cleanly. Same user session that hit skip-list drift also hit 46/47 batch failures because their model (likely DeepSeek V4-Flash or similar reasoning-style) returned non-strict JSON the parser refused. Added env-gated raw-response logging (CODEDNA_DEBUG_LLM_RESPONSES=/path) so the next failure produces a reproducible sample without a code patch. 11 regression tests in TestJSONResponseParser — 4 were red on pre-fix code (leading prose, trailing prose, thinking tags, prose-before-fence), all green after.
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -35,6 +39,7 @@ No API key needed for local models via Ollama (pip install 'codedna[litellm]').
 Provider priority: litellm (all providers) > anthropic (fallback, Claude only).
 Multi-language: pass --extensions ts go php rs java kt rb cs swift (or with dots).
 Supported: .ts .tsx .js .jsx .mjs | .go | .php | .rs | .java | .kt .kts | .rb | .cs | .swift
+message: 
 """
 
 import argparse
@@ -583,45 +588,93 @@ class LLM:
 
     @staticmethod
     def _parse_json_response(resp: str) -> Optional[dict]:
-        """Extract a JSON object from an LLM response, tolerating markdown fences and truncation.
+        """Extract a JSON object from an LLM response, tolerating markdown fences,
+        leading/trailing prose, reasoning tags, and truncation.
 
-        Rules:   Tries three strategies in order:
-                 1. Strip fences, parse directly.
-                 2. Find the last complete key-value pair before a truncation point and close the object.
-                 3. Return None — caller emits WARNING and skips the batch.
+        Rules:   Tries four strategies in order — first dict wins:
+                 1. Strip ```json fences (any position) and parse what's inside.
+                 2. Direct parse of the trimmed input.
+                 3. Locate the first balanced `{...}` block via `raw_decode` —
+                    handles "Here is the JSON: {...}", "<think>…</think>\\n{...}",
+                    trailing commentary, and any wrapper text.
+                 4. Truncated JSON — find last complete "key":"value" pair and
+                    close the object (max_tokens cut mid-response).
+                 Returns None when no strategy yields a dict. Caller emits a
+                 WARNING and skips the batch. When the env var
+                 CODEDNA_DEBUG_LLM_RESPONSES is set to a directory path, the
+                 raw response is appended to a file there for offline diagnosis
+                 — reporters of "invalid JSON" issues can opt-in without code
+                 changes.
         """
         if not resp:
             return None
         clean = resp.strip()
-        # Strip markdown code fences
-        if clean.startswith("```"):
-            parts = clean.split("```")
-            clean = parts[1] if len(parts) > 1 else clean
-            if clean.startswith("json"):
-                clean = clean[4:]
-        clean = clean.strip()
 
-        # Strategy 1: direct parse
+        # Strategy 1: ```json ... ``` (anywhere in the response)
+        if "```" in clean:
+            parts = clean.split("```")
+            for i, section in enumerate(parts):
+                if i % 2 == 0:
+                    continue  # outside fence
+                candidate = section
+                if candidate.startswith("json"):
+                    candidate = candidate[4:]
+                candidate = candidate.strip()
+                try:
+                    return json.loads(candidate)
+                except (json.JSONDecodeError, ValueError):
+                    continue
+
+        # Strategy 2: direct parse
         try:
             return json.loads(clean)
         except (json.JSONDecodeError, ValueError):
             pass
 
-        # Strategy 2: truncated JSON — find last complete "key": "value" pair and close the object
-        # Handles the case where max_tokens cut the response mid-object.
+        # Strategy 3: locate the first balanced {...} block.
+        # raw_decode returns the first complete JSON object and the index where
+        # parsing stopped — so trailing prose is naturally ignored. To cope with
+        # leading prose, scan every '{' until one parses cleanly.
+        decoder = json.JSONDecoder()
+        idx = clean.find("{")
+        while idx >= 0:
+            try:
+                obj, _ = decoder.raw_decode(clean[idx:])
+                if isinstance(obj, dict):
+                    return obj
+            except (json.JSONDecodeError, ValueError):
+                pass
+            idx = clean.find("{", idx + 1)
+
+        # Strategy 4: truncated JSON — find last complete "key":"value" entry
+        # before the cut point and close the object.
         try:
-            # Find the rightmost complete "key": "value" entry
             last_comma = clean.rfind('",')
             if last_comma > 0:
                 candidate = clean[: last_comma + 1].rstrip().rstrip(",") + "\n}"
-                # Ensure it starts with {
                 brace = candidate.find("{")
                 if brace >= 0:
                     return json.loads(candidate[brace:])
         except (json.JSONDecodeError, ValueError):
-            # JSON repair failed — fall through to return None
             pass
 
+        # All strategies exhausted. Optionally persist the raw response so the
+        # next reporter of an "invalid JSON" issue gives us a reproducible
+        # sample without needing a code patch.
+        debug_dir = os.environ.get("CODEDNA_DEBUG_LLM_RESPONSES")
+        if debug_dir:
+            try:
+                from pathlib import Path as _P
+                from datetime import datetime as _dt
+                p = _P(debug_dir)
+                p.mkdir(parents=True, exist_ok=True)
+                stamp = _dt.utcnow().strftime("%Y%m%dT%H%M%S_%fZ")
+                (p / f"llm_unparseable_{stamp}.txt").write_text(
+                    resp, encoding="utf-8"
+                )
+            except OSError:
+                # Logging is best-effort — never let it mask the real failure.
+                pass
         return None
 
 
@@ -2604,7 +2657,9 @@ def _detect_project_meta(root: Path) -> dict:
 def _read_existing_codedna(codedna_path: Path) -> dict:
     """Read existing .codedna and extract fields we want to preserve.
 
-    Rules:   Preserves project:, description:, agent_sessions:, cross_cutting_patterns:.
+    Rules:   Preserves project:, description:, agent_sessions:, cross_cutting_patterns:,
+             and the top-level exclude: list (both for round-trip preservation in
+             exclude_block and as a parsed list in excludes).
              Uses simple line-based parsing — no PyYAML dependency.
              Returns defaults if file does not exist.
     """
@@ -2613,6 +2668,8 @@ def _read_existing_codedna(codedna_path: Path) -> dict:
         "description": "",
         "agent_sessions_block": "",
         "cross_cutting_block": "cross_cutting_patterns: {}\n",
+        "exclude_block": "",
+        "excludes": [],
     }
     if not codedna_path.exists():
         return defaults
@@ -2629,6 +2686,12 @@ def _read_existing_codedna(codedna_path: Path) -> dict:
     if m:
         defaults["description"] = m.group(1).strip()
 
+    # Extract exclude: list — supports flow form `exclude: [a, b]` and
+    # block form `exclude:\n  - a\n  - b`.
+    excludes, exclude_block = _parse_exclude_field(content)
+    defaults["excludes"] = excludes
+    defaults["exclude_block"] = exclude_block
+
     # Extract agent_sessions block (everything from 'agent_sessions:' to end or next top-level key)
     m = _re.search(r"(^agent_sessions:.*)", content, _re.MULTILINE | _re.DOTALL)
     if m:
@@ -2643,6 +2706,57 @@ def _read_existing_codedna(codedna_path: Path) -> dict:
     return defaults
 
 
+def _parse_exclude_field(content: str) -> tuple[list[str], str]:
+    """Extract top-level `exclude:` from a .codedna YAML-like string.
+
+    Rules:   Recognises two forms:
+             (a) flow:  `exclude: ["a/**", "b/**"]`
+             (b) block: `exclude:\\n  - "a/**"\\n  - "b/**"`
+             Returns (patterns_list, raw_block_text). raw_block_text is the
+             verbatim source slice — used by _write_codedna to round-trip
+             the field on manifest regeneration without losing comments
+             or formatting.
+             Returns ([], "") if no exclude: key present.
+             Strips surrounding quotes from each pattern.
+    """
+    import re as _re
+
+    # Flow form: exclude: [a, b, c]
+    m = _re.search(r"^exclude:\s*\[(.*?)\]\s*$", content, _re.MULTILINE)
+    if m:
+        raw_block = m.group(0) + "\n"
+        items = [it.strip().strip('"\'') for it in m.group(1).split(",")]
+        return [it for it in items if it], raw_block
+
+    # Block form:
+    #   exclude:
+    #     - "pattern1"
+    #     - "pattern2"
+    m = _re.search(
+        r"^exclude:\s*\n((?:^[ \t]+-[ \t]+.+\n?)+)",
+        content,
+        _re.MULTILINE,
+    )
+    if m:
+        raw_block = m.group(0).rstrip() + "\n"
+        items_raw = _re.findall(r"^[ \t]+-[ \t]+(.+?)\s*$", m.group(1), _re.MULTILINE)
+        items = [it.strip().strip('"\'') for it in items_raw]
+        return [it for it in items if it], raw_block
+
+    return [], ""
+
+
+def _read_codedna_excludes(root: Path) -> list[str]:
+    """Return exclude patterns declared in `<root>/.codedna`.
+
+    Rules:   Thin wrapper over _read_existing_codedna for the dispatch layer
+             in main() — merges with --exclude CLI flag additively.
+             Returns [] when .codedna missing or has no exclude: field.
+             Patterns follow fnmatch semantics, identical to --exclude.
+    """
+    return _read_existing_codedna(root / ".codedna").get("excludes", [])
+
+
 def _write_codedna(
     codedna_path: Path,
     project: str,
@@ -2651,11 +2765,14 @@ def _write_codedna(
     cross_cutting_block: str,
     agent_sessions_block: str,
     dry_run: bool,
+    exclude_block: str = "",
 ) -> str:
     """Serialise .codedna to YAML-like string and optionally write it.
 
     Rules:   agent_sessions: block is always appended last and never modified.
              cross_cutting_patterns: is preserved from existing file.
+             exclude: block (top-level, optional) is preserved verbatim from the
+             existing file when present — manifest never invents or drops it.
              packages: section is fully regenerated on every manifest run.
              Returns the generated content string regardless of dry_run.
     """
@@ -2665,6 +2782,9 @@ def _write_codedna(
     ]
     if description:
         lines.append(f'description: "{description}"')
+    if exclude_block:
+        lines.append("")
+        lines.append(exclude_block.rstrip())
     lines += ["", "packages:"]
 
     for pkg_name, data in sorted(packages.items()):
@@ -2844,6 +2964,7 @@ def cmd_manifest(
         cross_cutting_block=existing["cross_cutting_block"],
         agent_sessions_block=existing["agent_sessions_block"],
         dry_run=dry_run,
+        exclude_block=existing.get("exclude_block", ""),
     )
 
     print()
@@ -3223,6 +3344,10 @@ def main():
             print(f"Auto-detected: {', '.join(exts)}")
         else:
             exts = _normalize_extensions(args.extensions)
+        # Rules: merge --exclude CLI flag with the project-wide exclude: list
+        # in .codedna so a single manifest run honours both. CLI wins on
+        # ordering (additive — no de-dup needed; fnmatch is idempotent).
+        merged_excludes = list(args.exclude) + _read_codedna_excludes(target)
         return cmd_manifest(
             target=target,
             repo_root=target,
@@ -3232,7 +3357,7 @@ def main():
             api_key=args.api_key,
             verbose=args.verbose,
             extensions=exts,
-            exclude=list(args.exclude),
+            exclude=merged_excludes,
         )
 
     if args.command == "refresh":
@@ -3241,7 +3366,8 @@ def main():
             print(f"Error: {target} does not exist", file=sys.stderr)
             return 1
         repo_root = args.repo_root.resolve() if args.repo_root else None
-        return cmd_refresh(target, repo_root, list(args.exclude), args.dry_run, args.verbose)
+        merged_excludes = list(args.exclude) + _read_codedna_excludes(repo_root or target)
+        return cmd_refresh(target, repo_root, merged_excludes, args.dry_run, args.verbose)
 
     if args.command == "self-update":
         return cmd_self_update(force=args.force, check_only=args.check)
@@ -3279,7 +3405,8 @@ def main():
             print(f"Auto-detected: {', '.join(exts)}")
         else:
             exts = _normalize_extensions(args.extensions)
-        return cmd_check(target, repo_root, list(args.exclude), args.verbose, extensions=exts)
+        merged_excludes = list(args.exclude) + _read_codedna_excludes(repo_root or target)
+        return cmd_check(target, repo_root, merged_excludes, args.verbose, extensions=exts)
 
     # init / update share the same run() — only difference is force flag
     target = args.path.resolve()
@@ -3295,12 +3422,13 @@ def main():
     else:
         exts = _normalize_extensions(args.extensions)
 
+    merged_excludes = list(args.exclude) + _read_codedna_excludes(repo_root or target)
     run(
         target=target,
         levels=[1, 2],
         model=args.model,
         dry_run=args.dry_run,
-        exclude=list(args.exclude),
+        exclude=merged_excludes,
         force=force,
         no_llm=args.no_llm,
         only_public=not args.all_functions,

@@ -1,16 +1,15 @@
 """test_cli.py — Tests for codedna CLI commands (init, check, update).
 
-exports: PYTHON | run_codedna() | class TestInit | class TestCheck | class TestRoundTrip | class TestBuildDocstring
+exports: PYTHON | run_codedna() | class TestInit | class TestCheck | class TestRoundTrip | class TestLLM | class TestJSONResponseParser | class TestManifest | class TestBuildDocstring | class TestDetectProjectMeta
 used_by: none
 rules:   Tests run codedna CLI as subprocess to verify end-to-end behavior.
 Each test uses tmp_path for isolation — never touches real project files.
-agent:   claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_002 | initial CLI test suite
-claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | add TestDetectProjectMeta: 12 unit tests for go.mod/package.json/pom.xml/settings.gradle/Cargo.toml parsing
-claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_unused | remove unused json/pytest imports (CodeQL #1673, #1674)
-claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_init_dataloss | add 4 regression tests for #10 (yuzi-co) — multi-line docstring body must be preserved by build_module_docstring + init E2E. Pre-fix tests fail (red) showing the data-loss bug exactly: lines like "Detailed multi-paragraph description", "Example", "Notes", "This content is critical" disappear from the rebuilt docstring.
-claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_manifest_11 | add TestManifest with 2 regression tests for #11 (yuzi-co) — Bug A: --exclude '**/dir/**' must match root-level dir; Bug B: Go-only directory must become its own package, not bucketed under (root). Both tests fail on pre-fix code, pass after the _expand_exclude + _is_package_marker fixes.
+agent:   claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_manifest_11 | add TestManifest with 2 regression tests for #11 (yuzi-co) — Bug A: --exclude '**/dir/**' must match root-level dir; Bug B: Go-only directory must become its own package, not bucketed under (root). Both tests fail on pre-fix code, pass after the _expand_exclude + _is_package_marker fixes.
 claude-opus-4-7 | anthropic | 2026-05-01 | s_20260430_test_llm | add TestLLM (11 tests) covering the litellm + anthropic routing paths for the first time. Pre-existing benchmark artifacts (deepseek/* in agent: lines under benchmark_agent/) prove the litellm path was exercised in production but was never under CI. Tests are fully offline — monkey-patch _litellm/_anthropic — covering _detect_provider for all 6 providers, _call routing through litellm with kwargs verification, anthropic fallback with timeout, ImportError when no backend, and api_key env var injection (positive + negative). Re-introduced `import pytest` (had been removed for CodeQL #1674) as it's needed for pytest.raises in this class — kept with `# noqa: F401` to make the deliberate retention explicit.
 claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_skip_drift | add 4 regression tests for the skip-list drift bug: test_init_skips_claude_worktrees + test_init_skips_top_level_worktrees_dir reproduce the Silicore-style session where init annotated .claude/worktrees/<wt-id>/ trees; test_collect_files_skip_set_matches_wiki_skip_dirs is a drift guard that asserts cli._DEFAULT_SKIP_DIRS is a subset of both wiki.SKIP_DIRS and _MANIFEST_SKIP — preventing the same divergence from sneaking back. All 3 fail on pre-fix code (red), pass after _DEFAULT_SKIP_DIRS is introduced as canonical baseline.
+claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_json_robust | add TestJSONResponseParser with 11 tests probing _parse_json_response against realistic LLM output shapes: plain JSON, fenced JSON (with/without lang tag), truncated mid-string, leading prose, trailing prose, <think>...</think> reasoning tags, fenced JSON with leading/trailing prose, plain prose (must return None), empty (must return None). 4 are red on pre-fix code — exactly the formats newer reasoning models (DeepSeek V4-Flash, R1, Qwen-thinking) emit despite being asked for JSON-only. All green after raw_decode-based Strategy 3 lands.
+claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_codedna_exclude | extend TestManifest with 5 regression tests for the new project-wide exclude: field in .codedna: 3 unit tests on _parse_exclude_field (flow form, block form, absent → empty), 1 E2E test that an exclude: in .codedna excludes a directory from package detection without needing --exclude CLI flag, 1 round-trip test asserting the exclude: block is preserved verbatim across manifest regenerations (without preservation, every manifest run would silently strip the user's exclude — making the field useless).
+message: 
 """
 
 from __future__ import annotations
@@ -424,6 +423,83 @@ class TestLLM:
         )
 
 
+# ── LLM JSON response parser ─────────────────────────────────────────────────
+
+class TestJSONResponseParser:
+    """Probe `LLM._parse_json_response` against realistic non-strict-JSON
+    formats produced by newer/reasoning models.
+
+    Context: a user lost ~25 min and ~$0.30 because their model returned
+    invalid-JSON output that broke 46/47 function-rules batches. We don't
+    have the actual raw response (logging is added in this same change),
+    but we can reproduce the most common output shapes that newer models
+    emit and verify the parser tolerates them.
+    """
+
+    @staticmethod
+    def parse(resp):
+        from codedna_tool.cli import LLM
+        return LLM._parse_json_response(resp)
+
+    # ── Sanity: formats already supported ─────────────────────────────────
+
+    def test_plain_json_object(self):
+        assert self.parse('{"a": "b"}') == {"a": "b"}
+
+    def test_fenced_json_with_lang_tag(self):
+        assert self.parse('```json\n{"a": "b"}\n```') == {"a": "b"}
+
+    def test_fenced_json_without_lang_tag(self):
+        assert self.parse('```\n{"a": "b"}\n```') == {"a": "b"}
+
+    def test_truncated_json_repaired_via_strategy_2(self):
+        """Existing strategy 2: truncated mid-string at last `",`."""
+        text = '{"a": "value1", "b": "value2", "c": "trun'
+        assert self.parse(text) == {"a": "value1", "b": "value2"}
+
+    # ── New: formats observed from reasoning / V4-style models ────────────
+
+    def test_json_with_leading_prose(self):
+        """Reasoning models (R1, DeepSeek V4, Qwen3-thinking) frequently
+        prefix JSON with an explanatory sentence even when asked for JSON-only.
+        """
+        text = 'Here is the JSON you requested:\n{"a": "b"}'
+        assert self.parse(text) == {"a": "b"}
+
+    def test_json_with_trailing_prose(self):
+        """Some models append commentary after the JSON block."""
+        text = '{"a": "b"}\nThis is the requested annotation.'
+        assert self.parse(text) == {"a": "b"}
+
+    def test_json_with_thinking_tags(self):
+        """`<think>...</think>` reasoning trace before the JSON payload —
+        DeepSeek-R1 default output shape."""
+        text = "<think>Let me analyze the function...</think>\n" '{"a": "b"}'
+        assert self.parse(text) == {"a": "b"}
+
+    def test_fenced_json_with_leading_prose(self):
+        """Combined: explanatory text + ```json fence."""
+        text = 'Here you go:\n```json\n{"a": "b"}\n```'
+        assert self.parse(text) == {"a": "b"}
+
+    def test_fenced_json_with_trailing_prose(self):
+        """```json fence followed by commentary."""
+        text = '```json\n{"a": "b"}\n```\nLet me know if you need more.'
+        assert self.parse(text) == {"a": "b"}
+
+    # ── Failure cases must still return None gracefully ───────────────────
+
+    def test_plain_prose_returns_none(self):
+        """Model declined to produce JSON — must not crash, must return None."""
+        assert self.parse(
+            "I cannot annotate this code without more context."
+        ) is None
+
+    def test_empty_response_returns_none(self):
+        assert self.parse("") is None
+        assert self.parse("   \n\n") is None
+
+
 # ── codedna manifest ─────────────────────────────────────────────────────────
 
 class TestManifest:
@@ -503,6 +579,133 @@ class TestManifest:
             f"Expected 'mygoservice' among detected packages, got: {named_pkgs}\n"
             f"stdout:\n{out}"
         )
+
+    # ── .codedna top-level exclude: field (s_20260501_codedna_exclude) ────────
+
+    def test_parse_exclude_field_flow_form(self):
+        """Unit: `exclude: ["a/**", "b/**"]` is parsed as a 2-pattern list."""
+        from codedna_tool.cli import _parse_exclude_field
+        content = (
+            'project: demo\n'
+            'exclude: ["labs/**", "vendor/**"]\n'
+            'packages: {}\n'
+        )
+        excludes, raw = _parse_exclude_field(content)
+        assert excludes == ["labs/**", "vendor/**"]
+        assert "exclude:" in raw and "labs/**" in raw
+
+    def test_parse_exclude_field_block_form(self):
+        """Unit: `exclude:\\n  - a\\n  - b` block list is parsed correctly."""
+        from codedna_tool.cli import _parse_exclude_field
+        content = (
+            'project: demo\n'
+            'exclude:\n'
+            '  - "labs/**"\n'
+            '  - "vendor/**"\n'
+            'packages: {}\n'
+        )
+        excludes, raw = _parse_exclude_field(content)
+        assert excludes == ["labs/**", "vendor/**"]
+        assert raw.startswith("exclude:")
+        assert '- "labs/**"' in raw
+
+    def test_parse_exclude_field_absent_returns_empty(self):
+        """Unit: no `exclude:` key → empty list and empty raw block."""
+        from codedna_tool.cli import _parse_exclude_field
+        content = 'project: demo\npackages: {}\n'
+        excludes, raw = _parse_exclude_field(content)
+        assert excludes == []
+        assert raw == ""
+
+    def test_manifest_honours_codedna_exclude_field(self, tmp_path):
+        """E2E: an `exclude:` field in .codedna excludes files from package detection
+        without needing --exclude on the CLI.
+
+        Reporter scenario: `codedna manifest .` walked vendored test fixtures
+        (labs/benchmark/projects/**) and fired SyntaxWarning on LaTeX escape
+        sequences. Setting exclude: in .codedna should make the noise go away
+        on every subsequent run, no flag needed.
+        """
+        # Two real packages
+        (tmp_path / "mypkg").mkdir()
+        (tmp_path / "mypkg" / "__init__.py").write_text('"""m."""\n')
+        (tmp_path / "mypkg" / "core.py").write_text('"""c."""\n')
+        # A vendored fixture that should be excluded
+        (tmp_path / "labs" / "fixtures" / "external").mkdir(parents=True)
+        (tmp_path / "labs" / "fixtures" / "external" / "__init__.py").write_text('"""x."""\n')
+        (tmp_path / "labs" / "fixtures" / "external" / "mod.py").write_text('"""y."""\n')
+
+        # Pre-existing .codedna with project-wide exclude
+        (tmp_path / ".codedna").write_text(
+            'project: demo\n'
+            'description: "test fixture"\n'
+            '\n'
+            'exclude:\n'
+            '  - "labs/**"\n'
+            '\n'
+            'packages: {}\n'
+            'cross_cutting_patterns: {}\n'
+            'agent_sessions: []\n'
+        )
+
+        run_codedna("init", str(tmp_path), "--no-llm")
+        rc, out, err = run_codedna("manifest", str(tmp_path), "--no-llm")
+
+        assert rc == 0, f"manifest failed:\nstdout:\n{out}\nstderr:\n{err}"
+        assert "Packages detected: 1" in out, (
+            f"Expected only 1 package (mypkg), labs/** should have been excluded.\n"
+            f"stdout:\n{out}"
+        )
+        assert "mypkg" in out
+        # 'labs' should not appear as a detected package
+        import re as _re
+        pkg_lines = [
+            ln for ln in out.splitlines()
+            if _re.match(r"^\s+\S+\s+\d+\s+files\s*$", ln)
+        ]
+        named_pkgs = [ln.strip().split()[0] for ln in pkg_lines]
+        assert not any("labs" in p for p in named_pkgs), (
+            f"labs/** was not excluded — found {named_pkgs}\n"
+            f"stdout:\n{out}"
+        )
+
+    def test_manifest_preserves_codedna_exclude_block_on_regeneration(self, tmp_path):
+        """Round-trip: running `manifest` regenerates packages: but must NEVER
+        drop the user-authored `exclude:` block from .codedna.
+
+        Without preservation, every run of manifest would silently strip
+        the exclude — the field would be useless across runs.
+        """
+        (tmp_path / "mypkg").mkdir()
+        (tmp_path / "mypkg" / "__init__.py").write_text('"""m."""\n')
+        (tmp_path / "mypkg" / "core.py").write_text('"""c."""\n')
+
+        original_exclude_block = (
+            'exclude:\n'
+            '  - "labs/**"\n'
+            '  - "_repo_cache/**"\n'
+        )
+        (tmp_path / ".codedna").write_text(
+            'project: demo\n'
+            'description: "test"\n'
+            '\n'
+            + original_exclude_block
+            + '\n'
+            'packages: {}\n'
+            'cross_cutting_patterns: {}\n'
+            'agent_sessions: []\n'
+        )
+
+        run_codedna("init", str(tmp_path), "--no-llm")
+        rc, out, err = run_codedna("manifest", str(tmp_path), "--no-llm")
+        assert rc == 0, f"manifest failed:\n{out}\n{err}"
+
+        regenerated = (tmp_path / ".codedna").read_text()
+        assert "exclude:" in regenerated, (
+            "exclude: block was dropped on manifest regeneration"
+        )
+        assert '- "labs/**"' in regenerated
+        assert '- "_repo_cache/**"' in regenerated
 
 
 # ── build_module_docstring ───────────────────────────────────────────────────

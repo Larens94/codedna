@@ -875,3 +875,35 @@ agent_sessions:
       cycle). Note: env Python here is 3.14 (broken pyexpat from
       Homebrew/libexpat mismatch), used 3.11.6 at /usr/local/bin/python3.11
       to run pytest.
+
+  - agent: claude-opus-4-7
+    provider: anthropic
+    date: 2026-05-01
+    session_id: s_20260501_json_robust
+    task: "fix _parse_json_response for newer reasoning-style models (V4-Flash, R1, Qwen-thinking)"
+    changed:
+      - codedna_tool/cli.py
+      - tests/test_cli.py
+      - CHANGELOG.md
+    visited:
+      - codedna_tool/cli.py
+      - tests/test_cli.py
+      - CHANGELOG.md
+    message: >
+      The same user session that hit the skip-list drift also lost 46/47
+      batches because the LLM JSON parser only accepted strict JSON or
+      ```json fences at the very start of the response. Newer reasoning
+      models (DeepSeek V4-Flash, R1, Qwen-thinking) routinely emit
+      explanatory prose before/after the JSON, or wrap reasoning in
+      <think>...</think> tags, regardless of how strict the prompt is. Test-
+      first: 11 tests probing every realistic shape — 4 of them were red on
+      pre-fix code (leading prose, trailing prose, thinking tags, fenced
+      JSON with leading prose). Fix: new Strategy 3 in _parse_json_response
+      uses json.JSONDecoder.raw_decode to scan every '{' index until one
+      parses cleanly. Strategy ordering: (1) extract from any ``` fence,
+      (2) direct parse, (3) raw_decode at every '{', (4) truncated repair
+      via last `",`. Plus: env-gated raw-response logging
+      (CODEDNA_DEBUG_LLM_RESPONSES=/path) so the next "invalid JSON"
+      reporter gives us a sample without needing a debug build. Total: 218
+      passed / 0 failed (was 207). Did NOT touch the prompt itself — fixing
+      the parser is more robust than chasing model-specific prompts.
