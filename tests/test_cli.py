@@ -9,6 +9,7 @@ claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_skip_drift | add 4 regress
 claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_json_robust | add TestJSONResponseParser with 11 tests probing _parse_json_response against realistic LLM output shapes: plain JSON, fenced JSON (with/without lang tag), truncated mid-string, leading prose, trailing prose, <think>...</think> reasoning tags, fenced JSON with leading/trailing prose, plain prose (must return None), empty (must return None). 4 are red on pre-fix code — exactly the formats newer reasoning models (DeepSeek V4-Flash, R1, Qwen-thinking) emit despite being asked for JSON-only. All green after raw_decode-based Strategy 3 lands.
 claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_codedna_exclude | extend TestManifest with 5 regression tests for the new project-wide exclude: field in .codedna: 3 unit tests on _parse_exclude_field (flow form, block form, absent → empty), 1 E2E test that an exclude: in .codedna excludes a directory from package detection without needing --exclude CLI flag, 1 round-trip test asserting the exclude: block is preserved verbatim across manifest regenerations (without preservation, every manifest run would silently strip the user's exclude — making the field useless).
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_init_escape | add 2 regression tests in TestInit for #12 (yuzi-co). Symptom A: test_init_preserves_backslash_newline_continuation asserts the line continuation in module docstrings survives byte-for-byte across init rewrite (red on pre-fix — pre-fix scan_file used ast.get_docstring which collapsed it). Symptom B: test_init_preserves_double_backslash_in_docstring asserts a literal double-backslash sequence is NOT downgraded to a single backslash (red on pre-fix) and that the rewritten file fires zero SyntaxWarning when re-compiled.
+claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_testdata_skip | add test_init_skips_testdata_directory for #13 (yuzi-co). Creates a Go analysistest fixture under tools/myanalyzer/testdata/src/clean/clean.go and asserts the file is untouched while the analyzer source still gets annotated — header injection would shift `// want "..."` line numbers and break analysistest.
 message: 
 """
 
@@ -213,6 +214,45 @@ class TestInit:
             "This content is critical and must NOT be lost",
         ]:
             assert must in after, f"data loss — line missing after init: {must!r}"
+
+    def test_init_skips_testdata_directory(self, tmp_path):
+        """Regression for #13 (yuzi-co): `init` must skip Go `testdata/` dirs.
+
+        analysistest fixtures (golang.org/x/tools/go/analysis/analysistest)
+        encode expected diagnostic positions in `// want "…"` comments tied
+        to specific line numbers. Inserting an 8-line CodeDNA header at the
+        top shifts every line down and breaks the analyzer's tests.
+        `go test` itself ignores testdata/ for build purposes — we follow
+        the same convention.
+        """
+        analyzer_dir = tmp_path / "tools" / "myanalyzer"
+        analyzer_dir.mkdir(parents=True)
+        (analyzer_dir / "analyzer.go").write_text(
+            'package myanalyzer\n\nfunc Run() {}\n', encoding="utf-8",
+        )
+        fixture = analyzer_dir / "testdata" / "src" / "clean"
+        fixture.mkdir(parents=True)
+        fixture_file = fixture / "clean.go"
+        fixture_original = (
+            'package clean\n'
+            '\n'
+            'func F() int {\n'
+            '\treturn 1 // want "uses a literal"\n'
+            '}\n'
+        )
+        fixture_file.write_text(fixture_original, encoding="utf-8")
+
+        rc, out, err = run_codedna("init", str(tmp_path), "--auto", "--no-llm")
+        assert rc == 0
+
+        # Fixture file MUST be untouched — header injection would shift the
+        # `// want` line and break analysistest.
+        assert fixture_file.read_text(encoding="utf-8") == fixture_original, (
+            "init annotated a Go file under testdata/ — would break analysistest"
+        )
+        # Real analyzer source DID get touched (proves init ran on the project).
+        analyzer_src = (analyzer_dir / "analyzer.go").read_text(encoding="utf-8")
+        assert "exports:" in analyzer_src or "package myanalyzer" in analyzer_src
 
     def test_init_preserves_backslash_newline_continuation(self, tmp_path):
         """Regression for #12 symptom A (yuzi-co): `init` must preserve

@@ -980,6 +980,13 @@ _DEFAULT_SKIP_DIRS = frozenset({
     # session above. Without these, `init` happily annotates ephemeral
     # `.claude/worktrees/<wt-id>/` trees.
     ".claude", "worktrees",
+    # Issue #13 (yuzi-co): Go's analysistest fixtures live under testdata/
+    # and encode expected diagnostic positions as `// want "…"` comments
+    # tied to specific line numbers. Inserting an 8-line CodeDNA header
+    # at the top of those files shifts every line down and breaks the
+    # analyzer's tests. `go test` itself ignores testdata/ for build
+    # purposes — we follow the same convention.
+    "testdata",
 })
 
 
