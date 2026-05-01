@@ -13,11 +13,11 @@ _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
 scan_file handles 3 import patterns: (1) from .mod import X, (2) from . import X
 (submodule-first then __init__.py symbol), (3) from pkg import X (tries pkg/X.py
 before falling back to pkg/__init__.py). All 3 were previously under-resolved.
-agent:   claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_skip_drift | fix skip-list drift: collect_files (init), _MANIFEST_SKIP (manifest) and wiki.SKIP_DIRS each maintained their own copy of "dirs to skip" — diverged silently. A real Silicore-style session burned ~25 min and ~$0.30 of LLM calls annotating files inside .claude/worktrees/<wt-id>/ because init's skip set lacked .claude and worktrees (only wiki had them). Introduced canonical _DEFAULT_SKIP_DIRS frozenset (now includes .claude, worktrees, _repo_cache); collect_files uses it directly; _MANIFEST_SKIP becomes a superset (+coverage, +htmlcov). 4 regression tests in TestInit including a drift-guard that asserts wiki.SKIP_DIRS and _MANIFEST_SKIP both contain the canonical baseline.
-claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_json_robust | _parse_json_response now tolerates leading/trailing prose, <think>...</think> reasoning tags, and ```json fences anywhere in the response — not only at the start. New Strategy 3 uses json.JSONDecoder.raw_decode to scan every '{' until one parses cleanly. Same user session that hit skip-list drift also hit 46/47 batch failures because their model (likely DeepSeek V4-Flash or similar reasoning-style) returned non-strict JSON the parser refused. Added env-gated raw-response logging (CODEDNA_DEBUG_LLM_RESPONSES=/path) so the next failure produces a reproducible sample without a code patch. 11 regression tests in TestJSONResponseParser — 4 were red on pre-fix code (leading prose, trailing prose, thinking tags, prose-before-fence), all green after.
+agent:   claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_json_robust | _parse_json_response now tolerates leading/trailing prose, <think>...</think> reasoning tags, and ```json fences anywhere in the response — not only at the start. New Strategy 3 uses json.JSONDecoder.raw_decode to scan every '{' until one parses cleanly. Same user session that hit skip-list drift also hit 46/47 batch failures because their model (likely DeepSeek V4-Flash or similar reasoning-style) returned non-strict JSON the parser refused. Added env-gated raw-response logging (CODEDNA_DEBUG_LLM_RESPONSES=/path) so the next failure produces a reproducible sample without a code patch. 11 regression tests in TestJSONResponseParser — 4 were red on pre-fix code (leading prose, trailing prose, thinking tags, prose-before-fence), all green after.
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260501_codedna_exclude | add project-wide `exclude:` field at .codedna top level — read by manifest/check/refresh/init via _read_codedna_excludes() and merged additively with --exclude CLI flag in main(). Driven by real frustration on this repo: `codedna manifest .` walked into labs/benchmark/projects/ (vendored SWE-bench fixtures with LaTeX escapes \Lambda and Win paths \Documents) firing SyntaxWarning on every ast.parse(). Field round-trips through _read_existing_codedna → _write_codedna verbatim (raw block preserved, supports both flow `[a, b]` and block `- a / - b` YAML forms). _parse_exclude_field is the parser. 5 regression tests in TestManifest covering parser unit behaviour and end-to-end exclusion + round-trip. Companion fix in csharp.py:13: same SyntaxWarning class for `\w<>\[\]?,\s` text in pre-existing 2026-04-21 narrative — doubled all backslashes.
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_init_escapes_testdata | fix #12 + #13 (yuzi-co). #12: scan_file used ast.get_docstring(tree) which returns the *evaluated* string — Python had already collapsed `\<newline>` line continuations and downgraded `\\` to `\`. Round-tripping that into rewritten docstrings silently corrupted shell snippets and ASCII pipeline diagrams (also fired SyntaxWarning at re-import for the `\\` case). New FileInfo.docstring_raw_body field captures the raw source slice via ast.get_source_segment; build_module_docstring prefers it over info.docstring. #13: added `testdata` to _DEFAULT_SKIP_DIRS — Go's analysistest fixtures encode expected diagnostic positions in `// want "…"` comments tied to specific line numbers, header insertion broke them. 3 regression tests in TestInit reproducing both yuzi-co scenarios exactly.
-claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_wiki_sync_hook | add opt-in post-commit wiki-sync hook to `codedna install`. cmd_install's with_wiki_sync param became tri-state Optional[bool]: True/False/None where None triggers an interactive prompt (`y/N`, default skip) when stdin+stdout are TTYs, or skip in non-interactive contexts. New `--no-wiki-sync` flag (mutex with `--with-wiki-sync` via add_mutually_exclusive_group) for explicit opt-out from CI scripts. New _POST_COMMIT_WIKI_HOOK template (non-blocking via `|| true`, marked with "CodeDNA" so re-install is idempotent and user-authored hooks are never clobbered). 5 regression tests in TestInstallWikiSync covering: default-non-TTY skips, `--with-wiki-sync` installs, `--no-wiki-sync` skips, existing user hook not clobbered, default install does NOT silently install. README §"Optional: post-commit wiki-sync hook" documents the tri-state matrix and adds an explicit advisory for agents to pass an explicit flag in scripted contexts.
+claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_wiki_sync_hook | add opt-in post-commit wiki-sync hook to `codedna install` with tri-state Optional[bool] semantic (None → interactive prompt or skip in non-TTY). New `--no-wiki-sync` flag and _POST_COMMIT_WIKI_HOOK template marked with "CodeDNA" so re-install is idempotent. README §"Optional: post-commit wiki-sync hook" documents the matrix and advises agents to pass an explicit flag.
+claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_l2_stubs | fix #14 (yuzi-co): inject_function_rules malformed Python on (a) Protocol stub methods `async def foo(): ...` (single-line body — body[0].lineno == def.lineno → injection landed BEFORE the def) and (b) decorator-stacked inner functions where body_lineno of the outer points to body[0].lineno (the inner `def`) instead of the earliest decorator (injection landed BETWEEN @decorator and def — invalid). Two fixes in _extract_funcs: (1) FuncInfo.is_single_line_stub flag set when body[0].lineno == child.lineno; inject_function_rules guards on it and returns source unchanged. (2) body_lineno anchored to min(d.lineno) of body[0]'s decorator_list when body[0] is a decorated FunctionDef/AsyncFunctionDef/ClassDef — keeps decorator+def contiguous. 5 regression tests in TestL2InjectionEdgeCases. The skip on single-line stubs is principled: Protocol stubs and `@overload` declarations are interfaces with no body to describe; trivial `pass`/`return None` bodies are already filtered by the >60-char source filter; non-trivial one-liners are a marginal lost-annotation cost worth paying for never-malformed output.
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -81,6 +81,12 @@ class FuncInfo:
     source: str  # truncated source for LLM prompt
     is_public: bool
     is_dunder: bool
+    # Issue #14 (yuzi-co): True when the function body sits on the same line
+    # as `def` (e.g. Protocol stubs `async def foo(...) -> T: ...`, or
+    # `def foo(): pass`). There is no separate body line to inject a docstring
+    # into without rewriting the body — inject_function_rules treats this as
+    # a hard skip rather than producing invalid Python.
+    is_single_line_stub: bool = False
 
 
 @dataclass
@@ -130,7 +136,28 @@ def _extract_funcs(tree: ast.AST, source_lines: list[str]) -> list[FuncInfo]:
                 _walk(child, in_class=True)
             elif isinstance(child, (ast.FunctionDef, ast.AsyncFunctionDef)):
                 # Body start
-                body_ln = child.body[0].lineno if child.body else child.lineno + 1
+                # Issue #14 (yuzi-co): when body[0] is itself a decorated
+                # function/class, body[0].lineno points to the inner `def`,
+                # NOT to the earliest decorator. Injecting at body_lineno-1
+                # would land between `@decorator` and `def` — invalid Python.
+                # Anchor to the earliest decorator so injection lands BEFORE
+                # the whole decorated block.
+                if child.body:
+                    first = child.body[0]
+                    if (isinstance(first, (ast.FunctionDef, ast.AsyncFunctionDef, ast.ClassDef))
+                            and first.decorator_list):
+                        body_ln = min(d.lineno for d in first.decorator_list)
+                    else:
+                        body_ln = first.lineno
+                else:
+                    body_ln = child.lineno + 1
+
+                # Issue #14 (yuzi-co): single-line body (`async def foo(): ...`,
+                # `def foo(): pass`, `def foo(): return None` — common in
+                # Protocol stubs and overload declarations) has no separate
+                # line for a docstring. Mark and skip downstream rather than
+                # malforming the source.
+                is_single_line_stub = bool(child.body) and child.body[0].lineno == child.lineno
 
                 # Docstring span
                 ds_end = 0
@@ -159,6 +186,7 @@ def _extract_funcs(tree: ast.AST, source_lines: list[str]) -> list[FuncInfo]:
                         source=src,
                         is_public=not name.startswith("_"),
                         is_dunder=name.startswith("__") and name.endswith("__"),
+                        is_single_line_stub=is_single_line_stub,
                     )
                 )
 
@@ -879,10 +907,18 @@ def inject_module_docstring(source: str, docstring: str) -> str:
 
 
 def inject_function_rules(source: str, func: FuncInfo, rules_text: str) -> str:
+    """Inject Rules: into a function docstring (or create one).
+
+    Rules:   Caller must apply from BOTTOM to TOP to preserve line numbers.
+             Issue #14 (yuzi-co): a single-line body (Protocol stub
+             `async def foo(): ...`, `def foo(): pass`, etc.) has no
+             separate line for a docstring; rewriting it would change the
+             body semantics. Skip injection and return source unchanged
+             rather than emitting invalid Python.
     """
-    Inject Rules: into a function docstring (or create one).
-    Caller must apply from BOTTOM to TOP to preserve line numbers.
-    """
+    if func.is_single_line_stub:
+        return source
+
     lines = source.split("\n")
     indent = " " * (func.col_offset + 4)
 

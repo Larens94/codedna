@@ -4,12 +4,12 @@ exports: PYTHON | run_codedna() | class TestInit | class TestCheck | class TestR
 used_by: none
 rules:   Tests run codedna CLI as subprocess to verify end-to-end behavior.
 Each test uses tmp_path for isolation — never touches real project files.
-agent:   claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_skip_drift | add 4 regression tests for the skip-list drift bug: test_init_skips_claude_worktrees + test_init_skips_top_level_worktrees_dir reproduce the Silicore-style session where init annotated .claude/worktrees/<wt-id>/ trees; test_collect_files_skip_set_matches_wiki_skip_dirs is a drift guard that asserts cli._DEFAULT_SKIP_DIRS is a subset of both wiki.SKIP_DIRS and _MANIFEST_SKIP — preventing the same divergence from sneaking back. All 3 fail on pre-fix code (red), pass after _DEFAULT_SKIP_DIRS is introduced as canonical baseline.
-claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_json_robust | add TestJSONResponseParser with 11 tests probing _parse_json_response against realistic LLM output shapes: plain JSON, fenced JSON (with/without lang tag), truncated mid-string, leading prose, trailing prose, <think>...</think> reasoning tags, fenced JSON with leading/trailing prose, plain prose (must return None), empty (must return None). 4 are red on pre-fix code — exactly the formats newer reasoning models (DeepSeek V4-Flash, R1, Qwen-thinking) emit despite being asked for JSON-only. All green after raw_decode-based Strategy 3 lands.
+agent:   claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_json_robust | add TestJSONResponseParser with 11 tests probing _parse_json_response against realistic LLM output shapes: plain JSON, fenced JSON (with/without lang tag), truncated mid-string, leading prose, trailing prose, <think>...</think> reasoning tags, fenced JSON with leading/trailing prose, plain prose (must return None), empty (must return None). 4 are red on pre-fix code — exactly the formats newer reasoning models (DeepSeek V4-Flash, R1, Qwen-thinking) emit despite being asked for JSON-only. All green after raw_decode-based Strategy 3 lands.
 claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_codedna_exclude | extend TestManifest with 5 regression tests for the new project-wide exclude: field in .codedna: 3 unit tests on _parse_exclude_field (flow form, block form, absent → empty), 1 E2E test that an exclude: in .codedna excludes a directory from package detection without needing --exclude CLI flag, 1 round-trip test asserting the exclude: block is preserved verbatim across manifest regenerations (without preservation, every manifest run would silently strip the user's exclude — making the field useless).
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_init_escape | add 2 regression tests in TestInit for #12 (yuzi-co). Symptom A: test_init_preserves_backslash_newline_continuation asserts the line continuation in module docstrings survives byte-for-byte across init rewrite (red on pre-fix — pre-fix scan_file used ast.get_docstring which collapsed it). Symptom B: test_init_preserves_double_backslash_in_docstring asserts a literal double-backslash sequence is NOT downgraded to a single backslash (red on pre-fix) and that the rewritten file fires zero SyntaxWarning when re-compiled.
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_testdata_skip | add test_init_skips_testdata_directory for #13 (yuzi-co). Creates a Go analysistest fixture under tools/myanalyzer/testdata/src/clean/clean.go and asserts the file is untouched while the analyzer source still gets annotated — header injection would shift `// want "..."` line numbers and break analysistest.
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_wiki_sync_hook | extend TestInstallWikiSync to 5 tests covering the tri-state Optional[bool] for cmd_install's with_wiki_sync param: (1) default-non-TTY install does NOT create post-commit hook (safe default); (2) `--with-wiki-sync` installs a marked, executable hook invoking `codedna wiki sync`; (3) explicit `--no-wiki-sync` skips even when CodeDNA marker would have triggered re-install logic; (4) default in non-TTY context (run_codedna's subprocess has no TTY) skips silently; (5) install never overwrites a user-authored post-commit hook (no CodeDNA marker → SKIP).
+claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_l2_stubs | add TestL2InjectionEdgeCases (5 tests) for #14 (yuzi-co): _extract_funcs marks Protocol stubs and `def foo(): pass`/`def foo(): return None` as is_single_line_stub=True; _extract_funcs anchors body_lineno to the earliest decorator of body[0] when body[0] is a decorated FunctionDef/ClassDef; inject_function_rules guard returns source unchanged for is_single_line_stub=True; decorator-stacked outer keeps @decorator+def contiguous after injection (compile-checked).
 message: 
 """
 
@@ -419,6 +419,152 @@ class TestInstallWikiSync:
         # And the install output flagged the skip
         assert "SKIP" in out and "post-commit" in out, (
             f"install did not announce the skip:\n{out}"
+        )
+
+
+# ── L2 injection on Protocol stubs / decorator-stacked funcs (#14) ──────────
+
+class TestL2InjectionEdgeCases:
+    """Regression tests for #14 (yuzi-co): inject_function_rules must NOT
+    produce malformed Python on (a) Protocol stub methods with single-line
+    bodies, or (b) decorator-stacked inner functions where the AST-reported
+    body_lineno would land injection between `@decorator` and `def`.
+    """
+
+    def test_extract_funcs_marks_protocol_stub_as_single_line(self):
+        """`async def publish(self, t: str) -> None: ...` (Protocol stub
+        single-line body) must be flagged is_single_line_stub=True."""
+        import ast
+        from codedna_tool.cli import _extract_funcs
+
+        src = (
+            "from typing import Protocol\n"
+            "\n"
+            "\n"
+            "class EventBus(Protocol):\n"
+            "    async def publish(self, t: str) -> None: ...\n"
+            "    async def subscribe(self, t: str) -> None: ...\n"
+        )
+        tree = ast.parse(src)
+        funcs = _extract_funcs(tree, src.split("\n"))
+        names = {f.name: f for f in funcs}
+        assert "publish" in names and "subscribe" in names
+        assert names["publish"].is_single_line_stub is True
+        assert names["subscribe"].is_single_line_stub is True
+
+    def test_extract_funcs_marks_pass_only_body_as_single_line(self):
+        """`def foo(): pass` and `def foo(): return None` are also
+        single-line bodies and must be flagged."""
+        import ast
+        from codedna_tool.cli import _extract_funcs
+
+        src = (
+            "def stub_a(): pass\n"
+            "def stub_b(): return None\n"
+            "def real(x):\n"
+            "    return x + 1\n"
+        )
+        tree = ast.parse(src)
+        funcs = _extract_funcs(tree, src.split("\n"))
+        by_name = {f.name: f for f in funcs}
+        assert by_name["stub_a"].is_single_line_stub is True
+        assert by_name["stub_b"].is_single_line_stub is True
+        # Multi-line body must NOT be flagged.
+        assert by_name["real"].is_single_line_stub is False
+
+    def test_extract_funcs_body_lineno_anchored_to_inner_decorator(self):
+        """When the outer function's body[0] is itself a decorated
+        function/class, body_lineno must be the earliest decorator line —
+        otherwise injection lands between `@decorator` and `def` (invalid).
+        """
+        import ast
+        from codedna_tool.cli import _extract_funcs
+
+        src = (
+            "import functools\n"                                # 1
+            "\n"                                                # 2
+            "\n"                                                # 3
+            "def chat_safety_guard(fn):\n"                      # 4
+            "    @functools.wraps(fn)\n"                        # 5  ← decorator
+            "    async def wrapper(*args, **kwargs):\n"         # 6  ← def
+            "        return await fn(*args, **kwargs)\n"        # 7
+            "    return wrapper\n"                              # 8
+        )
+        tree = ast.parse(src)
+        funcs = _extract_funcs(tree, src.split("\n"))
+        outer = next(f for f in funcs if f.name == "chat_safety_guard")
+        # body_lineno must be 5 (decorator), not 6 (`def wrapper`).
+        # Pre-fix it was 6 → injection at line 5 (between @decorator and def) → invalid.
+        assert outer.body_lineno == 5, (
+            f"expected body_lineno=5 (earliest decorator line), got {outer.body_lineno}"
+        )
+
+    def test_inject_function_rules_skips_single_line_stub(self):
+        """The guard at the top of inject_function_rules must short-circuit
+        for is_single_line_stub=True, returning the source unchanged."""
+        from codedna_tool.cli import inject_function_rules, FuncInfo
+
+        source = (
+            "class EventBus:\n"
+            "    async def publish(self, t: str) -> None: ...\n"
+        )
+        func = FuncInfo(
+            name="publish",
+            lineno=2,
+            body_lineno=2,
+            ds_end_lineno=0,
+            col_offset=4,
+            has_rules=False,
+            source="    async def publish(self, t: str) -> None: ...",
+            is_public=True,
+            is_dunder=False,
+            is_single_line_stub=True,
+        )
+        result = inject_function_rules(source, func, "some generated rule")
+        assert result == source, (
+            "inject_function_rules must return source unchanged for stubs"
+        )
+
+    def test_inject_function_rules_handles_decorator_stacked_outer(self):
+        """When body_lineno is correctly anchored to the decorator line,
+        inject_function_rules places the docstring BEFORE the decorator —
+        as a clean first statement of the outer function — not between
+        @decorator and def."""
+        from codedna_tool.cli import inject_function_rules, FuncInfo
+
+        source = (
+            "import functools\n"                                # 1
+            "\n"                                                # 2
+            "\n"                                                # 3
+            "def chat_safety_guard(fn):\n"                      # 4
+            "    @functools.wraps(fn)\n"                        # 5  ← body_ln
+            "    async def wrapper(*args, **kwargs):\n"         # 6
+            "        return await fn(*args, **kwargs)\n"        # 7
+            "    return wrapper\n"                              # 8
+        )
+        func = FuncInfo(
+            name="chat_safety_guard",
+            lineno=4,
+            body_lineno=5,  # decorator line, post-fix
+            ds_end_lineno=0,
+            col_offset=0,
+            has_rules=False,
+            source="def chat_safety_guard(fn):\n    @functools.wraps(fn)\n    async def wrapper",
+            is_public=True,
+            is_dunder=False,
+            is_single_line_stub=False,
+        )
+        result = inject_function_rules(source, func, "guard wraps fn with safety")
+        # Result must compile.
+        compile(result, "<test>", "exec")
+        # Docstring must be inserted BEFORE the decorator, not between it and def.
+        # I.e. the decorator + def block remains contiguous.
+        result_lines = result.split("\n")
+        decorator_idx = next(i for i, ln in enumerate(result_lines) if "@functools.wraps" in ln)
+        def_idx = next(i for i, ln in enumerate(result_lines) if "async def wrapper" in ln)
+        assert def_idx == decorator_idx + 1, (
+            "decorator and def must remain contiguous after injection — "
+            f"decorator at line {decorator_idx}, def at line {def_idx}"
         )
 
 
