@@ -13,11 +13,11 @@ _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
 scan_file handles 3 import patterns: (1) from .mod import X, (2) from . import X
 (submodule-first then __init__.py symbol), (3) from pkg import X (tries pkg/X.py
 before falling back to pkg/__init__.py). All 3 were previously under-resolved.
-agent:   claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_manifest_11 | fix #11 (yuzi-co): two manifest bugs. Bug A: --exclude '**/dir/**' did not match root-level dir because fnmatch and pre-3.13 pathlib.match collapse ** to single * — added _expand_exclude() that conservatively also tries the prefix-stripped form. Bug B: _detect_packages only recognised __init__.py as a package marker, so Go-only dirs fell into '(root)'; introduced _is_package_marker() which also accepts .go (Go has no marker file — the directory IS the package). 2 regression tests in TestManifest reproducing both reporter scenarios.
-claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_skip_drift | fix skip-list drift: collect_files (init), _MANIFEST_SKIP (manifest) and wiki.SKIP_DIRS each maintained their own copy of "dirs to skip" — diverged silently. A real Silicore-style session burned ~25 min and ~$0.30 of LLM calls annotating files inside .claude/worktrees/<wt-id>/ because init's skip set lacked .claude and worktrees (only wiki had them). Introduced canonical _DEFAULT_SKIP_DIRS frozenset (now includes .claude, worktrees, _repo_cache); collect_files uses it directly; _MANIFEST_SKIP becomes a superset (+coverage, +htmlcov). 4 regression tests in TestInit including a drift-guard that asserts wiki.SKIP_DIRS and _MANIFEST_SKIP both contain the canonical baseline.
+agent:   claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_skip_drift | fix skip-list drift: collect_files (init), _MANIFEST_SKIP (manifest) and wiki.SKIP_DIRS each maintained their own copy of "dirs to skip" — diverged silently. A real Silicore-style session burned ~25 min and ~$0.30 of LLM calls annotating files inside .claude/worktrees/<wt-id>/ because init's skip set lacked .claude and worktrees (only wiki had them). Introduced canonical _DEFAULT_SKIP_DIRS frozenset (now includes .claude, worktrees, _repo_cache); collect_files uses it directly; _MANIFEST_SKIP becomes a superset (+coverage, +htmlcov). 4 regression tests in TestInit including a drift-guard that asserts wiki.SKIP_DIRS and _MANIFEST_SKIP both contain the canonical baseline.
 claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_json_robust | _parse_json_response now tolerates leading/trailing prose, <think>...</think> reasoning tags, and ```json fences anywhere in the response — not only at the start. New Strategy 3 uses json.JSONDecoder.raw_decode to scan every '{' until one parses cleanly. Same user session that hit skip-list drift also hit 46/47 batch failures because their model (likely DeepSeek V4-Flash or similar reasoning-style) returned non-strict JSON the parser refused. Added env-gated raw-response logging (CODEDNA_DEBUG_LLM_RESPONSES=/path) so the next failure produces a reproducible sample without a code patch. 11 regression tests in TestJSONResponseParser — 4 were red on pre-fix code (leading prose, trailing prose, thinking tags, prose-before-fence), all green after.
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260501_codedna_exclude | add project-wide `exclude:` field at .codedna top level — read by manifest/check/refresh/init via _read_codedna_excludes() and merged additively with --exclude CLI flag in main(). Driven by real frustration on this repo: `codedna manifest .` walked into labs/benchmark/projects/ (vendored SWE-bench fixtures with LaTeX escapes \Lambda and Win paths \Documents) firing SyntaxWarning on every ast.parse(). Field round-trips through _read_existing_codedna → _write_codedna verbatim (raw block preserved, supports both flow `[a, b]` and block `- a / - b` YAML forms). _parse_exclude_field is the parser. 5 regression tests in TestManifest covering parser unit behaviour and end-to-end exclusion + round-trip. Companion fix in csharp.py:13: same SyntaxWarning class for `\w<>\[\]?,\s` text in pre-existing 2026-04-21 narrative — doubled all backslashes.
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_init_escapes_testdata | fix #12 + #13 (yuzi-co). #12: scan_file used ast.get_docstring(tree) which returns the *evaluated* string — Python had already collapsed `\<newline>` line continuations and downgraded `\\` to `\`. Round-tripping that into rewritten docstrings silently corrupted shell snippets and ASCII pipeline diagrams (also fired SyntaxWarning at re-import for the `\\` case). New FileInfo.docstring_raw_body field captures the raw source slice via ast.get_source_segment; build_module_docstring prefers it over info.docstring. #13: added `testdata` to _DEFAULT_SKIP_DIRS — Go's analysistest fixtures encode expected diagnostic positions in `// want "…"` comments tied to specific line numbers, header insertion broke them. 3 regression tests in TestInit reproducing both yuzi-co scenarios exactly.
+claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_wiki_sync_hook | add opt-in `--with-wiki-sync` flag to `codedna install`. When passed, drops a marked, executable post-commit hook (.git/hooks/post-commit) that runs `codedna wiki sync . --out docs/codedna-wiki.md` non-blockingly after every commit (failures silenced via `|| true` so a wiki regen never breaks `git commit`). Same skip-on-existing-hook discipline as the pre-commit hook — never clobbers a user-authored hook (detects via "CodeDNA" marker). New _POST_COMMIT_WIKI_HOOK template; cmd_install grew a with_wiki_sync param. 3 regression tests in TestInstallWikiSync: default does NOT install, --with-wiki-sync DOES install, existing user hook is NEVER overwritten.
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -1927,6 +1927,33 @@ _HOOKS_BASE_MAP = {
     "opencode-hooks": "opencode",
 }
 
+_POST_COMMIT_WIKI_HOOK = r'''#!/usr/bin/env bash
+# CodeDNA v0.9 post-commit hook — auto-syncs the project wiki.
+# Installed by: codedna install --with-wiki-sync
+#
+# Behaviour: regenerates docs/codedna-wiki.md after every commit.
+# The regenerated file lands in your working tree as an unstaged
+# change — stage + commit it whenever you want it to travel with
+# code (e.g. before pushing).
+#
+# Non-blocking: any failure (CLI missing, network, etc.) is silenced
+# so a wiki regen never breaks `git commit`. Drop the `|| true` if
+# you want failures to surface in commit output.
+
+if ! command -v codedna >/dev/null 2>&1; then
+    exit 0
+fi
+
+REPO_ROOT="$(git rev-parse --show-toplevel 2>/dev/null)"
+if [[ -z "$REPO_ROOT" ]]; then
+    exit 0
+fi
+
+cd "$REPO_ROOT" && codedna wiki sync . --out docs/codedna-wiki.md >/dev/null 2>&1 || true
+exit 0
+'''
+
+
 _PRE_COMMIT_HOOK = r'''#!/usr/bin/env bash
 # CodeDNA v0.9 pre-commit hook — validates staged files.
 # Installed by: codedna install
@@ -2305,12 +2332,16 @@ _CLAUDE_HOOKS_SETTINGS = r'''{
 
 
 def cmd_install(repo_root: Path, tools: list[str], skip_hook: bool = False,
-                skip_prompt: bool = False) -> int:
+                skip_prompt: bool = False, with_wiki_sync: bool = False) -> int:
     """Setup CodeDNA in a project: pre-commit hook + AI tool prompt + .codedna.
 
     Rules:   Never overwrite an existing pre-commit hook without --force.
              Always create .codedna if missing.
              Prompt files are fetched from GitHub raw; fall back to a minimal template on network error.
+             with_wiki_sync (opt-in) installs a post-commit hook that runs
+             `codedna wiki sync` non-blockingly. Same skip-on-existing-hook
+             discipline as the pre-commit hook — never clobbers a hook the
+             user already authored.
     """
     import stat
     import urllib.request
@@ -2344,6 +2375,29 @@ def cmd_install(repo_root: Path, tools: list[str], skip_hook: bool = False,
                 path_hook.write_text(_PRE_COMMIT_HOOK, encoding="utf-8")
                 path_hook.chmod(path_hook.stat().st_mode | stat.S_IEXEC)
                 print("  OK    pre-commit hook installed")
+                int_count_installed += 1
+
+    # 1b. Optional post-commit wiki sync hook
+    if with_wiki_sync:
+        path_git_dir = repo_root / ".git"
+        if not path_git_dir.is_dir():
+            print("  WARNING: Not a git repository — skipping post-commit wiki sync hook")
+        else:
+            path_hooks_dir = path_git_dir / "hooks"
+            path_hooks_dir.mkdir(exist_ok=True)
+            path_post_hook = path_hooks_dir / "post-commit"
+
+            if path_post_hook.exists():
+                str_existing_post = path_post_hook.read_text(encoding="utf-8", errors="replace")
+                if "CodeDNA" in str_existing_post:
+                    print("  SKIP  post-commit wiki hook (CodeDNA hook already installed)")
+                else:
+                    print("  SKIP  post-commit wiki hook (existing hook found — won't overwrite)")
+                    print("        To add manually, append `codedna wiki sync . --out docs/codedna-wiki.md` to your hook")
+            else:
+                path_post_hook.write_text(_POST_COMMIT_WIKI_HOOK, encoding="utf-8")
+                path_post_hook.chmod(path_post_hook.stat().st_mode | stat.S_IEXEC)
+                print("  OK    post-commit wiki sync hook installed")
                 int_count_installed += 1
 
     # 2. AI tool prompt files + hooks
@@ -3131,6 +3185,10 @@ def main():
     )
     install_p.add_argument("--skip-hook", action="store_true", help="Skip pre-commit hook installation")
     install_p.add_argument("--skip-prompt", action="store_true", help="Skip AI tool prompt installation")
+    install_p.add_argument(
+        "--with-wiki-sync", action="store_true",
+        help="Also install a post-commit hook that runs `codedna wiki sync . --out docs/codedna-wiki.md` (non-blocking).",
+    )
 
     # ── init ──────────────────────────────────────────────────────────────────
     init_p = subs.add_parser(
@@ -3379,6 +3437,7 @@ def main():
             tools=list_str_tools,
             skip_hook=args.skip_hook,
             skip_prompt=args.skip_prompt,
+            with_wiki_sync=args.with_wiki_sync,
         )
 
     if args.command == "manifest":

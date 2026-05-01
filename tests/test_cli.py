@@ -4,12 +4,12 @@ exports: PYTHON | run_codedna() | class TestInit | class TestCheck | class TestR
 used_by: none
 rules:   Tests run codedna CLI as subprocess to verify end-to-end behavior.
 Each test uses tmp_path for isolation — never touches real project files.
-agent:   claude-opus-4-7 | anthropic | 2026-05-01 | s_20260430_test_llm | add TestLLM (11 tests) covering the litellm + anthropic routing paths for the first time. Pre-existing benchmark artifacts (deepseek/* in agent: lines under benchmark_agent/) prove the litellm path was exercised in production but was never under CI. Tests are fully offline — monkey-patch _litellm/_anthropic — covering _detect_provider for all 6 providers, _call routing through litellm with kwargs verification, anthropic fallback with timeout, ImportError when no backend, and api_key env var injection (positive + negative). Re-introduced `import pytest` (had been removed for CodeQL #1674) as it's needed for pytest.raises in this class — kept with `# noqa: F401` to make the deliberate retention explicit.
-claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_skip_drift | add 4 regression tests for the skip-list drift bug: test_init_skips_claude_worktrees + test_init_skips_top_level_worktrees_dir reproduce the Silicore-style session where init annotated .claude/worktrees/<wt-id>/ trees; test_collect_files_skip_set_matches_wiki_skip_dirs is a drift guard that asserts cli._DEFAULT_SKIP_DIRS is a subset of both wiki.SKIP_DIRS and _MANIFEST_SKIP — preventing the same divergence from sneaking back. All 3 fail on pre-fix code (red), pass after _DEFAULT_SKIP_DIRS is introduced as canonical baseline.
+agent:   claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_skip_drift | add 4 regression tests for the skip-list drift bug: test_init_skips_claude_worktrees + test_init_skips_top_level_worktrees_dir reproduce the Silicore-style session where init annotated .claude/worktrees/<wt-id>/ trees; test_collect_files_skip_set_matches_wiki_skip_dirs is a drift guard that asserts cli._DEFAULT_SKIP_DIRS is a subset of both wiki.SKIP_DIRS and _MANIFEST_SKIP — preventing the same divergence from sneaking back. All 3 fail on pre-fix code (red), pass after _DEFAULT_SKIP_DIRS is introduced as canonical baseline.
 claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_json_robust | add TestJSONResponseParser with 11 tests probing _parse_json_response against realistic LLM output shapes: plain JSON, fenced JSON (with/without lang tag), truncated mid-string, leading prose, trailing prose, <think>...</think> reasoning tags, fenced JSON with leading/trailing prose, plain prose (must return None), empty (must return None). 4 are red on pre-fix code — exactly the formats newer reasoning models (DeepSeek V4-Flash, R1, Qwen-thinking) emit despite being asked for JSON-only. All green after raw_decode-based Strategy 3 lands.
 claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_codedna_exclude | extend TestManifest with 5 regression tests for the new project-wide exclude: field in .codedna: 3 unit tests on _parse_exclude_field (flow form, block form, absent → empty), 1 E2E test that an exclude: in .codedna excludes a directory from package detection without needing --exclude CLI flag, 1 round-trip test asserting the exclude: block is preserved verbatim across manifest regenerations (without preservation, every manifest run would silently strip the user's exclude — making the field useless).
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_init_escape | add 2 regression tests in TestInit for #12 (yuzi-co). Symptom A: test_init_preserves_backslash_newline_continuation asserts the line continuation in module docstrings survives byte-for-byte across init rewrite (red on pre-fix — pre-fix scan_file used ast.get_docstring which collapsed it). Symptom B: test_init_preserves_double_backslash_in_docstring asserts a literal double-backslash sequence is NOT downgraded to a single backslash (red on pre-fix) and that the rewritten file fires zero SyntaxWarning when re-compiled.
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_testdata_skip | add test_init_skips_testdata_directory for #13 (yuzi-co). Creates a Go analysistest fixture under tools/myanalyzer/testdata/src/clean/clean.go and asserts the file is untouched while the analyzer source still gets annotated — header injection would shift `// want "..."` line numbers and break analysistest.
+claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_wiki_sync_hook | add TestInstallWikiSync (3 tests) for the new opt-in `--with-wiki-sync` flag in `codedna install`: (1) default install does NOT create post-commit hook; (2) `--with-wiki-sync` installs a marked, executable hook invoking `codedna wiki sync`; (3) install never overwrites a user-authored post-commit hook (no CodeDNA marker → SKIP).
 message: 
 """
 
@@ -325,6 +325,69 @@ class TestInit:
             assert not syntax_warnings, (
                 f"rewritten docstring fires SyntaxWarning: {[str(w.message) for w in syntax_warnings]}"
             )
+
+
+# ── codedna install --with-wiki-sync ─────────────────────────────────────────
+
+class TestInstallWikiSync:
+    """Opt-in post-commit hook that runs `codedna wiki sync` after every commit."""
+
+    def _make_git_repo(self, tmp_path):
+        import subprocess as _sub
+        _sub.run(["git", "init", "-q"], cwd=tmp_path, check=True)
+        _sub.run(["git", "config", "user.email", "test@example.com"], cwd=tmp_path, check=True)
+        _sub.run(["git", "config", "user.name", "test"], cwd=tmp_path, check=True)
+        return tmp_path
+
+    def test_install_without_flag_does_not_create_post_commit_hook(self, tmp_path):
+        """Default `codedna install` must NOT install a post-commit hook —
+        opt-in only, since wiki regen leaves uncommitted changes."""
+        self._make_git_repo(tmp_path)
+        rc, out, err = run_codedna("install", "--path", str(tmp_path),
+                                   "--skip-prompt")
+        assert rc == 0
+        post = tmp_path / ".git" / "hooks" / "post-commit"
+        assert not post.exists(), (
+            f"post-commit hook installed without --with-wiki-sync flag:\n{out}"
+        )
+
+    def test_install_with_wiki_sync_creates_executable_post_commit_hook(self, tmp_path):
+        """Regression for opt-in wiki sync: --with-wiki-sync must drop a
+        marked, executable hook that calls `codedna wiki sync`."""
+        import os
+        self._make_git_repo(tmp_path)
+        rc, out, err = run_codedna("install", "--path", str(tmp_path),
+                                   "--skip-prompt", "--with-wiki-sync")
+        assert rc == 0, f"install failed:\n{out}\n{err}"
+        post = tmp_path / ".git" / "hooks" / "post-commit"
+        assert post.exists(), f"post-commit hook NOT installed:\n{out}"
+        assert os.access(post, os.X_OK), "post-commit hook is not executable"
+        body = post.read_text(encoding="utf-8")
+        assert "CodeDNA" in body, "hook missing CodeDNA marker — would clobber on reinstall"
+        assert "codedna wiki sync" in body, "hook does not invoke `codedna wiki sync`"
+
+    def test_install_with_wiki_sync_does_not_clobber_existing_hook(self, tmp_path):
+        """If a non-CodeDNA post-commit hook already exists, `install
+        --with-wiki-sync` must skip — never overwrite user-authored hooks."""
+        self._make_git_repo(tmp_path)
+        hooks_dir = tmp_path / ".git" / "hooks"
+        hooks_dir.mkdir(exist_ok=True)
+        existing = hooks_dir / "post-commit"
+        existing_body = "#!/usr/bin/env bash\necho 'user hook'\n"
+        existing.write_text(existing_body, encoding="utf-8")
+        existing.chmod(0o755)
+
+        rc, out, err = run_codedna("install", "--path", str(tmp_path),
+                                   "--skip-prompt", "--with-wiki-sync")
+        assert rc == 0
+        # The existing hook is untouched
+        assert existing.read_text(encoding="utf-8") == existing_body, (
+            "install clobbered an existing user-authored post-commit hook"
+        )
+        # And the install output flagged the skip
+        assert "SKIP" in out and "post-commit" in out, (
+            f"install did not announce the skip:\n{out}"
+        )
 
 
 # ── codedna check ────────────────────────────────────────────────────────────
