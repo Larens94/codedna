@@ -2,18 +2,74 @@
 project: codedna
 description: "An In-Source Communication Protocol for AI Coding Agents — spec, benchmark, tools"
 
+exclude:
+  - "labs/benchmark/**"
+  - "experiments/runs/**"
+  - "benchmark_agent/runs/**"
+  - "benchmark_agent/projects_swebench/**"
+
 packages:
+  (root):
+    purpose: "analyze claude code test, benchmark server, status module"
+    key_files: [run_agent_multi.py, parser.py, agent_history.py, order.rb, benchmark_server.py]
+
+  benchmark_agent/projects_swebench/django__django-11808/:
+    purpose: "config, registry, django-admin module"
+    key_files: [utils.py, models.py, base.py, views.py, admin.py]
+
+  benchmark_agent/projects_swebench/django__django-11991/:
+    purpose: "config, registry, django-admin module"
+    key_files: [utils.py, models.py, base.py, views.py, admin.py]
+
+  benchmark_agent/projects_swebench/django__django-12508/:
+    purpose: "config, registry, django-admin module"
+    key_files: [utils.py, models.py, base.py, views.py, admin.py]
+
+  benchmark_agent/projects_swebench/django__django-13495/:
+    purpose: "config, registry, django-admin module"
+    key_files: [utils.py, models.py, base.py, views.py, admin.py]
+
+  benchmark_agent/projects_swebench/django__django-14480/:
+    purpose: "config, registry, global settings module"
+    key_files: [utils.py, models.py, base.py, admin.py, views.py]
+
   codedna_tool/:
-    purpose: "Analyzes source code across multiple languages to extract and map function, class, and dependency information"
-    key_files: [cli.py, swift.py, php.py, rust.py, java.py]
+    purpose: "cli, wiki module"
+    key_files: [cli.py, wiki.py, __init__.py]
+    depends_on: [codedna_tool/languages/]
 
-  examples/:
-    purpose: "Provides revenue analytics and reporting with user management for financial dashboards"
-    key_files: [format.py, revenue.py, routes.py, user.py, dashboard.py]
+  codedna_tool/languages/:
+    purpose: " treesitter,  ts csharp,  ts go module"
+    key_files: [base.py, _treesitter.py, __init__.py, java.py, go.py]
 
-  tools/:
-    purpose: "Utilities for processing agent traces, validating manifests, and extracting city data from CodeDNA sources"
-    key_files: [agent_history.py, traces_to_training.py, validate_manifests.py, extract_city_data.py]
+  examples/go-api/:
+    purpose: "main module"
+    key_files: [main.go]
+
+  examples/go-api/handlers/:
+    purpose: "revenue module"
+    key_files: [revenue.go]
+
+  examples/go-api/models/:
+    purpose: "user module"
+    key_files: [user.go]
+
+  examples/go-api/services/:
+    purpose: "revenue module"
+    key_files: [revenue.go]
+
+  examples/go-api/utils/:
+    purpose: "format module"
+    key_files: [format.go]
+
+  tests/:
+    purpose: "conftest, test cli, test integration langs module"
+    key_files: [test_language_adapters.py, test_integration_langs.py, test_refresh.py, test_cli.py, test_validator.py]
+    depends_on: [codedna_tool/, codedna_tool/languages/]
+
+  tests/fixtures/:
+    purpose: "user service, UserService, UserService module"
+    key_files: [UserService.kt, user_service.rb, user_service.go, UserService.ts, UserService.java]
 
 cross_cutting_patterns: {}
 
@@ -907,3 +963,77 @@ agent_sessions:
       reporter gives us a sample without needing a debug build. Total: 218
       passed / 0 failed (was 207). Did NOT touch the prompt itself — fixing
       the parser is more robust than chasing model-specific prompts.
+
+  - agent: claude-opus-4-7
+    provider: anthropic
+    date: 2026-05-01
+    session_id: s_20260501_codedna_exclude
+    task: "add project-wide exclude: field at .codedna top level"
+    changed:
+      - codedna_tool/cli.py
+      - tests/test_cli.py
+      - .codedna
+    visited:
+      - codedna_tool/cli.py
+      - tests/test_cli.py
+      - .codedna
+      - CLAUDE.md
+      - pyproject.toml
+    message: >
+      Driven by user frustration: `codedna manifest .` walked into
+      labs/benchmark/projects/ (vendored SWE-bench fixtures with LaTeX
+      escapes \\Lambda and Win paths \\Documents) firing SyntaxWarning
+      on every ast.parse(). Pre-fix the only way to silence it was to
+      pass --exclude on every CLI invocation. Solution: top-level
+      `exclude:` field in .codedna, supporting both YAML flow form
+      `[a, b]` and block form `- a\\n- b`. Read by manifest, check,
+      refresh, and init via _read_codedna_excludes() and merged
+      additively with --exclude in main(). Round-trips through
+      _read_existing_codedna → _write_codedna verbatim so manifest
+      regeneration never silently drops the user's exclude. 5 regression
+      tests in TestManifest (3 unit on _parse_exclude_field, 1 E2E, 1
+      round-trip). All 7 TestManifest tests green; 5 pre-existing
+      failures (4 TestLLM monkeypatch on missing _litellm attribute, 1
+      TestCodeDNAManifest missing PyYAML) confirmed pre-existing via
+      git stash before/after — not caused by this change.
+      Side-quest in same session: bonified Python 3.14 brew bottle on
+      macOS Tahoe 26.2 (broken pyexpat — libexpat ABI mismatch),
+      switched to brew --build-from-source python@3.13 + pipx
+      reinstall, set PIPX_DEFAULT_PYTHON in ~/.zshrc.
+
+  - agent: claude-opus-4-7
+    provider: anthropic
+    date: 2026-05-02
+    session_id: s_20260502_init_escapes_testdata
+    task: "fix #12 (init loses backslash escapes) and #13 (testdata not in skip list)"
+    changed:
+      - codedna_tool/cli.py
+      - tests/test_cli.py
+      - .codedna
+    visited:
+      - codedna_tool/cli.py
+      - tests/test_cli.py
+      - codedna_tool/wiki.py
+      - .codedna
+    message: >
+      yuzi-co reported two more init regressions, both fixed in one shot.
+      #12: scan_file used ast.get_docstring(tree) which returns the
+      *evaluated* string — Python's parser had already collapsed
+      `\\<newline>` line continuations and downgraded `\\\\` to `\\`.
+      Round-tripping that into a rewritten docstring silently turned a
+      runnable shell example into a single concatenated command, and
+      downgraded ASCII pipeline diagrams (`\\\\->`) such that the next
+      import fired SyntaxWarning. Fix: new FileInfo.docstring_raw_body
+      field captured via ast.get_source_segment + strip surrounding
+      triple quotes + lstrip leading newlines (matches ast.get_docstring's
+      summary-on-line-0 convention). build_module_docstring prefers
+      docstring_raw_body over docstring; falls back if None (e.g.
+      f-string Expr nodes). #13: added `testdata` to _DEFAULT_SKIP_DIRS
+      next to .claude / worktrees. Go's analysistest fixtures encode
+      expected diagnostic positions in `// want "…"` comments tied to
+      specific line numbers — header injection broke them. `go test`
+      itself ignores testdata/ for build purposes, we follow the same
+      convention. wiki.SKIP_DIRS inherits via _DEFAULT_SKIP_DIRS so the
+      drift-guard test still passes. 3 regression tests in TestInit, all
+      green. Full test_cli.py: 60 passed (was 57), 4 pre-existing
+      failures unrelated.
