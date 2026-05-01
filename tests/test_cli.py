@@ -4,11 +4,11 @@ exports: PYTHON | run_codedna() | class TestInit | class TestCheck | class TestR
 used_by: none
 rules:   Tests run codedna CLI as subprocess to verify end-to-end behavior.
 Each test uses tmp_path for isolation — never touches real project files.
-agent:   claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_manifest_11 | add TestManifest with 2 regression tests for #11 (yuzi-co) — Bug A: --exclude '**/dir/**' must match root-level dir; Bug B: Go-only directory must become its own package, not bucketed under (root). Both tests fail on pre-fix code, pass after the _expand_exclude + _is_package_marker fixes.
-claude-opus-4-7 | anthropic | 2026-05-01 | s_20260430_test_llm | add TestLLM (11 tests) covering the litellm + anthropic routing paths for the first time. Pre-existing benchmark artifacts (deepseek/* in agent: lines under benchmark_agent/) prove the litellm path was exercised in production but was never under CI. Tests are fully offline — monkey-patch _litellm/_anthropic — covering _detect_provider for all 6 providers, _call routing through litellm with kwargs verification, anthropic fallback with timeout, ImportError when no backend, and api_key env var injection (positive + negative). Re-introduced `import pytest` (had been removed for CodeQL #1674) as it's needed for pytest.raises in this class — kept with `# noqa: F401` to make the deliberate retention explicit.
+agent:   claude-opus-4-7 | anthropic | 2026-05-01 | s_20260430_test_llm | add TestLLM (11 tests) covering the litellm + anthropic routing paths for the first time. Pre-existing benchmark artifacts (deepseek/* in agent: lines under benchmark_agent/) prove the litellm path was exercised in production but was never under CI. Tests are fully offline — monkey-patch _litellm/_anthropic — covering _detect_provider for all 6 providers, _call routing through litellm with kwargs verification, anthropic fallback with timeout, ImportError when no backend, and api_key env var injection (positive + negative). Re-introduced `import pytest` (had been removed for CodeQL #1674) as it's needed for pytest.raises in this class — kept with `# noqa: F401` to make the deliberate retention explicit.
 claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_skip_drift | add 4 regression tests for the skip-list drift bug: test_init_skips_claude_worktrees + test_init_skips_top_level_worktrees_dir reproduce the Silicore-style session where init annotated .claude/worktrees/<wt-id>/ trees; test_collect_files_skip_set_matches_wiki_skip_dirs is a drift guard that asserts cli._DEFAULT_SKIP_DIRS is a subset of both wiki.SKIP_DIRS and _MANIFEST_SKIP — preventing the same divergence from sneaking back. All 3 fail on pre-fix code (red), pass after _DEFAULT_SKIP_DIRS is introduced as canonical baseline.
 claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_json_robust | add TestJSONResponseParser with 11 tests probing _parse_json_response against realistic LLM output shapes: plain JSON, fenced JSON (with/without lang tag), truncated mid-string, leading prose, trailing prose, <think>...</think> reasoning tags, fenced JSON with leading/trailing prose, plain prose (must return None), empty (must return None). 4 are red on pre-fix code — exactly the formats newer reasoning models (DeepSeek V4-Flash, R1, Qwen-thinking) emit despite being asked for JSON-only. All green after raw_decode-based Strategy 3 lands.
 claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_codedna_exclude | extend TestManifest with 5 regression tests for the new project-wide exclude: field in .codedna: 3 unit tests on _parse_exclude_field (flow form, block form, absent → empty), 1 E2E test that an exclude: in .codedna excludes a directory from package detection without needing --exclude CLI flag, 1 round-trip test asserting the exclude: block is preserved verbatim across manifest regenerations (without preservation, every manifest run would silently strip the user's exclude — making the field useless).
+claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_init_escape | add 2 regression tests in TestInit for #12 (yuzi-co). Symptom A: test_init_preserves_backslash_newline_continuation asserts the line continuation in module docstrings survives byte-for-byte across init rewrite (red on pre-fix — pre-fix scan_file used ast.get_docstring which collapsed it). Symptom B: test_init_preserves_double_backslash_in_docstring asserts a literal double-backslash sequence is NOT downgraded to a single backslash (red on pre-fix) and that the rewritten file fires zero SyntaxWarning when re-compiled.
 message: 
 """
 
@@ -213,6 +213,78 @@ class TestInit:
             "This content is critical and must NOT be lost",
         ]:
             assert must in after, f"data loss — line missing after init: {must!r}"
+
+    def test_init_preserves_backslash_newline_continuation(self, tmp_path):
+        """Regression for #12 symptom A (yuzi-co): `init` must preserve
+        backslash-newline line continuations in module docstrings byte-for-byte.
+
+        Pre-fix scan_file used ast.get_docstring() which returns the
+        *evaluated* string — Python's parser already collapsed the
+        continuation. Round-tripping that into the rewritten docstring
+        silently turned a documented multi-line shell example into a
+        single broken concatenated command.
+        """
+        path = tmp_path / "demo.py"
+        path.write_text(
+            '"""Demo module.\n'
+            '\n'
+            'Run:\n'
+            '    FLAG_A=1 FLAG_B=2 \\\n'
+            '    pytest tests/foo -v\n'
+            '"""\n'
+            '\n'
+            'def foo(): pass\n',
+            encoding="utf-8",
+        )
+        rc, out, err = run_codedna("init", str(tmp_path), "--no-llm")
+        assert rc == 0
+        after = path.read_text(encoding="utf-8")
+        # The backslash-newline continuation must survive — both lines distinct.
+        assert "FLAG_A=1 FLAG_B=2 \\" in after, (
+            f"backslash-newline continuation lost on rewrite:\n{after}"
+        )
+        assert "pytest tests/foo -v" in after
+        # And the two parts must NOT have collapsed onto a single line.
+        assert "FLAG_B=2     pytest" not in after, (
+            f"continuation collapsed into one line — multi-line example destroyed:\n{after}"
+        )
+
+    def test_init_preserves_double_backslash_in_docstring(self, tmp_path):
+        """Regression for #12 symptom B (yuzi-co): `init` must preserve
+        a literal double-backslash sequence byte-for-byte.
+
+        Pre-fix it was downgraded to a single backslash, which then made
+        Python emit `SyntaxWarning: invalid escape sequence` at every
+        import because the resulting `\\-` is not a recognized escape.
+        """
+        path = tmp_path / "pipeline.py"
+        path.write_text(
+            '"""Pipeline ASCII art.\n'
+            '\n'
+            '    pending -> parsed\n'
+            '            \\\\-> failed\n'
+            '"""\n'
+            '\n'
+            'def step(): pass\n',
+            encoding="utf-8",
+        )
+        rc, out, err = run_codedna("init", str(tmp_path), "--no-llm")
+        assert rc == 0
+        after = path.read_text(encoding="utf-8")
+        # Source on disk must still contain the double backslash so Python
+        # evaluates it as a single literal backslash and emits NO SyntaxWarning.
+        assert "\\\\->" in after, (
+            f"double-backslash downgraded to single — would emit SyntaxWarning at import:\n{after}"
+        )
+        # Re-parsing the rewritten file must succeed without SyntaxWarning.
+        import warnings
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always")
+            compile(after, str(path), "exec")
+            syntax_warnings = [w for w in caught if issubclass(w.category, SyntaxWarning)]
+            assert not syntax_warnings, (
+                f"rewritten docstring fires SyntaxWarning: {[str(w.message) for w in syntax_warnings]}"
+            )
 
 
 # ── codedna check ────────────────────────────────────────────────────────────

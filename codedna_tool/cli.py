@@ -13,12 +13,11 @@ _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
 scan_file handles 3 import patterns: (1) from .mod import X, (2) from . import X
 (submodule-first then __init__.py symbol), (3) from pkg import X (tries pkg/X.py
 before falling back to pkg/__init__.py). All 3 were previously under-resolved.
-agent:   claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_init_dataloss | fix #10 (yuzi-co): build_module_docstring now preserves the existing multi-line docstring body. Pre-fix `init` discarded everything below the summary line — silent data loss reported on a real 745-file repo (migration docs, architectural notes, pipeline diagrams erased). New _extract_docstring_body() helper extracts the prose body and strips out any pre-existing CodeDNA fields (so init --force doesn't duplicate them). 4 regression tests in TestBuildDocstring + 1 E2E in TestInit reproducing the reporter's exact case.
-claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_manifest_11 | fix #11 (yuzi-co): two manifest bugs. Bug A: --exclude '**/dir/**' did not match root-level dir because fnmatch and pre-3.13 pathlib.match collapse ** to single * — added _expand_exclude() that conservatively also tries the prefix-stripped form. Bug B: _detect_packages only recognised __init__.py as a package marker, so Go-only dirs fell into '(root)'; introduced _is_package_marker() which also accepts .go (Go has no marker file — the directory IS the package). 2 regression tests in TestManifest reproducing both reporter scenarios.
+agent:   claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_manifest_11 | fix #11 (yuzi-co): two manifest bugs. Bug A: --exclude '**/dir/**' did not match root-level dir because fnmatch and pre-3.13 pathlib.match collapse ** to single * — added _expand_exclude() that conservatively also tries the prefix-stripped form. Bug B: _detect_packages only recognised __init__.py as a package marker, so Go-only dirs fell into '(root)'; introduced _is_package_marker() which also accepts .go (Go has no marker file — the directory IS the package). 2 regression tests in TestManifest reproducing both reporter scenarios.
 claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_skip_drift | fix skip-list drift: collect_files (init), _MANIFEST_SKIP (manifest) and wiki.SKIP_DIRS each maintained their own copy of "dirs to skip" — diverged silently. A real Silicore-style session burned ~25 min and ~$0.30 of LLM calls annotating files inside .claude/worktrees/<wt-id>/ because init's skip set lacked .claude and worktrees (only wiki had them). Introduced canonical _DEFAULT_SKIP_DIRS frozenset (now includes .claude, worktrees, _repo_cache); collect_files uses it directly; _MANIFEST_SKIP becomes a superset (+coverage, +htmlcov). 4 regression tests in TestInit including a drift-guard that asserts wiki.SKIP_DIRS and _MANIFEST_SKIP both contain the canonical baseline.
 claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_json_robust | _parse_json_response now tolerates leading/trailing prose, <think>...</think> reasoning tags, and ```json fences anywhere in the response — not only at the start. New Strategy 3 uses json.JSONDecoder.raw_decode to scan every '{' until one parses cleanly. Same user session that hit skip-list drift also hit 46/47 batch failures because their model (likely DeepSeek V4-Flash or similar reasoning-style) returned non-strict JSON the parser refused. Added env-gated raw-response logging (CODEDNA_DEBUG_LLM_RESPONSES=/path) so the next failure produces a reproducible sample without a code patch. 11 regression tests in TestJSONResponseParser — 4 were red on pre-fix code (leading prose, trailing prose, thinking tags, prose-before-fence), all green after.
-claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_codedna_exclude | add project-wide `exclude:` field at .codedna top level — read by manifest/check/refresh/init via _read_codedna_excludes() and merged additively with --exclude CLI flag in main(). Driven by real frustration on this repo: `codedna manifest .` walked into labs/benchmark/projects/ (vendored SWE-bench fixtures with LaTeX escapes \Lambda and Win paths \Documents) firing SyntaxWarning on every ast.parse(). Field round-trips through _read_existing_codedna → _write_codedna verbatim (raw block preserved, supports both flow `[a, b]` and block `- a
-- b` YAML forms). _parse_exclude_field is the parser. 5 regression tests in TestManifest covering parser unit behaviour and end-to-end exclusion + round-trip.
+claude-opus-4-7 | anthropic | 2026-05-02 | s_20260501_codedna_exclude | add project-wide `exclude:` field at .codedna top level — read by manifest/check/refresh/init via _read_codedna_excludes() and merged additively with --exclude CLI flag in main(). Driven by real frustration on this repo: `codedna manifest .` walked into labs/benchmark/projects/ (vendored SWE-bench fixtures with LaTeX escapes \Lambda and Win paths \Documents) firing SyntaxWarning on every ast.parse(). Field round-trips through _read_existing_codedna → _write_codedna verbatim (raw block preserved, supports both flow `[a, b]` and block `- a / - b` YAML forms). _parse_exclude_field is the parser. 5 regression tests in TestManifest covering parser unit behaviour and end-to-end exclusion + round-trip. Companion fix in csharp.py:13: same SyntaxWarning class for `\w<>\[\]?,\s` text in pre-existing 2026-04-21 narrative — doubled all backslashes.
+claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_init_escapes_testdata | fix #12 + #13 (yuzi-co). #12: scan_file used ast.get_docstring(tree) which returns the *evaluated* string — Python had already collapsed `\<newline>` line continuations and downgraded `\\` to `\`. Round-tripping that into rewritten docstrings silently corrupted shell snippets and ASCII pipeline diagrams (also fired SyntaxWarning at re-import for the `\\` case). New FileInfo.docstring_raw_body field captures the raw source slice via ast.get_source_segment; build_module_docstring prefers it over info.docstring. #13: added `testdata` to _DEFAULT_SKIP_DIRS — Go's analysistest fixtures encode expected diagnostic positions in `// want "…"` comments tied to specific line numbers, header insertion broke them. 3 regression tests in TestInit reproducing both yuzi-co scenarios exactly.
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -94,6 +93,14 @@ class FileInfo:
     has_codedna: bool  # already has exports:/used_by:/rules: fields
     funcs: list[FuncInfo]
     parseable: bool
+    # Issue #12 (yuzi-co): raw source slice of the docstring contents (between
+    # the triple quotes), preserving backslash escapes byte-for-byte.
+    # `docstring` above is `ast.get_docstring(tree)` which is the *evaluated*
+    # string — Python's parser has already collapsed line continuations and
+    # downgraded double backslashes to single. Round-tripping that into a
+    # rewritten docstring silently corrupted shell snippets and ASCII
+    # diagrams. build_module_docstring prefers this field when present.
+    docstring_raw_body: Optional[str] = None
 
 
 # ── AST analysis ─────────────────────────────────────────────────────────────
@@ -269,6 +276,7 @@ def scan_file(path: Path, repo_root: Path) -> FileInfo:
 
     docstring = ast.get_docstring(tree)
     has_codedna = bool(docstring and any(f in docstring for f in ("exports:", "used_by:", "rules:")))
+    docstring_raw_body = _extract_module_docstring_raw(source, tree)
 
     funcs = _extract_funcs(tree, source_lines)
 
@@ -281,7 +289,39 @@ def scan_file(path: Path, repo_root: Path) -> FileInfo:
         has_codedna=has_codedna,
         funcs=funcs,
         parseable=True,
+        docstring_raw_body=docstring_raw_body,
     )
+
+
+def _extract_module_docstring_raw(source: str, tree: ast.Module) -> Optional[str]:
+    """Return the raw source slice between the module docstring's triple quotes.
+
+    Rules:   Issue #12 (yuzi-co): ast.get_docstring(tree) returns the *evaluated*
+             docstring — Python's parser has already collapsed line continuations
+             and downgraded double-backslash escapes to single. Round-tripping
+             that text back into a rewritten docstring silently corrupts shell
+             snippets, ASCII diagrams, and any other content with backslash
+             escapes. We capture the raw source slice instead so
+             build_module_docstring can re-emit it byte-for-byte.
+             Returns None when there is no module docstring or when the
+             docstring is not a string literal (e.g. f-string — invalid
+             docstring but ast still tolerates the Expr node).
+             Strips leading newlines so the layout matches ast.get_docstring's
+             "first line is the summary" convention used by _extract_docstring_body.
+    """
+    if not (tree.body and isinstance(tree.body[0], ast.Expr)):
+        return None
+    val = tree.body[0].value
+    if not isinstance(val, ast.Constant) or not isinstance(val.value, str):
+        return None
+    seg = ast.get_source_segment(source, val)
+    if seg is None:
+        return None
+    for q in ('"""', "'''"):
+        if seg.startswith(q) and seg.endswith(q) and len(seg) >= 6:
+            seg = seg[3:-3]
+            break
+    return seg.lstrip("\n")
 
 
 def scan_file_lang(path: Path, repo_root: Path, adapter) -> FileInfo:
@@ -774,7 +814,13 @@ def build_module_docstring(info: FileInfo, ub: dict, rules: str, model_id: str) 
     # don't silently destroy hand-authored module documentation (multi-paragraph
     # descriptions, examples, notes, ASCII diagrams). CodeDNA fields already in
     # the original body get stripped to avoid duplication on `init --force`.
-    str_preserved_body = _extract_docstring_body(info.docstring)
+    # Issue #12: prefer the raw source slice (docstring_raw_body) over the
+    # evaluated docstring — ast.get_docstring collapses line continuations and
+    # downgrades double-backslash escapes to single, both of which silently
+    # corrupt shell snippets and ASCII art on rewrite. The raw slice preserves
+    # backslash escapes byte-for-byte.
+    body_source = info.docstring_raw_body if info.docstring_raw_body is not None else info.docstring
+    str_preserved_body = _extract_docstring_body(body_source)
 
     lines = [
         f'"""{info.rel} — {_purpose(info.rel, info.docstring)}.',
