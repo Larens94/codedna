@@ -112,10 +112,26 @@ codedna refresh .                              # update exports + used_by (zero 
 | `codedna check <path>` | Coverage report. Exit code 1 if incomplete — works in CI. |
 | `codedna manifest <path>` | Generate `.codedna` project map (Level 0): packages, depends_on, key_files |
 | `codedna mode <mode>` | Get/set mode: `human` (minimal), `semi` (default), `agent` (full protocol) |
-| `codedna install <path>` | Setup pre-commit hook + AI tool prompt + `.codedna` manifest |
+| `codedna install <path>` | Setup pre-commit hook + AI tool prompt + `.codedna` manifest. Optional `--with-wiki-sync` installs a post-commit hook that auto-regenerates the project wiki (see [Optional: post-commit wiki-sync hook](#optional-post-commit-wiki-sync-hook)). |
 | `codedna wiki bootstrap <path>` | Emit a per-file [Obsidian](https://obsidian.md) vault under `docs/wiki/` with `[[wikilinks]]` from `used_by:`/`related:` graphs |
 | `codedna wiki sync <path>` | Regenerate `docs/codedna-wiki.md` — a narrative 7-section project wiki (Karpathy LLM-wiki pattern). Hook this to post-commit. |
 | `codedna self-update` | Upgrade the CLI itself via `pip install --upgrade --force-reinstall git+...`. Refuses to clobber editable/dev checkouts unless `--force`. Use `--check` to see the installed version. |
+
+### Optional: post-commit wiki-sync hook
+
+`codedna install` can also drop a **post-commit git hook** that runs `codedna wiki sync . --out docs/codedna-wiki.md` automatically after every commit, so the project wiki always reflects the latest code without you (or an agent) having to remember it.
+
+**This is opt-in by design** — the hook leaves `docs/codedna-wiki.md` as an unstaged change after every commit, which is exactly what you want for auto-sync but surprising for users who just want the basic install.
+
+| Invocation | Behaviour |
+|---|---|
+| `codedna install` | Asks interactively (`y/N`, defaults to no) when running in a TTY. In CI / piped contexts the safe default is **skip**. |
+| `codedna install --with-wiki-sync` | Installs the hook unconditionally, no prompt. Use this in scripts. |
+| `codedna install --no-wiki-sync` | Skips the hook unconditionally, suppresses the prompt. Use this when you want a clean automated install in environments that the runtime might mistake for a TTY. |
+
+The hook is **non-blocking** (any failure inside `codedna wiki sync` is silenced via `\|\| true`), so a wiki regen never breaks `git commit`. It also follows the same skip-on-existing-hook discipline as the pre-commit hook — if you already have a `.git/hooks/post-commit`, `codedna install` will not overwrite it (it looks for a `CodeDNA` marker in the body to decide whether to skip or re-install).
+
+> **For agents reading this:** when running an automated `codedna install` (e.g. inside a script you generate for the user), pass `--with-wiki-sync` or `--no-wiki-sync` explicitly. Don't rely on the prompt — it's a UX nicety for humans and may be skipped in non-TTY contexts.
 
 **Wiki layer in action** — the `wiki:` opt-in field and the Obsidian graph view:
 

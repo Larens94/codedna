@@ -17,7 +17,7 @@ agent:   claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_skip_drift | fix 
 claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_json_robust | _parse_json_response now tolerates leading/trailing prose, <think>...</think> reasoning tags, and ```json fences anywhere in the response — not only at the start. New Strategy 3 uses json.JSONDecoder.raw_decode to scan every '{' until one parses cleanly. Same user session that hit skip-list drift also hit 46/47 batch failures because their model (likely DeepSeek V4-Flash or similar reasoning-style) returned non-strict JSON the parser refused. Added env-gated raw-response logging (CODEDNA_DEBUG_LLM_RESPONSES=/path) so the next failure produces a reproducible sample without a code patch. 11 regression tests in TestJSONResponseParser — 4 were red on pre-fix code (leading prose, trailing prose, thinking tags, prose-before-fence), all green after.
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260501_codedna_exclude | add project-wide `exclude:` field at .codedna top level — read by manifest/check/refresh/init via _read_codedna_excludes() and merged additively with --exclude CLI flag in main(). Driven by real frustration on this repo: `codedna manifest .` walked into labs/benchmark/projects/ (vendored SWE-bench fixtures with LaTeX escapes \Lambda and Win paths \Documents) firing SyntaxWarning on every ast.parse(). Field round-trips through _read_existing_codedna → _write_codedna verbatim (raw block preserved, supports both flow `[a, b]` and block `- a / - b` YAML forms). _parse_exclude_field is the parser. 5 regression tests in TestManifest covering parser unit behaviour and end-to-end exclusion + round-trip. Companion fix in csharp.py:13: same SyntaxWarning class for `\w<>\[\]?,\s` text in pre-existing 2026-04-21 narrative — doubled all backslashes.
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_init_escapes_testdata | fix #12 + #13 (yuzi-co). #12: scan_file used ast.get_docstring(tree) which returns the *evaluated* string — Python had already collapsed `\<newline>` line continuations and downgraded `\\` to `\`. Round-tripping that into rewritten docstrings silently corrupted shell snippets and ASCII pipeline diagrams (also fired SyntaxWarning at re-import for the `\\` case). New FileInfo.docstring_raw_body field captures the raw source slice via ast.get_source_segment; build_module_docstring prefers it over info.docstring. #13: added `testdata` to _DEFAULT_SKIP_DIRS — Go's analysistest fixtures encode expected diagnostic positions in `// want "…"` comments tied to specific line numbers, header insertion broke them. 3 regression tests in TestInit reproducing both yuzi-co scenarios exactly.
-claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_wiki_sync_hook | add opt-in `--with-wiki-sync` flag to `codedna install`. When passed, drops a marked, executable post-commit hook (.git/hooks/post-commit) that runs `codedna wiki sync . --out docs/codedna-wiki.md` non-blockingly after every commit (failures silenced via `|| true` so a wiki regen never breaks `git commit`). Same skip-on-existing-hook discipline as the pre-commit hook — never clobbers a user-authored hook (detects via "CodeDNA" marker). New _POST_COMMIT_WIKI_HOOK template; cmd_install grew a with_wiki_sync param. 3 regression tests in TestInstallWikiSync: default does NOT install, --with-wiki-sync DOES install, existing user hook is NEVER overwritten.
+claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_wiki_sync_hook | add opt-in post-commit wiki-sync hook to `codedna install`. cmd_install's with_wiki_sync param became tri-state Optional[bool]: True/False/None where None triggers an interactive prompt (`y/N`, default skip) when stdin+stdout are TTYs, or skip in non-interactive contexts. New `--no-wiki-sync` flag (mutex with `--with-wiki-sync` via add_mutually_exclusive_group) for explicit opt-out from CI scripts. New _POST_COMMIT_WIKI_HOOK template (non-blocking via `|| true`, marked with "CodeDNA" so re-install is idempotent and user-authored hooks are never clobbered). 5 regression tests in TestInstallWikiSync covering: default-non-TTY skips, `--with-wiki-sync` installs, `--no-wiki-sync` skips, existing user hook not clobbered, default install does NOT silently install. README §"Optional: post-commit wiki-sync hook" documents the tri-state matrix and adds an explicit advisory for agents to pass an explicit flag in scripted contexts.
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -2332,16 +2332,21 @@ _CLAUDE_HOOKS_SETTINGS = r'''{
 
 
 def cmd_install(repo_root: Path, tools: list[str], skip_hook: bool = False,
-                skip_prompt: bool = False, with_wiki_sync: bool = False) -> int:
+                skip_prompt: bool = False,
+                with_wiki_sync: Optional[bool] = None) -> int:
     """Setup CodeDNA in a project: pre-commit hook + AI tool prompt + .codedna.
 
     Rules:   Never overwrite an existing pre-commit hook without --force.
              Always create .codedna if missing.
              Prompt files are fetched from GitHub raw; fall back to a minimal template on network error.
-             with_wiki_sync (opt-in) installs a post-commit hook that runs
-             `codedna wiki sync` non-blockingly. Same skip-on-existing-hook
-             discipline as the pre-commit hook — never clobbers a hook the
-             user already authored.
+             with_wiki_sync is tri-state: True → install, False → skip,
+             None → prompt interactively if stdin is a TTY (else skip).
+             The post-commit wiki-sync hook is opt-in by design — it leaves
+             docs/codedna-wiki.md as an unstaged change after every commit,
+             which is friendly for users who want auto-sync but surprising
+             for users who don't, so we never enable it silently.
+             Same skip-on-existing-hook discipline as the pre-commit hook —
+             never clobbers a hook the user already authored.
     """
     import stat
     import urllib.request
@@ -2378,6 +2383,22 @@ def cmd_install(repo_root: Path, tools: list[str], skip_hook: bool = False,
                 int_count_installed += 1
 
     # 1b. Optional post-commit wiki sync hook
+    # Tri-state resolution: True → install, False → skip, None → prompt if TTY.
+    if with_wiki_sync is None:
+        if sys.stdin.isatty() and sys.stdout.isatty():
+            try:
+                str_answer = input(
+                    "  ?     Install post-commit hook to auto-sync "
+                    "`docs/codedna-wiki.md` after every commit? [y/N] "
+                ).strip().lower()
+            except (EOFError, KeyboardInterrupt):
+                str_answer = ""
+            with_wiki_sync = str_answer in ("y", "yes")
+        else:
+            # Non-interactive context (CI, piped install) → safe default: skip.
+            # Use --with-wiki-sync to enable explicitly in CI scripts.
+            with_wiki_sync = False
+
     if with_wiki_sync:
         path_git_dir = repo_root / ".git"
         if not path_git_dir.is_dir():
@@ -3185,9 +3206,14 @@ def main():
     )
     install_p.add_argument("--skip-hook", action="store_true", help="Skip pre-commit hook installation")
     install_p.add_argument("--skip-prompt", action="store_true", help="Skip AI tool prompt installation")
-    install_p.add_argument(
+    wiki_sync_grp = install_p.add_mutually_exclusive_group()
+    wiki_sync_grp.add_argument(
         "--with-wiki-sync", action="store_true",
-        help="Also install a post-commit hook that runs `codedna wiki sync . --out docs/codedna-wiki.md` (non-blocking).",
+        help="Install a post-commit hook that runs `codedna wiki sync . --out docs/codedna-wiki.md` (non-blocking).",
+    )
+    wiki_sync_grp.add_argument(
+        "--no-wiki-sync", action="store_true",
+        help="Skip the post-commit wiki-sync hook even if running interactively (suppresses the prompt).",
     )
 
     # ── init ──────────────────────────────────────────────────────────────────
@@ -3432,12 +3458,20 @@ def main():
                     if str_base_tool not in list_str_tools:
                         list_str_tools.insert(list_str_tools.index(tool), str_base_tool)
 
+        # Tri-state mapping: explicit flags pin True/False, otherwise None
+        # falls through to the interactive prompt (or non-interactive default).
+        if args.with_wiki_sync:
+            wiki_sync_decision: Optional[bool] = True
+        elif args.no_wiki_sync:
+            wiki_sync_decision = False
+        else:
+            wiki_sync_decision = None
         return cmd_install(
             repo_root=path_repo_root,
             tools=list_str_tools,
             skip_hook=args.skip_hook,
             skip_prompt=args.skip_prompt,
-            with_wiki_sync=args.with_wiki_sync,
+            with_wiki_sync=wiki_sync_decision,
         )
 
     if args.command == "manifest":

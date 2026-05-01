@@ -9,7 +9,7 @@ claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_json_robust | add TestJSON
 claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_codedna_exclude | extend TestManifest with 5 regression tests for the new project-wide exclude: field in .codedna: 3 unit tests on _parse_exclude_field (flow form, block form, absent → empty), 1 E2E test that an exclude: in .codedna excludes a directory from package detection without needing --exclude CLI flag, 1 round-trip test asserting the exclude: block is preserved verbatim across manifest regenerations (without preservation, every manifest run would silently strip the user's exclude — making the field useless).
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_init_escape | add 2 regression tests in TestInit for #12 (yuzi-co). Symptom A: test_init_preserves_backslash_newline_continuation asserts the line continuation in module docstrings survives byte-for-byte across init rewrite (red on pre-fix — pre-fix scan_file used ast.get_docstring which collapsed it). Symptom B: test_init_preserves_double_backslash_in_docstring asserts a literal double-backslash sequence is NOT downgraded to a single backslash (red on pre-fix) and that the rewritten file fires zero SyntaxWarning when re-compiled.
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_testdata_skip | add test_init_skips_testdata_directory for #13 (yuzi-co). Creates a Go analysistest fixture under tools/myanalyzer/testdata/src/clean/clean.go and asserts the file is untouched while the analyzer source still gets annotated — header injection would shift `// want "..."` line numbers and break analysistest.
-claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_wiki_sync_hook | add TestInstallWikiSync (3 tests) for the new opt-in `--with-wiki-sync` flag in `codedna install`: (1) default install does NOT create post-commit hook; (2) `--with-wiki-sync` installs a marked, executable hook invoking `codedna wiki sync`; (3) install never overwrites a user-authored post-commit hook (no CodeDNA marker → SKIP).
+claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_wiki_sync_hook | extend TestInstallWikiSync to 5 tests covering the tri-state Optional[bool] for cmd_install's with_wiki_sync param: (1) default-non-TTY install does NOT create post-commit hook (safe default); (2) `--with-wiki-sync` installs a marked, executable hook invoking `codedna wiki sync`; (3) explicit `--no-wiki-sync` skips even when CodeDNA marker would have triggered re-install logic; (4) default in non-TTY context (run_codedna's subprocess has no TTY) skips silently; (5) install never overwrites a user-authored post-commit hook (no CodeDNA marker → SKIP).
 message: 
 """
 
@@ -365,6 +365,38 @@ class TestInstallWikiSync:
         body = post.read_text(encoding="utf-8")
         assert "CodeDNA" in body, "hook missing CodeDNA marker — would clobber on reinstall"
         assert "codedna wiki sync" in body, "hook does not invoke `codedna wiki sync`"
+
+    def test_install_no_wiki_sync_skips_even_with_existing_codedna_marker(self, tmp_path):
+        """Explicit --no-wiki-sync must skip the post-commit hook entirely
+        regardless of whether the prompt would have asked. Used in CI to
+        suppress the interactive question in non-TTY contexts that the runtime
+        misdetects as TTY (rare but happens with some terminal multiplexers).
+        """
+        self._make_git_repo(tmp_path)
+        rc, out, err = run_codedna("install", "--path", str(tmp_path),
+                                   "--skip-prompt", "--no-wiki-sync")
+        assert rc == 0
+        post = tmp_path / ".git" / "hooks" / "post-commit"
+        assert not post.exists(), (
+            f"--no-wiki-sync did not skip the post-commit hook:\n{out}"
+        )
+
+    def test_install_default_in_non_tty_context_skips_hook(self, tmp_path):
+        """When neither --with-wiki-sync nor --no-wiki-sync is passed AND
+        stdin is not a TTY (e.g. piped install, CI runner), the safe default
+        is to SKIP — never silently enable a hook that produces unstaged
+        changes after every commit.
+        """
+        self._make_git_repo(tmp_path)
+        # run_codedna uses subprocess.run with capture_output=True, so the
+        # child's stdin is NOT a TTY — exercises the non-interactive branch.
+        rc, out, err = run_codedna("install", "--path", str(tmp_path),
+                                   "--skip-prompt")
+        assert rc == 0
+        post = tmp_path / ".git" / "hooks" / "post-commit"
+        assert not post.exists(), (
+            f"default install in non-TTY context installed the post-commit hook:\n{out}"
+        )
 
     def test_install_with_wiki_sync_does_not_clobber_existing_hook(self, tmp_path):
         """If a non-CodeDNA post-commit hook already exists, `install
