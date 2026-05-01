@@ -840,3 +840,38 @@ agent_sessions:
       (had been removed for CodeQL #1674) since pytest.raises is needed in
       this class — kept with `# noqa: F401`. Total: 204 passed / 0 failed
       (was 193).
+
+  - agent: claude-opus-4-7
+    provider: anthropic
+    date: 2026-05-01
+    session_id: s_20260501_skip_drift
+    task: "fix skip-list drift: init/manifest/wiki must share the same canonical baseline"
+    changed:
+      - codedna_tool/cli.py
+      - codedna_tool/wiki.py
+      - tests/test_cli.py
+      - CHANGELOG.md
+    visited:
+      - codedna_tool/cli.py
+      - codedna_tool/wiki.py
+      - tests/test_cli.py
+      - CHANGELOG.md
+    message: >
+      Bug surfaced from a real user session: `codedna init` annotated 47
+      files inside .claude/worktrees/<wt-id>/ (ephemeral git worktrees
+      created by the Claude Code agent), wasting ~25 min and ~$0.30 of LLM
+      calls before crashing on a separate JSON-format issue with the user's
+      chosen model. Root cause: three independent skip lists (collect_files
+      inline, _MANIFEST_SKIP, wiki.SKIP_DIRS) had drifted — only wiki had
+      .claude and worktrees. Fix introduces canonical _DEFAULT_SKIP_DIRS
+      frozenset (cli.py); collect_files uses it directly; _MANIFEST_SKIP is
+      a superset (+coverage, +htmlcov); wiki.SKIP_DIRS is a superset
+      (+runs/docs/paper/thesis/dev_notes/examples/projects_swebench/
+      projects). Test-first: 3 failing tests reproducing the user's exact
+      scenario (.claude/worktrees/elastic-hoover-1313fd) + a 4th drift-guard
+      test that asserts wiki.SKIP_DIRS and _MANIFEST_SKIP both contain the
+      canonical baseline. wiki.py now imports _DEFAULT_SKIP_DIRS at module
+      top — verified safe (cli.py imports wiki only inside functions, no
+      cycle). Note: env Python here is 3.14 (broken pyexpat from
+      Homebrew/libexpat mismatch), used 3.11.6 at /usr/local/bin/python3.11
+      to run pytest.

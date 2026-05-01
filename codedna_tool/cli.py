@@ -17,6 +17,7 @@ claude-opus-4-7 | anthropic | 2026-04-29 | s_20260429_selfupdate | add cmd_self_
 claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_antigravity | fix Antigravity integration: rename .agents/ → .agent/ (singular per official docs), make 'agents' tool install AGENTS.md + .agent/workflows/codedna.md (multi-file via list-of-tuples in _TOOL_FILES), add to _detect_ai_tools and --tools help text. Antigravity v1.20.3 reads AGENTS.md from repo root.
 claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_init_dataloss | fix #10 (yuzi-co): build_module_docstring now preserves the existing multi-line docstring body. Pre-fix `init` discarded everything below the summary line — silent data loss reported on a real 745-file repo (migration docs, architectural notes, pipeline diagrams erased). New _extract_docstring_body() helper extracts the prose body and strips out any pre-existing CodeDNA fields (so init --force doesn't duplicate them). 4 regression tests in TestBuildDocstring + 1 E2E in TestInit reproducing the reporter's exact case.
 claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_manifest_11 | fix #11 (yuzi-co): two manifest bugs. Bug A: --exclude '**/dir/**' did not match root-level dir because fnmatch and pre-3.13 pathlib.match collapse ** to single * — added _expand_exclude() that conservatively also tries the prefix-stripped form. Bug B: _detect_packages only recognised __init__.py as a package marker, so Go-only dirs fell into '(root)'; introduced _is_package_marker() which also accepts .go (Go has no marker file — the directory IS the package). 2 regression tests in TestManifest reproducing both reporter scenarios.
+claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_skip_drift | fix skip-list drift: collect_files (init), _MANIFEST_SKIP (manifest) and wiki.SKIP_DIRS each maintained their own copy of "dirs to skip" — diverged silently. A real Silicore-style session burned ~25 min and ~$0.30 of LLM calls annotating files inside .claude/worktrees/<wt-id>/ because init's skip set lacked .claude and worktrees (only wiki had them). Introduced canonical _DEFAULT_SKIP_DIRS frozenset (now includes .claude, worktrees, _repo_cache); collect_files uses it directly; _MANIFEST_SKIP becomes a superset (+coverage, +htmlcov). 4 regression tests in TestInit including a drift-guard that asserts wiki.SKIP_DIRS and _MANIFEST_SKIP both contain the canonical baseline.
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -863,6 +864,29 @@ def _expand_exclude(patterns: list[str]) -> list[str]:
     return out
 
 
+# Canonical "always skip" directory set — the foundation every codedna scan
+# (init, manifest, wiki) must honour. Pre-fix this set was duplicated inline
+# in 3 places (collect_files local var, _MANIFEST_SKIP, wiki.SKIP_DIRS) and
+# silently drifted: a real-world session ate ~25 min and ~$0.30 of LLM calls
+# annotating files inside `.claude/worktrees/<wt-id>/` because `init`'s skip
+# set didn't include `.claude` or `worktrees` (only wiki.py did).
+# The drift guard test test_collect_files_skip_set_matches_wiki_skip_dirs
+# enforces this baseline against wiki.SKIP_DIRS and _MANIFEST_SKIP.
+_DEFAULT_SKIP_DIRS = frozenset({
+    "__pycache__", ".git", ".hg", ".svn",
+    "venv", ".venv", "env", ".env",
+    "node_modules", "vendor", "bower_components",
+    "dist", "build",
+    ".tox", ".mypy_cache", ".pytest_cache", ".ruff_cache",
+    "migrations", "__pypackages__",
+    "_repo_cache",
+    # AI agent worktrees / IDE state — added after the Silicore-style
+    # session above. Without these, `init` happily annotates ephemeral
+    # `.claude/worktrees/<wt-id>/` trees.
+    ".claude", "worktrees",
+})
+
+
 def collect_files(target: Path, exclude: list[str], extensions: Optional[list[str]] = None) -> list[Path]:
     """Collect source files under target matching the given extensions.
 
@@ -871,18 +895,15 @@ def collect_files(target: Path, exclude: list[str], extensions: Optional[list[st
              Supports compound extensions (e.g. '.blade.php').
              Exclude globs are expanded so leading '**/<dir>/**' also matches
              root-level <dir> (issue #11).
+             Skip set is the canonical _DEFAULT_SKIP_DIRS — keeping this
+             inline (drifting from wiki/manifest) silently annotates
+             .claude/worktrees and other AI-agent ephemera.
     """
     if extensions is None:
         extensions = [".py"]
     if target.is_file():
         return [target] if _get_extension(target) in extensions else []
-    skip = {
-        "__pycache__", ".git", ".hg", ".svn",
-        "venv", ".venv", "env", ".env",
-        "node_modules", "vendor", "bower_components",
-        "dist", "build", ".tox", ".mypy_cache", ".ruff_cache",
-        "migrations", "__pypackages__",
-    }
+    skip = _DEFAULT_SKIP_DIRS
     expanded_exclude = _expand_exclude(exclude)
     files = []
     for f in sorted(target.rglob("*")):
@@ -2302,9 +2323,10 @@ def cmd_install(repo_root: Path, tools: list[str], skip_hook: bool = False,
 
 # ── Manifest command (Level 0) ────────────────────────────────────────────────
 
-_MANIFEST_SKIP = {"__pycache__", ".git", "venv", ".venv", "node_modules",
-                  "migrations", "dist", "build", ".tox", "coverage",
-                  "_repo_cache", ".mypy_cache", ".pytest_cache", "htmlcov"}
+# Manifest-specific skip set — superset of _DEFAULT_SKIP_DIRS plus coverage
+# artefacts (which are noise for L0 package detection but legitimate source
+# in other contexts, so they don't belong in the canonical baseline).
+_MANIFEST_SKIP = frozenset(_DEFAULT_SKIP_DIRS | {"coverage", "htmlcov"})
 
 _MANIFEST_PKG_DEPTH = 3
 

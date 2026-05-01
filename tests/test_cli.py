@@ -10,6 +10,7 @@ claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_unused | remove unused jso
 claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_init_dataloss | add 4 regression tests for #10 (yuzi-co) — multi-line docstring body must be preserved by build_module_docstring + init E2E. Pre-fix tests fail (red) showing the data-loss bug exactly: lines like "Detailed multi-paragraph description", "Example", "Notes", "This content is critical" disappear from the rebuilt docstring.
 claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_manifest_11 | add TestManifest with 2 regression tests for #11 (yuzi-co) — Bug A: --exclude '**/dir/**' must match root-level dir; Bug B: Go-only directory must become its own package, not bucketed under (root). Both tests fail on pre-fix code, pass after the _expand_exclude + _is_package_marker fixes.
 claude-opus-4-7 | anthropic | 2026-05-01 | s_20260430_test_llm | add TestLLM (11 tests) covering the litellm + anthropic routing paths for the first time. Pre-existing benchmark artifacts (deepseek/* in agent: lines under benchmark_agent/) prove the litellm path was exercised in production but was never under CI. Tests are fully offline — monkey-patch _litellm/_anthropic — covering _detect_provider for all 6 providers, _call routing through litellm with kwargs verification, anthropic fallback with timeout, ImportError when no backend, and api_key env var injection (positive + negative). Re-introduced `import pytest` (had been removed for CodeQL #1674) as it's needed for pytest.raises in this class — kept with `# noqa: F401` to make the deliberate retention explicit.
+claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_skip_drift | add 4 regression tests for the skip-list drift bug: test_init_skips_claude_worktrees + test_init_skips_top_level_worktrees_dir reproduce the Silicore-style session where init annotated .claude/worktrees/<wt-id>/ trees; test_collect_files_skip_set_matches_wiki_skip_dirs is a drift guard that asserts cli._DEFAULT_SKIP_DIRS is a subset of both wiki.SKIP_DIRS and _MANIFEST_SKIP — preventing the same divergence from sneaking back. All 3 fail on pre-fix code (red), pass after _DEFAULT_SKIP_DIRS is introduced as canonical baseline.
 """
 
 from __future__ import annotations
@@ -89,6 +90,71 @@ class TestInit:
         for skip_dir in ["node_modules", "vendor", "venv"]:
             content = (mini_project / skip_dir / "bad.py").read_text()
             assert "exports:" not in content
+
+    def test_init_skips_claude_worktrees(self, tmp_path):
+        """Regression for the Silicore-style session: `init` must skip
+        `.claude/worktrees/` so it does NOT try to annotate ephemeral git
+        worktrees created by the Claude Code agent itself.
+
+        Pre-fix `collect_files` had its own inline skip set without `.claude`
+        or `worktrees`, while `wiki.py` SKIP_DIRS already had them. The drift
+        cost a real user ~25 min and ~$0.30 of LLM calls on 47 worktree files.
+        """
+        wt = tmp_path / ".claude" / "worktrees" / "elastic-hoover-1313fd"
+        wt.mkdir(parents=True)
+        (wt / "junk.py").write_text("def junk(): pass\n")
+        (tmp_path / "src").mkdir()
+        (tmp_path / "src" / "main.py").write_text("def main(): pass\n")
+
+        rc, out, err = run_codedna("init", str(tmp_path), "--no-llm")
+        assert rc == 0
+
+        # Worktree file MUST NOT have a CodeDNA header
+        junk = (wt / "junk.py").read_text()
+        assert "exports:" not in junk, (
+            f"init annotated a file inside .claude/worktrees/ — drift:\n{junk}"
+        )
+        # Real source still gets annotated
+        main = (tmp_path / "src" / "main.py").read_text()
+        assert "exports:" in main
+
+    def test_init_skips_top_level_worktrees_dir(self, tmp_path):
+        """Plain top-level `worktrees/` (e.g. created by `git worktree add`) must
+        also be skipped — not just `.claude/worktrees/`."""
+        (tmp_path / "worktrees" / "wt-1").mkdir(parents=True)
+        (tmp_path / "worktrees" / "wt-1" / "stale.py").write_text("def x(): pass\n")
+        (tmp_path / "src").mkdir()
+        (tmp_path / "src" / "main.py").write_text("def main(): pass\n")
+
+        rc, out, err = run_codedna("init", str(tmp_path), "--no-llm")
+        assert rc == 0
+        stale = (tmp_path / "worktrees" / "wt-1" / "stale.py").read_text()
+        assert "exports:" not in stale
+
+    def test_collect_files_skip_set_matches_wiki_skip_dirs(self):
+        """Drift guard: every dir wiki.py refuses to scan, init/manifest must
+        also refuse — otherwise we leak source-of-truth between commands.
+
+        Pre-fix the three skip lists (collect_files inline set,
+        _MANIFEST_SKIP, wiki.SKIP_DIRS) drifted independently. This test
+        anchors collect_files (and via _MANIFEST_SKIP) to the same canonical
+        baseline.
+        """
+        from codedna_tool.cli import _DEFAULT_SKIP_DIRS, _MANIFEST_SKIP
+        from codedna_tool.wiki import SKIP_DIRS as WIKI_SKIP
+
+        # Canonical baseline must include .claude and worktrees.
+        assert ".claude" in _DEFAULT_SKIP_DIRS
+        assert "worktrees" in _DEFAULT_SKIP_DIRS
+        # Every dir in the canonical baseline must also be in wiki + manifest.
+        missing_in_wiki = _DEFAULT_SKIP_DIRS - set(WIKI_SKIP)
+        assert not missing_in_wiki, (
+            f"wiki.SKIP_DIRS missing canonical entries: {missing_in_wiki}"
+        )
+        missing_in_manifest = _DEFAULT_SKIP_DIRS - set(_MANIFEST_SKIP)
+        assert not missing_in_manifest, (
+            f"_MANIFEST_SKIP missing canonical entries: {missing_in_manifest}"
+        )
 
     def test_init_with_extensions(self, mini_project):
         # Create a TS file
