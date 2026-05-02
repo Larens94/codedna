@@ -63,3 +63,8 @@ docs/wiki/*
 !docs/wiki/cli.md
 !docs/wiki/wiki.md
 .obsidian/
+
+# Benchmark build artifacts (regenerable via labs/benchmark/setup_benchmark.py)
+labs/benchmark/_repo_cache/
+benchmark_agent/_repo_cache/
+benchmark_agent/projects_swebench/
