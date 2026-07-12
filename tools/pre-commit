@@ -41,8 +41,10 @@ echo "CodeDNA v0.8 — validating staged files..."
 PY_STAGED=$(echo "$STAGED" | grep '\.py$' || true)
 if [[ -n "$PY_STAGED" ]]; then
     "$CODEDNA" refresh "$REPO_ROOT" --exclude "venv/*" ".venv/*" "node_modules/*" 2>/dev/null || true
-    # Re-stage files that were refreshed
-    for FILE in $PY_STAGED; do
+    # Re-stage any staged file that refresh may have rewritten. refresh updates
+    # BOTH Python and non-Python headers, so re-stage every staged source file
+    # (not just .py) to avoid committing a stale header for a .php/.ts/.js file.
+    for FILE in $STAGED; do
         FULL="$REPO_ROOT/$FILE"
         [[ -f "$FULL" ]] && git add "$FULL" 2>/dev/null || true
     done
@@ -58,7 +60,12 @@ for f in $STAGED; do
     fi
     ext="${f##*.}"
     case "$ext" in
-        ts|tsx|js|jsx|mjs) EXTS="$EXTS ts" ;;
+        # Pass each extension through as-is — `codedna check` matches the file's
+        # real extension. Collapsing js/jsx/mjs → ts made `check file.js
+        # --extensions ts` count 0 files (extension mismatch) and the old grep
+        # on "L1 (module headers) 0/" then mis-read that as a missing header,
+        # blocking every .js/.jsx commit.
+        ts|tsx|js|jsx|mjs|cjs) EXTS="$EXTS $ext" ;;
         go)                EXTS="$EXTS go" ;;
         rs)                EXTS="$EXTS rs" ;;
         java)              EXTS="$EXTS java" ;;
@@ -80,9 +87,9 @@ done
 EXTS=$(echo "$EXTS" | tr ' ' '\n' | sort -u | tr '\n' ' ')
 
 # Build codedna check args
-ARGS=""
+ARGS="--verbose"
 if [[ -n "$EXTS" ]]; then
-    ARGS="--extensions $EXTS"
+    ARGS="$ARGS --extensions $EXTS"
 fi
 
 # Validate each staged file individually
@@ -93,12 +100,17 @@ for FILE in $STAGED; do
 
     OUTPUT=$("$CODEDNA" check "$FULL" $ARGS 2>&1) || true
 
-    # Block only on L1 (module header) missing — L2 (function Rules:) is enforced incrementally
-    if echo "$OUTPUT" | grep -qE "L1 \(module headers\)[[:space:]]+0/"; then
+    # Block only on a MISSING L1 module header. The "Missing L1:" (Python) and
+    # "Missing non-Python L1:" markers only appear (with --verbose) when a file
+    # genuinely lacks a header — they list the offending files. This is robust
+    # across Python vs non-Python: the "L1 (module headers) X/Y" summary counts
+    # Python files ONLY, so it is always 0/0 for a .js/.php file and must NOT be
+    # used as the block signal.
+    if echo "$OUTPUT" | grep -qE "^Missing (non-Python )?L1:"; then
         ERRORS=$((ERRORS + 1))
         echo ""
         echo "FAIL  $FILE"
-        echo "      Missing CodeDNA v0.8 module header"
+        echo "      Missing CodeDNA module header"
     fi
 done
 

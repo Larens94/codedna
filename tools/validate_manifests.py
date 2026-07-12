@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """validate_manifests.py — Validate CodeDNA v0.9 annotations across a codebase.
 
-exports: REQUIRED_FIELDS_FULL | REQUIRED_FIELDS | OPTIONAL_FIELDS | KNOWN_FIELDS | SKIP_DIRS | COMMENT_PREFIX | _DATE_RE | _PURPOSE_MAX_WORDS | _AGENT_MAX_ENTRIES | class ValidationResult | _find_repo_root(start) | _validate_wiki(result, wiki_value, source_path) | validate_file(path) | validate_directory(root, extensions) | print_results(results, verbose) | main()
+exports: REQUIRED_FIELDS_FULL | REQUIRED_FIELDS | OPTIONAL_FIELDS | KNOWN_FIELDS | SKIP_DIRS | COMMENT_PREFIX | _DATE_RE | _PURPOSE_MAX_WORDS | _AGENT_MAX_ENTRIES | class ValidationResult | validate_file(path) | validate_directory(root, extensions) | print_results(results, verbose) | main()
 used_by: none
 rules:   validates v0.9 format only (exports:/used_by:/rules:/agent: in module docstring).
 Python uses AST; other languages use regex on first 40 lines.
@@ -20,6 +20,7 @@ python tools/validate_manifests.py myfile.py     # single file
 Exit codes:
 0 — all files valid
 1 — one or more validation errors
+message: 
 """
 
 import argparse
@@ -147,6 +148,10 @@ def _extract_other(path: Path, prefix: str) -> tuple[Optional[str], Optional[dic
             if s.startswith(p):
                 content = s[len(p):].strip()
                 break
+        # JSDoc/PHPDoc docblock inner lines start with '*' (e.g. ' * exports:').
+        # Mirror the CLI's _parse_lang_header so docblock headers validate too.
+        if content is None and s.startswith("*") and not s.startswith("*/"):
+            content = s[1:].strip()
         if content is None:
             # Also try bare field lines (indented inside block comments)
             if any(s.startswith(k + ":") for k in REQUIRED_FIELDS):

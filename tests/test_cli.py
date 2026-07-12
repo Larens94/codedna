@@ -1,6 +1,6 @@
 """test_cli.py — Tests for codedna CLI commands (init, check, update).
 
-exports: PYTHON | run_codedna() | class TestInit | class TestCheck | class TestRoundTrip | class TestLLM | class TestJSONResponseParser | class TestManifest | class TestBuildDocstring | class TestDetectProjectMeta
+exports: PYTHON | run_codedna() | class TestInit | class TestInstallWikiSync | class TestL2InjectionEdgeCases | class TestCheck | class TestRoundTrip | class TestLLM | class TestJSONResponseParser | class TestManifest | class TestBuildDocstring | class TestDetectProjectMeta
 used_by: none
 rules:   Tests run codedna CLI as subprocess to verify end-to-end behavior.
 Each test uses tmp_path for isolation — never touches real project files.
@@ -10,7 +10,7 @@ claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_init_escape | add 2 regres
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_testdata_skip | add test_init_skips_testdata_directory for #13 (yuzi-co). Creates a Go analysistest fixture under tools/myanalyzer/testdata/src/clean/clean.go and asserts the file is untouched while the analyzer source still gets annotated — header injection would shift `// want "..."` line numbers and break analysistest.
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_wiki_sync_hook | extend TestInstallWikiSync to 5 tests covering the tri-state Optional[bool] for cmd_install's with_wiki_sync param: (1) default-non-TTY install does NOT create post-commit hook (safe default); (2) `--with-wiki-sync` installs a marked, executable hook invoking `codedna wiki sync`; (3) explicit `--no-wiki-sync` skips even when CodeDNA marker would have triggered re-install logic; (4) default in non-TTY context (run_codedna's subprocess has no TTY) skips silently; (5) install never overwrites a user-authored post-commit hook (no CodeDNA marker → SKIP).
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_l2_stubs | add TestL2InjectionEdgeCases (5 tests) for #14 (yuzi-co): _extract_funcs marks Protocol stubs and `def foo(): pass`/`def foo(): return None` as is_single_line_stub=True; _extract_funcs anchors body_lineno to the earliest decorator of body[0] when body[0] is a decorated FunctionDef/ClassDef; inject_function_rules guard returns source unchanged for is_single_line_stub=True; decorator-stacked outer keeps @decorator+def contiguous after injection (compile-checked).
-message: 
+message:
 """
 
 from __future__ import annotations
@@ -146,6 +146,9 @@ class TestInit:
         # Canonical baseline must include .claude and worktrees.
         assert ".claude" in _DEFAULT_SKIP_DIRS
         assert "worktrees" in _DEFAULT_SKIP_DIRS
+        # Laravel scaffolding/runtime dirs (Vibe Bridge report) — never source.
+        assert "bootstrap" in _DEFAULT_SKIP_DIRS
+        assert "storage" in _DEFAULT_SKIP_DIRS
         # Every dir in the canonical baseline must also be in wiki + manifest.
         missing_in_wiki = _DEFAULT_SKIP_DIRS - set(WIKI_SKIP)
         assert not missing_in_wiki, (

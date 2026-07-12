@@ -1,11 +1,11 @@
 #!/usr/bin/env python3
 """cli.py — CodeDNA v0.9 annotation tool: init, update, check, install.
 
-exports: class FuncInfo | class FileInfo | scan_file(path, repo_root) | scan_file_lang(path, repo_root, adapter) | build_used_by(infos) | build_ast_skeleton(source, rel) | class LLM | _EXPORTS_CAP | _CODEDNA_FIELD_RE | build_module_docstring(info, ub, rules, model_id) | inject_module_docstring(source, docstring) | inject_function_rules(source, func, rules_text) | _DEFAULT_SKIP_DIRS | collect_files(target, exclude, extensions) | run_lang_files(target, extensions, repo_root, exclude, model, dry_run, force, no_llm, verbose, api_key) | run(target, levels, model, dry_run, exclude, force, no_llm, only_public, verbose, api_key, repo_root, extensions) | cmd_refresh(target, repo_root, exclude, dry_run, verbose) | cmd_check(target, repo_root, exclude, verbose, extensions) | _TOOL_FILES | _TOOL_HOOKS_MAP | (+12 more)
+exports: class FuncInfo | class FileInfo | scan_file(path, repo_root) | scan_file_lang(path, repo_root, adapter) | build_used_by(infos) | build_ast_skeleton(source, rel) | class LLM | _EXPORTS_CAP | _CODEDNA_FIELD_RE | build_module_docstring(info, ub, rules, model_id) | inject_module_docstring(source, docstring) | inject_function_rules(source, func, rules_text) | _DEFAULT_SKIP_DIRS | collect_files(target, exclude, extensions) | run_lang_files(target, extensions, repo_root, exclude, model, dry_run, force, no_llm, verbose, api_key) | run(target, levels, model, dry_run, exclude, force, no_llm, only_public, verbose, api_key, repo_root, extensions) | cmd_refresh(target, repo_root, exclude, dry_run, verbose) | cmd_check(target, repo_root, exclude, verbose, extensions) | _TOOL_FILES | _TOOL_HOOKS_MAP | (+13 more)
 used_by: codedna_tool/wiki.py → _DEFAULT_SKIP_DIRS, _parse_existing_docstring, _parse_lang_header
-         tests/test_cli.py → FileInfo, LLM, _DEFAULT_SKIP_DIRS, _MANIFEST_SKIP, _detect_project_meta, _parse_exclude_field, build_module_docstring
+         tests/test_cli.py → FileInfo, FuncInfo, LLM, _DEFAULT_SKIP_DIRS, _MANIFEST_SKIP, _detect_project_meta, _extract_funcs, _parse_exclude_field, build_module_docstring, inject_function_rules
          tests/test_language_adapters.py → collect_files
-         tests/test_refresh.py → _parse_existing_docstring, _rebuild_docstring
+         tests/test_refresh.py → _parse_existing_docstring, _parse_lang_header, _rebuild_docstring, _rebuild_lang_header, _replace_lang_header
 wiki:    docs/wiki/cli.md
 rules:   L2 (function Rules:) applies Python AST only; language adapters are L1-only.
 LLM calls are capped at 2 per Python file; --no-llm skips all LLM calls.
@@ -13,11 +13,12 @@ _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
 scan_file handles 3 import patterns: (1) from .mod import X, (2) from . import X
 (submodule-first then __init__.py symbol), (3) from pkg import X (tries pkg/X.py
 before falling back to pkg/__init__.py). All 3 were previously under-resolved.
-agent:   claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_json_robust | _parse_json_response now tolerates leading/trailing prose, <think>...</think> reasoning tags, and ```json fences anywhere in the response — not only at the start. New Strategy 3 uses json.JSONDecoder.raw_decode to scan every '{' until one parses cleanly. Same user session that hit skip-list drift also hit 46/47 batch failures because their model (likely DeepSeek V4-Flash or similar reasoning-style) returned non-strict JSON the parser refused. Added env-gated raw-response logging (CODEDNA_DEBUG_LLM_RESPONSES=/path) so the next failure produces a reproducible sample without a code patch. 11 regression tests in TestJSONResponseParser — 4 were red on pre-fix code (leading prose, trailing prose, thinking tags, prose-before-fence), all green after.
-claude-opus-4-7 | anthropic | 2026-05-02 | s_20260501_codedna_exclude | add project-wide `exclude:` field at .codedna top level — read by manifest/check/refresh/init via _read_codedna_excludes() and merged additively with --exclude CLI flag in main(). Driven by real frustration on this repo: `codedna manifest .` walked into labs/benchmark/projects/ (vendored SWE-bench fixtures with LaTeX escape sequences and Windows paths) firing SyntaxWarning on every ast.parse(). Field round-trips through _read_existing_codedna → _write_codedna verbatim (raw block preserved, supports both flow `[a, b]` and block `- a / - b` YAML forms). _parse_exclude_field is the parser. 5 regression tests in TestManifest covering parser unit behaviour and end-to-end exclusion + round-trip. Companion fix in csharp.py:13: same SyntaxWarning class for the regex-charclass text in the pre-existing 2026-04-21 narrative — doubled all backslashes.
+_parse_lang_header accepts BOTH single-line (// #) AND docblock (/** * */) headers.
+agent:   claude-opus-4-7 | anthropic | 2026-05-02 | s_20260501_codedna_exclude | add project-wide `exclude:` field at .codedna top level — read by manifest/check/refresh/init via _read_codedna_excludes() and merged additively with --exclude CLI flag in main(). Driven by real frustration on this repo: `codedna manifest .` walked into labs/benchmark/projects/ (vendored SWE-bench fixtures with LaTeX escape sequences and Windows paths) firing SyntaxWarning on every ast.parse(). Field round-trips through _read_existing_codedna → _write_codedna verbatim (raw block preserved, supports both flow `[a, b]` and block `- a / - b` YAML forms). _parse_exclude_field is the parser. 5 regression tests in TestManifest covering parser unit behaviour and end-to-end exclusion + round-trip. Companion fix in csharp.py:13: same SyntaxWarning class for the regex-charclass text in the pre-existing 2026-04-21 narrative — doubled all backslashes.
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_init_escapes_testdata | fix #12 + #13 (yuzi-co). #12: scan_file used ast.get_docstring(tree) which returns the *evaluated* string — Python had already collapsed backslash-newline line continuations and downgraded double-backslash escapes to single. Round-tripping that into rewritten docstrings silently corrupted shell snippets and ASCII pipeline diagrams (and fired SyntaxWarning at re-import for the literal-double-backslash case). New FileInfo.docstring_raw_body field captures the raw source slice via ast.get_source_segment; build_module_docstring prefers it over info.docstring. #13: added `testdata` to _DEFAULT_SKIP_DIRS — Go's analysistest fixtures encode expected diagnostic positions in `// want "…"` comments tied to specific line numbers, header insertion broke them. 3 regression tests in TestInit reproducing both yuzi-co scenarios exactly.
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_wiki_sync_hook | add opt-in post-commit wiki-sync hook to `codedna install` with tri-state Optional[bool] semantic (None → interactive prompt or skip in non-TTY). New `--no-wiki-sync` flag and _POST_COMMIT_WIKI_HOOK template marked with "CodeDNA" so re-install is idempotent. README §"Optional: post-commit wiki-sync hook" documents the matrix and advises agents to pass an explicit flag.
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_l2_stubs | fix #14 (yuzi-co): inject_function_rules malformed Python on (a) Protocol stub methods `async def foo(): ...` (single-line body — body[0].lineno == def.lineno → injection landed BEFORE the def) and (b) decorator-stacked inner functions where body_lineno of the outer points to body[0].lineno (the inner `def`) instead of the earliest decorator (injection landed BETWEEN @decorator and def — invalid). Two fixes in _extract_funcs: (1) FuncInfo.is_single_line_stub flag set when body[0].lineno == child.lineno; inject_function_rules guards on it and returns source unchanged. (2) body_lineno anchored to min(d.lineno) of body[0]'s decorator_list when body[0] is a decorated FunctionDef/AsyncFunctionDef/ClassDef — keeps decorator+def contiguous. 5 regression tests in TestL2InjectionEdgeCases. The skip on single-line stubs is principled: Protocol stubs and `@overload` declarations are interfaces with no body to describe; trivial `pass`/`return None` bodies are already filtered by the >60-char source filter; non-trivial one-liners are a marginal lost-annotation cost worth paying for never-malformed output.
+deepseek-v4-pro | deepseek | 2026-07-10 | s_20260710_docblock | _parse_lang_header now accepts /** */ JSDoc/PHPDoc docblock headers (each line prefixed with *), not only single-line // comments. Vibe Bridge reported refresh + wiki bootstrap yielding 0 files on a Laravel 12 + React 19 project whose PHP/TSX files carried docblock-style CodeDNA headers — the parser only stripped the language comment_prefix so ` * exports:` never matched, returning None. Fixes BOTH refresh (cli) and wiki bootstrap (wiki._extract_fields shares this parser). Header range now spans the /** opener through */ closer so _replace_lang_header rewrites the whole block cleanly. Also added Laravel bootstrap/ + storage/ to _DEFAULT_SKIP_DIRS (framework scaffolding/runtime, never source — inflated check coverage denominator). 6 tests in TestDocblockHeader. Did NOT adopt their tools/refresh-wiki.py (redundant — wiki bootstrap already covers all adapter languages) nor their block-on-write plugin design (kept warn-only; hard enforcement stays in pre-commit).
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -1023,6 +1024,11 @@ _DEFAULT_SKIP_DIRS = frozenset({
     # analyzer's tests. `go test` itself ignores testdata/ for build
     # purposes — we follow the same convention.
     "testdata",
+    # Laravel scaffolding/runtime dirs (reported by Vibe Bridge on a
+    # Laravel 12 project): bootstrap/ holds framework bootstrap + cache,
+    # storage/ holds runtime logs/cache/sessions — never project source.
+    # Counting them tanked coverage (280 files incl. framework internals).
+    "bootstrap", "storage",
 })
 
 
@@ -1476,6 +1482,10 @@ def _parse_lang_header(source: str, comment_prefix: str) -> dict[str, str] | Non
 
     Rules:   Returns None if no CodeDNA header found.
              Parses // exports:, // used_by:, // rules:, // agent:, // message: lines.
+             Also parses JSDoc/PHPDoc-style docblock headers (/** ... */ where each
+             line starts with '*') — some agents/tools emit headers in this format
+             even though inject_header writes single-line // comments. Without this,
+             refresh and wiki bootstrap silently skipped every docblock-annotated file.
              Preserves multi-line continuation values (indented lines after a field).
     """
     fields: dict[str, str] = {}
@@ -1483,12 +1493,29 @@ def _parse_lang_header(source: str, comment_prefix: str) -> dict[str, str] | Non
     current_lines: list[str] = []
     header_started = False
     header_line_indices: list[int] = []
+    pending_open_idx: int | None = None
 
     for i, line in enumerate(source.splitlines()):
         stripped = line.strip()
-        # Strip comment prefix
-        if stripped.startswith(comment_prefix):
+        # Strip comment prefix — supports single-line (//, #) and docblock
+        # (/** ... */ with leading *) styles. Order matters: check the language's
+        # own prefix first, then the docblock markers.
+        if comment_prefix and stripped.startswith(comment_prefix):
             content = stripped[len(comment_prefix):].strip()
+        elif stripped.startswith("/**") or stripped == "/*":
+            # Docblock opener — remember its index so the whole block can be
+            # replaced cleanly by _replace_lang_header; no field content here.
+            if not header_started:
+                pending_open_idx = i
+            content = stripped.lstrip("/*").strip()
+        elif stripped.startswith("*/"):
+            # Docblock closer — end of the header block.
+            if header_started:
+                header_line_indices.append(i)
+                break
+            continue
+        elif stripped.startswith("*"):
+            content = stripped[1:].strip()
         else:
             if header_started:
                 break
@@ -1499,9 +1526,14 @@ def _parse_lang_header(source: str, comment_prefix: str) -> dict[str, str] | Non
             if any(content.startswith(f) for f in ("exports:", "used_by:", "related:", "wiki:", "rules:", "agent:")):
                 header_started = True
                 fields["first_line"] = ""
+                # Include the docblock opener line in the replaceable range.
+                if pending_open_idx is not None:
+                    header_line_indices.append(pending_open_idx)
             elif " — " in content or content.endswith("."):
                 fields["first_line"] = content
                 header_started = True
+                if pending_open_idx is not None:
+                    header_line_indices.append(pending_open_idx)
                 header_line_indices.append(i)
                 continue
             else:

@@ -1037,3 +1037,67 @@ agent_sessions:
       drift-guard test still passes. 3 regression tests in TestInit, all
       green. Full test_cli.py: 60 passed (was 57), 4 pre-existing
       failures unrelated.
+
+  - agent: deepseek-v4-pro
+    provider: deepseek
+    date: 2026-07-10
+    session_id: s_20260710_docblock
+    task: "accept /** */ docblock CodeDNA headers; skip Laravel bootstrap/storage"
+    changed:
+      - codedna_tool/cli.py
+      - integrations/opencode-plugin/codedna.js
+      - tools/validate_manifests.py
+      - tools/pre-commit
+      - tests/test_refresh.py
+      - tests/test_cli.py
+      - tests/test_validator.py
+      - .codedna
+    visited:
+      - codedna_tool/cli.py
+      - codedna_tool/wiki.py
+      - codedna_tool/languages/base.py
+      - codedna_tool/languages/php.py
+      - integrations/opencode-plugin/codedna.js
+      - tools/validate_manifests.py
+      - tests/test_refresh.py
+      - tests/test_cli.py
+      - tests/test_validator.py
+      - .codedna
+    message: >
+      Vibe Bridge (Larens94/vibebridge) reported refresh + wiki bootstrap
+      yielding 0 files on a Laravel 12 + React 19 project whose PHP/TSX files
+      carried CodeDNA headers in JSDoc/PHPDoc docblock form (/** ... */ with
+      each line prefixed by *). Root cause: _parse_lang_header only stripped the
+      language comment_prefix (// #), so ` * exports:` never matched → returned
+      None. Since this parser is shared by cmd_refresh AND wiki._extract_fields,
+      a single fix repaired both. Header range now spans the /** opener through
+      the */ closer so _replace_lang_header rewrites the whole block cleanly
+      (docblock normalises to canonical // on refresh — no field loss). Also
+      added Laravel bootstrap/ + storage/ to _DEFAULT_SKIP_DIRS (scaffolding +
+      runtime, never source — inflated check coverage denominator; they reported
+      280 files / 13%). OpenCode plugin fixes (real bugs from their report):
+      client.app.log now uses { body: { service, level, message } } not the
+      positional form that silently no-ops; all hooks wrapped in try/catch;
+      filePath resolution falls back through file_path/path/fileName. Kept the
+      plugin WARN-ONLY (tool.execute.after) — declined their block-on-write
+      redesign (tool.execute.before + throw); hard enforcement belongs in the
+      pre-commit hook, and their edit false-positive was self-inflicted by the
+      block. Declined tools/refresh-wiki.py (redundant — wiki bootstrap already
+      covers every adapter language; their script hardcoded Laravel SCAN_DIRS).
+      6 tests in TestDocblockHeader + skip-set asserts. E2E verified on a real
+      Laravel+React fixture: check 3/3, refresh updates docblock preserving
+      rules/agent, wiki bootstrap emits 2 pages, no vendor/node_modules/
+      bootstrap/storage leakage, init idempotent on docblock files. Pre-existing
+      5 failures (TestLLM litellm, TestCodeDNAManifest yaml) confirmed unrelated.
+      Also fixed two pre-existing bugs in tools/pre-commit surfaced while
+      committing this work: (1) it mapped js/jsx/mjs → `ts` for `codedna check
+      --extensions`, so `check file.js --extensions ts` counted 0 files and the
+      block-grep on "L1 (module headers) 0/" mis-read that as a missing header —
+      EVERY .js/.jsx commit was blocked. Now each extension passes through as-is.
+      (2) the block signal itself was wrong: "L1 (module headers) X/Y" counts
+      Python files ONLY (always 0/0 for non-Python), so it can't indicate a
+      missing non-Python header. Switched to `check --verbose` and block only on
+      the "Missing L1:" / "Missing non-Python L1:" markers, which list genuinely
+      un-annotated files. Refresh re-stage loop now re-stages ALL staged source
+      files, not just .py (refresh rewrites non-Python headers too). Reinstalled
+      .git/hooks/pre-commit from tools/pre-commit.

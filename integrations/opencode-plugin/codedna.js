@@ -1,19 +1,34 @@
 /**
- * codedna.js — CodeDNA v0.8 Plugin for OpenCode
+ * codedna.js — CodeDNA v0.9 warn-only enforcement plugin for OpenCode.
+ *
+ * exports: CodeDNAPlugin
+ * used_by: .opencode/plugins/ → auto-loaded by OpenCode at startup
+ * rules:   WARN ONLY — hooks must NEVER throw; a plugin error must not block the
+ *          host tool call. Hard enforcement lives in the pre-commit hook, not here.
+ *          client.app.log takes { body: { service, level, message } } — the
+ *          positional form log('warn', msg) silently no-ops on OpenCode.
+ * agent:   deepseek-v4-pro | deepseek | 2026-07-10 | s_20260710_docblock | fix log API + try/catch + path/fileName fallbacks; detect docblock headers; kept warn-only
  *
  * Installation:
  *   mkdir -p .opencode/plugins
  *   cp codedna.js .opencode/plugins/codedna.js
+ *   (restart OpenCode — plugins are loaded once at startup)
  *
- * What it does:
- *   - After every file write: warns if the file is missing a CodeDNA v0.8 header
+ * What it does (warn-only, never blocks the host):
+ *   - After every file write: warns if the file is missing a CodeDNA header
  *   - After every session: reminds to update .codedna and commit with AI git trailers
+ *
+ * Enforcement note:
+ *   This plugin only WARNS — it never throws to block a tool call. Hard
+ *   enforcement belongs in the pre-commit hook (tools/pre-commit), so an
+ *   editor-hook/API mismatch can never wedge the user's workflow.
  *
  * Supported languages (11):
  *   Python, TypeScript, JavaScript, Go, PHP, Rust, Java, Kotlin, Ruby, C#, Swift
  *
  * Detection logic mirrors base.py has_codedna_header():
- *   scan first 30 lines, strip comment prefix, look for exports: or used_by:
+ *   scan first 30 lines, strip comment prefix (//, #, * for docblocks),
+ *   look for exports: or used_by:
  */
 
 // ---------------------------------------------------------------------------
@@ -51,6 +66,27 @@ function getExt(filePath) {
 }
 
 /**
+ * Resolve the file path from a tool's args across OpenCode versions.
+ * Different versions / tools use filePath, file_path, path or fileName.
+ */
+function resolveFilePath(args) {
+  return args?.filePath ?? args?.file_path ?? args?.path ?? args?.fileName ?? null
+}
+
+/**
+ * Emit a log line through the OpenCode client.
+ *
+ * OpenCode's client.app.log expects a single object argument:
+ *   { body: { service, level, message } }
+ * The old positional form client.app.log('warn', '...') silently no-ops.
+ */
+async function log(client, level, message) {
+  try {
+    await client.app.log({ body: { service: 'codedna', level, message } })
+  } catch (_) { /* logging must never break the host */ }
+}
+
+/**
  * Return true if content already contains a CodeDNA v0.8 header.
  *
  * Mirrors base.py LanguageAdapter.has_codedna_header():
@@ -61,8 +97,9 @@ function hasCodeDNAHeader(content) {
   const lines = content.split('\n').slice(0, 30)
   for (const rawLine of lines) {
     const line = rawLine.trim()
-    // Strip leading comment prefix — handles //, #, and inside """ for Python
-    const bare = line.replace(/^(\/\/+|#+|"{3})\s*/, '').trim()
+    // Strip leading comment prefix — handles //, #, * (JSDoc/PHPDoc docblocks),
+    // and """ for Python.
+    const bare = line.replace(/^(\/\/+|#+|\/\*+|\*+|"{3})\s*/, '').trim()
     if (bare.startsWith('exports:') || bare.startsWith('used_by:')) {
       return true
     }
@@ -95,73 +132,76 @@ export const CodeDNAPlugin = async ({ client }) => {
      * when the patch looks like a new function/class definition.
      */
     'tool.execute.after': async (input, output) => {
-      const tool = input?.tool
-      if (!tool) return
+      try {
+        const tool = input?.tool
+        if (!tool) return
 
-      // --- write: full content available, most reliable check ---
-      if (tool === 'write') {
-        const filePath = output?.args?.filePath ?? output?.args?.file_path
-        if (!filePath) return
+        // --- write: full content available, most reliable check ---
+        if (tool === 'write') {
+          const filePath = resolveFilePath(output?.args)
+          if (!filePath) return
 
-        const ext = getExt(filePath)
-        if (!LANG[ext]) return // unsupported language — skip silently
+          const ext = getExt(filePath)
+          if (!LANG[ext]) return // unsupported language — skip silently
 
-        const content = output?.args?.content ?? ''
-        if (!content) return
+          const content = output?.args?.content ?? ''
+          if (!content) return
 
-        if (!hasCodeDNAHeader(content)) {
-          await client.app.log(
-            'warn',
-            `[CodeDNA] ${shortPath(filePath)} — missing exports: / used_by: header.\n` +
-            `         Add a CodeDNA v0.8 module docstring before committing.\n` +
-            `         See: https://github.com/Larens94/codedna`
-          )
+          if (!hasCodeDNAHeader(content)) {
+            await log(client, 'warn',
+              `[CodeDNA] ${shortPath(filePath)} — missing exports: / used_by: header. ` +
+              `Add a CodeDNA v0.9 module docstring before committing. ` +
+              `See: https://github.com/Larens94/codedna`
+            )
+          }
+          return
         }
-        return
-      }
 
-      // --- edit: only the patch (new_string) is available ---
-      if (tool === 'edit') {
-        const filePath = output?.args?.filePath ?? output?.args?.file_path
-        if (!filePath) return
+        // --- edit: only the patch (new_string) is available ---
+        if (tool === 'edit') {
+          const filePath = resolveFilePath(output?.args)
+          if (!filePath) return
 
-        const ext = getExt(filePath)
-        if (!LANG[ext]) return
+          const ext = getExt(filePath)
+          if (!LANG[ext]) return
 
-        const newString = output?.args?.new_string ?? ''
-        // Only warn if the patch itself introduces a new top-level definition
-        // (function/class/def/fn/func) without CodeDNA markers — this avoids
-        // false positives for small inline edits.
-        const defPattern = /^\s*(export\s+)?(function|class|def |fn |func |public |private |protected )/m
-        if (defPattern.test(newString) && !hasCodeDNAHeader(newString)) {
-          await client.app.log(
-            'warn',
-            `[CodeDNA] ${shortPath(filePath)} — patch adds a definition without CodeDNA fields.\n` +
-            `         Ensure the module header has exports: and used_by:.`
-          )
+          const newString = output?.args?.new_string ?? output?.args?.newString ?? ''
+          // Only warn if the patch itself introduces a new top-level definition
+          // (function/class/def/fn/func) without CodeDNA markers — this avoids
+          // false positives for small inline edits. Note: edits on files that
+          // already carry a header are expected NOT to repeat the header, so we
+          // never hard-block edits.
+          const defPattern = /^\s*(export\s+)?(function|class|def |fn |func |public |private |protected )/m
+          if (defPattern.test(newString) && !hasCodeDNAHeader(newString)) {
+            await log(client, 'warn',
+              `[CodeDNA] ${shortPath(filePath)} — patch adds a definition; ` +
+              `ensure the module header has exports: and used_by:.`
+            )
+          }
+          return
         }
-        return
+      } catch (_) {
+        // A plugin error must never block the host tool call.
       }
     },
 
     /**
      * End of session — remind the agent to update .codedna and commit
-     * with the required AI git trailers (v0.8 session end protocol).
+     * with the required AI git trailers (v0.9 session end protocol).
      */
     'event': async ({ event }) => {
-      if (event?.type !== 'session.idle') return
-      await client.app.log(
-        'info',
-        '[CodeDNA] Session complete. Before closing:\n' +
-        '  1. Append an agent_sessions: entry to .codedna\n' +
-        '     fields: agent, provider, date, session_id, task, changed, visited, message\n' +
-        '  2. Commit with AI git trailers:\n' +
-        '     AI-Agent:    <model-id>\n' +
-        '     AI-Provider: <provider>\n' +
-        '     AI-Session:  <session_id>\n' +
-        '     AI-Visited:  <comma-separated files read>\n' +
-        '     AI-Message:  <one-line summary>'
-      )
+      try {
+        if (event?.type !== 'session.idle') return
+        await log(client, 'info',
+          '[CodeDNA] Session complete. Before closing: ' +
+          '(1) Append an agent_sessions: entry to .codedna ' +
+          '(agent, provider, date, session_id, task, changed, visited, message). ' +
+          '(2) Commit with AI git trailers: AI-Agent, AI-Provider, AI-Session, ' +
+          'AI-Visited, AI-Message.'
+        )
+      } catch (_) {
+        // never break the host on the idle hook
+      }
     },
 
   }

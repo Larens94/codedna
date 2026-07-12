@@ -1,6 +1,6 @@
 """test_refresh.py — Tests for codedna refresh command and relative import resolution.
 
-exports: PYTHON | run_codedna() | class TestRefresh | class TestRelativeImports | class TestReducedHeader | class TestHasCodednaHeader | class TestRelatedField | class TestWikiField
+exports: PYTHON | run_codedna() | class TestRefresh | class TestRelativeImports | class TestReducedHeader | class TestCrossLanguageRefresh | class TestRefreshPreservesLLMAnnotations | class TestRefreshPreserveMatrix | class TestHasCodednaHeader | class TestRelatedField | class TestWikiField | class TestDocblockHeader
 used_by: none
 rules:   Tests verify that refresh updates exports/used_by without touching rules/agent/message.
 Tests also verify Python relative imports (from .module) are resolved correctly.
@@ -10,6 +10,7 @@ claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | remove .rs from
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | add TestWikiField — 4 tests for the experimental wiki: pointer field (parse, rebuild, refresh preservation, opt-in absence)
 claude-sonnet-4-6 | anthropic | 2026-04-22 | s_20260422_refresh | add TestRefreshPreservesLLMAnnotations — 3 regression tests for bug where refresh degraded real annotations to "none" on PHP config + Python files with no AST importers
 claude-sonnet-4-6 | anthropic | 2026-04-22 | s_20260422_matrix | add TestRefreshPreserveMatrix — exhaustive 14-case matrix covering Python+PHP paths, all combinations of old/new exports/used_by values (preserve vs update vs no-change)
+message: 
 """
 
 from __future__ import annotations
@@ -706,3 +707,75 @@ class TestWikiField:
         )
         fields = _parse_existing_docstring(doc)
         assert "wiki" not in fields  # absent, not empty
+
+
+class TestDocblockHeader:
+    """Tests for /** */ JSDoc/PHPDoc-style CodeDNA headers (Vibe Bridge report).
+
+    Some agents/tools emit the CodeDNA header inside a docblock where each line
+    starts with '*' instead of the single-line // that inject_header writes.
+    _parse_lang_header must accept both so refresh and wiki bootstrap don't
+    silently skip docblock-annotated PHP/TSX files.
+    """
+
+    _DOCBLOCK = (
+        "<?php\n"
+        "/**\n"
+        " * UserService.php — user domain logic.\n"
+        " *\n"
+        " * exports: UserService::create | UserService::find\n"
+        " * used_by: app/Http/Controllers/UserController.php → store\n"
+        " * rules:   amounts in cents — divide by 100 before display\n"
+        " * agent:   deepseek-v4-pro | deepseek | 2026-07-10 | s_x | init\n"
+        " */\n"
+        "class UserService {}\n"
+    )
+
+    def test_parses_docblock_fields(self):
+        from codedna_tool.cli import _parse_lang_header
+        fields = _parse_lang_header(self._DOCBLOCK, "//")
+        assert fields is not None
+        assert "UserService::create" in fields["exports"]
+        assert "UserController.php" in fields["used_by"]
+        assert "cents" in fields["rules"]
+
+    def test_docblock_header_range_covers_block(self):
+        """Header range must include the /** opener and */ closer for clean replace."""
+        from codedna_tool.cli import _parse_lang_header
+        fields = _parse_lang_header(self._DOCBLOCK, "//")
+        # /** is line index 1, */ is line index 8
+        assert int(fields["_header_start"]) == 1
+        assert int(fields["_header_end"]) == 8
+
+    def test_docblock_replace_roundtrip(self):
+        from codedna_tool.cli import (
+            _parse_lang_header, _rebuild_lang_header, _replace_lang_header,
+        )
+        fields = _parse_lang_header(self._DOCBLOCK, "//")
+        new_header = _rebuild_lang_header(fields, "NEW::m", "app/Foo.php → bar", "//")
+        out = _replace_lang_header(self._DOCBLOCK, fields, new_header)
+        assert "class UserService {}" in out  # body preserved
+        assert "NEW::m" in out
+        assert "app/Foo.php → bar" in out
+
+    def test_single_line_header_still_parses(self):
+        """Regression: the classic // header must keep working."""
+        from codedna_tool.cli import _parse_lang_header
+        src = (
+            "<?php\n"
+            "// UserService.php — user logic.\n"
+            "//\n"
+            "// exports: UserService::create\n"
+            "// used_by: none\n"
+            "// rules:   none\n"
+            "// agent:   x | y | z | s | init\n"
+            "class UserService {}\n"
+        )
+        fields = _parse_lang_header(src, "//")
+        assert fields is not None
+        assert "UserService::create" in fields["exports"]
+
+    def test_no_header_returns_none(self):
+        from codedna_tool.cli import _parse_lang_header
+        assert _parse_lang_header("<?php\nclass Foo {}\n", "//") is None
+

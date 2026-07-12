@@ -92,10 +92,11 @@ class TestPHPValidation:
         r = validate_file(p)
         assert r.valid
 
-    def test_php_phpdoc_header_not_detected_by_validator(self, tmp_path):
-        """PHPDoc format (/** */) is detected by has_codedna_header (prevents duplicates)
-        but NOT by the validator (which uses // prefix for PHP). This is a known limitation —
-        the canonical PHP format is // comments, not PHPDoc."""
+    def test_php_phpdoc_docblock_header_passes(self, tmp_path):
+        """PHPDoc/JSDoc docblock format (/** */ with ' * ' inner lines) is now
+        accepted by the validator, mirroring the CLI's _parse_lang_header.
+        Some agents/tools emit headers in docblock form on PHP/TSX files
+        (Vibe Bridge report) — refusing them broke refresh + wiki + commit."""
         p = tmp_path / "Bar.php"
         p.write_text(
             "<?php\n"
@@ -105,12 +106,12 @@ class TestPHPValidation:
             " * exports: Bar\n"
             " * used_by: none\n"
             " * rules: none\n"
+            " * agent: test | deepseek | 2026-07-10 | s_x | test\n"
             " */\n"
             "class Bar {}\n"
         )
         r = validate_file(p)
-        # Validator uses // prefix — PHPDoc * prefix not detected
-        assert not r.valid
+        assert r.valid
 
 
 # ── Go files ─────────────────────────────────────────────────────────────────
