@@ -87,7 +87,7 @@ async function log(client, level, message) {
 }
 
 /**
- * Return true if content already contains a CodeDNA v0.8 header.
+ * Return true if content already contains a CodeDNA v0.9 header.
  *
  * Mirrors base.py LanguageAdapter.has_codedna_header():
  *   scan first 30 lines, strip any leading comment chars (// # """),

@@ -1,7 +1,7 @@
 // user.ts — user module.
 //
 // exports: User | Invoice | isSuspended | displayName
-// used_by: src/routes.ts
+// used_by: examples/typescript-api/src/routes.ts
 // rules:   none
 // agent:   claude-haiku-4-5-20251001 | unknown | 2026-03-27 | unknown | initial CodeDNA annotation pass
 

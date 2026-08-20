@@ -368,6 +368,7 @@ img { max-width: 100%; height: auto; }
   .stat-number { font-size: 2rem; }
 }
 </style>
+<link rel="stylesheet" href="site.css">
 </head>
 <body>
 
@@ -398,13 +399,18 @@ img { max-width: 100%; height: auto; }
   <canvas id="hero-canvas"></canvas>
   <div class="hero-inner">
     <div class="hero-eyebrow fade-up"><span class="eyebrow-dot"></span>CodeDNA Annotation Standard · v0.9 · MIT</div>
-    <h1 class="fade-up" data-i18n-html="h1">The code that<br><em>explains itself.</em></h1>
+    <h1 class="fade-up" data-i18n-html="h1">Give every agent<br><em>the missing context.</em></h1>
     <p class="hero-sub fade-up" data-i18n-html="heroSub">
-      AI tools editing your code make mistakes because they have <strong>no context</strong>. CodeDNA embeds it directly in the files — like DNA in every cell. Zero RAG. Minimal drift.
+      CodeDNA puts contracts, dependencies, rules, and session history directly in source files—so Claude, Codex, OpenCode, and every next agent can work safely.
     </p>
     <div class="hero-actions fade-up">
-      <a href="#benchmark" class="btn-primary" data-i18n="heroCta1">See the evidence →</a>
-      <a href="https://github.com/Larens94/codedna" target="_blank" class="btn-secondary" data-i18n="heroCta2">Read the Spec</a>
+      <a href="install.html" class="btn-primary" data-i18n="heroCta1">Install CodeDNA →</a>
+      <a href="#come-funziona" class="btn-secondary" data-i18n="heroCta2">See how it works</a>
+    </div>
+    <div class="hero-terminal fade-up" aria-label="CodeDNA installation example">
+      <div class="hero-terminal-bar"><span class="terminal-dots"><i></i><i></i><i></i></span><span>terminal · project root</span></div>
+      <div class="hero-command"><span class="prompt">$</span><span>codedna install <span class="dim">--tools</span> codex claude opencode</span></div>
+      <div class="agent-pills"><span class="active">Codex</span><span class="active">Claude Code</span><span class="active">OpenCode</span><span>Cursor</span><span>Copilot</span><span>Aider</span></div>
     </div>
   </div>
 </div>
@@ -519,16 +525,13 @@ img { max-width: 100%; height: auto; }
     <p class="section-lead" data-i18n="setupLead">One command installs CodeDNA rules for any AI coding assistant. Or pick the file for your tool and paste it into your project.</p>
 
     <div class="setup-code-block">
-      <div class="setup-code-label">Step 1 — Install for your AI tool (instructions + enforcement hooks)</div>
-      <pre style="font-size:0.85rem; color:#f8f8f2; line-height:1.9; margin:0; border:none; background:transparent; padding:0;"><span style="color:#50fa7b;">bash</span> <span style="color:#bd93f9;">&lt;(</span><span style="color:#ff79c6;">curl</span> -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh<span style="color:#bd93f9;">)</span> claude-hooks
-<span style="color:#6272a4;"># or: cursor-hooks  copilot-hooks  cline-hooks  opencode  windsurf</span></pre>
+      <div class="setup-code-label">Step 1 — Install the universal CLI</div>
+      <pre style="font-size:0.85rem; color:#f8f8f2; line-height:1.9; margin:0; border:none; background:transparent; padding:0;"><span style="color:#50fa7b;">pipx</span> install git+https://github.com/Larens94/codedna.git</pre>
       <div class="setup-code-divider">
-        <div class="setup-code-label">Step 2 — Annotate existing files (CLI)</div>
-        <pre style="font-size:0.85rem; color:#f8f8f2; line-height:1.9; margin:0; border:none; background:transparent; padding:0;"><span style="color:#50fa7b;">pip</span> install git+https://github.com/Larens94/codedna.git
-<span style="color:#6272a4;"># set ANTHROPIC_API_KEY first</span>
-<span style="color:#50fa7b;">codedna</span> init ./          <span style="color:#6272a4;"># first-time: annotates every .py file</span>
-<span style="color:#50fa7b;">codedna</span> update ./        <span style="color:#6272a4;"># incremental: only unannotated files</span>
-<span style="color:#50fa7b;">codedna</span> check ./         <span style="color:#6272a4;"># coverage report, no changes</span></pre>
+        <div class="setup-code-label">Step 2 — Connect your agents and annotate the project</div>
+        <pre style="font-size:0.85rem; color:#f8f8f2; line-height:1.9; margin:0; border:none; background:transparent; padding:0;"><span style="color:#50fa7b;">codedna</span> install --path . --tools codex claude opencode --no-wiki-sync
+<span style="color:#50fa7b;">codedna</span> init . --no-llm    <span style="color:#6272a4;"># free, local structural pass</span>
+<span style="color:#50fa7b;">codedna</span> doctor --path .    <span style="color:#6272a4;"># confirm the setup</span></pre>
       </div>
     </div>
 
@@ -536,8 +539,14 @@ img { max-width: 100%; height: auto; }
       <div class="sc-card" style="text-align:center;">
         <div class="sc-title">Claude Code</div>
         <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:11px; font-weight:700; letter-spacing:0.06em; padding:0.2rem 0.55rem; border-radius:var(--radius); background:var(--green-lt); color:var(--green); margin-bottom:0.5rem; border:1px solid rgba(22,163,74,0.2);">Active enforcement</div>
-        <div class="sc-body" style="font-size:0.78rem;">4 hooks: SessionStart, PreToolUse, PostToolUse, Stop. Validates every <code>.py</code> write automatically.</div>
+        <div class="sc-body" style="font-size:0.78rem;">4 hooks: SessionStart, PreToolUse, PostToolUse, Stop. Validates supported source writes automatically.</div>
         <a href="install.html#claude-code" style="font-size:0.75rem; color:var(--black); text-decoration:underline; text-underline-offset:3px; font-weight:600;">Install guide →</a>
+      </div>
+      <div class="sc-card" style="text-align:center;">
+        <div class="sc-title">Codex</div>
+        <div style="display:inline-flex; align-items:center; font-size:11px; font-weight:700; padding:0.2rem 0.55rem; border-radius:var(--radius); background:var(--amber-lt); color:var(--amber); margin-bottom:0.5rem; border:1px solid rgba(217,119,6,0.2);">Instructions + Git gate</div>
+        <div class="sc-body" style="font-size:0.78rem;"><code>AGENTS.md</code> provides the always-on protocol; the shared pre-commit hook validates staged source files.</div>
+        <a href="install.html#codex" style="font-size:0.75rem; color:var(--black); text-decoration:underline; text-underline-offset:3px; font-weight:600;">Install guide →</a>
       </div>
       <div class="sc-card" style="text-align:center;">
         <div class="sc-title">Cursor</div>
@@ -568,6 +577,12 @@ img { max-width: 100%; height: auto; }
         <div style="display:inline-flex; align-items:center; gap:0.3rem; font-size:11px; font-weight:700; letter-spacing:0.06em; padding:0.2rem 0.55rem; border-radius:var(--radius); background:var(--amber-lt); color:var(--amber); margin-bottom:0.5rem; border:1px solid rgba(217,119,6,0.2);">Instructions only</div>
         <div class="sc-body" style="font-size:0.78rem;">Copy <code>.windsurfrules</code> to your project root. Cascade reads it automatically.</div>
         <a href="install.html#windsurf" style="font-size:0.75rem; color:var(--black); text-decoration:underline; text-underline-offset:3px; font-weight:600;">Install guide →</a>
+      </div>
+      <div class="sc-card" style="text-align:center;">
+        <div class="sc-title">Aider</div>
+        <div style="display:inline-flex; align-items:center; font-size:11px; font-weight:700; padding:0.2rem 0.55rem; border-radius:var(--radius); background:var(--amber-lt); color:var(--amber); margin-bottom:0.5rem; border:1px solid rgba(217,119,6,0.2);">Instructions + Git gate</div>
+        <div class="sc-body" style="font-size:0.78rem;">Loads <code>AGENTS.md</code> with <code>aider --read AGENTS.md</code> and shares the same repository validation gate.</div>
+        <a href="install.html#aider" style="font-size:0.75rem; color:var(--black); text-decoration:underline; text-underline-offset:3px; font-weight:600;">Install guide →</a>
       </div>
       <div class="sc-card" style="text-align:center;">
         <div class="sc-title">Antigravity</div>
@@ -957,9 +972,9 @@ agent:   claude-sonnet-4-6 | 2026-03-10 | ...
 // ── I18N ──
 const IT = {
   navProblem:'Il Problema', navHow:'Come Funziona',
-  h1:'Il codice che si<br><em>spiega da solo.</em>',
-  heroSub:'Gli AI che modificano il tuo codice commettono errori perch\u00e9 <strong>non hanno contesto</strong>. CodeDNA lo incorpora direttamente nei file \u2014 come il DNA in ogni cellula. Zero RAG. Deriva minima.',
-  heroCta1:'Vedi le prove \u2192', heroCta2:'Leggi la Spec',
+  h1:'Dai a ogni agente<br><em>il contesto che manca.</em>',
+  heroSub:'CodeDNA inserisce contratti, dipendenze, regole e cronologia direttamente nei sorgenti, cos\u00ec Claude, Codex, OpenCode e ogni agente successivo possono lavorare in sicurezza.',
+  heroCta1:'Installa CodeDNA \u2192', heroCta2:'Scopri come funziona',
   stat1Label:'Miglioramento F1', stat1Note:'DeepSeek Chat · 10 task · p=0.001 ✅',
   stat2Label:'LLM testati', stat2Note:'\u0394 positivo su tutti e 3 i modelli',
   stat3Label:'Riduzione rischio retry', stat3Note:'run ad alto rischio: 52% → 25%',

@@ -1,11 +1,12 @@
 """test_manifest_store.py — Regression tests for concurrent .codedna session persistence.
 
-exports: none
+exports: test_default_retention_keeps_exactly_latest_five(tmp_path) | test_configurable_retention(tmp_path) | test_invalid_retention_uses_default() | test_legacy_multiline_and_block_arrays_are_normalized() | test_custom_metadata_and_top_level_comments_survive() | test_permissions_are_preserved(tmp_path) | test_concurrent_appends_do_not_lose_entries(tmp_path) | test_prune_override_and_yaml_safe_output(tmp_path) | test_section_regeneration_preserves_comments_and_metadata_after_sessions() | test_atomic_replace_failure_preserves_original_and_removes_temp(tmp_path, monkeypatch)
 used_by: none
 related: tests/test_cli.py — CLI integration coverage
 rules:   Tests must use temporary manifests and never mutate the repository .codedna.
 agent:   gpt-5 | openai | 2026-08-20 | s_20260820_sessions | added retention, legacy, atomicity, permission, and concurrency coverage
-         message: "Canonical JSON scalars are deliberately parsed as valid YAML by PyYAML."
+message: "Canonical JSON scalars are deliberately parsed as valid YAML by PyYAML."
+gpt-5 | openai | 2026-08-20 | s_20260820_hardening | prove replace failure preserves original content and removes temporary files
 """
 
 from __future__ import annotations
@@ -14,6 +15,7 @@ import concurrent.futures
 import os
 
 from codedna_tool.manifest_store import (
+    atomic_write_text,
     append_session,
     parse_agent_sessions,
     prune_sessions,
@@ -136,3 +138,22 @@ agent_sessions: []
     assert "new/:" in merged
     assert "old/:" not in merged
     assert 'custom_after: "keep me"' in merged
+
+
+def test_atomic_replace_failure_preserves_original_and_removes_temp(tmp_path, monkeypatch):
+    path = tmp_path / "source.py"
+    path.write_text("original\n")
+
+    def fail_replace(_source, _destination):
+        raise OSError("simulated replace failure")
+
+    monkeypatch.setattr("codedna_tool.manifest_store.os.replace", fail_replace)
+    try:
+        atomic_write_text(path, "replacement\n")
+    except OSError as error:
+        assert "simulated" in str(error)
+    else:
+        raise AssertionError("atomic_write_text should propagate replace failure")
+
+    assert path.read_text() == "original\n"
+    assert list(tmp_path.glob(".source.py.*.tmp")) == []

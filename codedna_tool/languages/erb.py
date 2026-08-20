@@ -7,6 +7,7 @@ Uses <%# %> comment syntax for the CodeDNA header.
 Covers both ERB (.erb) and EJS (.ejs) — same comment syntax.
 Detects render/partial calls as deps.
 agent:   claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | initial ERB/EJS template adapter
+gpt-5 | openai | 2026-08-20 | s_20260820_hardening | add explicit contract for ERB header detection
 """
 
 from __future__ import annotations
@@ -39,7 +40,10 @@ class ErbAdapter(LanguageAdapter):
         return "<%#"
 
     def has_codedna_header(self, source: str) -> bool:
-        """Check for CodeDNA block in <%# %> comment."""
+        """Check for CodeDNA block in ERB/EJS comments.
+
+        Rules:   Inspect only the header region and strip template comment markers.
+        """
         for line in source.splitlines()[:30]:
             stripped = line.strip()
             for prefix in ("<%#", "%>", "#"):

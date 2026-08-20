@@ -1,8 +1,7 @@
 """typescript.py — CodeDNA v0.9 adapter for TypeScript and JavaScript files.
 
 exports: _EXPORT_PATTERNS | _IMPORT_RE | class TypeScriptAdapter
-used_by: codedna_tool/languages/__init__.py → TypeScriptAdapter
-         codedna_tool/languages/_ts_typescript.py → TypeScriptAdapter
+used_by: codedna_tool/languages/_ts_typescript.py → TypeScriptAdapter
 rules:   regex-based only — never parse TS/JS AST (no Node.js dependency).
 Detects exports via 'export function', 'export class', 'export const', 'export default'.
 Import resolution is path-only (relative imports starting with '.' or './').
@@ -10,6 +9,7 @@ inject_function_rules uses JSDoc /** ... */ blocks (same style as PHPDoc).
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_002 | CodeDNA v0.9 compliance pass: added session_id to agent: field, added Rules: docstrings to extract_info and inject_header
 claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed _resolve_import: check is_file() not exists() to avoid resolving directories as files
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | add inject_function_rules() — JSDoc Rules: injection; handles existing doc block (append before */) and no-doc (new /** */ block)
+message:
 """
 
 from __future__ import annotations

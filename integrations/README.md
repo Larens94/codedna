@@ -1,25 +1,29 @@
 # CodeDNA — Integration Guide
 
-One command installs everything your AI tool needs — instructions + real-time enforcement.
+The recommended path installs the CLI first, then lets it add instructions and available enforcement without overwriting existing files:
 
 ---
 
 ## Install for your tool
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) <tool>
+pipx install git+https://github.com/Larens94/codedna.git
+codedna install --path . --tools <tool> --no-wiki-sync
 ```
+
+The curl installer shown in the tool-specific sections is a legacy fallback for prompt-only installations.
 
 | Tool | Option | What gets installed | Enforcement |
 |---|---|---|---|
 | **Claude Code** ⭐ | **`claude-hooks`** | **`CLAUDE.md` + 4 hooks + `.claude/settings.local.json`** | ✅ Active |
+| **Codex** | `codex` | `AGENTS.md` | ⚠️ Instructions + Git pre-commit gate |
 | **Cursor** | **`cursor-hooks`** | **`.cursorrules` + hook scripts in `.cursor/hooks/`** | ✅ Active (v1.7+) |
 | **GitHub Copilot** | **`copilot-hooks`** | **`copilot-instructions.md` + `.github/hooks/`** | ✅ Active |
 | **Cline** | **`cline-hooks`** | **`.clinerules` + hook scripts in `.clinerules/hooks/`** | ✅ Active (v3.36+) |
 | **OpenCode** | **`opencode`** | **`AGENTS.md` + `.opencode/plugins/codedna.js`** | ✅ Active |
 | Windsurf | `windsurf` | `.windsurfrules` | ⚠️ Instructions only |
 | **Antigravity** | `agents` | **`AGENTS.md` + `.agent/workflows/codedna.md`** | ⚠️ Instructions only |
-| Aider | `claude` | `CLAUDE.md` | ⚠️ Instructions only |
+| Aider | `aider` | `AGENTS.md` loaded with `--read` | ⚠️ Instructions + Git pre-commit gate |
 
 > **Active enforcement** = the tool validates annotations automatically on every file write/edit, without relying on the agent remembering to do it.
 
@@ -246,18 +250,19 @@ curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/
 ## Aider
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) claude
+pipx install git+https://github.com/Larens94/codedna.git
+codedna install --path . --tools aider --no-wiki-sync
 ```
 
-Installs `CLAUDE.md` in your repo root, then pass it as system prompt at launch:
+This installs `AGENTS.md`. Load it as Aider's read-only conventions file:
 
 ```bash
-aider --system-prompt "$(cat CLAUDE.md)"
+aider --read AGENTS.md
 ```
 
 Or add it permanently to `.aider.conf.yml`:
 ```yaml
-system_prompt: CLAUDE.md
+read: AGENTS.md
 ```
 
 ---

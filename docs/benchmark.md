@@ -6,6 +6,8 @@ Django issues from [SWE-bench](https://github.com/princeton-nlp/SWE-bench), test
 
 > **Statistical test:** Wilcoxon signed-rank test (one-tailed, H1: CodeDNA > Control).
 
+> **Reproducibility status:** these are reported historical results. The raw run artifacts are not currently included in this checkout, so CI does not claim to reproduce or verify the numerical advantage. Publishing versioned raw traces and an end-to-end reproduction command is required before treating these figures as independently reproducible from the repository alone.
+
 | Model | Tasks | Ctrl F1 | DNA F1 | **Δ F1** | p-value | Tasks Won |
 |---|---|---|---|---|---|---|
 | **Gemini 2.5 Flash** | 5 | 60% | **72%** | **+13%** | 0.040* | 4/5 |

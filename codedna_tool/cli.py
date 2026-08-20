@@ -2,24 +2,25 @@
 """cli.py — CodeDNA v0.9 annotation tool: init, update, check, install.
 
 exports: class FuncInfo | class FileInfo | scan_file(path, repo_root) | scan_file_lang(path, repo_root, adapter) | build_used_by(infos) | build_ast_skeleton(source, rel) | class LLM | _EXPORTS_CAP | _CODEDNA_FIELD_RE | build_module_docstring(info, ub, rules, model_id) | inject_module_docstring(source, docstring) | inject_function_rules(source, func, rules_text) | _DEFAULT_SKIP_DIRS | collect_files(target, exclude, extensions) | run_lang_files(target, extensions, repo_root, exclude, model, dry_run, force, no_llm, verbose, api_key) | run(target, levels, model, dry_run, exclude, force, no_llm, only_public, verbose, api_key, repo_root, extensions) | cmd_refresh(target, repo_root, exclude, dry_run, verbose) | cmd_check(target, repo_root, exclude, verbose, extensions) | _TOOL_FILES | _TOOL_HOOKS_MAP | (+13 more)
-used_by: codedna_tool/wiki.py → _DEFAULT_SKIP_DIRS, _parse_existing_docstring, _parse_lang_header
-         tests/test_cli.py → FileInfo, FuncInfo, LLM, _DEFAULT_SKIP_DIRS, _MANIFEST_SKIP, _detect_project_meta, _extract_funcs, _parse_exclude_field, build_module_docstring, inject_function_rules
+used_by: codedna_tool/audit.py → _auto_detect_extensions, _get_extension, _normalize_extensions, _parse_existing_docstring, _parse_lang_header, _read_codedna_excludes, build_used_by, collect_files, scan_file, scan_file_lang
+         codedna_tool/wiki.py → _DEFAULT_SKIP_DIRS, _parse_existing_docstring, _parse_lang_header
+         tests/test_audit.py → run
+         tests/test_cli.py → FileInfo, FuncInfo, LLM, _DEFAULT_SKIP_DIRS, _MANIFEST_SKIP, _TOOL_FILES, _detect_ai_tools, _detect_project_meta, _extract_funcs, _parse_exclude_field, _write_codedna, build_module_docstring, inject_function_rules
          tests/test_language_adapters.py → collect_files
          tests/test_refresh.py → _parse_existing_docstring, _parse_lang_header, _rebuild_docstring, _rebuild_lang_header, _replace_lang_header
 wiki:    docs/wiki/cli.md
-rules:   L2 (function Rules:) applies Python AST only; language adapters are L1-only.
+rules:   L2 uses Python AST for .py and adapter-provided function metadata for supported source languages.
 LLM calls are capped at 2 per Python file; --no-llm skips all LLM calls.
 _resolve_dep must NOT filter by top_pkg — filesystem existence is the guard.
 scan_file handles 3 import patterns: (1) from .mod import X, (2) from . import X
 (submodule-first then __init__.py symbol), (3) from pkg import X (tries pkg/X.py
 before falling back to pkg/__init__.py). All 3 were previously under-resolved.
 _parse_lang_header accepts BOTH single-line (// #) AND docblock (/** * */) headers.
-agent:   claude-opus-4-7 | anthropic | 2026-05-02 | s_20260501_codedna_exclude | add project-wide `exclude:` field at .codedna top level — read by manifest/check/refresh/init via _read_codedna_excludes() and merged additively with --exclude CLI flag in main(). Driven by real frustration on this repo: `codedna manifest .` walked into labs/benchmark/projects/ (vendored SWE-bench fixtures with LaTeX escape sequences and Windows paths) firing SyntaxWarning on every ast.parse(). Field round-trips through _read_existing_codedna → _write_codedna verbatim (raw block preserved, supports both flow `[a, b]` and block `- a / - b` YAML forms). _parse_exclude_field is the parser. 5 regression tests in TestManifest covering parser unit behaviour and end-to-end exclusion + round-trip. Companion fix in csharp.py:13: same SyntaxWarning class for the regex-charclass text in the pre-existing 2026-04-21 narrative — doubled all backslashes.
-claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_init_escapes_testdata | fix #12 + #13 (yuzi-co). #12: scan_file used ast.get_docstring(tree) which returns the *evaluated* string — Python had already collapsed backslash-newline line continuations and downgraded double-backslash escapes to single. Round-tripping that into rewritten docstrings silently corrupted shell snippets and ASCII pipeline diagrams (and fired SyntaxWarning at re-import for the literal-double-backslash case). New FileInfo.docstring_raw_body field captures the raw source slice via ast.get_source_segment; build_module_docstring prefers it over info.docstring. #13: added `testdata` to _DEFAULT_SKIP_DIRS — Go's analysistest fixtures encode expected diagnostic positions in `// want "…"` comments tied to specific line numbers, header insertion broke them. 3 regression tests in TestInit reproducing both yuzi-co scenarios exactly.
-claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_wiki_sync_hook | add opt-in post-commit wiki-sync hook to `codedna install` with tri-state Optional[bool] semantic (None → interactive prompt or skip in non-TTY). New `--no-wiki-sync` flag and _POST_COMMIT_WIKI_HOOK template marked with "CodeDNA" so re-install is idempotent. README §"Optional: post-commit wiki-sync hook" documents the matrix and advises agents to pass an explicit flag.
-claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_l2_stubs | fix #14 (yuzi-co): inject_function_rules malformed Python on (a) Protocol stub methods `async def foo(): ...` (single-line body — body[0].lineno == def.lineno → injection landed BEFORE the def) and (b) decorator-stacked inner functions where body_lineno of the outer points to body[0].lineno (the inner `def`) instead of the earliest decorator (injection landed BETWEEN @decorator and def — invalid). Two fixes in _extract_funcs: (1) FuncInfo.is_single_line_stub flag set when body[0].lineno == child.lineno; inject_function_rules guards on it and returns source unchanged. (2) body_lineno anchored to min(d.lineno) of body[0]'s decorator_list when body[0] is a decorated FunctionDef/AsyncFunctionDef/ClassDef — keeps decorator+def contiguous. 5 regression tests in TestL2InjectionEdgeCases. The skip on single-line stubs is principled: Protocol stubs and `@overload` declarations are interfaces with no body to describe; trivial `pass`/`return None` bodies are already filtered by the >60-char source filter; non-trivial one-liners are a marginal lost-annotation cost worth paying for never-malformed output.
+agent:   claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_l2_stubs | fix #14 (yuzi-co): inject_function_rules malformed Python on (a) Protocol stub methods `async def foo(): ...` (single-line body — body[0].lineno == def.lineno → injection landed BEFORE the def) and (b) decorator-stacked inner functions where body_lineno of the outer points to body[0].lineno (the inner `def`) instead of the earliest decorator (injection landed BETWEEN @decorator and def — invalid). Two fixes in _extract_funcs: (1) FuncInfo.is_single_line_stub flag set when body[0].lineno == child.lineno; inject_function_rules guards on it and returns source unchanged. (2) body_lineno anchored to min(d.lineno) of body[0]'s decorator_list when body[0] is a decorated FunctionDef/AsyncFunctionDef/ClassDef — keeps decorator+def contiguous. 5 regression tests in TestL2InjectionEdgeCases. The skip on single-line stubs is principled: Protocol stubs and `@overload` declarations are interfaces with no body to describe; trivial `pass`/`return None` bodies are already filtered by the >60-char source filter; non-trivial one-liners are a marginal lost-annotation cost worth paying for never-malformed output.
 deepseek-v4-pro | deepseek | 2026-07-10 | s_20260710_docblock | _parse_lang_header now accepts /** */ JSDoc/PHPDoc docblock headers (each line prefixed with *), not only single-line // comments. Vibe Bridge reported refresh + wiki bootstrap yielding 0 files on a Laravel 12 + React 19 project whose PHP/TSX files carried docblock-style CodeDNA headers — the parser only stripped the language comment_prefix so ` * exports:` never matched, returning None. Fixes BOTH refresh (cli) and wiki bootstrap (wiki._extract_fields shares this parser). Header range now spans the /** opener through */ closer so _replace_lang_header rewrites the whole block cleanly. Also added Laravel bootstrap/ + storage/ to _DEFAULT_SKIP_DIRS (framework scaffolding/runtime, never source — inflated check coverage denominator). 6 tests in TestDocblockHeader. Did NOT adopt their tools/refresh-wiki.py (redundant — wiki bootstrap already covers all adapter languages) nor their block-on-write plugin design (kept warn-only; hard enforcement stays in pre-commit).
-gpt-5 | openai | 2026-08-20 | s_20260820_sessions | added canonical session append/prune commands and routed manifest/mode writes through the shared atomic lock
+gpt-5 | openai | 2026-08-20 | s_20260820_hardening | make source rewrites atomic, lock install-time manifest creation, and align session semantics
+gpt-5 | openai | 2026-08-20 | s_20260820_audit | expose read-only doctor, impact, and verify gates with human and JSON output
+gpt-5 | openai | 2026-08-20 | s_20260820_adoption | add explicit Codex and Aider installers and prevent AGENTS.md from implying OpenCode hooks
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -54,7 +55,7 @@ from typing import Optional
 
 from .languages import SUPPORTED_EXTENSIONS, get_adapter
 from .manifest_store import (
-    DEFAULT_MAX_AGENT_SESSIONS,
+    atomic_write_text,
     append_session,
     mutate_manifest,
     parse_agent_sessions,
@@ -208,6 +209,11 @@ def _extract_funcs(tree: ast.AST, source_lines: list[str]) -> list[FuncInfo]:
 
 
 def scan_file(path: Path, repo_root: Path) -> FileInfo:
+    """Extract Python exports, internal dependencies, annotations, and functions.
+
+    Rules:   Syntax-invalid or undecodable files return FileInfo(parseable=False);
+             dependency resolution must remain repository-local.
+    """
     rel = str(path.relative_to(repo_root))
     try:
         source = path.read_text(encoding="utf-8", errors="replace")
@@ -390,7 +396,10 @@ def scan_file_lang(path: Path, repo_root: Path, adapter) -> FileInfo:
 
 
 def build_used_by(infos: dict[str, FileInfo]) -> dict[str, dict[str, list[str]]]:
-    """Invert deps graph → {file: {importer: [symbols]}}"""
+    """Invert deps graph → {file: {importer: [symbols]}}.
+
+    Rules:   Preserve imported symbol lists; callers format empty lists as file-only dependencies.
+    """
     used_by: dict[str, dict] = {}
     for rel, info in infos.items():
         for dep, syms in info.deps.items():
@@ -408,6 +417,8 @@ def build_ast_skeleton(source: str, rel: str) -> str:
     Includes every class, every method signature, and the first meaningful
     body line of each method — so the LLM sees the full file architecture
     regardless of file length, at a fraction of the token cost.
+
+    Rules:   On invalid Python return at most the first 3000 source characters.
     """
     try:
         tree = ast.parse(source)
@@ -550,7 +561,10 @@ class LLM:
         return r.content[0].text.strip()
 
     def module_rules(self, rel: str, source: str) -> str:
-        """1 call → rules: content for a Python module (uses AST skeleton)."""
+        """Generate rules content for a Python module in one call.
+
+        Rules:   Build the compact AST skeleton before prompting; never send the full file blindly.
+        """
         skeleton = build_ast_skeleton(source, rel)
         return self._module_rules_from_context(rel, f"```\n{skeleton}\n```")
 
@@ -580,7 +594,10 @@ class LLM:
         return resp
 
     def package_purpose(self, pkg_name: str, key_files: list[str], exports_sample: str) -> str:
-        """1 call → purpose: description for a package (≤15 words)."""
+        """Generate a package purpose description in one call.
+
+        Rules:   Return no trailing period and fall back deterministically when the response is empty.
+        """
         resp = self._call(
             "You are writing the `purpose:` field for a CodeDNA `.codedna` manifest entry.\n\n"
             f"Package: {pkg_name}/\n"
@@ -845,6 +862,11 @@ def _extract_docstring_body(existing: Optional[str]) -> str:
 
 
 def build_module_docstring(info: FileInfo, ub: dict, rules: str, model_id: str) -> str:
+    """Build a canonical Python CodeDNA module docstring.
+
+    Rules:   Preserve existing prose and raw backslash escapes; field order is
+             exports, used_by, rules, agent, message.
+    """
     today = date.today().isoformat()
     provider = (
         "codedna-cli"
@@ -1200,7 +1222,7 @@ def run_lang_files(
 
         if new_source != source:
             if not dry_run:
-                path.write_text(new_source, encoding="utf-8")
+                atomic_write_text(path, new_source)
             annotated += 1
             if verbose:
                 print(f"  L1  {info.rel}  exports: {exports_str[:60]}")
@@ -1225,7 +1247,7 @@ def run_lang_files(
                     if r and r != "SKIP":
                         current_source = adapter.inject_function_rules(current_source, func, r)
                 if not dry_run:
-                    path.write_text(current_source, encoding="utf-8")
+                    atomic_write_text(path, current_source)
                 if verbose:
                     n_injected = sum(1 for f in info.funcs if rules_map.get(f.name, "SKIP") != "SKIP")
                     print(f"  L2  {info.rel}  {n_injected} Rules: injected")
@@ -1248,6 +1270,11 @@ def run(
     repo_root: Optional[Path] = None,
     extensions: Optional[list[str]] = None,
 ):
+    """Run the complete annotation pipeline for Python and selected adapters.
+
+    Rules:   Use at most two LLM calls per Python file and zero when --no-llm;
+             all writes must use atomic_write_text.
+    """
     effective_root = target if target.is_dir() else target.parent
     if repo_root is None:
         repo_root = effective_root
@@ -1390,7 +1417,7 @@ def run(
         # Write
         if file_changed and modified != source:
             if not dry_run:
-                info.path.write_text(modified, encoding="utf-8")
+                atomic_write_text(info.path, modified)
 
     # Non-Python languages
     if any(e != ".py" for e in all_exts):
@@ -1763,7 +1790,7 @@ def cmd_refresh(target: Path, repo_root: Optional[Path], exclude: list[str],
             new_source = _replace_lang_header(source, fields, new_header)
 
             if not dry_run:
-                info.path.write_text(new_source, encoding="utf-8")
+                atomic_write_text(info.path, new_source)
 
             updated += 1
             changes = []
@@ -1809,7 +1836,7 @@ def cmd_refresh(target: Path, repo_root: Optional[Path], exclude: list[str],
         new_source = inject_module_docstring(source, new_docstring)
 
         if not dry_run:
-            info.path.write_text(new_source, encoding="utf-8")
+            atomic_write_text(info.path, new_source)
 
         updated += 1
         if verbose or True:  # always show updates
@@ -1830,7 +1857,10 @@ def cmd_refresh(target: Path, repo_root: Optional[Path], exclude: list[str],
 
 def cmd_check(target: Path, repo_root: Optional[Path], exclude: list[str], verbose: bool,
               extensions: Optional[list[str]] = None):
-    """Report annotation coverage without modifying any files."""
+    """Report annotation coverage without modifying any files.
+
+    Rules:   Return non-zero when any parseable source lacks required L1 or L2 annotations.
+    """
     effective_root = target if target.is_dir() else target.parent
     if repo_root is None:
         repo_root = effective_root
@@ -1980,6 +2010,8 @@ def _add_common_args(sub):
 # v1.20.3 convention — see https://antigravity.google/docs/rules-workflows.
 _TOOL_FILES = {
     "claude":   ("CLAUDE.md",   "CLAUDE.md"),
+    "codex":    ("AGENTS.md",   "AGENTS.md"),
+    "aider":    ("AGENTS.md",   "AGENTS.md"),
     "cursor":   (".cursorrules", ".cursorrules"),
     "copilot":  ("copilot-instructions.md", ".github/copilot-instructions.md"),
     "cline":    (".clinerules",  ".clinerules"),
@@ -2157,11 +2189,13 @@ def _detect_ai_tools(repo_root: Path) -> list[str]:
     list_str_detected_tools = []
     checks = {
         "claude":   [".claude", "CLAUDE.md"],
+        "codex":    [".codex", "AGENTS.md"],
+        "aider":    [".aider.conf.yml", ".aider.conf.yaml"],
         "cursor":   [".cursor", ".cursorrules"],
         "copilot":  [".github/copilot-instructions.md"],
         "cline":    [".clinerules", ".cline"],
         "windsurf": [".windsurfrules", ".windsurf"],
-        "opencode": ["AGENTS.md", ".opencode"],
+        "opencode": [".opencode"],
         # Antigravity uses .agent/ (singular) + GEMINI.md — see
         # https://antigravity.google/docs/rules-workflows
         "agents":   [".agent", "GEMINI.md", ".gemini"],
@@ -2557,9 +2591,9 @@ def cmd_install(repo_root: Path, tools: list[str], skip_hook: bool = False,
         str_project_name = meta["name"] or repo_root.name
         if meta["stack"]:
             print(f"  INFO  stack detected: {', '.join(meta['stack'])}")
-        path_codedna.write_text(
-            _CODEDNA_TEMPLATE.format(project_name=str_project_name),
-            encoding="utf-8",
+        mutate_manifest(
+            path_codedna,
+            lambda _content: _CODEDNA_TEMPLATE.format(project_name=str_project_name),
         )
         print(f"  OK    .codedna created (project: {str_project_name})")
         int_count_installed += 1
@@ -3008,27 +3042,11 @@ def _write_codedna(
     lines.append(cross_cutting_block.rstrip())
     lines.append("")
 
-    if agent_sessions_block:
-        # Rolling window: keep only the last _SESSIONS_MAX entries.
-        # Each entry starts with '  - agent:' — split on that marker and trim oldest.
-        import re as _re
-        _SESSIONS_MAX = DEFAULT_MAX_AGENT_SESSIONS
-        header_line = "agent_sessions:\n"
-        entries_raw = agent_sessions_block
-        # Strip leading 'agent_sessions:' line for splitting
-        body = _re.sub(r"^agent_sessions:\s*\n?", "", entries_raw, count=1)
-        # Each session entry starts with '  - agent:' at column 0+2 spaces
-        entries = _re.split(r"(?=^  - agent:)", body, flags=_re.MULTILINE)
-        entries = [e for e in entries if e.strip()]
-        if len(entries) > _SESSIONS_MAX:
-            entries = entries[-_SESSIONS_MAX:]
-        trimmed = header_line + "".join(entries)
-        lines.append(trimmed.rstrip())
-    else:
-        lines.append("agent_sessions: []")
+    lines.append("agent_sessions: []")
     lines.append("")
 
     content = "\n".join(lines)
+    content = replace_agent_sessions(content, parse_agent_sessions(agent_sessions_block))
     if not dry_run:
         # Rules: merge the latest session cache while holding the common manifest
         # lock. A concurrent `session append` must never be lost by regeneration.
@@ -3057,7 +3075,7 @@ def cmd_manifest(
 ):
     """Generate or update .codedna (Level 0 manifest) from codebase structure.
 
-    Rules:   agent_sessions: block is never modified — append-only by design.
+    Rules:   agent_sessions: is a bounded recent cache; regeneration preserves and prunes it.
              packages: section is regenerated on every run (authoritative from code).
              cross_cutting_patterns: is preserved from existing file unchanged.
              LLM is used only for package purpose: descriptions.
@@ -3260,6 +3278,11 @@ def cmd_self_update(*, force: bool = False, check_only: bool = False) -> int:
 
 
 def main():
+    """Parse CLI arguments and dispatch exactly one CodeDNA command.
+
+    Rules:   Read-only commands must not mutate project files; every .codedna
+             mutation routes through the shared manifest lock.
+    """
     p = argparse.ArgumentParser(
         prog="codedna",
         description="CodeDNA v0.9 — in-source annotation protocol",
@@ -3280,7 +3303,7 @@ def main():
             "Auto-detects which AI tools are in use. Override with --tools.\n\n"
             "Examples:\n"
             "  codedna install                          # auto-detect tools\n"
-            "  codedna install --tools claude cursor     # specific tools\n"
+            "  codedna install --tools codex opencode    # specific tools\n"
             "  codedna install --tools all               # all supported tools\n"
             "  codedna install --skip-hook               # prompt files only\n"
             "  codedna install --skip-prompt              # hook only"
@@ -3293,7 +3316,7 @@ def main():
     )
     install_p.add_argument(
         "--tools", nargs="*", default=None,
-        help="AI tools to install prompts/hooks for: claude cursor copilot cline windsurf opencode agents claude-hooks cursor-hooks copilot-hooks cline-hooks opencode-hooks all (default: auto-detect). 'agents' = Antigravity (AGENTS.md + .agent/workflows/codedna.md).",
+        help="AI tools: claude codex aider cursor copilot cline windsurf opencode agents, their supported *-hooks variants, or all (default: auto-detect). 'agents' installs the Antigravity workflow.",
     )
     install_p.add_argument("--skip-hook", action="store_true", help="Skip pre-commit hook installation")
     install_p.add_argument("--skip-prompt", action="store_true", help="Skip AI tool prompt installation")
@@ -3430,7 +3453,7 @@ def main():
         description=(
             "Scans the project, detects packages, infers depends_on from imports,\n"
             "and writes (or updates) the .codedna manifest at the project root.\n\n"
-            "Preserves: agent_sessions: (append-only) and cross_cutting_patterns:\n"
+            "Preserves: bounded agent_sessions cache and cross_cutting_patterns:\n"
             "Regenerates: packages: section on every run.\n\n"
             "Run once after `codedna init` to complete the Level 0 setup."
         ),
@@ -3491,6 +3514,49 @@ def main():
     wiki_sync.add_argument("--out", type=Path, default=Path("docs/codedna-wiki.md"),
                            help="Output file (default: docs/codedna-wiki.md)")
 
+    # ── audit commands ────────────────────────────────────────────────────────
+    verify_p = subs.add_parser(
+        "verify", help="Detect stale exports and used_by annotations without writing",
+        description=(
+            "Post-edit gate for agents. Compares CodeDNA exports:/used_by: fields with source\n"
+            "structure and exits 1 on drift. It never writes files or validates semantic rules.\n\n"
+            "Agent workflow: codedna verify . --json\n"
+            "If stale: review evidence, run `codedna refresh .`, then verify again."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    verify_p.add_argument("path", type=Path, nargs="?", default=Path("."),
+                          help="File or directory to verify (default: current directory)")
+    verify_p.add_argument("--extensions", nargs="*", default=None, metavar="EXT")
+    verify_p.add_argument("--exclude", nargs="*", default=[])
+    verify_p.add_argument("--json", action="store_true", help="Emit stable machine-readable JSON")
+
+    impact_p = subs.add_parser(
+        "impact", help="Show transitive dependants and rules for a file or symbol",
+        description=(
+            "Pre-edit gate for agents. Resolves a repo-relative file or exported symbol, then\n"
+            "prints its rules and every transitive caller. Read MATCH rules first; inspect\n"
+            "domain-relevant AFFECTS files before changing the public contract."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    impact_p.add_argument("query", help="Repo-relative file path or exported symbol")
+    impact_p.add_argument("--path", type=Path, default=Path("."), help="Project root")
+    impact_p.add_argument("--extensions", nargs="*", default=None, metavar="EXT")
+    impact_p.add_argument("--exclude", nargs="*", default=[])
+    impact_p.add_argument("--json", action="store_true", help="Emit stable machine-readable JSON")
+
+    doctor_p = subs.add_parser(
+        "doctor", help="Check manifest, adapters, hooks, CI, and lock configuration",
+        description=(
+            "Onboarding gate for agents. ERROR means the required CodeDNA setup is broken;\n"
+            "WARNING identifies an optional integration. This command never changes the project."
+        ),
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+    )
+    doctor_p.add_argument("--path", type=Path, default=Path("."), help="Project root")
+    doctor_p.add_argument("--json", action="store_true", help="Emit stable machine-readable JSON")
+
     # ── self-update ──────────────────────────────────────────────────────────
     self_update_p = subs.add_parser(
         "self-update",
@@ -3512,6 +3578,47 @@ def main():
     args = p.parse_args()
 
     # ── dispatch ──────────────────────────────────────────────────────────────
+    if args.command in {"verify", "impact", "doctor"}:
+        from codedna_tool.audit import doctor_report, impact_report, verify_repository
+
+        root = (args.path if args.command != "verify" else args.path).resolve()
+        if not root.exists():
+            print(f"Error: {root} does not exist", file=sys.stderr)
+            return 2
+        if args.command == "verify":
+            report = verify_repository(root, args.extensions,
+                                       list(args.exclude) + _read_codedna_excludes(root))
+        elif args.command == "impact":
+            report = impact_report(root, args.query, args.extensions,
+                                   list(args.exclude) + _read_codedna_excludes(root))
+        else:
+            report = doctor_report(root)
+
+        if args.json:
+            print(json.dumps(report, ensure_ascii=False, indent=2))
+        elif args.command == "verify":
+            print(f"CodeDNA Verify — {report['files_checked']} files")
+            for issue in report["issues"]:
+                print(f"{issue['severity'].upper():7s} {issue['code']:16s} {issue['path']}")
+                print(f"        {issue['evidence']}")
+            print("OK — structural annotations are current" if report["ok"]
+                  else f"STALE — {len(report['issues'])} issue(s) found; run `codedna refresh {root}` after review")
+        elif args.command == "impact":
+            print(f"CodeDNA Impact — {args.query}")
+            if not report["matches"]:
+                print("NOT FOUND — use a repo-relative path or exact exported symbol")
+            else:
+                for match in report["matches"]:
+                    print(f"MATCH   {match}")
+                    print(f"RULES   {report['rules'][match]}")
+                for item in report["dependants"]:
+                    print(f"AFFECTS {item['path']}  via {item['via']}")
+        else:
+            print("CodeDNA Doctor")
+            for check in report["checks"]:
+                print(f"{check['status'].upper():7s} {check['code']:22s} {check['evidence']}")
+        return 0 if report["ok"] else 1
+
     if args.command == "session":
         sub = getattr(args, "session_command", None)
         if sub == "append":
@@ -3600,8 +3707,8 @@ def main():
         if args.tools is None:
             list_str_tools = _detect_ai_tools(path_repo_root)
             if not list_str_tools:
-                list_str_tools = ["claude"]  # sensible default
-                print("  No AI tool detected — defaulting to Claude Code")
+                list_str_tools = ["codex"]  # safest cross-vendor default: instructions only
+                print("  No AI tool detected — installing cross-vendor AGENTS.md")
         elif "all" in args.tools:
             list_str_tools = list(_TOOL_FILES.keys()) + list(_HOOK_INSTALLERS.keys())
         else:

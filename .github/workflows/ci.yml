@@ -30,15 +30,17 @@ jobs:
         run: |
           pytest tests/ -q --tb=short
 
-      - name: Lint Python (ruff)
-        run: |
-          ruff check tools/ benchmark_agent/*.py benchmark/*.py --ignore E501 || true
+      - name: Lint product and tests (ruff)
+        run: ruff check codedna_tool tests
 
       - name: Validate CodeDNA Manifests
-        run: |
-          python tools/codedna_setup.py validate benchmark_agent/projects/ 2>/dev/null || \
-          python tools/validate_manifests.py benchmark_agent/projects/ 2>/dev/null || \
-          echo "No annotated projects to validate yet — OK"
+        run: python tools/validate_manifests.py codedna_tool
+
+      - name: Dogfood CodeDNA coverage
+        run: codedna check codedna_tool
+
+      - name: Verify structural annotations are current
+        run: codedna verify codedna_tool --extensions py
 
       - name: Check integrations exist
         run: |
@@ -58,54 +60,14 @@ jobs:
             python -c "import ast; ast.parse(open('$f').read())" && echo "✓ $f" || exit 1
           done
 
-  benchmark-data:
-    name: Verify Benchmark Data
-    runs-on: ubuntu-latest
+  windows-core:
+    name: Windows core portability
+    runs-on: windows-latest
 
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
-
-      - name: Set up Python
-        uses: actions/setup-python@v5
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-
-      - name: Validate results JSON
-        run: |
-          python -c "
-          import json, sys
-
-          files = [
-              'benchmark_agent/results_agent.json',
-              'benchmark_agent/results_enterprise.json',
-          ]
-          for f in files:
-              try:
-                  data = json.load(open(f))
-                  print(f'✓ {f} — valid JSON ({len(data)} scenarios)')
-              except FileNotFoundError:
-                  print(f'⚠  {f} — not found (skip)')
-              except json.JSONDecodeError as e:
-                  print(f'✗ {f} — invalid JSON: {e}')
-                  sys.exit(1)
-          "
-
-      - name: Verify CodeDNA advantage in results
-        run: |
-          python -c "
-          import json, sys
-
-          try:
-              r = json.load(open('benchmark_agent/results_enterprise.json'))
-              # B1: CodeDNA should use fewer tools and find the bug
-              b1 = r.get('B1_suspended_revenue', {})
-              ctl_tools = b1.get('control', {}).get('tools', 0)
-              dna_tools = b1.get('codedna', {}).get('tools', 0)
-              dna_found = b1.get('codedna', {}).get('found', False)
-              assert dna_tools <= ctl_tools, f'B1: CodeDNA used more tools ({dna_tools} > {ctl_tools})'
-              assert dna_found, 'B1: CodeDNA did not find the bug'
-              print(f'✓ B1 verified: CodeDNA {dna_tools} calls (control {ctl_tools}), found={dna_found}')
-          except FileNotFoundError:
-              print('⚠  enterprise results not found — skip')
-          "
+      - run: pip install -e ".[dev]"
+      - run: pytest tests/test_manifest_store.py tests/test_language_adapters.py -q

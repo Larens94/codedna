@@ -1,11 +1,11 @@
 # CodeDNA: An In-Source Communication Protocol for AI Coding Agents — Specification
 
-**Protocol version:** 0.8
+**Protocol version:** 0.9
 **Tool release:** v1.0.0
 **Status:** Stable
-**Language:** Python (canonical), TypeScript, JavaScript, Go, Rust, Java, Ruby, C/C++
+**Languages:** Python (canonical), TypeScript, JavaScript, Go, PHP, Java, Kotlin, Ruby, Rust, C#, Swift, plus supported template families
 
-> **Versioning note**: the *protocol* version (0.8) tracks the annotation format and field semantics. The *tool release* (v1.0.0) tracks the CLI, plugin, and integrations. They evolve independently — protocol v0.9 may ship as tool v1.x for multiple releases.
+> **Versioning note**: the *protocol* version (0.9) tracks the annotation format and field semantics. The *tool release* (v1.0.0) tracks the CLI, plugin, and integrations. They evolve independently — protocol v0.9 may ship as tool v1.x for multiple releases.
 
 ---
 
@@ -149,7 +149,7 @@ Tooling: `codedna wiki bootstrap` generates a per-file Obsidian-ready vault with
 - **Zero retrieval latency**: no vector DB, no network call
 - **Sliding-window safe**: Level 2 sub-layers guide agents that skip the header
 - **Planner efficient**: docstring-only reads give a full codebase map in ~70 tok/file
-- **Python-native**: module docstring format, deeply embedded in LLM training data (other languages planned)
+- **Native annotation syntax**: Python uses module docstrings; every other supported language uses its valid native documentation or comment syntax
 - **Agent-first**: designed for agentic code generation workflows — the agent writes and maintains the annotations, not the human; marginal annotation cost approaches zero
 - **Human readable**: developers benefit as much as AI agents
 
@@ -437,16 +437,18 @@ agent_sessions:
 
 ```bash
 pipx install git+https://github.com/Larens94/codedna.git
-export ANTHROPIC_API_KEY=sk-...
-
-codedna init PATH     # first-time: L1 module headers + L2 Rules: on every .py file
+codedna install --path PATH --tools codex --no-wiki-sync
+codedna init PATH --no-llm  # free structural pass for all detected languages
 codedna update PATH   # incremental: only unannotated files (safe to re-run)
 codedna check PATH    # coverage report, no file changes
+codedna doctor --path PATH        # onboarding/environment health gate
+codedna impact FILE --path PATH   # pre-edit dependency and rules gate
+codedna verify PATH               # post-edit structural drift gate
 ```
 
-Options: `--model` (default: `claude-haiku-4-5-20251001`), `--dry-run`, `--no-llm`, `--repo-root`, `-v`
+Options: `--model`, `--dry-run`, `--no-llm`, `--repo-root`, `--extensions`, `-v`
 
-Cost: ~$1–3 for a Django-sized project (~500 files) with the default Haiku model.
+The structural `--no-llm` path needs no API key and has no model cost. Semantic `rules:` generation is opt-in via `--model <provider/model>` and uses that provider's credentials and pricing.
 
 ---
 
@@ -1386,7 +1388,11 @@ ReturnType myFunction(Type arg) {
 | Rust | `//! ...` inner doc at file top | `/// # Rules` on `pub fn` | `snake_case` prefixed | Supported |
 | Java | `/** ... */` Javadoc before class | `/** Rules: ... */` on method | `camelCase` prefixed | Supported |
 | Ruby | `# ...` block before requires | `# Rules: ...` before `def` | `snake_case` prefixed | Supported |
-| C/C++ | `/** ... */` before includes | `/** Rules: ... */` before function | `snake_case` prefixed | Supported |
+| PHP | `// ...` after `<?php` | `/** Rules: ... */` PHPDoc on method | `camelCase` prefixed | Supported |
+| Kotlin | `// ...` before package/imports | `/** Rules: ... */` KDoc on method | `camelCase` prefixed | Supported |
+| C# | `// ...` before namespace/imports | `/// Rules: ...` on public method | `camelCase` prefixed | Supported |
+| Swift | `// ...` at file top | `/// Rules: ...` on declaration | `camelCase` prefixed | Supported (structural parser) |
+| Templates | Native template comments | L1 only | Engine-native | Supported (7 families) |
 
 ---
 
@@ -1402,5 +1408,5 @@ ReturnType myFunction(Type arg) {
 | 0.6 | 2026-03-18 | Redundancy audit: removed `deps:` and `Depends:`. Added Level 0 `.codedna` manifest. Level 2 simplified to `Rules:` only. `used_by:` promoted to required field. Zoom metaphor. |
 | **0.7** | **2026-03-18** | **Header reduced to 3 fields: `exports:`, `used_by:`, `rules:`. `rules:` promoted to required — the inter-agent communication channel. `cascade:` absorbed into `used_by:` as `[cascade]` tag. Removed redundant fields: `tested_by:`, `tables:`, `raises:` (all inferrable from code). Python-only focus.** |
 | **0.7.1** | **2026-03-18** | **Added §2.5 codedna file format requirement (docstring + full source). Added §2.4 task-type analysis (dependency chains vs cross-cutting). Benchmark extended to 5 tasks, ≥5 runs/task, multi-model. Tool harness hardened with `list_files`/`read_file` directory guards.** |
-| **0.8 (proposed)** | — | **`cross_cutting_patterns:` section in `.codedna` manifest. Written by agents post-fix to capture patterns that span files with no dependency relationship. Enables navigation for cross-cutting tasks where `used_by:` graphs have no shared ancestor.** |
-| **0.9 (proposed)** | — | **Multi-language support: TypeScript/JS, Go, Rust, Java, Ruby, C/C++. Each language uses its native documentation comment syntax. Field names (`exports:`, `used_by:`, `rules:`, `agent:`, `message:`) are identical across all languages. See §11.** |
+| **0.8** | **2026-03** | **Added the `message:` agent-chat layer and cross-cutting context design.** |
+| **0.9** | **2026-04** | **Shipped multi-language support for 11 programming languages, 27 registered extensions, and 7 template families. Added `related:`, opt-in `wiki:`, retained session history, audit commands, and native agent integrations. See §11 and `docs/languages.md`.** |

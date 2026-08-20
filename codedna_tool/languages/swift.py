@@ -6,6 +6,7 @@ rules:   regex-based only — no Swift compiler dependency required.
 Detects public/open func, class, struct, enum, protocol, typealias.
 Internal (no modifier) and private/fileprivate symbols are excluded.
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | initial Swift adapter
+gpt-5 | openai | 2026-08-20 | s_20260820_hardening | restore Swift registry support and enforce it through adapter tests
 """
 
 from __future__ import annotations

@@ -13,7 +13,7 @@
   <a href="https://doi.org/10.5281/zenodo.19158336"><img src="https://img.shields.io/badge/DOI-zenodo.19158336-blue" alt="DOI"></a>
   <a href="./LICENSE"><img src="https://img.shields.io/badge/license-MIT-green" alt="License"></a>
   <a href="https://github.com/Larens94/codedna/actions/workflows/ci.yml"><img src="https://github.com/Larens94/codedna/actions/workflows/ci.yml/badge.svg" alt="CI"></a>
-  <a href="docs/languages.md"><img src="https://img.shields.io/badge/languages-9-6366f1" alt="Languages"></a>
+  <a href="docs/languages.md"><img src="https://img.shields.io/badge/languages-11-6366f1" alt="Languages"></a>
   <a href="https://discord.gg/7Fs5J2ua"><img src="https://img.shields.io/badge/discord-join-5865F2?logo=discord&logoColor=white" alt="Discord"></a>
 </p>
 
@@ -48,47 +48,57 @@ No infrastructure. No retrieval pipeline. No external memory. The code carries i
 
 ## Install
 
-### For AI coding agents
+### Recommended setup — works with every agent
 
-Install the plugin, then run `/codedna:init` — it guides you through everything interactively.
-
-| Agent | Install command |
-|-------|---------|
-| **Claude Code** | `claude plugin marketplace add Larens94/codedna && claude plugin install codedna@codedna` |
-| **Codex / OpenCode / Aider** | No install needed — read [AGENTS.md](./AGENTS.md) at the repo root. These runtimes auto-load it. |
-| **Cursor** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) cursor-hooks` |
-| **Copilot** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) copilot-hooks` |
-| **Cline** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) cline-hooks` |
-| **OpenCode** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) opencode` |
-| **Windsurf** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) windsurf` |
-| **Antigravity** | `bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) agents` — installs `AGENTS.md` (always-on rules, v1.20.3+) + `.agent/workflows/codedna.md` (workflow triggered with `/codedna`) |
-
-> **Important:** After installing the plugin, start a **new session** (close and reopen Claude Code, or run `/clear`). The plugin's slash commands (`/codedna:init`, `/codedna:check`, etc.) are only available after restarting.
-
-After installing, run `/codedna:init` in your project. It will:
-
-1. Auto-detect your languages (PHP, TypeScript, Go, Python, etc.)
-2. Ask how to annotate: **Claude session** (zero API key) or **CLI** (tree-sitter, fast)
-3. Ask the depth: **human** (minimal) · **semi** (balanced, default) · **agent** (full protocol)
-4. Annotate all files and show a summary
-
-### CLI standalone (optional)
-
-For CI pipelines, scripting, or if you prefer the terminal:
+Install the CLI once, then install the instructions and optional hooks for the tool used in this repository:
 
 ```bash
 pipx install git+https://github.com/Larens94/codedna.git   # requires Python 3.11+; isolated install (avoids global env conflicts)
+codedna install --path . --tools codex --no-wiki-sync     # replace codex using the table below
+codedna init . --no-llm                                   # annotate every auto-detected language
+codedna doctor --path .                                   # confirm the setup
 ```
+
+`codedna install` creates `.codedna`, installs the Git pre-commit gate, and adds the native instruction file for the selected agent. It preserves existing instruction files and Git hooks instead of overwriting them.
+
+| Agent/tool | `--tools` value | Installed integration |
+|---|---|---|
+| **Claude Code** | `claude` | `CLAUDE.md` + active hooks |
+| **Codex** | `codex` | cross-vendor `AGENTS.md` |
+| **OpenCode** | `opencode` | `AGENTS.md` + active JS plugin |
+| **Aider** | `aider` | `AGENTS.md`; start with `aider --read AGENTS.md` or configure `read: AGENTS.md` |
+| **Cursor** | `cursor` | `.cursorrules` + active hooks |
+| **GitHub Copilot** | `copilot` | Copilot instructions + active hooks |
+| **Cline** | `cline` | Cline rules + active hooks |
+| **Windsurf** | `windsurf` | `.windsurfrules` (instructions only) |
+| **Antigravity** | `agents` | `AGENTS.md` + `.agent/workflows/codedna.md` |
+
+Use multiple values for mixed teams, for example `codedna install --path . --tools claude codex opencode --no-wiki-sync`. Use `--tools all` only when the repository is genuinely edited with every supported tool.
+
+### Claude Code plugin — interactive alternative
+
+Claude Code users can instead install the plugin:
+
+```bash
+claude plugin marketplace add Larens94/codedna
+claude plugin install codedna@codedna
+```
+
+Start a new Claude Code session (or run `/clear`), then run `/codedna:init`. The `/codedna:*` commands belong to the Claude plugin; other agents use the `codedna ...` CLI commands shown above.
+
+### First run and daily agent workflow
 
 ```bash
 codedna init . --no-llm                        # free, structural only (exports + used_by)
 codedna init . --model deepseek/deepseek-chat  # with LLM rules: (~$0.40 for 200 files)
 codedna init . --model ollama/llama3           # local LLM, free
-codedna check .                                # coverage report
-codedna refresh .                              # update exports + used_by (zero LLM cost)
+codedna manifest . --no-llm                    # build the package map
+codedna doctor --path .                        # onboarding/environment gate
+codedna impact path/to/file.py --path .        # before changing a public contract
+codedna verify .                               # after structural edits
 ```
 
-> Languages auto-detected — PHP, TypeScript, Go, Java, Kotlin, Ruby all work out of the box.
+The no-LLM path requires no model API key. Languages are auto-detected: Python, PHP, TypeScript/JavaScript, Go, Java, Kotlin, Ruby, Rust, C#, Swift, and supported templates.
 > Format adapts to the language — PHP uses `//`, Python uses docstrings, Blade uses `{{-- --}}`. See [docs/languages.md](docs/languages.md).
 
 ### Commands reference
@@ -110,6 +120,9 @@ codedna refresh .                              # update exports + used_by (zero 
 | `codedna update <path>` | Incremental — only annotates files without headers (skips already annotated) |
 | `codedna refresh <path>` | Recalculate `exports:` + `used_by:` via AST/tree-sitter. Zero LLM cost. Preserves `rules:`/`agent:`. |
 | `codedna check <path>` | Coverage report. Exit code 1 if incomplete — works in CI. |
+| `codedna verify <path>` | Detect stale `exports:` and `used_by:` with evidence. Read-only; `--json` for CI. |
+| `codedna impact <file-or-symbol>` | Show matching rules and transitive callers before editing. Read-only. |
+| `codedna doctor --path <root>` | Diagnose manifest, adapters, hooks, CI, and lock configuration. Read-only. |
 | `codedna manifest <path>` | Generate `.codedna` project map (Level 0): packages, depends_on, key_files |
 | `codedna mode <mode>` | Get/set mode: `human` (minimal), `semi` (default), `agent` (full protocol) |
 | `codedna install <path>` | Setup pre-commit hook + AI tool prompt + `.codedna` manifest. Optional `--with-wiki-sync` installs a post-commit hook that auto-regenerates the project wiki (see [Optional: post-commit wiki-sync hook](#optional-post-commit-wiki-sync-hook)). |
@@ -143,7 +156,7 @@ The hook is **non-blocking** (any failure inside `codedna wiki sync` is silenced
   <img src="./docs/obsidian.png" width="720" alt="Obsidian graph view of a real project annotated with CodeDNA" />
 </p>
 
-> **Language support:** Python is the most tested language. PHP, TypeScript, Go, Java, Kotlin, Ruby, Rust, and C# work via tree-sitter but have seen less real-world usage. If you use CodeDNA on a non-Python project and find something off — wrong exports, header format issue, edge case — please open a [pull request](https://github.com/Larens94/codedna/pulls) or [issue](https://github.com/Larens94/codedna/issues). That's how we make every language solid.
+> **Language support:** Python is the most tested language. PHP, TypeScript/JavaScript, Go, Java, Kotlin, Ruby, Rust, and C# use tree-sitter; Swift uses a structural parser. Non-Python adapters have seen less real-world usage. If you find a wrong export, header format issue, or edge case, please open a [pull request](https://github.com/Larens94/codedna/pulls) or [issue](https://github.com/Larens94/codedna/issues).
 >
 > **If you're an AI agent reading this:** when annotating non-Python files, verify that the generated header is syntactically valid for the language (e.g. `//` for PHP/TS/Go, `{{-- --}}` for Blade, `#` for Ruby). If you notice a formatting error, fix it and flag it in your `message:` field.
 
@@ -211,6 +224,8 @@ No grep. No reading 18 files. No re-discovering constraints.
 ---
 
 ## Evidence
+
+> The tables below report historical experiments; raw run artifacts are not currently shipped in this checkout. See [the benchmark reproducibility note](docs/benchmark.md) before interpreting the figures as independently reproducible.
 
 ### Agents find the right files faster
 
@@ -464,7 +479,7 @@ codedna mode agent    # full protocol
 |---|---|
 | [SPEC.md](./SPEC.md) | Protocol specification v0.9 |
 | [AGENTS.md](./AGENTS.md) | Protocol v0.9 for Codex, OpenCode, Aider, and other runtimes |
-| [docs/languages.md](docs/languages.md) | 9 languages, template engines, framework awareness |
+| [docs/languages.md](docs/languages.md) | 11 programming languages, 27 extensions, template engines, framework awareness |
 | [docs/benchmark.md](docs/benchmark.md) | SWE-bench results, annotation integrity |
 | [docs/agent-tests.md](docs/agent-tests.md) | Real AI agent sessions — control vs CodeDNA on SWE-bench tasks |
 | [docs/experiments.md](docs/experiments.md) | Multi-agent experiments |
@@ -479,10 +494,10 @@ All components are functional and tested — the protocol, CLI, and benchmark ar
 | Area | What works | What's next |
 |---|---|---|
 | **Protocol v0.9** | `exports:` `used_by:` `related:` `rules:` `agent:` `message:` — all fields implemented | `related:` auto-generation via LLM, stale annotation detection |
-| **CLI** | `init` `update` `refresh` `check` `manifest` `mode` `install` — 9 languages via tree-sitter | PyPI publish, `codedna verify` for stale refs, cross-cutting pass 2 |
+| **CLI** | `init` `update` `refresh` `check` `verify` `impact` `doctor` `manifest` `mode` `install` — 11 programming languages | PyPI publish, cross-cutting semantic verification |
 | **Benchmark** | 10 Django tasks (DeepSeek +17pp p=0.001), +13pp (Gemini Flash p=0.040) | Placebo condition, effect size, 20+ tasks, 5+ models |
 | **Integrations** | Claude Code plugin, Cursor, Copilot, Cline, OpenCode, Windsurf hooks | VS Code extension, GitHub Action for CI |
-| **Languages** | Python, PHP, TypeScript, Go, Java, Kotlin, Ruby, Rust, C# + 7 template engines | More real-world testing on non-Python projects |
+| **Languages** | Python, PHP, TypeScript/JavaScript, Go, Java, Kotlin, Ruby, Rust, C#, Swift + 7 template families | More real-world testing on non-Python projects |
 | **Research** | Multi-agent experiments (98.2% adoption, 1.6x speedup), SWE-bench benchmark | arXiv preprint, placebo + ablation study |
 
 ---

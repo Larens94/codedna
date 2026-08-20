@@ -1,17 +1,17 @@
 """benchmark_server.py — Live Flask benchmark runner with SSE streaming.
 
-exports: app | run_with_streaming() | _save_run_results() | _avg_f1()
+exports: _TASK_ID_RE | _MODEL_SAFE_RE | SWEBENCH_DIR | BASE_DIR | TASKS_FILE | PROJECTS_DIR | RUNS_DIR | UI_FILE | run_with_streaming(problem, repo_root, provider, model_id, side, queue, temperature, max_turns, system_prompt) | DASHBOARD_FILE | index() | dashboard() | api_results() | api_models() | api_tasks() | api_run() | api_stream()
 used_by: none (entry-point script)
 rules:   task_id MUST be digits-only (path traversal guard at line 466).
-         Resolved ctrl_dir/cdna_dir MUST be contained in PROJECTS_DIR (line 478).
-         Model segment in save path MUST be sanitized (line 589) — containment check under RUNS_DIR.
-         Imports ALL logic from swebench/run_agent_multi.py to guarantee identical behavior.
+Resolved ctrl_dir/cdna_dir MUST be contained in PROJECTS_DIR (line 478).
+Model segment in save path MUST be sanitized (line 589) — containment check under RUNS_DIR.
+Imports ALL logic from swebench/run_agent_multi.py to guarantee identical behavior.
 agent:   claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | initial CodeDNA header; add task_id digit validation + PROJECTS_DIR containment check + RUNS_DIR containment check; fix file handle leaks; drop unused re/time/all_runs (CodeQL #1072-1077, #1083-1087)
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql2 | harden path sanitizers: task_id via anchored _TASK_ID_RE + int() cast; model via _MODEL_SAFE_RE whitelist; Path.is_relative_to() for containment — silences CodeQL reopened path-injection (#1712-1716, reopened #1072-1077)
-
 Usage:
-  GEMINI_API_KEY=... python benchmark_server.py
-  Open http://localhost:5001
+GEMINI_API_KEY=... python benchmark_server.py
+Open http://localhost:5001
+message:
 """
 
 import json

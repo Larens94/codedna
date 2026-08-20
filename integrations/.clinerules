@@ -1,13 +1,15 @@
-# CodeDNA v0.8 — In-Source Communication Protocol
-# Annotate your project: pip install git+https://github.com/Larens94/codedna.git && codedna init ./
+# CodeDNA v0.9 — In-Source Communication Protocol
+# Setup: pipx install git+https://github.com/Larens94/codedna.git && codedna install --path . --tools cline --no-wiki-sync && codedna init . --no-llm
 
-This project uses CodeDNA. Every Python file begins with a module docstring.
+This project uses CodeDNA. Every supported source file starts with a native CodeDNA header; Python uses a module docstring, while other languages use their valid comment syntax.
 
 On SESSION START:
 - Read `.codedna` at repo root — project map, last 3-5 agent_sessions entries
+- Run `codedna doctor --path .`; resolve errors before editing
 - CodeDNA is additive — it complements Cline's native memory, not replaces it
 
 On EDIT:
+- Before changing a public contract, run `codedna impact <file-or-symbol> --path .`
 - Re-read `rules:` before writing any logic — never violate these constraints
 - Read `Rules:` in function docstrings before writing logic there
 - Check `used_by:` after changes and update callers if needed
@@ -71,7 +73,8 @@ When NOT to add: simple getters, obvious control flow, standard library usage.
 - Lifecycle: promote to `rules:` or dismiss. Always append-only — never delete.
 
 On SESSION END:
-- Append to `.codedna` → `agent_sessions:` with agent, provider, date, session_id, task, changed, visited, message
+- Run `codedna verify .`; if stale, review evidence, run `codedna refresh .`, then verify again
+- Use `codedna session append` with agent, provider, session-id, task, changed, visited, and message; never edit `agent_sessions:` manually
 - Commit with AI git trailers: AI-Agent, AI-Provider, AI-Session, AI-Visited, AI-Message
 
 `exports:` are contracts — never rename without explicit instruction and updating all `used_by:` callers.

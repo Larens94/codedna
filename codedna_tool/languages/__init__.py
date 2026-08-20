@@ -1,19 +1,22 @@
 """languages/__init__.py — Language adapter registry for CodeDNA v0.9.
 
 exports: SUPPORTED_EXTENSIONS | get_adapter(extension)
-used_by: codedna_tool/cli.py → SUPPORTED_EXTENSIONS, get_adapter
+used_by: codedna_tool/audit.py → SUPPORTED_EXTENSIONS, get_adapter
+         codedna_tool/cli.py → SUPPORTED_EXTENSIONS, get_adapter
+         codedna_tool/wiki.py → get_adapter
          tests/test_integration_langs.py → get_adapter
          tests/test_language_adapters.py → get_adapter
          tests/test_refresh.py → get_adapter
 rules:   adapters are stateless; get_adapter returns None for unsupported extensions.
 Never import language-specific deps here — keep this registry lightweight.
-Tree-sitter is REQUIRED for source languages — no regex fallback.
+Tree-sitter is REQUIRED where an AST adapter exists; Swift uses its structural regex adapter.
 Regex adapters (php.py, go.py, etc.) still exist as utility classes for inject_header/resolve.
-agent:   claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | added template engine adapters: Blade, Jinja2/Twig, ERB/EJS, Handlebars, Razor, Vue SFC, Svelte — 17 total extensions
-claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | added .volt (Phalcon Volt engine) via JinjaAdapter — same {# #} comment syntax
+agent:   claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | added .volt (Phalcon Volt engine) via JinjaAdapter — same {# #} comment syntax
 claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_001 | added tree-sitter adapters for TS/JS and Go with regex fallback
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | added tree-sitter adapters for PHP, Java, Rust, C#, Ruby, Kotlin — all 9 source languages now AST-powered with regex fallback
 claude-opus-4-6 | anthropic | 2026-04-18 | s_20260418_gate6 | GATE 6: removed regex fallback — tree-sitter is now required for all source languages; regex adapters kept only as utility classes
+gpt-5 | openai | 2026-08-20 | s_20260820_hardening | restore advertised Rust, C#, and Swift registry support with executable tests
+message:
 """
 
 from typing import Optional
@@ -25,6 +28,7 @@ from .handlebars import HandlebarsAdapter
 from .jinja import JinjaAdapter
 from .razor import RazorAdapter
 from .vue import VueAdapter, SvelteAdapter
+from .swift import SwiftAdapter
 
 # ── Tree-sitter adapters (required) ──────────────────────────────────────────
 from ._ts_typescript import TreeSitterTypeScriptAdapter
@@ -33,6 +37,8 @@ from ._ts_php import TreeSitterPhpAdapter
 from ._ts_java import TreeSitterJavaAdapter
 from ._ts_ruby import TreeSitterRubyAdapter
 from ._ts_kotlin import TreeSitterKotlinAdapter
+from ._ts_rust import TreeSitterRustAdapter
+from ._ts_csharp import TreeSitterCSharpAdapter
 
 _ts_adapter = TreeSitterTypeScriptAdapter()
 _go_adapter = TreeSitterGoAdapter()
@@ -40,6 +46,8 @@ _php_adapter = TreeSitterPhpAdapter()
 _java_adapter = TreeSitterJavaAdapter()
 _ruby_adapter = TreeSitterRubyAdapter()
 _kotlin_adapter = TreeSitterKotlinAdapter()
+_rust_adapter = TreeSitterRustAdapter()
+_csharp_adapter = TreeSitterCSharpAdapter()
 
 _REGISTRY: dict[str, LanguageAdapter] = {
     # Source code languages (tree-sitter powered)
@@ -54,6 +62,9 @@ _REGISTRY: dict[str, LanguageAdapter] = {
     ".kt":    _kotlin_adapter,
     ".kts":   _kotlin_adapter,
     ".rb":    _ruby_adapter,
+    ".rs":    _rust_adapter,
+    ".cs":    _csharp_adapter,
+    ".swift": SwiftAdapter(),
     # Template engines (regex-based by design)
     ".blade.php": BladeAdapter(),
     ".j2":        JinjaAdapter(),

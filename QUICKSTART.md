@@ -29,22 +29,29 @@ Use both. At session start, read `.codedna` first, then your tool's native memor
 Run this from the root of your project:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh)
+pipx install git+https://github.com/Larens94/codedna.git
+codedna install --path . --tools codex --no-wiki-sync
+codedna init . --no-llm
+codedna doctor --path .
 ```
 
-This installs CodeDNA rules for **all** supported tools (Claude Code, Cursor, Copilot, Cline, Windsurf, OpenCode, Antigravity).
-
-To install for a **single tool** only:
+Replace `codex` with the tool you use, or pass several values for a mixed team:
 
 ```bash
-bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) claude-hooks
+codedna install --path . --tools claude codex opencode --no-wiki-sync
 ```
 
-Options: `claude` · `claude-hooks` · `cursor` · `cursor-hooks` · `copilot` · `copilot-hooks` · `cline` · `cline-hooks` · `windsurf` · `opencode` · `agents` · `all`
+Supported values: `claude` · `codex` · `aider` · `cursor` · `copilot` · `cline` · `windsurf` · `opencode` · `agents` · `all`.
 
-> **`-hooks` variants** install both the base prompt and active enforcement hooks that validate annotations on every file write. Recommended for most users.
+The installer adds the tool's native instructions, the available enforcement hooks or plugin, the shared Git pre-commit gate, and `.codedna`. Existing instruction files and Git hooks are preserved.
 
-> After installing, skip to [Step 2 — Annotate your first file](#step-2--annotate-your-first-file).
+The older curl installer remains available as a prompt-only fallback when the CLI cannot be installed:
+
+```bash
+bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) codex
+```
+
+> Use `--tools all` only when the repository is genuinely edited with every supported tool.
 
 ---
 
@@ -82,11 +89,12 @@ Manual fallback — paste the following in `~/.gemini/GEMINI.md`, `<project>/AGE
 ```
 You follow the CodeDNA v0.9 Annotation Standard (github.com/Larens94/codedna).
 
-ON READ: parse the module docstring first (first 8–12 lines). Check `rules:` before
+ON READ: parse the CodeDNA module header first (first 8–12 lines). Check `rules:` before
 writing. Check `used_by:` to understand who depends on this file. Read `Rules:` in
 function docstrings before writing logic in that function.
 
-ON WRITE: every new Python file must start with a module docstring:
+ON WRITE: every new source file must start with a CodeDNA header in its native comment syntax.
+For Python, use the canonical module docstring:
   """filename.py — <purpose ≤15 words>.
   exports: function(arg) -> type
   used_by: consumer.py → function
@@ -110,13 +118,13 @@ Create `.cursorrules` at the root of your project:
 # CodeDNA v0.9 — cursor rules
 
 ON READ
-- Parse the module docstring (first 8–12 lines) before reading code.
+- Parse the CodeDNA module header (first 8–12 lines) before reading code.
 - Respect `rules:` as hard constraints.
 - Check `used_by:` to understand who depends on this file.
 - Read `Rules:` in function docstrings before writing logic.
 
 ON WRITE
-- Begin every new Python file with a module docstring (exports/used_by/rules).
+- Begin every new source file with a native CodeDNA header (exports/used_by/rules).
 - For critical functions, add docstring with Rules:.
 - Use semantic naming: list_dict_users_from_db = get_users()
 
@@ -232,14 +240,13 @@ Or annotate an entire codebase automatically with the CLI:
 
 ```bash
 pipx install git+https://github.com/Larens94/codedna.git
-export ANTHROPIC_API_KEY=sk-...
-
-codedna init ./          # annotates every .py file (L1 headers + L2 Rules:)
-codedna update ./        # incremental — only unannotated files
-codedna check ./         # coverage report, no changes
+codedna init . --no-llm  # free structural pass; auto-detects all supported languages
+codedna update .         # incremental — only unannotated files
+codedna check .          # coverage report, no changes
+codedna verify .         # structural drift report after edits
 ```
 
-Cost: ~$1–3 for a Django-sized project using the default Haiku model.
+No API key is required for `--no-llm`. To generate semantic `rules:` with a model, pass `--model <provider/model>` and configure that provider separately.
 
 ### Optional: wiki layer *(v0.9 experimental)*
 

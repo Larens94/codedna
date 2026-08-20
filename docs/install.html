@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Install — CodeDNA</title>
-<meta name="description" content="Install CodeDNA for Claude Code, Cursor, Copilot, Cline, OpenCode and 9 programming languages.">
+<meta name="description" content="Install CodeDNA for Claude Code, Codex, OpenCode, Aider, Cursor, Copilot, Cline, Windsurf and 11 programming languages.">
 <link rel="icon" href="logo.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -226,6 +226,7 @@ tr:last-child td { border-bottom: none; }
   nav.topnav { padding: 0 1rem; }
 }
 </style>
+<link rel="stylesheet" href="site.css">
 </head>
 <body>
 
@@ -257,6 +258,7 @@ tr:last-child td { border-bottom: none; }
   <a href="#cline" onclick="closeDrawer()">Cline</a>
   <a href="#opencode" onclick="closeDrawer()">OpenCode</a>
   <span class="sb-label">Instructions only</span>
+  <a href="#codex" onclick="closeDrawer()">Codex</a>
   <a href="#windsurf" onclick="closeDrawer()">Windsurf</a>
   <a href="#aider" onclick="closeDrawer()">Aider</a>
   <a href="#antigravity" onclick="closeDrawer()">Antigravity</a>
@@ -295,6 +297,7 @@ tr:last-child td { border-bottom: none; }
 
   <div class="sb-group">
     <span class="sb-label">Instructions only</span>
+    <a class="sb-link" href="#codex"><span class="sb-dot amber"></span>Codex</a>
     <a class="sb-link" href="#windsurf"><span class="sb-dot amber"></span>Windsurf</a>
     <a class="sb-link" href="#aider"><span class="sb-dot amber"></span>Aider</a>
     <a class="sb-link" href="#antigravity"><span class="sb-dot amber"></span>Antigravity</a>
@@ -332,27 +335,27 @@ tr:last-child td { border-bottom: none; }
   <div style="margin-bottom:2rem">
     <p class="page-meta">Documentation</p>
     <h1>Install CodeDNA</h1>
-    <p style="font-size:15.5px;max-width:500px;color:var(--gray-600)">One command installs the protocol for your AI tool — instructions + real-time enforcement.</p>
+    <p style="font-size:15.5px;max-width:590px;color:var(--gray-600)">One CLI connects every coding agent to the same protocol, annotates all supported languages, and verifies the setup.</p>
   </div>
 
   <!-- OVERVIEW -->
   <section id="overview">
     <h2>Overview</h2>
-    <p>Setup is two steps. For a new project, step 1 is enough — the agent annotates files as it creates them. For an existing codebase, do both.</p>
+    <p>Use the same setup for a new repository or an existing codebase. No model API key is required for the structural pass.</p>
 
     <div class="steps">
       <div class="step">
         <div class="step-n">1</div>
         <div class="step-body">
-          <strong>Install the integration for your AI tool</strong>
-          <p>Tells the agent how to follow the CodeDNA protocol. Choose your tool below.</p>
+          <strong>Install the CodeDNA CLI</strong>
+          <p>Provides language detection, annotation, verification, and the project installer.</p>
         </div>
       </div>
       <div class="step">
         <div class="step-n">2</div>
         <div class="step-body">
-          <strong>Annotate your existing codebase (existing projects only)</strong>
-          <p>Bulk-adds CodeDNA headers to files already in your repo. See <a href="#cli" style="color:var(--black);text-decoration:underline;text-underline-offset:3px">CLI</a>.</p>
+          <strong>Connect agents and annotate the repository</strong>
+          <p>Installs native instructions/hooks, then adds CodeDNA headers to existing source files.</p>
         </div>
       </div>
     </div>
@@ -360,13 +363,14 @@ tr:last-child td { border-bottom: none; }
     <div class="table-wrap">
     <table>
       <tr><th>Tool</th><th>Option</th><th>Enforcement</th></tr>
-      <tr><td><strong>Claude Code</strong></td><td><span class="ic">claude-hooks</span></td><td><span class="badge badge-green">Active</span></td></tr>
-      <tr><td><strong>Cursor</strong></td><td><span class="ic">cursor-hooks</span></td><td><span class="badge badge-green">Active</span> <span style="font-size:11px;color:var(--gray-400)">v1.7+</span></td></tr>
-      <tr><td><strong>GitHub Copilot</strong></td><td><span class="ic">copilot-hooks</span></td><td><span class="badge badge-green">Active</span></td></tr>
-      <tr><td><strong>Cline</strong></td><td><span class="ic">cline-hooks</span></td><td><span class="badge badge-green">Active</span> <span style="font-size:11px;color:var(--gray-400)">v3.36+</span></td></tr>
+      <tr><td><strong>Claude Code</strong></td><td><span class="ic">claude</span></td><td><span class="badge badge-green">Active</span></td></tr>
+      <tr><td><strong>Codex</strong></td><td><span class="ic">codex</span></td><td><span class="badge badge-amber">Instructions + Git gate</span></td></tr>
+      <tr><td><strong>Cursor</strong></td><td><span class="ic">cursor</span></td><td><span class="badge badge-green">Active</span> <span style="font-size:11px;color:var(--gray-400)">v1.7+</span></td></tr>
+      <tr><td><strong>GitHub Copilot</strong></td><td><span class="ic">copilot</span></td><td><span class="badge badge-green">Active</span></td></tr>
+      <tr><td><strong>Cline</strong></td><td><span class="ic">cline</span></td><td><span class="badge badge-green">Active</span> <span style="font-size:11px;color:var(--gray-400)">v3.36+</span></td></tr>
       <tr><td><strong>OpenCode</strong></td><td><span class="ic">opencode</span></td><td><span class="badge badge-green">Active</span></td></tr>
       <tr><td>Windsurf</td><td><span class="ic">windsurf</span></td><td><span class="badge badge-amber">Instructions only</span></td></tr>
-      <tr><td>Aider</td><td><span class="ic">claude</span></td><td><span class="badge badge-amber">Instructions only</span></td></tr>
+      <tr><td>Aider</td><td><span class="ic">aider</span></td><td><span class="badge badge-amber">Instructions + Git gate</span></td></tr>
       <tr><td><strong>Antigravity</strong></td><td><span class="ic">agents</span></td><td><span class="badge badge-amber">Instructions only</span> <span style="font-size:11px;color:var(--gray-400)">v1.20.3+</span></td></tr>
     </table>
     </div>
@@ -379,19 +383,18 @@ tr:last-child td { border-bottom: none; }
   <!-- QUICK SETUP -->
   <section id="quick-setup">
     <h2>Quick Setup</h2>
-    <p>Run one command for your tool:</p>
+    <p>Run these commands from the repository root:</p>
     <div class="install-box">
       <div>
         <div class="lbl">terminal</div>
-        <code id="qs-cmd">bash &lt;(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) claude-hooks</code>
+        <code id="qs-cmd">pipx install git+https://github.com/Larens94/codedna.git</code>
       </div>
       <button class="cp" onclick="copyText('qs-cmd',this)">copy</button>
     </div>
-    <p style="margin-top:-.25rem">Replace <span class="ic">claude-hooks</span> with your tool's option from the table above.</p>
-
-    <p>For an <strong>existing codebase</strong>, also run:</p>
-    <div class="cb"><button class="cp" onclick="copyPre(this)">copy</button><pre>pipx install git+https://github.com/Larens94/codedna.git
-codedna init /path/to/project <span class="c">--no-llm  # free, structural only</span></pre></div>
+    <div class="cb"><button class="cp" onclick="copyPre(this)">copy</button><pre>codedna install --path . --tools codex <span class="c">--no-wiki-sync</span>
+codedna init . --no-llm
+codedna doctor --path .</pre></div>
+    <p>Replace <span class="ic">codex</span> with one or more values from the table. Mixed teams can use <span class="ic">--tools claude codex opencode</span>.</p>
   </section>
 
   <hr>
@@ -406,7 +409,7 @@ codedna init /path/to/project <span class="c">--no-llm  # free, structural only<
     <div class="install-box">
       <div>
         <div class="lbl">terminal</div>
-        <code id="cc-cmd">bash &lt;(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) claude-hooks</code>
+        <code id="cc-cmd">codedna install --path . --tools claude --no-wiki-sync</code>
       </div>
       <button class="cp" onclick="copyText('cc-cmd',this)">copy</button>
     </div>
@@ -434,6 +437,21 @@ codedna init /path/to/project <span class="c">--no-llm  # free, structural only<
 
   <hr>
 
+  <!-- CODEX -->
+  <section id="codex">
+    <div class="tool-header">
+      <h2>Codex</h2>
+      <span class="badge badge-amber">Instructions + Git gate</span>
+    </div>
+    <div class="install-box">
+      <div><div class="lbl">terminal</div><code id="codex-cmd">codedna install --path . --tools codex --no-wiki-sync</code></div>
+      <button class="cp" onclick="copyText('codex-cmd',this)">copy</button>
+    </div>
+    <p>Installs the cross-vendor <span class="ic">AGENTS.md</span>, the local manifest, and the Git pre-commit gate. Codex discovers the repository instructions automatically and follows the same protocol as every other agent.</p>
+  </section>
+
+  <hr>
+
   <!-- CURSOR -->
   <section id="cursor">
     <div class="tool-header">
@@ -445,7 +463,7 @@ codedna init /path/to/project <span class="c">--no-llm  # free, structural only<
     <div class="install-box">
       <div>
         <div class="lbl">terminal</div>
-        <code id="cur-cmd">bash &lt;(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) cursor-hooks</code>
+        <code id="cur-cmd">codedna install --path . --tools cursor --no-wiki-sync</code>
       </div>
       <button class="cp" onclick="copyText('cur-cmd',this)">copy</button>
     </div>
@@ -473,7 +491,7 @@ codedna init /path/to/project <span class="c">--no-llm  # free, structural only<
     <div class="install-box">
       <div>
         <div class="lbl">terminal</div>
-        <code id="cop-cmd">bash &lt;(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) copilot-hooks</code>
+        <code id="cop-cmd">codedna install --path . --tools copilot --no-wiki-sync</code>
       </div>
       <button class="cp" onclick="copyText('cop-cmd',this)">copy</button>
     </div>
@@ -501,7 +519,7 @@ codedna init /path/to/project <span class="c">--no-llm  # free, structural only<
     <div class="install-box">
       <div>
         <div class="lbl">terminal</div>
-        <code id="cline-cmd">bash &lt;(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) cline-hooks</code>
+        <code id="cline-cmd">codedna install --path . --tools cline --no-wiki-sync</code>
       </div>
       <button class="cp" onclick="copyText('cline-cmd',this)">copy</button>
     </div>
@@ -527,7 +545,7 @@ codedna init /path/to/project <span class="c">--no-llm  # free, structural only<
     <div class="install-box">
       <div>
         <div class="lbl">terminal</div>
-        <code id="oc-cmd">bash &lt;(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) opencode</code>
+        <code id="oc-cmd">codedna install --path . --tools opencode --no-wiki-sync</code>
       </div>
       <button class="cp" onclick="copyText('oc-cmd',this)">copy</button>
     </div>
@@ -549,13 +567,13 @@ codedna init /path/to/project <span class="c">--no-llm  # free, structural only<
   <section id="windsurf">
     <div class="tool-header">
       <h2>Windsurf</h2>
-      <span class="badge badge-amber">Instructions only</span>
+      <span class="badge badge-amber">Instructions + Git gate</span>
     </div>
 
     <div class="install-box">
       <div>
         <div class="lbl">terminal</div>
-        <code id="ws-cmd">bash &lt;(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) windsurf</code>
+        <code id="ws-cmd">codedna install --path . --tools windsurf --no-wiki-sync</code>
       </div>
       <button class="cp" onclick="copyText('ws-cmd',this)">copy</button>
     </div>
@@ -576,15 +594,15 @@ codedna init /path/to/project <span class="c">--no-llm  # free, structural only<
     <div class="install-box">
       <div>
         <div class="lbl">terminal</div>
-        <code id="aid-cmd">bash &lt;(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) claude</code>
+        <code id="aid-cmd">codedna install --path . --tools aider --no-wiki-sync</code>
       </div>
       <button class="cp" onclick="copyText('aid-cmd',this)">copy</button>
     </div>
 
-    <p>Installs <span class="ic">CLAUDE.md</span>, then pass it as system prompt at launch:</p>
-    <div class="cb"><button class="cp" onclick="copyPre(this)">copy</button><pre>aider --system-prompt "$(cat CLAUDE.md)"</pre></div>
+    <p>Installs <span class="ic">AGENTS.md</span>. Load it as Aider's read-only conventions file:</p>
+    <div class="cb"><button class="cp" onclick="copyPre(this)">copy</button><pre>aider --read AGENTS.md</pre></div>
     <p>Or add permanently to <span class="ic">.aider.conf.yml</span>:</p>
-    <div class="cb"><button class="cp" onclick="copyPre(this)">copy</button><pre>system_prompt: CLAUDE.md</pre></div>
+    <div class="cb"><button class="cp" onclick="copyPre(this)">copy</button><pre>read: AGENTS.md</pre></div>
   </section>
 
   <hr>
@@ -600,7 +618,7 @@ codedna init /path/to/project <span class="c">--no-llm  # free, structural only<
     <div class="install-box">
       <div>
         <div class="lbl">terminal</div>
-        <code id="ag-cmd">bash &lt;(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) agents</code>
+        <code id="ag-cmd">codedna install --path . --tools agents --no-wiki-sync</code>
       </div>
       <button class="cp" onclick="copyText('ag-cmd',this)">copy</button>
     </div>
@@ -641,6 +659,9 @@ ANTHROPIC_API_KEY=sk-... codedna init /path/to/project --model claude-haiku-4-5-
       <tr><td><span class="ic">codedna update PATH</span></td><td>Incremental — only unannotated files, safe to re-run</td></tr>
       <tr><td><span class="ic">codedna refresh PATH</span></td><td>Recalculate <span class="ic">exports:</span> + <span class="ic">used_by:</span> via AST/tree-sitter. Zero LLM cost. Preserves <span class="ic">rules:</span>/<span class="ic">agent:</span>.</td></tr>
       <tr><td><span class="ic">codedna check PATH</span></td><td>Coverage report without modifying files. Exit code 1 if incomplete — works in CI.</td></tr>
+      <tr><td><span class="ic">codedna doctor --path PATH</span></td><td>Onboarding health check for the manifest, parsers, hooks, CI, and lock configuration.</td></tr>
+      <tr><td><span class="ic">codedna impact FILE --path PATH</span></td><td>Show rules and transitive callers before changing a public contract.</td></tr>
+      <tr><td><span class="ic">codedna verify PATH</span></td><td>Read-only structural drift gate for <span class="ic">exports:</span> and <span class="ic">used_by:</span>. Add <span class="ic">--json</span> in CI.</td></tr>
       <tr><td><span class="ic">codedna manifest PATH</span></td><td>Generate <span class="ic">.codedna</span> project map (Level 0): packages, depends_on, key_files</td></tr>
       <tr><td><span class="ic">codedna mode MODE</span></td><td>Get/set mode: <span class="ic">human</span> (minimal), <span class="ic">semi</span> (default), <span class="ic">agent</span> (full protocol)</td></tr>
       <tr><td><span class="ic">codedna wiki bootstrap PATH</span></td><td>Generate a per-file <a href="https://obsidian.md" target="_blank">Obsidian</a> vault under <span class="ic">docs/wiki/</span> with <span class="ic">[[wikilinks]]</span> from <span class="ic">used_by:</span>/<span class="ic">related:</span> graphs</td></tr>
@@ -671,7 +692,7 @@ ANTHROPIC_API_KEY=sk-... codedna init /path/to/project --model claude-haiku-4-5-
   <!-- LANGUAGES -->
   <section id="languages">
     <h2>Language Annotation Format</h2>
-    <p>Field names are identical across all languages. Only the comment syntax changes. Select your language:</p>
+    <p>Field names are identical across all languages; only native comment syntax changes. CodeDNA registers 27 extensions across Python, TypeScript, JavaScript, Go, PHP, Java, Kotlin, Ruby, Rust, C#, Swift, and seven template families. Explore representative formats below:</p>
 
     <div class="lang-grid" id="lang-cards">
       <div class="lang-card active" data-lang="python" onclick="showLang('python',this)">

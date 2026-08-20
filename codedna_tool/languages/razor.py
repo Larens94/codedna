@@ -8,6 +8,7 @@ Detects @model, @inject, @using as structural info.
 Detects <partial>, <component> tag helpers as deps.
 agent:   claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | initial Razor template adapter
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | remove unused _USING_RE regex global (dead declaration) — CodeQL #1660
+gpt-5 | openai | 2026-08-20 | s_20260820_hardening | add explicit contract for Razor header detection
 """
 
 from __future__ import annotations
@@ -40,7 +41,10 @@ class RazorAdapter(LanguageAdapter):
         return "@*"
 
     def has_codedna_header(self, source: str) -> bool:
-        """Check for CodeDNA block in @* *@ comment."""
+        """Check for CodeDNA block in Razor comments.
+
+        Rules:   Inspect only the header region and strip Razor comment markers.
+        """
         for line in source.splitlines()[:30]:
             stripped = line.strip()
             for prefix in ("@*", "*@", "*"):

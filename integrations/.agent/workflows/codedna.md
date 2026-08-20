@@ -15,8 +15,10 @@ CodeDNA is the **shared** layer — git-tracked, visible to every agent and ever
 
 ## Session start
 
-1. Read `.codedna` at repo root — project map and last 3 `agent_sessions:` entries
+1. Read `.codedna` at repo root — project map and retained `agent_sessions:` entries
 2. Read only the module docstring (first 8–12 lines) of each file you plan to touch — build an `exports:` → `used_by:` graph before opening any file in full
+3. Run `codedna doctor --path .` on onboarding and resolve errors before editing
+4. Run `codedna impact <file-or-symbol> --path .` before changing a public contract
 
 ## Reading a file
 
@@ -26,6 +28,8 @@ CodeDNA is the **shared** layer — git-tracked, visible to every agent and ever
 4. Note `rules:` → hard constraints that apply everywhere in this file
 5. Note `agent:` → session history from previous agents; read to understand *why* the current state exists
 6. For any function, check its docstring for `Rules:` before writing logic there
+
+After structural edits run `codedna verify .`; exit 1 means review evidence, refresh structural fields, and verify again. Use `--json` for automation. Verification is structural, not a semantic proof of `rules:`.
 
 ## Creating a file
 

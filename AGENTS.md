@@ -6,7 +6,7 @@ This project uses the **CodeDNA** in-source communication protocol. Follow these
 
 ## Reading files
 
-1. Read the **module docstring** at the top of every Python file before reading any code.
+1. Read the **CodeDNA module header** at the top of every supported source file before reading any code. Python uses a module docstring; other languages use their native comment syntax.
 2. Parse `exports:` — these are symbols you **must never rename or remove** without explicit instruction.
 3. Parse `used_by:` — callers that depend on this file. **Do not follow all of them blindly.** Ask: "does this caller's domain intersect with my current task?" Only explore callers relevant to the specific change you're making.
 4. Parse `related:` — files sharing the same logic without importing each other. Same filter: is it relevant to this task?
@@ -14,9 +14,22 @@ This project uses the **CodeDNA** in-source communication protocol. Follow these
 6. Parse `agent:` — session history written by previous agents; read to understand *why* the current state exists.
 7. For any function with a `Rules:` docstring, read and respect those before writing logic.
 
+## Required command workflow
+
+Use the audit commands as evidence gates:
+
+| When | Command | Agent action |
+|---|---|---|
+| First session/onboarding | `codedna doctor --path .` | Fix `ERROR` items before editing. Report `WARNING` items as optional integrations. |
+| Before changing a public file or symbol | `codedna impact <file-or-symbol> --path .` | Read every `MATCH` rule and inspect domain-relevant `AFFECTS` files. Exit 1 means resolve the correct query before editing. |
+| After structural edits | `codedna verify .` | Exit 1 means review evidence, run `codedna refresh .`, then verify again. Never overwrite semantic `rules:`. |
+| Automation/CI | add `--json` | Parse stable structured fields. Exit 0 passes; exit 1 reports actionable findings. |
+
+`verify` proves structural consistency only (`exports:` and `used_by:`); it does not certify that natural-language `rules:` are semantically true.
+
 ## Writing new files
 
-Every new Python source file **must begin** with a CodeDNA module docstring:
+Every new source file must begin with a CodeDNA header in its native syntax. Python uses this canonical module docstring:
 
 ```python
 """filename.py — <what it does, ≤15 words>.

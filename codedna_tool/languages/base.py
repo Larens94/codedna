@@ -3,39 +3,40 @@
 exports: class LangFuncInfo | class LangFileInfo | class LanguageAdapter
 used_by: codedna_tool/languages/__init__.py → LanguageAdapter
          codedna_tool/languages/_treesitter.py → LanguageAdapter
-         codedna_tool/languages/_ts_csharp.py → LangFileInfo
-         codedna_tool/languages/_ts_go.py → LangFileInfo
-         codedna_tool/languages/_ts_java.py → LangFileInfo
-         codedna_tool/languages/_ts_kotlin.py → LangFileInfo
-         codedna_tool/languages/_ts_php.py → LangFileInfo
-         codedna_tool/languages/_ts_ruby.py → LangFileInfo
-         codedna_tool/languages/_ts_rust.py → LangFileInfo
-         codedna_tool/languages/_ts_typescript.py → LangFileInfo
+         codedna_tool/languages/_ts_csharp.py → LangFileInfo, LangFuncInfo
+         codedna_tool/languages/_ts_go.py → LangFileInfo, LangFuncInfo
+         codedna_tool/languages/_ts_java.py → LangFileInfo, LangFuncInfo
+         codedna_tool/languages/_ts_kotlin.py → LangFileInfo, LangFuncInfo
+         codedna_tool/languages/_ts_php.py → LangFileInfo, LangFuncInfo
+         codedna_tool/languages/_ts_ruby.py → LangFileInfo, LangFuncInfo
+         codedna_tool/languages/_ts_rust.py → LangFileInfo, LangFuncInfo
+         codedna_tool/languages/_ts_typescript.py → LangFileInfo, LangFuncInfo
          codedna_tool/languages/blade.py → LangFileInfo, LanguageAdapter
-         codedna_tool/languages/csharp.py → LangFileInfo, LanguageAdapter
+         codedna_tool/languages/csharp.py → LangFileInfo, LangFuncInfo, LanguageAdapter
          codedna_tool/languages/erb.py → LangFileInfo, LanguageAdapter
          codedna_tool/languages/go.py → LangFileInfo, LanguageAdapter
          codedna_tool/languages/handlebars.py → LangFileInfo, LanguageAdapter
-         codedna_tool/languages/java.py → LangFileInfo, LanguageAdapter
+         codedna_tool/languages/java.py → LangFileInfo, LangFuncInfo, LanguageAdapter
          codedna_tool/languages/jinja.py → LangFileInfo, LanguageAdapter
-         codedna_tool/languages/php.py → LangFileInfo, LanguageAdapter
+         codedna_tool/languages/php.py → LangFileInfo, LangFuncInfo, LanguageAdapter
          codedna_tool/languages/razor.py → LangFileInfo, LanguageAdapter
-         codedna_tool/languages/ruby.py → LangFileInfo, LanguageAdapter
+         codedna_tool/languages/ruby.py → LangFileInfo, LangFuncInfo, LanguageAdapter
          codedna_tool/languages/rust.py → LangFileInfo, LanguageAdapter
          codedna_tool/languages/swift.py → LangFileInfo, LanguageAdapter
-         codedna_tool/languages/typescript.py → LangFileInfo, LanguageAdapter
+         codedna_tool/languages/typescript.py → LangFileInfo, LangFuncInfo, LanguageAdapter
          codedna_tool/languages/vue.py → LangFileInfo, LanguageAdapter
+         tests/test_language_adapters.py → LangFuncInfo
 rules:   All adapters must be stateless (no instance state).
 extract_info() must never raise — return empty defaults on failure.
 inject_header() must be idempotent: if header already present, return source unchanged.
 _build_header_lines() MUST emit agent: with 5 fields: model-id | provider | YYYY-MM-DD | session_id | narrative.
 Never change the field order in _build_header_lines() — downstream validators parse by position.
-agent:   claude-sonnet-4-6 | anthropic | 2026-04-15 | s_20260415_002 | emit full 4-field header (exports/used_by/rules/agent) for all non-Python languages — adapters already extract them, _build_header_lines was discarding them
-claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_004 | fix provider/session_id always "unknown" — added _detect_provider() in base, derives from model_id; removed caller-supplied provider param
-claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_005 | fix multi-line rules normalization; ruff cleanup: ambiguous var l→line, removed unused Optional import
+agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_005 | fix multi-line rules normalization; ruff cleanup: ambiguous var l→line, removed unused Optional import
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php2 | GATE 3: add LangFuncInfo dataclass + funcs field to LangFileInfo — enables L2 function Rules: for non-Python adapters (PHP first)
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_msg | add message: empty field to _build_header_lines() — visible to next agent even when empty
 claude-opus-4-6 | anthropic | 2026-04-18 | s_20260418_gate2 | fix multi-line used_by missing comment prefix — _build_header_lines now normalizes used_by like rules
+gpt-5 | openai | 2026-08-20 | s_20260820_hardening | document Rules contracts on every abstract public adapter method
+message:
 """
 
 from __future__ import annotations
@@ -78,16 +79,25 @@ class LanguageAdapter(ABC):
     @property
     @abstractmethod
     def comment_prefix(self) -> str:
-        """Single-line comment prefix for this language (e.g. '//' or '#')."""
+        """Single-line comment prefix for this language (e.g. '//' or '#').
+
+        Rules:   Concrete adapters must return syntax valid for their language.
+        """
 
     @abstractmethod
     def extract_info(self, path: Path, repo_root: Path) -> LangFileInfo:
-        """Parse a source file and return structural information."""
+        """Parse a source file and return structural information.
+
+        Rules:   Implementations never raise; failures return parseable=False.
+        """
 
     @abstractmethod
     def inject_header(self, source: str, rel: str, exports: str, used_by: str,
                       rules: str, model_id: str, today: str) -> str:
-        """Prepend (or replace) a CodeDNA comment block in source. Return new source."""
+        """Prepend or replace a CodeDNA comment block.
+
+        Rules:   Implementations must preserve valid syntax and be idempotent.
+        """
 
     def inject_function_rules(self, source: str, func: "LangFuncInfo", rules_text: str) -> str:
         """Inject a Rules: annotation above a public function/method.

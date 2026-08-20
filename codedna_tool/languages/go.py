@@ -1,8 +1,7 @@
 """go.py — CodeDNA v0.9 adapter for Go source files.
 
 exports: _FUNC_RE | _TYPE_RE | _VAR_RE | _IMPORT_SINGLE_RE | _IMPORT_BLOCK_RE | class GoAdapter
-used_by: codedna_tool/languages/__init__.py → GoAdapter
-         codedna_tool/languages/_ts_go.py → GoAdapter
+used_by: codedna_tool/languages/_ts_go.py → GoAdapter
          tests/test_refresh.py → GoAdapter
 rules:   regex-based only — no go toolchain dependency required.
 Detects exports via capitalized top-level func/type/var/const identifiers.
@@ -13,6 +12,7 @@ agent:   claude-haiku-4-5-20251001 | anthropic | 2026-03-27 | s_20260327_001 | i
 claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_002 | CodeDNA v0.9 compliance pass: added session_id to agent: field, added Rules: docstrings to extract_info and inject_header
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | add inject_function_rules() — injects // Rules: above exported Go functions/methods; handles existing godoc block and no-doc cases
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_secfix | remove dead walk-upward loop in inject_function_rules — insert_before/idx/stripped were unused (CodeQL #1699, #1701)
+message:
 """
 
 from __future__ import annotations

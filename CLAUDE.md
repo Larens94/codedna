@@ -6,7 +6,7 @@ This project uses the **CodeDNA** in-source communication protocol. Follow these
 
 ## Reading files
 
-1. Read the **module docstring** at the top of every Python file before reading any code.
+1. Read the **CodeDNA module header** at the top of every supported source file before reading any code. Python uses a module docstring; other languages use their native comment syntax.
 2. Parse `exports:` — these are symbols you **must never rename or remove** without explicit instruction.
 3. Parse `used_by:` — callers that depend on this file. **Do not follow all of them blindly.** Ask: "does this caller's domain intersect with my current task?" Only explore callers relevant to the specific change you're making.
 4. Parse `related:` — files sharing the same logic without importing each other. Same filter: is it relevant to this task?
@@ -14,9 +14,16 @@ This project uses the **CodeDNA** in-source communication protocol. Follow these
 6. Parse `agent:` — session history written by previous agents; read to understand *why* the current state exists.
 7. For any function with a `Rules:` docstring, read and respect those before writing logic.
 
+## Required audit workflow
+
+- Onboarding: run `codedna doctor --path .`; resolve errors before editing.
+- Before public changes: run `codedna impact <file-or-symbol> --path .`; read matching rules and relevant affected callers.
+- After structural edits: run `codedna verify .`. Exit 1 means review evidence, run `codedna refresh .`, then verify again.
+- Use `--json` in automation. `verify` proves structural fields only, never semantic truth of `rules:`.
+
 ## Writing new files
 
-Every new Python source file **must begin** with a CodeDNA module docstring:
+Every new source file must begin with a CodeDNA header in its native syntax. Python uses this canonical module docstring:
 
 ```python
 """filename.py — <what it does, ≤15 words>.

@@ -1,8 +1,7 @@
 """php.py — CodeDNA v0.9 adapter for PHP source files (Laravel + Phalcon).
 
-exports: _CLASS_RE | _INTERFACE_RE | _TRAIT_RE | _ENUM_RE | _FUNC_RE | _PUBLIC_METHOD_RE | _ROUTE_RE | _USE_RE | _PHALCON_ROUTER_RE | _PHALCON_DI_RE | class PhpAdapter | PhpAdapter.inject_function_rules
-used_by: codedna_tool/languages/__init__.py → PhpAdapter
-         codedna_tool/languages/_ts_php.py → PhpAdapter
+exports: _CLASS_RE | _INTERFACE_RE | _TRAIT_RE | _ENUM_RE | _FUNC_RE | _PUBLIC_METHOD_RE | _ROUTE_RE | _USE_RE | _PHALCON_ROUTER_RE | _PHALCON_DI_RE | class PhpAdapter
+used_by: codedna_tool/languages/_ts_php.py → PhpAdapter
 rules:   regex-based only — no PHP interpreter dependency required.
 Detects exports: public functions/methods, classes, interfaces, traits, enums.
 Laravel-aware: detects Route facades, controller methods, Eloquent model fillable.
@@ -13,6 +12,7 @@ agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_005 | remove un
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php | fix _resolve_use: lowercase-first candidate order + resolve() for real fs path — fixes macOS case-insensitive match returning App/ instead of app/ (Laravel PSR-4 convention)
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php2 | GATE 3: add inject_function_rules() — injects PHPDoc Rules: above public methods; handles existing PHPDoc (append before */) and no-doc (new block)
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | remove unused regex globals _NAMESPACE_RE and _PHALCON_EXTENDS_RE (dead declarations) — CodeQL #1662, #1690
+message:
 """
 
 from __future__ import annotations

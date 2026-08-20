@@ -25,6 +25,9 @@ benchmark_agent/venv/
 .DS_Store
 Thumbs.db
 
+# Editors — local workspace settings
+.vscode/
+
 # Logs
 *.log
 

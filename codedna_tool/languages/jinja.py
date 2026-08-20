@@ -8,6 +8,7 @@ Covers both Jinja2 (.j2, .jinja2) and Twig (.twig) — same comment syntax.
 Detects {% extends %}, {% include %}, {% import %}, {% from %} as deps.
 Detects {% block %} and {% macro %} as exports.
 agent:   claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | initial Jinja2/Twig template adapter
+gpt-5 | openai | 2026-08-20 | s_20260820_hardening | add explicit contract for Jinja header detection
 """
 
 from __future__ import annotations
@@ -38,7 +39,10 @@ class JinjaAdapter(LanguageAdapter):
         return "{#"
 
     def has_codedna_header(self, source: str) -> bool:
-        """Check for CodeDNA block in {# #} comment."""
+        """Check for CodeDNA block in Jinja/Twig comments.
+
+        Rules:   Inspect only the header region and strip template comment markers.
+        """
         for line in source.splitlines()[:30]:
             stripped = line.strip()
             for prefix in ("{#", "#}", "#"):

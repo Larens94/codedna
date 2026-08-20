@@ -6,35 +6,45 @@ This project uses the **CodeDNA** in-source communication protocol. Follow these
 
 ```bash
 pipx install git+https://github.com/Larens94/codedna.git
-export ANTHROPIC_API_KEY=sk-...
-
-codedna init ./          # first-time: annotates every .py file
-codedna update ./        # incremental: only unannotated files
-codedna check ./         # coverage report, no changes
+codedna install --path . --tools opencode --no-wiki-sync
+codedna init . --no-llm  # free structural pass; all supported languages
+codedna update .         # incremental: only unannotated files
+codedna check .          # coverage report, no changes
+codedna doctor --path .  # onboarding health gate
+codedna impact FILE --path .  # pre-edit impact gate
+codedna verify .         # post-edit structural drift gate
 ```
 
-Cost: ~$1–3 for a Django-sized project with the default Haiku model.
+No model API key is required for the structural workflow. OpenCode loads this `AGENTS.md` and `.opencode/plugins/codedna.js` automatically after installation.
 
 ---
 
 ## Reading files
 
-1. Read the **module docstring** at the top of every Python file before reading any code.
+1. Read the **CodeDNA module header** at the top of every supported source file before reading any code.
 2. Parse `exports:` — these are symbols you **must never rename or remove** without explicit instruction.
-3. Parse `used_by:` — these are callers that will be affected by your changes.
-4. Parse `rules:` — hard constraints for every edit in this file; read **before writing any logic**.
-5. Parse `agent:` — session history written by previous agents; read to understand *why* the current state exists.
-6. For any function with a `Rules:` docstring, read and respect those before writing logic.
+3. Parse `used_by:` — inspect only callers relevant to the current task.
+4. Parse `related:` — inspect semantic siblings only when their domain intersects the task.
+5. Parse `rules:` — hard constraints for every edit in this file; read **before writing any logic**.
+6. Parse `agent:` — session history written by previous agents; read to understand *why* the current state exists.
+7. If `wiki:` is present, read the referenced curated page before editing.
+8. For any function with a `Rules:` docstring, read and respect those before writing logic.
+
+## Required audit workflow
+
+Run `doctor` on onboarding, `impact` before a public change, and `verify` after structural edits. Resolve exit 1 before continuing. Use `--json` in automation. `verify` checks structural `exports:`/`used_by:` consistency only; it does not certify semantic rules.
 
 ## Writing new files
 
-Every new Python source file **must begin** with a CodeDNA module docstring:
+Every new source file must begin with a CodeDNA header using that language's native comment syntax. Python uses this canonical module docstring:
 
 ```python
 """filename.py — <what it does, ≤15 words>.
 
 exports: public_function(arg) -> return_type
 used_by: consumer_file.py → consumer_function
+related: other_file.py — shares the same logic without importing this file
+wiki:    docs/wiki/filename.md
 rules:   <hard constraint agents must never violate>
 agent:   <your-model-id> | <provider> | <YYYY-MM-DD> | <session_id> | <what you implemented and what you noticed>
          message: "<open hypothesis or observation for the next agent>"
@@ -48,6 +58,8 @@ Field guide:
 | First line | ✅ | `filename.py — <purpose ≤15 words>` |
 | `exports:` | ✅ | Public API with return type |
 | `used_by:` | ✅ | Who calls this file's exports |
+| `related:` | ⬜ | Semantic siblings without an import link |
+| `wiki:` | ⬜ | Opt-in pointer to curated context under `docs/wiki/` |
 | `rules:` | ✅ | Architectural truth — hard constraints, updated in-place |
 | `agent:` | ✅ | Session narrative — rolling window of last 5 entries; drop the oldest when adding a 6th |
 | `message:` | ⬜ | Inter-agent channel — open hypotheses, unverified observations (v0.9) |
@@ -111,7 +123,18 @@ When NOT to add: simple getters, obvious control flow, standard library usage.
 
 At the end of every session that modifies files:
 
-1. Append an `agent_sessions:` entry to `.codedna`:
+1. Append through the canonical writer; never edit `agent_sessions:` manually:
+
+```bash
+codedna session append --agent <model-id> --provider <provider> \
+  --session-id <s_YYYYMMDD_NNN> --task "<brief task>" \
+  --changed <modified files...> --visited <read files...> \
+  --message "<what the next agent should know>"
+```
+
+The writer locks `.codedna`, writes atomically, and retains the configured recent-session window. Git trailers remain the complete audit log.
+
+Canonical stored shape:
 
 ```yaml
 agent_sessions:
@@ -169,7 +192,7 @@ def my_function():
 
 Use manifest-only read mode: read only the module docstring (first 8–12 lines) of each file to build an architectural map before deciding which files to open fully.
 
-At session start, also read the last 3 `agent_sessions:` entries in `.codedna` to understand recent project history.
+At session start, read the retained `agent_sessions:` entries in `.codedna` to understand recent project history.
 
 Filter by priority:
 - File has `used_by:` mentioning the file you're editing → always include

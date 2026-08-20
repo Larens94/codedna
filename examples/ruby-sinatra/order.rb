@@ -3,7 +3,7 @@
 # order.rb — order module.
 #
 # exports: Orders | Order | Order#confirm | Order#cancel | Order#amount_formatted | Order.from_hash | Order#to_json
-# used_by: app.rb
+# used_by: examples/ruby-sinatra/app.rb
 # rules:   none
 # agent:   claude-haiku-4-5-20251001 | unknown | 2026-03-27 | unknown | initial CodeDNA annotation pass
 

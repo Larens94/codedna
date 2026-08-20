@@ -8,6 +8,7 @@ Detects @extends, @include, @component, @livewire as deps.
 Detects @section, @slot, @yield as exports.
 agent:   claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | initial Blade template adapter
 claude-opus-4-6 | anthropic | 2026-04-18 | s_20260418_gate2 | fix agent field: use _detect_provider() instead of hardcoded 'unknown'
+gpt-5 | openai | 2026-08-20 | s_20260820_hardening | add explicit contract for Blade header detection
 """
 
 from __future__ import annotations
@@ -39,7 +40,10 @@ class BladeAdapter(LanguageAdapter):
         return "{{--"
 
     def has_codedna_header(self, source: str) -> bool:
-        """Check for CodeDNA block in Blade {{-- --}} comment."""
+        """Check for CodeDNA block in Blade comments.
+
+        Rules:   Inspect only the header region and strip Blade comment markers.
+        """
         for line in source.splitlines()[:30]:
             stripped = line.strip()
             # Strip Blade comment markers

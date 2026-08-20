@@ -1,16 +1,17 @@
 """test_language_adapters.py — Test suite for CodeDNA language adapters.
 
-exports: project(tmp_path) | write_file(project, name, content) | class TestTypeScript | class TestGo | class TestRuby | class TestPHP | class TestJava | class TestKotlin | class TestBlade | class TestFallback | class TestErrorHandling
+exports: project(tmp_path) | write_file(project, name, content) | class TestTypeScript | class TestGo | class TestRuby | class TestCSharp | class TestPHP | class TestRust | class TestJava | class TestSwift | class TestKotlin | class TestBlade | class TestFallback | class TestErrorHandling
 used_by: none
 rules:   Each language adapter must pass: export detection, private exclusion,
 header injection, and injection idempotency.
-tree-sitter tests are skipped if tree-sitter is not installed.
-C#, Rust, Swift adapters removed from registry — tests marked skip with reason.
-agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | initial test suite for all 9 language adapters
-claude-opus-4-7 | anthropic | 2026-04-17 | s_20260417_blade | regression tests for Blade: {{-- --}} syntax (not //), idempotent inject, vendor/ excluded. Catches regression where .blade.php was being routed to PhpAdapter, corrupting Laravel views.
+Tree-sitter is a core test dependency for registered AST-backed languages.
+C#, Rust, and Swift adapters are advertised public contracts and must be registered.
+agent:   claude-opus-4-7 | anthropic | 2026-04-17 | s_20260417_blade | regression tests for Blade: {{-- --}} syntax (not //), idempotent inject, vendor/ excluded. Catches regression where .blade.php was being routed to PhpAdapter, corrupting Laravel views.
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php2 | GATE 3: add PHP L2 tests — funcs_populated, inject_function_rules (no-doc, idempotent, bottom-to-top)
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | remove C#/Rust/Swift from registry → skip those test classes; fix TestFallback/TestErrorHandling ext lists
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_unused | remove unused tempfile import and unused vendor_file/app_file vars (CodeQL #1668, #1694, #1695)
+gpt-5 | openai | 2026-08-20 | s_20260820_hardening | enforce advertised Rust, C#, and Swift registry support instead of skipping it
+message:
 """
 
 from __future__ import annotations
@@ -243,7 +244,6 @@ class Service; end
 
 # ── C# ───────────────────────────────────────────────────────────────────────
 
-@pytest.mark.skip(reason="C# removed from registry (2026-04-18) — adapter code kept but not registered")
 class TestCSharp:
     def test_class_inside_namespace(self, project):
         cs = get_adapter(".cs")
@@ -371,7 +371,6 @@ class UserController extends Controller
 
 # ── Rust ─────────────────────────────────────────────────────────────────────
 
-@pytest.mark.skip(reason="Rust removed from registry (2026-04-18) — adapter code kept but not registered")
 class TestRust:
     def test_pub_vs_private(self, project):
         rs = get_adapter(".rs")
@@ -426,7 +425,6 @@ public class UserService {
 
 # ── Swift ────────────────────────────────────────────────────────────────────
 
-@pytest.mark.skip(reason="Swift removed from registry (2026-04-18) — adapter code kept but not registered")
 class TestSwift:
     def test_all_declaration_types(self, project):
         sw = get_adapter(".swift")
@@ -562,10 +560,10 @@ class TestFallback:
             adapter = get_adapter(ext)
             assert adapter is not None, f"No adapter for {ext}"
 
-    def test_removed_languages_return_none(self):
-        """C#, Rust, Swift removed from registry — must return None, not raise."""
+    def test_advertised_languages_are_registered(self):
+        """README-advertised C#, Rust, and Swift adapters must be callable."""
         for ext in [".cs", ".rs", ".swift"]:
-            assert get_adapter(ext) is None, f"{ext} should be unregistered"
+            assert get_adapter(ext) is not None, f"{ext} should be registered"
 
     def test_unsupported_extension_returns_none(self):
         assert get_adapter(".xyz") is None

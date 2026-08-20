@@ -4,9 +4,16 @@ This codebase uses the CodeDNA communication protocol (v0.9). Apply these rules 
 
 > Annotate your project: `pipx install git+https://github.com/Larens94/codedna.git` then `codedna init ./`
 
-## Module header (required in every Python file)
+## Required command workflow
 
-Every file must begin with a module docstring:
+- Onboarding: run `codedna doctor --path .` and resolve errors.
+- Before changing a public contract: run `codedna impact <file-or-symbol> --path .`.
+- After structural edits: run `codedna verify .`; review evidence before running `codedna refresh .`.
+- Add `--json` in automation. Verification checks `exports:` and `used_by:`, not semantic truth.
+
+## Module header
+
+Every supported source file needs a native CodeDNA header. Python files begin with this module docstring; non-Python files use their language's valid comment syntax:
 
 ```python
 """filename.py — <what it does, ≤15 words>.
@@ -66,7 +73,7 @@ When NOT to add: simple getters, obvious control flow, standard library usage.
 
 ## On session start
 
-Read `.codedna` at repo root — project structure and last 3 `agent_sessions:` entries.
+Read `.codedna` at repo root — project structure and retained `agent_sessions:` entries.
 
 ## On edit: always do these in order
 

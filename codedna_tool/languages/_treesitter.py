@@ -1,6 +1,6 @@
 """_treesitter.py — Base class for tree-sitter-powered CodeDNA adapters.
 
-exports: class TreeSitterAdapter | TreeSitterAdapter._has_doc_block_above(node) | TreeSitterAdapter._fmt_sig(name, params_node, return_node)
+exports: class TreeSitterAdapter
 used_by: codedna_tool/languages/_ts_csharp.py → TreeSitterAdapter
          codedna_tool/languages/_ts_go.py → TreeSitterAdapter
          codedna_tool/languages/_ts_java.py → TreeSitterAdapter
@@ -9,7 +9,7 @@ used_by: codedna_tool/languages/_ts_csharp.py → TreeSitterAdapter
          codedna_tool/languages/_ts_ruby.py → TreeSitterAdapter
          codedna_tool/languages/_ts_rust.py → TreeSitterAdapter
          codedna_tool/languages/_ts_typescript.py → TreeSitterAdapter
-rules:   tree-sitter is an optional dependency — import errors must be caught by callers.
+rules:   tree-sitter is a core dependency for registered AST-backed source languages.
 All adapters inherit inject_header() from the regex adapter; only extract_info() changes.
 extract_info() must never raise — return LangFileInfo(parseable=False) on failure.
 tree-sitter 0.25+ API: Query(lang, pattern) → QueryCursor(query) → cursor.captures(node).
@@ -19,6 +19,8 @@ agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | extended 
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | add _parse_cached() 1-entry cache — prevents parsing same bytes N times per extract_info() call
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php2 | GATE 3: delegate inject_function_rules() to regex_fallback — enables L2 PHPDoc Rules: via TreeSitterPhpAdapter
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | add _has_doc_block_above() + _fmt_sig() shared helpers — all 8 adapters use these for AST-based doc detection and full signature strings
+gpt-5 | openai | 2026-08-20 | s_20260820_hardening | align dependency rule with pyproject and the registry's mandatory AST adapters
+message:
 """
 
 from __future__ import annotations
@@ -50,15 +52,25 @@ class TreeSitterAdapter(LanguageAdapter):
 
     @property
     def comment_prefix(self) -> str:
+        """Return the delegated adapter's comment prefix.
+
+        Rules:   Header syntax remains owned by the language-specific structural adapter.
+        """
         return self._regex_fallback.comment_prefix
 
     def inject_header(self, source: str, rel: str, exports: str, used_by: str,
                       rules: str, model_id: str, today: str) -> str:
-        """Delegate to regex adapter — header injection logic is identical."""
+        """Delegate language-specific header injection.
+
+        Rules:   Do not implement header placement in the Tree-sitter layer.
+        """
         return self._regex_fallback.inject_header(source, rel, exports, used_by, rules, model_id, today)
 
     def inject_function_rules(self, source: str, func, rules_text: str) -> str:
-        """Delegate to regex adapter — function rules injection logic is language-specific."""
+        """Delegate language-specific function annotation.
+
+        Rules:   Function placement remains owned by the language-specific adapter.
+        """
         return self._regex_fallback.inject_function_rules(source, func, rules_text)
 
     # ── Shared signature + doc helpers (used by all language adapters) ──────────

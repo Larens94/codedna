@@ -11,11 +11,11 @@
 #   bash <(curl -fsSL https://raw.githubusercontent.com/Larens94/codedna/main/integrations/install.sh) claude
 #
 # What this does:
-#   1. pip install codedna  — CLI tool with multi-language support (9 languages + templates)
+#   1. pip install codedna  — CLI tool with 11 programming languages + templates
 #   2. codedna install      — pre-commit hook + AI tool prompt + .codedna manifest
 #
-# Supported AI tools: claude claude-hooks cursor cursor-hooks copilot copilot-hooks cline cline-hooks windsurf opencode opencode-hooks agents
-# Supported languages: Python, TypeScript/JS, Go, PHP, Java, Kotlin, Ruby, Rust, C#
+# Supported AI tools: claude codex aider cursor copilot cline windsurf opencode agents (+ hook variants)
+# Supported languages: Python, TypeScript, JavaScript, Go, PHP, Java, Kotlin, Ruby, Rust, C#, Swift
 
 set -euo pipefail
 
@@ -51,6 +51,10 @@ echo "       pip install git+https://github.com/Larens94/codedna.git && codedna 
 echo ""
 
 do_claude()   { curl -fsSL "$RAW/CLAUDE.md"               > "$REPO_ROOT/CLAUDE.md";                          echo "  OK  Claude Code    -> CLAUDE.md"; }
+do_codex() {
+    if [[ ! -f "$REPO_ROOT/AGENTS.md" ]]; then curl -fsSL "$RAW/AGENTS.md" > "$REPO_ROOT/AGENTS.md"; echo "  OK  Codex          -> AGENTS.md"; else echo "  SKIP Codex         -> AGENTS.md (already exists)"; fi
+}
+do_aider() { do_codex; echo "      Start Aider with: aider --read AGENTS.md"; }
 do_cursor()   { curl -fsSL "$RAW/.cursorrules"             > "$REPO_ROOT/.cursorrules";                       echo "  OK  Cursor         -> .cursorrules"; }
 do_copilot()  { mkdir -p "$REPO_ROOT/.github"; curl -fsSL "$RAW/copilot-instructions.md" > "$REPO_ROOT/.github/copilot-instructions.md"; echo "  OK  GitHub Copilot -> .github/copilot-instructions.md"; }
 do_cline()    { curl -fsSL "$RAW/.clinerules"              > "$REPO_ROOT/.clinerules";                        echo "  OK  Cline          -> .clinerules"; }
@@ -100,8 +104,12 @@ do_cursor_hooks() {
     echo "      Requires: Cursor v1.7+"
 }
 do_opencode() {
-    curl -fsSL "$RAW/AGENTS.md" > "$REPO_ROOT/AGENTS.md"
-    echo "  OK  OpenCode       -> AGENTS.md"
+    if [[ ! -f "$REPO_ROOT/AGENTS.md" ]]; then
+        curl -fsSL "$RAW/AGENTS.md" > "$REPO_ROOT/AGENTS.md"
+        echo "  OK  OpenCode       -> AGENTS.md"
+    else
+        echo "  SKIP OpenCode      -> AGENTS.md (already exists)"
+    fi
 }
 do_opencode_hooks() {
     mkdir -p "$REPO_ROOT/.opencode/plugins"
@@ -184,6 +192,8 @@ SETTINGSEOF
 
 case "$TOOL" in
     claude)         do_claude ;;
+    codex)          do_codex ;;
+    aider)          do_aider ;;
     cursor)         do_cursor ;;
     copilot)        do_copilot ;;
     cline)          do_cline ;;
@@ -196,7 +206,7 @@ case "$TOOL" in
     cursor-hooks)   do_cursor; do_cursor_hooks ;;
     opencode-hooks) do_opencode; do_opencode_hooks ;;
     all)            do_claude; do_cursor; do_copilot; do_cline; do_windsurf; do_agents; do_opencode; do_claude_hooks; do_cline_hooks; do_copilot_hooks; do_cursor_hooks; do_opencode_hooks ;;
-    *) echo "Usage: install.sh [claude|claude-hooks|cursor|cursor-hooks|copilot|copilot-hooks|cline|cline-hooks|windsurf|opencode|opencode-hooks|agents|all]"; exit 1 ;;
+    *) echo "Usage: install.sh [claude|codex|aider|claude-hooks|cursor|cursor-hooks|copilot|copilot-hooks|cline|cline-hooks|windsurf|opencode|opencode-hooks|agents|all]"; exit 1 ;;
 esac
 
 echo ""

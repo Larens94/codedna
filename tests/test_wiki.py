@@ -1,14 +1,15 @@
 """test_wiki.py — Tests for codedna_tool.wiki (Obsidian vault bootstrap + project wiki).
 
-exports: class TestWikilink | class TestSlug | class TestPageMarkdown | class TestBuildVault | class TestAgentNotesPreservation | class TestProjectWiki | class TestWikiFieldTarget
+exports: write_annotated(project, rel, exports, used_by, rules, related, wiki) | class TestSlug | class TestWikilink | class TestPageMarkdown | class TestWikiFieldTarget | class TestBuildVault | class TestAgentNotesPreservation | class TestProjectWiki
 used_by: none
 rules:   Tests must never require network or LLM access.
-         Vault generation uses tmp_path only — never touches the real repo.
+Vault generation uses tmp_path only — never touches the real repo.
 agent:   claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | initial test suite for wiki vault generator — wikilinks, slug, markdown rendering, AGENT NOTES preservation
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki2 | add TestProjectWiki — 4 tests for render_project_wiki + build_project_wiki (workingfm template integration)
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki4 | update tests for nested vault layout — slug preserves folders, wikilinks use `path|display` format, build_vault mirrors source hierarchy
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki5 | add TestWikiFieldTarget + page render tests for the wiki: opt-in field — covers callout layout and missing-field behavior
 claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_wiki_oom | regression tests for #9: large 5 MB non-source binary in the repo must not OOM bootstrap; Python file with body >16 KB after the docstring still has its header extracted via the regex fallback path
+message:
 """
 
 from __future__ import annotations

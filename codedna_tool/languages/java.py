@@ -1,8 +1,7 @@
 """java.py — CodeDNA v0.9 adapter for Java and Kotlin source files.
 
-exports: _JAVA_CLASS_RE | _JAVA_METHOD_RE | _JAVA_IMPORT_RE | _KT_CLASS_RE | _KT_FUN_RE | _KT_CONST_RE | _KT_IMPORT_RE | class JavaAdapter | class KotlinAdapter | KotlinAdapter.inject_function_rules
-used_by: codedna_tool/languages/__init__.py → JavaAdapter, KotlinAdapter
-         codedna_tool/languages/_ts_java.py → JavaAdapter
+exports: _JAVA_CLASS_RE | _JAVA_METHOD_RE | _JAVA_IMPORT_RE | _KT_CLASS_RE | _KT_FUN_RE | _KT_CONST_RE | _KT_IMPORT_RE | class JavaAdapter | class KotlinAdapter
+used_by: codedna_tool/languages/_ts_java.py → JavaAdapter
          codedna_tool/languages/_ts_kotlin.py → KotlinAdapter
 rules:   regex-based only — no JVM dependency required.
 Java: detects public class/interface/enum/record and public methods.
@@ -14,6 +13,8 @@ agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | initial J
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | fixed double blank line: strip leading newlines from after before reassembling, both JavaAdapter and KotlinAdapter
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | add inject_function_rules() to JavaAdapter — JavaDoc Rules: injection; handles existing doc block and no-doc cases
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | add inject_function_rules() to KotlinAdapter — KDoc Rules: injection; same /** */ block format as JavaDoc
+gpt-5 | openai | 2026-08-20 | s_20260820_hardening | document Kotlin extraction rules for full L2 dogfooding coverage
+message:
 """
 
 from __future__ import annotations
@@ -181,6 +182,11 @@ class KotlinAdapter(LanguageAdapter):
         return "//"
 
     def extract_info(self, path: Path, repo_root: Path) -> LangFileInfo:
+        """Parse Kotlin declarations and imports structurally.
+
+        Rules:   Must never raise on file I/O; only public/default-visible
+                 declarations are eligible exports.
+        """
         rel = str(path.relative_to(repo_root))
         try:
             source = path.read_text(encoding="utf-8", errors="replace")

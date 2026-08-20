@@ -1,15 +1,14 @@
 """test_cli.py — Tests for codedna CLI commands (init, check, update).
 
-exports: PYTHON | run_codedna() | class TestInit | class TestInstallWikiSync | class TestL2InjectionEdgeCases | class TestCheck | class TestRoundTrip | class TestLLM | class TestJSONResponseParser | class TestManifest | class TestBuildDocstring | class TestDetectProjectMeta
+exports: PYTHON | run_codedna() | class TestInit | class TestInstallWikiSync | test_install_registry_exposes_codex_and_aider_without_opencode_hooks(tmp_path) | class TestL2InjectionEdgeCases | class TestCheck | class TestRoundTrip | class TestLLM | class TestJSONResponseParser | class TestManifest | class TestBuildDocstring | class TestDetectProjectMeta
 used_by: none
 rules:   Tests run codedna CLI as subprocess to verify end-to-end behavior.
 Each test uses tmp_path for isolation — never touches real project files.
-agent:   claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_json_robust | add TestJSONResponseParser with 11 tests probing _parse_json_response against realistic LLM output shapes: plain JSON, fenced JSON (with/without lang tag), truncated mid-string, leading prose, trailing prose, <think>...</think> reasoning tags, fenced JSON with leading/trailing prose, plain prose (must return None), empty (must return None). 4 are red on pre-fix code — exactly the formats newer reasoning models (DeepSeek V4-Flash, R1, Qwen-thinking) emit despite being asked for JSON-only. All green after raw_decode-based Strategy 3 lands.
-claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_codedna_exclude | extend TestManifest with 5 regression tests for the new project-wide exclude: field in .codedna: 3 unit tests on _parse_exclude_field (flow form, block form, absent → empty), 1 E2E test that an exclude: in .codedna excludes a directory from package detection without needing --exclude CLI flag, 1 round-trip test asserting the exclude: block is preserved verbatim across manifest regenerations (without preservation, every manifest run would silently strip the user's exclude — making the field useless).
-claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_init_escape | add 2 regression tests in TestInit for #12 (yuzi-co). Symptom A: test_init_preserves_backslash_newline_continuation asserts the line continuation in module docstrings survives byte-for-byte across init rewrite (red on pre-fix — pre-fix scan_file used ast.get_docstring which collapsed it). Symptom B: test_init_preserves_double_backslash_in_docstring asserts a literal double-backslash sequence is NOT downgraded to a single backslash (red on pre-fix) and that the rewritten file fires zero SyntaxWarning when re-compiled.
-claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_testdata_skip | add test_init_skips_testdata_directory for #13 (yuzi-co). Creates a Go analysistest fixture under tools/myanalyzer/testdata/src/clean/clean.go and asserts the file is untouched while the analyzer source still gets annotated — header injection would shift `// want "..."` line numbers and break analysistest.
+agent:   claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_testdata_skip | add test_init_skips_testdata_directory for #13 (yuzi-co). Creates a Go analysistest fixture under tools/myanalyzer/testdata/src/clean/clean.go and asserts the file is untouched while the analyzer source still gets annotated — header injection would shift `// want "..."` line numbers and break analysistest.
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_wiki_sync_hook | extend TestInstallWikiSync to 5 tests covering the tri-state Optional[bool] for cmd_install's with_wiki_sync param: (1) default-non-TTY install does NOT create post-commit hook (safe default); (2) `--with-wiki-sync` installs a marked, executable hook invoking `codedna wiki sync`; (3) explicit `--no-wiki-sync` skips even when CodeDNA marker would have triggered re-install logic; (4) default in non-TTY context (run_codedna's subprocess has no TTY) skips silently; (5) install never overwrites a user-authored post-commit hook (no CodeDNA marker → SKIP).
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_l2_stubs | add TestL2InjectionEdgeCases (5 tests) for #14 (yuzi-co): _extract_funcs marks Protocol stubs and `def foo(): pass`/`def foo(): return None` as is_single_line_stub=True; _extract_funcs anchors body_lineno to the earliest decorator of body[0] when body[0] is a decorated FunctionDef/ClassDef; inject_function_rules guard returns source unchanged for is_single_line_stub=True; decorator-stacked outer keeps @decorator+def contiguous after injection (compile-checked).
+gpt-5 | openai | 2026-08-20 | s_20260820_hardening | prove manifest dry-run uses canonical YAML-safe legacy session normalization
+gpt-5 | openai | 2026-08-20 | s_20260820_adoption | verify Codex and Aider integration aliases do not trigger OpenCode hooks
 message:
 """
 
@@ -423,6 +422,18 @@ class TestInstallWikiSync:
         assert "SKIP" in out and "post-commit" in out, (
             f"install did not announce the skip:\n{out}"
         )
+
+
+def test_install_registry_exposes_codex_and_aider_without_opencode_hooks(tmp_path):
+    """Cross-vendor AGENTS.md consumers must not implicitly install OpenCode plugins."""
+    from codedna_tool.cli import _TOOL_FILES, _detect_ai_tools
+
+    assert _TOOL_FILES["codex"] == ("AGENTS.md", "AGENTS.md")
+    assert _TOOL_FILES["aider"] == ("AGENTS.md", "AGENTS.md")
+    (tmp_path / "AGENTS.md").write_text("# Existing cross-vendor instructions\n")
+    detected = _detect_ai_tools(tmp_path)
+    assert "codex" in detected
+    assert "opencode" not in detected
 
 
 # ── L2 injection on Protocol stubs / decorator-stacked funcs (#14) ──────────
@@ -857,6 +868,31 @@ class TestJSONResponseParser:
 
 class TestManifest:
     """Regression tests for issue #11 (yuzi-co): manifest exclude glob + Go package detection."""
+
+    def test_manifest_dry_run_serializes_legacy_sessions_as_valid_yaml(self, tmp_path):
+        """Dry-run output must use the same canonical session serializer as writes."""
+        import yaml
+        from codedna_tool.cli import _write_codedna
+
+        legacy_sessions = """agent_sessions:
+  - agent: test-model
+    provider: openai
+    date: 2026-08-20
+    session_id: s_test
+    task: "quoted: task"
+    changed:
+      - a.py
+    visited: [a.py]
+    message: >
+      regex \\w+ and multiline
+"""
+        content = _write_codedna(
+            tmp_path / ".codedna", "demo", "", {},
+            "cross_cutting_patterns: {}\n", legacy_sessions, True,
+        )
+        parsed = yaml.safe_load(content)
+        assert parsed["agent_sessions"][0]["session_id"] == "s_test"
+        assert parsed["agent_sessions"][0]["changed"] == ["a.py"]
 
     def test_exclude_pattern_matches_root_level_dir(self, tmp_path):
         """Bug A: `--exclude '**/dir/**'` must match a directory at the project root.

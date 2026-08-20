@@ -1,7 +1,14 @@
-# CodeDNA v0.8 — In-Source Communication Protocol
-# Annotate your project: pip install git+https://github.com/Larens94/codedna.git && codedna init ./
+# CodeDNA v0.9 — In-Source Communication Protocol
+# Setup: pipx install git+https://github.com/Larens94/codedna.git && codedna install --path . --tools windsurf --no-wiki-sync && codedna init . --no-llm
 
-Every source file in this project must have a CodeDNA module docstring as the very first block.
+Every supported source file must start with a CodeDNA header using native comment syntax. Python uses a module docstring; non-Python files must use their language's valid comment form.
+
+## Required command workflow
+
+- Onboarding: `codedna doctor --path .`
+- Before changing a public contract: `codedna impact <file-or-symbol> --path .`
+- After structural edits: `codedna verify .`; review evidence before `codedna refresh .`
+- Use `--json` in automation; verification is structural, not semantic
 
 ## Module docstring format
 

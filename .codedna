@@ -11,106 +11,62 @@ exclude:
 packages:
   (root):
     purpose: "analyze claude code test, benchmark server, status module"
-    key_files: [run_agent_multi.py, parser.py, agent_history.py, order.rb, benchmark_server.py]
-
-  benchmark_agent/projects_swebench/django__django-11808/:
-    purpose: "config, registry, django-admin module"
-    key_files: [utils.py, models.py, base.py, views.py, admin.py]
-
-  benchmark_agent/projects_swebench/django__django-11991/:
-    purpose: "config, registry, django-admin module"
-    key_files: [utils.py, models.py, base.py, views.py, admin.py]
-
-  benchmark_agent/projects_swebench/django__django-12508/:
-    purpose: "config, registry, django-admin module"
-    key_files: [utils.py, models.py, base.py, views.py, admin.py]
-
-  benchmark_agent/projects_swebench/django__django-13495/:
-    purpose: "config, registry, django-admin module"
-    key_files: [utils.py, models.py, base.py, views.py, admin.py]
-
-  benchmark_agent/projects_swebench/django__django-14480/:
-    purpose: "config, registry, global settings module"
-    key_files: [utils.py, models.py, base.py, admin.py, views.py]
+    key_files: [run_agent_multi.py, parser.py, agent_history.py, benchmark_server.py, validate_manifests.py]
 
   codedna_tool/:
-    purpose: "cli, wiki module"
-    key_files: [cli.py, wiki.py, __init__.py]
+    purpose: "cli, manifest store, wiki module"
+    key_files: [cli.py, wiki.py, manifest_store.py, __init__.py]
     depends_on: [codedna_tool/languages/]
 
   codedna_tool/languages/:
     purpose: " treesitter,  ts csharp,  ts go module"
     key_files: [base.py, _treesitter.py, __init__.py, java.py, go.py]
 
-  examples/go-api/:
-    purpose: "main module"
-    key_files: [main.go]
-
-  examples/go-api/handlers/:
-    purpose: "revenue module"
-    key_files: [revenue.go]
-
-  examples/go-api/models/:
-    purpose: "user module"
-    key_files: [user.go]
-
-  examples/go-api/services/:
-    purpose: "revenue module"
-    key_files: [revenue.go]
-
-  examples/go-api/utils/:
-    purpose: "format module"
-    key_files: [format.go]
-
   tests/:
     purpose: "conftest, test cli, test integration langs module"
-    key_files: [test_language_adapters.py, test_integration_langs.py, test_refresh.py, test_cli.py, test_validator.py]
+    key_files: [test_language_adapters.py, test_integration_langs.py, test_refresh.py, test_cli.py, test_manifest_store.py]
     depends_on: [codedna_tool/, codedna_tool/languages/]
-
-  tests/fixtures/:
-    purpose: "user service, UserService, UserService module"
-    key_files: [UserService.kt, user_service.rb, user_service.go, UserService.ts, UserService.java]
 
 cross_cutting_patterns: {}
 
 agent_sessions:
-  - agent: "claude-opus-4-7"
-    provider: "anthropic"
-    date: "2026-05-01"
-    session_id: "s_20260501_json_robust"
-    task: "fix _parse_json_response for newer reasoning-style models (V4-Flash, R1, Qwen-thinking)"
-    changed: ["codedna_tool/cli.py","tests/test_cli.py","CHANGELOG.md"]
-    visited: ["codedna_tool/cli.py","tests/test_cli.py","CHANGELOG.md"]
-    message: "The same user session that hit the skip-list drift also lost 46/47\nbatches because the LLM JSON parser only accepted strict JSON or\n```json fences at the very start of the response. Newer reasoning\nmodels (DeepSeek V4-Flash, R1, Qwen-thinking) routinely emit\nexplanatory prose before/after the JSON, or wrap reasoning in\n<think>...</think> tags, regardless of how strict the prompt is. Test-\nfirst: 11 tests probing every realistic shape — 4 of them were red on\npre-fix code (leading prose, trailing prose, thinking tags, fenced\nJSON with leading prose). Fix: new Strategy 3 in _parse_json_response\nuses json.JSONDecoder.raw_decode to scan every '{' index until one\nparses cleanly. Strategy ordering: (1) extract from any ``` fence,\n(2) direct parse, (3) raw_decode at every '{', (4) truncated repair\nvia last `\",`. Plus: env-gated raw-response logging\n(CODEDNA_DEBUG_LLM_RESPONSES=/path) so the next \"invalid JSON\"\nreporter gives us a sample without needing a debug build. Total: 218\npassed / 0 failed (was 207). Did NOT touch the prompt itself — fixing\nthe parser is more robust than chasing model-specific prompts."
-  - agent: "claude-opus-4-7"
-    provider: "anthropic"
-    date: "2026-05-01"
-    session_id: "s_20260501_codedna_exclude"
-    task: "add project-wide exclude: field at .codedna top level"
-    changed: ["codedna_tool/cli.py","tests/test_cli.py",".codedna"]
-    visited: ["codedna_tool/cli.py","tests/test_cli.py",".codedna","CLAUDE.md","pyproject.toml"]
-    message: "Driven by user frustration: `codedna manifest .` walked into\nlabs/benchmark/projects/ (vendored SWE-bench fixtures with LaTeX\nescapes \\\\Lambda and Win paths \\\\Documents) firing SyntaxWarning\non every ast.parse(). Pre-fix the only way to silence it was to\npass --exclude on every CLI invocation. Solution: top-level\n`exclude:` field in .codedna, supporting both YAML flow form\n`[a, b]` and block form `- a\\\\n- b`. Read by manifest, check,\nrefresh, and init via _read_codedna_excludes() and merged\nadditively with --exclude in main(). Round-trips through\n_read_existing_codedna → _write_codedna verbatim so manifest\nregeneration never silently drops the user's exclude. 5 regression\ntests in TestManifest (3 unit on _parse_exclude_field, 1 E2E, 1\nround-trip). All 7 TestManifest tests green; 5 pre-existing\nfailures (4 TestLLM monkeypatch on missing _litellm attribute, 1\nTestCodeDNAManifest missing PyYAML) confirmed pre-existing via\ngit stash before/after — not caused by this change.\nSide-quest in same session: bonified Python 3.14 brew bottle on\nmacOS Tahoe 26.2 (broken pyexpat — libexpat ABI mismatch),\nswitched to brew --build-from-source python@3.13 + pipx\nreinstall, set PIPX_DEFAULT_PYTHON in ~/.zshrc."
-  - agent: "claude-opus-4-7"
-    provider: "anthropic"
-    date: "2026-05-02"
-    session_id: "s_20260502_init_escapes_testdata"
-    task: "fix #12 (init loses backslash escapes) and #13 (testdata not in skip list)"
-    changed: ["codedna_tool/cli.py","tests/test_cli.py",".codedna"]
-    visited: ["codedna_tool/cli.py","tests/test_cli.py","codedna_tool/wiki.py",".codedna"]
-    message: "yuzi-co reported two more init regressions, both fixed in one shot.\n#12: scan_file used ast.get_docstring(tree) which returns the\n*evaluated* string — Python's parser had already collapsed\n`\\\\<newline>` line continuations and downgraded `\\\\\\\\` to `\\\\`.\nRound-tripping that into a rewritten docstring silently turned a\nrunnable shell example into a single concatenated command, and\ndowngraded ASCII pipeline diagrams (`\\\\\\\\->`) such that the next\nimport fired SyntaxWarning. Fix: new FileInfo.docstring_raw_body\nfield captured via ast.get_source_segment + strip surrounding\ntriple quotes + lstrip leading newlines (matches ast.get_docstring's\nsummary-on-line-0 convention). build_module_docstring prefers\ndocstring_raw_body over docstring; falls back if None (e.g.\nf-string Expr nodes). #13: added `testdata` to _DEFAULT_SKIP_DIRS\nnext to .claude / worktrees. Go's analysistest fixtures encode\nexpected diagnostic positions in `// want \"…\"` comments tied to\nspecific line numbers — header injection broke them. `go test`\nitself ignores testdata/ for build purposes, we follow the same\nconvention. wiki.SKIP_DIRS inherits via _DEFAULT_SKIP_DIRS so the\ndrift-guard test still passes. 3 regression tests in TestInit, all\ngreen. Full test_cli.py: 60 passed (was 57), 4 pre-existing\nfailures unrelated."
-  - agent: "deepseek-v4-pro"
-    provider: "deepseek"
-    date: "2026-07-10"
-    session_id: "s_20260710_docblock"
-    task: "accept /** */ docblock CodeDNA headers; skip Laravel bootstrap/storage"
-    changed: ["codedna_tool/cli.py","integrations/opencode-plugin/codedna.js","tools/validate_manifests.py","tools/pre-commit","tests/test_refresh.py","tests/test_cli.py","tests/test_validator.py",".codedna"]
-    visited: ["codedna_tool/cli.py","codedna_tool/wiki.py","codedna_tool/languages/base.py","codedna_tool/languages/php.py","integrations/opencode-plugin/codedna.js","tools/validate_manifests.py","tests/test_refresh.py","tests/test_cli.py","tests/test_validator.py",".codedna"]
-    message: "Vibe Bridge (Larens94/vibebridge) reported refresh + wiki bootstrap\nyielding 0 files on a Laravel 12 + React 19 project whose PHP/TSX files\ncarried CodeDNA headers in JSDoc/PHPDoc docblock form (/** ... */ with\neach line prefixed by *). Root cause: _parse_lang_header only stripped the\nlanguage comment_prefix (// #), so ` * exports:` never matched → returned\nNone. Since this parser is shared by cmd_refresh AND wiki._extract_fields,\na single fix repaired both. Header range now spans the /** opener through\nthe */ closer so _replace_lang_header rewrites the whole block cleanly\n(docblock normalises to canonical // on refresh — no field loss). Also\nadded Laravel bootstrap/ + storage/ to _DEFAULT_SKIP_DIRS (scaffolding +\nruntime, never source — inflated check coverage denominator; they reported\n280 files / 13%). OpenCode plugin fixes (real bugs from their report):\nclient.app.log now uses { body: { service, level, message } } not the\npositional form that silently no-ops; all hooks wrapped in try/catch;\nfilePath resolution falls back through file_path/path/fileName. Kept the\nplugin WARN-ONLY (tool.execute.after) — declined their block-on-write\nredesign (tool.execute.before + throw); hard enforcement belongs in the\npre-commit hook, and their edit false-positive was self-inflicted by the\nblock. Declined tools/refresh-wiki.py (redundant — wiki bootstrap already\ncovers every adapter language; their script hardcoded Laravel SCAN_DIRS).\n6 tests in TestDocblockHeader + skip-set asserts. E2E verified on a real\nLaravel+React fixture: check 3/3, refresh updates docblock preserving\nrules/agent, wiki bootstrap emits 2 pages, no vendor/node_modules/\nbootstrap/storage leakage, init idempotent on docblock files. Pre-existing\n5 failures (TestLLM litellm, TestCodeDNAManifest yaml) confirmed unrelated.\nAlso fixed two pre-existing bugs in tools/pre-commit surfaced while\ncommitting this work: (1) it mapped js/jsx/mjs → `ts` for `codedna check\n--extensions`, so `check file.js --extensions ts` counted 0 files and the\nblock-grep on \"L1 (module headers) 0/\" mis-read that as a missing header —\nEVERY .js/.jsx commit was blocked. Now each extension passes through as-is.\n(2) the block signal itself was wrong: \"L1 (module headers) X/Y\" counts\nPython files ONLY (always 0/0 for non-Python), so it can't indicate a\nmissing non-Python header. Switched to `check --verbose` and block only on\nthe \"Missing L1:\" / \"Missing non-Python L1:\" markers, which list genuinely\nun-annotated files. Refresh re-stage loop now re-stages ALL staged source\nfiles, not just .py (refresh rewrites non-Python headers too). Reinstalled\n.git/hooks/pre-commit from tools/pre-commit."
   - agent: "gpt-5"
     provider: "openai"
-    date: "2026-08-20"
-    session_id: "s_20260820_sessions"
-    task: "robust manifest session retention"
-    changed: ["codedna_tool/manifest_store.py","codedna_tool/cli.py","tests/test_manifest_store.py","tests/test_cli.py","tests/test_refresh.py","tests/test_wiki.py","tests/__init__.py","codedna_tool/languages/csharp.py","pyproject.toml",".gitignore","AGENTS.md","CLAUDE.md","SPEC.md","integrations/copilot-instructions.md","integrations/.windsurfrules",".codedna"]
-    visited: [".codedna","docs/wiki/cli.md","codedna_tool/cli.py","pyproject.toml","tests/test_cli.py","tests/test_validator.py","AGENTS.md","CLAUDE.md","SPEC.md","integrations/copilot-instructions.md","integrations/.windsurfrules"]
-    message: "Implemented locked atomic session retention, canonical append/prune commands, lossless manifest section updates, YAML-safe serialization, and concurrency regression coverage. Git remains the complete audit log."
+    date: "2026-08-21"
+    session_id: "s_20260821_site_spacing"
+    task: "Fix GitHub CTA and component spacing"
+    changed: ["docs/site.css",".codedna"]
+    visited: ["docs/site.css","docs/index.html","docs/install.html","docs/privacy.html",".codedna"]
+    message: "Fixed the GitHub CTA text cascade so normal and hover states remain white. Standardized button heights, card padding, table cells, steps, callouts, tool headings, and responsive spacing. Structural checks, Ruff, and 281 tests pass."
+  - agent: "gpt-5"
+    provider: "openai"
+    date: "2026-08-21"
+    session_id: "s_20260821_site_logo"
+    task: "Increase site logo size"
+    changed: ["docs/site.css",".codedna"]
+    visited: ["docs/site.css","docs/index.html","docs/install.html","docs/privacy.html",".codedna"]
+    message: "Increased navigation and privacy header logos to 42px desktop and 36px mobile, enlarged the footer mark, and preserved alignment with responsive spacing. CSS checks and 281 tests pass."
+  - agent: "gpt-5"
+    provider: "openai"
+    date: "2026-08-21"
+    session_id: "s_20260821_docs_toc"
+    task: "Fix documentation right navigation"
+    changed: ["docs/site.css",".codedna"]
+    visited: ["docs/site.css","docs/install.html",".codedna"]
+    message: "Found that generic nav rules forced the right On-this-page TOC to 68px height and top-navbar padding. Scoped navbar rules to top-level navigation and restored the TOC as a spaced sticky column with clear hover and active states. CSS checks and 281 tests pass."
+  - agent: "gpt-5"
+    provider: "openai"
+    date: "2026-08-21"
+    session_id: "s_20260821_docs_consistency"
+    task: "Align Markdown documentation and agent templates"
+    changed: ["README.md","README-it.md","QUICKSTART.md","SPEC.md","AGENTS.md","CLAUDE.md","integrations/AGENTS.md","integrations/CLAUDE.md","codedna-plugin/README.md","docs/languages.md","tests/test_docs.py",".codedna"]
+    visited: ["README.md","README-it.md","QUICKSTART.md","SPEC.md","AGENTS.md","CLAUDE.md","CONTRIBUTING.md","SECURITY.md","CHANGELOG.md","integrations/README.md","integrations/AGENTS.md","integrations/CLAUDE.md","codedna-plugin/README.md","codedna-plugin/SUBMIT.md","docs/languages.md","docs/benchmark.md","integrations/install.sh","pyproject.toml","codedna_tool/cli.py","tests/test_docs.py",".codedna"]
+    message: "Aligned public docs on protocol 0.9, 11 languages, 27 extensions, 7 template families, and the canonical no-LLM install workflow. Removed unsupported C/C++ claims, updated installable agent templates with session append, and added documentation drift/link tests. 284 tests pass and CodeDNA verify is clean."
+  - agent: "gpt-5"
+    provider: "openai"
+    date: "2026-08-21"
+    session_id: "s_20260821_commit_push"
+    task: "Prepare verified release changes for push"
+    changed: [".gitignore",".codedna"]
+    visited: [".gitignore",".vscode/settings.json",".codedna"]
+    message: "Ignored local VS Code Live Server settings before committing the accumulated verified CodeDNA changes. The removed legacy logo video and updated site logo are intentional site assets."

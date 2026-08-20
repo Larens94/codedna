@@ -1,18 +1,19 @@
 """manifest_store.py — Concurrent, lossless persistence for the .codedna manifest.
 
-exports: DEFAULT_MAX_AGENT_SESSIONS | manifest_lock(path) | read_max_agent_sessions(content) | parse_agent_sessions(content) | replace_agent_sessions(content, sessions, limit) | replace_top_level_section(content, generated, key) | mutate_manifest(path, transform) | append_session(path, session) | prune_sessions(path, limit)
-used_by: codedna_tool/cli.py → session commands, manifest and mode writers
+exports: DEFAULT_MAX_AGENT_SESSIONS | _TOP_LEVEL_KEY_RE | _SESSION_START_RE | manifest_lock(path) | read_max_agent_sessions(content) | parse_agent_sessions(content) | replace_agent_sessions(content, sessions, limit) | replace_top_level_section(content, generated, key) | atomic_write_text(path, content) | mutate_manifest(path, transform) | append_session(path, session) | prune_sessions(path, limit)
+used_by: codedna_tool/cli.py → append_session, atomic_write_text, mutate_manifest, parse_agent_sessions, prune_sessions, replace_agent_sessions, replace_top_level_section
+         tests/test_manifest_store.py → append_session, atomic_write_text, parse_agent_sessions, prune_sessions, read_max_agent_sessions, replace_agent_sessions, replace_top_level_section
 related: codedna_tool/cli.py — generates structural manifest sections
 rules:   Every .codedna mutation MUST hold the sibling .codedna.lock exclusively.
-         Writes MUST use a same-directory temporary file, fsync, os.replace, and preserve mode bits.
-         Session retention defaults to five and keeps the newest entries exactly.
+Writes MUST use a same-directory temporary file, fsync, os.replace, and preserve mode bits.
+Session retention defaults to five and keeps the newest entries exactly.
 agent:   gpt-5 | openai | 2026-08-20 | s_20260820_sessions | added lossless locked manifest storage and canonical session writer
-         message: "The text-preserving strategy intentionally rewrites only agent_sessions."
+message: "The text-preserving strategy intentionally rewrites only agent_sessions."
+gpt-5 | openai | 2026-08-20 | s_20260820_hardening | expose atomic writer for source rewrites and install-time manifest creation
 """
 
 from __future__ import annotations
 
-import fcntl
 import json
 import os
 import re
@@ -20,6 +21,12 @@ import tempfile
 from contextlib import contextmanager
 from pathlib import Path
 from typing import Callable, Iterator
+
+try:  # POSIX
+    import fcntl
+except ImportError:  # Windows
+    fcntl = None
+    import msvcrt
 
 DEFAULT_MAX_AGENT_SESSIONS = 5
 _TOP_LEVEL_KEY_RE = re.compile(r"^[A-Za-z_][\w-]*\s*:", re.MULTILINE)
@@ -36,11 +43,24 @@ def manifest_lock(path: Path) -> Iterator[None]:
     path.parent.mkdir(parents=True, exist_ok=True)
     lock_path = path.with_name(path.name + ".lock")
     with lock_path.open("a+b") as lock_file:
-        fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+        if fcntl is not None:
+            fcntl.flock(lock_file.fileno(), fcntl.LOCK_EX)
+        else:
+            # Rules: msvcrt.locking locks a byte range, so the persistent lock
+            # file must contain at least one byte on Windows.
+            if lock_file.tell() == 0:
+                lock_file.write(b"\0")
+                lock_file.flush()
+            lock_file.seek(0)
+            msvcrt.locking(lock_file.fileno(), msvcrt.LK_LOCK, 1)
         try:
             yield
         finally:
-            fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+            if fcntl is not None:
+                fcntl.flock(lock_file.fileno(), fcntl.LOCK_UN)
+            else:
+                lock_file.seek(0)
+                msvcrt.locking(lock_file.fileno(), msvcrt.LK_UNLCK, 1)
 
 
 def read_max_agent_sessions(content: str) -> int:
@@ -199,7 +219,12 @@ def replace_top_level_section(content: str, generated: str, key: str) -> str:
     return content + separator + section
 
 
-def _atomic_write(path: Path, content: str) -> None:
+def atomic_write_text(path: Path, content: str) -> None:
+    """Atomically replace a text file while preserving its permission bits.
+
+    Rules:   The temporary file MUST live beside the destination so os.replace is
+             atomic. On failure, the original remains intact and the temp is removed.
+    """
     mode = path.stat().st_mode & 0o7777 if path.exists() else 0o644
     fd, temp_name = tempfile.mkstemp(prefix=f".{path.name}.", suffix=".tmp", dir=path.parent)
     try:
@@ -209,11 +234,17 @@ def _atomic_write(path: Path, content: str) -> None:
             temp_file.flush()
             os.fsync(temp_file.fileno())
         os.replace(temp_name, path)
-        directory_fd = os.open(path.parent, os.O_RDONLY)
         try:
-            os.fsync(directory_fd)
-        finally:
-            os.close(directory_fd)
+            directory_fd = os.open(path.parent, os.O_RDONLY)
+        except OSError:
+            # Windows does not allow opening directories this way; the file was
+            # already fsynced before replace, which is the strongest portable guarantee.
+            directory_fd = None
+        if directory_fd is not None:
+            try:
+                os.fsync(directory_fd)
+            finally:
+                os.close(directory_fd)
     except BaseException:
         try:
             os.unlink(temp_name)
@@ -231,7 +262,7 @@ def mutate_manifest(path: Path, transform: Callable[[str], str]) -> str:
     with manifest_lock(path):
         current = path.read_text(encoding="utf-8") if path.exists() else ""
         updated = transform(current)
-        _atomic_write(path, updated)
+        atomic_write_text(path, updated)
         return updated
 
 

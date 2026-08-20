@@ -1,8 +1,7 @@
 """rust.py — CodeDNA v0.9 adapter for Rust source files.
 
 exports: _PUB_FN_RE | _PUB_STRUCT_RE | _PUB_ENUM_RE | _PUB_TRAIT_RE | _PUB_TYPE_RE | _PUB_CONST_RE | _MOD_RE | _USE_RE | class RustAdapter
-used_by: codedna_tool/languages/__init__.py → RustAdapter
-         codedna_tool/languages/_ts_rust.py → RustAdapter
+used_by: codedna_tool/languages/_ts_rust.py → RustAdapter
 rules:   regex-based only — no cargo/rustc dependency required.
 Detects pub fn, pub struct, pub enum, pub trait, pub type, pub const/static.
 impl blocks are not traversed — only top-level pub items are captured.
@@ -10,6 +9,7 @@ inject_function_rules() uses /// line comments (Rust doc convention, NOT /** */)
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_003 | initial Rust adapter
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | add inject_function_rules() — injects /// Rules: above pub fn; handles existing /// doc block and no-doc cases
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_secfix | fix ReDoS in _USE_RE — removed nested quantifier (::[...]+)+ (CodeQL #1094)
+message:
 """
 
 from __future__ import annotations

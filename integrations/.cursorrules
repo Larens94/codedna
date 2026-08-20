@@ -1,7 +1,14 @@
-# CodeDNA v0.8 — In-Source Communication Protocol
-# Annotate your project: pip install git+https://github.com/Larens94/codedna.git && codedna init ./
+# CodeDNA v0.9 — In-Source Communication Protocol
+# Setup: pipx install git+https://github.com/Larens94/codedna.git && codedna install --path . --tools cursor --no-wiki-sync && codedna init . --no-llm
 
-Every source file in this project must have a CodeDNA module docstring as the very first block.
+Every supported source file must start with a CodeDNA header using valid native comment syntax. Python uses a module docstring; never copy Python delimiters into another language.
+
+## Required command workflow
+
+- Onboarding: `codedna doctor --path .`
+- Before a public change: `codedna impact <file-or-symbol> --path .`
+- After structural edits: `codedna verify .`; review evidence, run `codedna refresh .`, then verify again if stale
+- Automation: add `--json`; verification covers structural fields, not semantic truth
 
 ## Module docstring format
 
@@ -99,7 +106,7 @@ def my_function():
 
 ## Session end protocol
 
-At session end, append to `.codedna` `agent_sessions:`:
+At session end, run `codedna session append` with these fields; never edit `agent_sessions:` manually:
 ```yaml
 - agent: <model-id> | <provider> | <YYYY-MM-DD> | <session_id>
   provider: <provider>

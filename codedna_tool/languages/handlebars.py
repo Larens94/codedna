@@ -7,6 +7,7 @@ Uses {{!-- --}} comment syntax for the CodeDNA header.
 Detects {{> partial}} as deps.
 Detects {{#block}} helpers as exports.
 agent:   claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | initial Handlebars/Mustache adapter
+gpt-5 | openai | 2026-08-20 | s_20260820_hardening | add explicit contract for Handlebars header detection
 """
 
 from __future__ import annotations
@@ -35,7 +36,10 @@ class HandlebarsAdapter(LanguageAdapter):
         return "{{!--"
 
     def has_codedna_header(self, source: str) -> bool:
-        """Check for CodeDNA block in {{!-- --}} comment."""
+        """Check for CodeDNA block in Handlebars comments.
+
+        Rules:   Inspect only the header region and strip template comment markers.
+        """
         for line in source.splitlines()[:30]:
             stripped = line.strip()
             for prefix in ("{{!--", "--}}", "!--", "--"):

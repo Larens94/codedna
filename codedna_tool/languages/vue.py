@@ -9,6 +9,7 @@ Svelte: detects export let, import statements.
 Header is placed BEFORE the first <template>/<script>/<style> tag.
 agent:   claude-opus-4-6 | anthropic | 2026-04-01 | s_20260401_001 | initial Vue SFC and Svelte adapter
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | remove unused _COMPONENTS_RE regex global (dead declaration) — CodeQL #1661
+gpt-5 | openai | 2026-08-20 | s_20260820_hardening | add explicit contracts for Vue and Svelte header detection
 """
 
 from __future__ import annotations
@@ -50,7 +51,10 @@ class VueAdapter(LanguageAdapter):
         return "<!--"
 
     def has_codedna_header(self, source: str) -> bool:
-        """Check for CodeDNA block in <!-- --> comment."""
+        """Check for CodeDNA block in Vue HTML comments.
+
+        Rules:   Inspect only the header region and strip HTML comment markers.
+        """
         for line in source.splitlines()[:30]:
             stripped = line.strip()
             for prefix in ("<!--", "-->", "--"):
@@ -139,7 +143,10 @@ class SvelteAdapter(LanguageAdapter):
         return "<!--"
 
     def has_codedna_header(self, source: str) -> bool:
-        """Check for CodeDNA block in <!-- --> comment."""
+        """Check for CodeDNA block in Svelte HTML comments.
+
+        Rules:   Inspect only the header region and strip HTML comment markers.
+        """
         for line in source.splitlines()[:30]:
             stripped = line.strip()
             for prefix in ("<!--", "-->", "--"):

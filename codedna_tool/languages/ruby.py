@@ -1,8 +1,7 @@
 """ruby.py — CodeDNA v0.9 adapter for Ruby source files.
 
-exports: _MODULE_RE | _CLASS_RE | _DEF_RE | _ATTR_RE | _REQUIRE_RE | _PRIVATE_RE | class RubyAdapter | RubyAdapter.inject_function_rules
-used_by: codedna_tool/languages/__init__.py → RubyAdapter
-         codedna_tool/languages/_ts_ruby.py → RubyAdapter
+exports: _MODULE_RE | _CLASS_RE | _DEF_RE | _ATTR_RE | _REQUIRE_RE | _PRIVATE_RE | class RubyAdapter
+used_by: codedna_tool/languages/_ts_ruby.py → RubyAdapter
 rules:   regex-based only — no Ruby interpreter dependency required.
 Detects module/class definitions and public def methods.
 attr_accessor/attr_reader/attr_writer are captured as exports.
@@ -12,6 +11,7 @@ agent:   claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed neste
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | fixed inject_header: no leading blank line when file has no shebang/frozen_string_literal (prefix only added when before is non-empty)
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | GATE 3: add inject_function_rules() — Ruby # comment Rules: insertion above func.start_line; has_doc and no-doc cases both insert at same position
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | add comment to empty except ValueError in require_relative dep resolution — CodeQL #1096
+message:
 """
 
 from __future__ import annotations

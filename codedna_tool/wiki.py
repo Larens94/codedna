@@ -1,23 +1,24 @@
 """wiki.py — Generate an Obsidian-compatible wiki vault from CodeDNA annotations.
 
-exports: SKIP_DIRS | build_wiki_vault(repo_root, out_dir, extensions) | _wikilink(rel) | _slug_for_rel(rel) | _wiki_field_target(wiki_value) | _is_placeholder(value) | _extract_fields(path) | _page_markdown(rel, fields) | _generate_index(repo_root, out_dir, rel_paths) | _generate_log(repo_root, out_dir) | _read_project_name(repo_root) | _list_top_level_dirs(repo_root) | render_project_wiki(project_name, repo_root) | build_project_wiki(repo_root, out_path) | _escape_obsidian_hashtags(text) | _escape_inline_wikilinks(text)
-used_by: codedna_tool/cli.py → build_wiki_vault (wiki subcommand)
+exports: _WIKI_EXTRA_SKIP | SKIP_DIRS | _AGENT_NOTES_MARKER | _AUTO_HEADER | _HEADER_READ_BYTES | _HASHTAG_NUMBER_RE | _INLINE_WIKILINK_RE | build_wiki_vault(repo_root, out_dir, extensions) | _PROJECT_WIKI_MARKER_AGENT | _PROJECT_WIKI_MARKER_AUTO | render_project_wiki(project_name, repo_root) | build_project_wiki(repo_root, out_path)
+used_by: codedna_tool/cli.py → build_project_wiki, build_wiki_vault
+         tests/test_cli.py → SKIP_DIRS
+         tests/test_wiki.py → _AGENT_NOTES_MARKER, _AUTO_HEADER, _PROJECT_WIKI_MARKER_AGENT, _page_markdown, _preserve_agent_notes, _read_project_name, _slug_for_rel, _wiki_field_target, _wikilink, build_project_wiki, build_wiki_vault, render_project_wiki
 wiki:    docs/wiki/wiki.md
 rules:   The output vault is an artifact — rigenerato ad ogni `codedna wiki bootstrap`.
-         Preserve the content BELOW the '<!-- AGENT NOTES' marker on re-runs (agent-authored).
-         Every [[wikilink]] must resolve to an existing .md file inside the vault, else the Obsidian
-         graph won't connect — so wikilink slugs MUST be deterministic from the source rel path.
-         Do NOT parse YAML — use regex/line parsing like cli.py does.
-         _extract_fields reads ONLY the first 16 KB of each file (issue #9): the L1
-         header always fits there. Reading the whole file caused MemoryError on
-         GGUF/dataset binaries — never expand back to read_text() without a guard.
-agent:   claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki4 | switch vault to nested layout — `_slug_for_rel` preserves folder hierarchy; wikilinks use "relative path to file" format; handles duplicate basenames (e.g. __init__.py)
-claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki5 | render the wiki: field in generated pages — emits a "📖 Extended documentation" callout with a clickable [[wikilink]] to the curated .md; the graph now shows the arc between auto-generated and curated pages (the opt-in pattern made visible)
-claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki6 | drop spurious graph nodes — _is_placeholder detects values like "none (entry-point script)" and renders them as inline code instead of [[wikilinks]]
-claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki7 | escape literal [[...]] mentions in Rules/Agent bullets via _escape_inline_wikilinks so docs talking ABOUT wikilinks don't spawn phantom graph nodes
+Preserve the content BELOW the '<!-- AGENT NOTES' marker on re-runs (agent-authored).
+Every [[wikilink]] must resolve to an existing .md file inside the vault, else the Obsidian
+graph won't connect — so wikilink slugs MUST be deterministic from the source rel path.
+Do NOT parse YAML — use regex/line parsing like cli.py does.
+_extract_fields reads ONLY the first 16 KB of each file (issue #9): the L1
+header always fits there. Reading the whole file caused MemoryError on
+GGUF/dataset binaries — never expand back to read_text() without a guard.
+agent:   claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki7 | escape literal [[...]] mentions in Rules/Agent bullets via _escape_inline_wikilinks so docs talking ABOUT wikilinks don't spawn phantom graph nodes
 claude-sonnet-4-6 | anthropic | 2026-04-24 | s_20260424_stable | remove "v0.9 experimental" label from wiki section in render_project_wiki — wiki is a stable v0.9 feature
 claude-opus-4-7 | anthropic | 2026-04-30 | s_20260430_wiki_oom | fix #9: _extract_fields now reads only the first 16 KB instead of the entire file. Adds an "exports:" pre-check to skip files without L1 cheaply, and a regex fallback when the 16 KB cut breaks AST syntax. Wiki content is unchanged (still L1-only — used_by/related/rules/agent/wiki/message). Eliminates the MemoryError on GGUF/dataset/binary files reported by @DATEx2.
 claude-opus-4-7 | anthropic | 2026-05-01 | s_20260501_skip_drift | SKIP_DIRS now inherits cli._DEFAULT_SKIP_DIRS (canonical baseline) and adds only wiki-specific extras (docs/paper/thesis/dev_notes/examples/runs/benchmark fixtures). Closes the drift between init/manifest/wiki skip lists that cost a real user 25 min + ~$0.30 of LLM calls. Drift guard test in tests/test_cli.py.
+gpt-5 | openai | 2026-08-20 | s_20260820_hardening | align generated log terminology with bounded session cache semantics
+message:
 """
 
 from __future__ import annotations
@@ -389,7 +390,7 @@ def _generate_index(repo_root: Path, out_dir: Path, rel_paths: list[str]) -> Non
 
 
 def _generate_log(repo_root: Path, out_dir: Path) -> None:
-    """Generate vault/log.md from .codedna agent_sessions: (append-only).
+    """Generate vault/log.md from the bounded .codedna agent_sessions cache.
 
     Rules:   Reads .codedna and emits one section per session in chronological order.
              Missing .codedna → emit a minimal placeholder so Obsidian still shows the page.

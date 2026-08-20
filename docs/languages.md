@@ -1,6 +1,6 @@
 # Language Support
 
-CodeDNA v0.9 supports **9 source languages** via tree-sitter AST parsing, plus **7 template engines** via regex. All languages are auto-detected — no configuration needed.
+CodeDNA v0.9 supports **11 programming languages** (counting TypeScript and JavaScript separately) across **27 registered extensions**, plus **7 template families**. All are auto-detected — no configuration needed.
 
 | Language | Extensions | L1 | L2 | Parser | Framework awareness |
 |---|---|---|---|---|---|
@@ -13,6 +13,7 @@ CodeDNA v0.9 supports **9 source languages** via tree-sitter AST parsing, plus *
 | Ruby | `.rb` | ✅ | ✅ | tree-sitter | — |
 | Rust | `.rs` | ✅ | ✅ | tree-sitter | — |
 | C# | `.cs` | ✅ | ✅ | tree-sitter | — |
+| Swift | `.swift` | ✅ | ✅ | structural parser | — |
 
 **Template engines** (L1 only, regex-based by design):
 
@@ -30,7 +31,7 @@ CodeDNA v0.9 supports **9 source languages** via tree-sitter AST parsing, plus *
 
 ## What tree-sitter extracts
 
-All source languages use tree-sitter for accurate AST-based extraction:
+Python uses the standard-library AST, PHP/TypeScript/JavaScript/Go/Java/Kotlin/Ruby/Rust/C# use tree-sitter, and Swift uses its dedicated structural parser. Together they provide:
 
 - **Exports**: classes, public methods (with full signatures), interfaces, traits, enums, constants
 - **Dependencies**: `use`, `import`, `require` statements resolved to file paths

@@ -10,16 +10,20 @@ pipx install git+https://github.com/Larens94/codedna.git   # isolated install (a
 codedna init .           # annotates all detected languages (auto-detects PHP, TS, Go, etc.)
 codedna init . --no-llm  # free — structural only, no API key needed
 codedna check .          # coverage report, no changes
+codedna doctor --path .  # onboarding health gate
+codedna impact FILE --path .  # pre-edit impact gate
+codedna verify .         # post-edit structural drift gate
 ```
 
 For LLM-powered `rules:` annotations:
 
 ```bash
-pipx install 'codedna[anthropic]' && export ANTHROPIC_API_KEY=sk-...
-codedna init .
+pipx inject codedna anthropic
+export ANTHROPIC_API_KEY=sk-...
+codedna init . --model claude-haiku-4-5-20251001
 
 # Or with a local model (free, no API key):
-pipx install 'codedna[litellm]'
+pipx inject codedna litellm
 codedna init . --model ollama/llama3
 ```
 
@@ -34,7 +38,7 @@ codedna init . --model ollama/llama3
 
 The format adapts to the language. Never use Python docstrings in non-Python files.
 
-**Python / Ruby** — module docstring:
+**Python** — module docstring:
 ```python
 """revenue.py — Monthly revenue aggregation.
 
@@ -46,7 +50,7 @@ agent:   claude-sonnet-4-6 | anthropic | 2026-04-15 | s_001 | initial implementa
 """
 ```
 
-**PHP / TypeScript / Go / Java / Kotlin / Ruby / Rust / C#** — `//` block comment at file top:
+**PHP / TypeScript / JavaScript / Go / Java / Kotlin / Rust / C# / Swift** — native line or documentation comments at file top. Ruby uses `#` comments. See `docs/languages.md` for the exact syntax:
 ```php
 <?php
 // UserController.php — Handles user CRUD endpoints.
@@ -89,6 +93,7 @@ Every new source file **must begin** with a CodeDNA header in the correct format
 | `exports:` | ✅ | Public API with return type |
 | `used_by:` | ✅ | Who calls this file's exports (structural link) |
 | `related:` | ⬜ | Files sharing the same logic without importing each other (semantic link) |
+| `wiki:` | ⬜ | Opt-in pointer to curated context under `docs/wiki/` |
 | `rules:` | ✅ | Hard constraints — specific and actionable |
 | `agent:` | ✅ | Rolling window of last 5 entries |
 | `message:` | ⬜ | Inter-agent channel — open hypotheses |
@@ -108,7 +113,7 @@ rules:   handle errors gracefully
 rules:   follow best practices
 ```
 
-## Writing critical functions (Python / Ruby only — L2)
+## Writing critical functions (all programming-language adapters — L2)
 
 Public functions **must** have a `Rules:` docstring:
 
@@ -132,7 +137,16 @@ def my_function(arg: type) -> return_type:
 
 ## Session end protocol
 
-Append an `agent_sessions:` entry to `.codedna`:
+Append through the canonical writer; never edit `agent_sessions:` manually:
+
+```bash
+codedna session append --agent <model-id> --provider <provider> \
+  --session-id <s_YYYYMMDD_NNN> --task "<brief task>" \
+  --changed <modified files...> --visited <read files...> \
+  --message "<what the next agent should know>"
+```
+
+Canonical stored shape:
 
 ```yaml
 agent_sessions:
