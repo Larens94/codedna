@@ -69,3 +69,5 @@ labs/benchmark/_repo_cache/
 benchmark_agent/_repo_cache/
 benchmark_agent/projects_swebench/
 .codedna.lock
+labs/benchmark/GLOSSARIO.md
+labs/benchmark/test_design.html
