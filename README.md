@@ -514,7 +514,13 @@ The data is reproducible and the spec is open. [ko-fi.com/codedna](https://ko-fi
 
 ---
 
-[![Star History Chart](https://api.star-history.com/svg?repos=Larens94/codedna&type=Date)](https://star-history.com/#Larens94/codedna&Date)
+## Star History
+
+<p align="center">
+  <a href="https://www.star-history.com/?repos=Larens94%2Fcodedna&amp;type=timeline&amp;logscale=&amp;legend=bottom-right">
+    <img src="https://api.star-history.com/svg?repos=Larens94/codedna&amp;type=Timeline&amp;legend=bottom-right" alt="CodeDNA Star History timeline" />
+  </a>
+</p>
 
 ## Contributing
 

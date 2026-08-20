@@ -33,14 +33,6 @@ agent_sessions:
   - agent: "gpt-5"
     provider: "openai"
     date: "2026-08-21"
-    session_id: "s_20260821_site_logo"
-    task: "Increase site logo size"
-    changed: ["docs/site.css",".codedna"]
-    visited: ["docs/site.css","docs/index.html","docs/install.html","docs/privacy.html",".codedna"]
-    message: "Increased navigation and privacy header logos to 42px desktop and 36px mobile, enlarged the footer mark, and preserved alignment with responsive spacing. CSS checks and 281 tests pass."
-  - agent: "gpt-5"
-    provider: "openai"
-    date: "2026-08-21"
     session_id: "s_20260821_docs_toc"
     task: "Fix documentation right navigation"
     changed: ["docs/site.css",".codedna"]
@@ -70,3 +62,11 @@ agent_sessions:
     changed: ["docs/install.html","docs/site.css",".codedna"]
     visited: ["docs/install.html","docs/site.css",".codedna"]
     message: "Reworked the documentation shell with a GitBook-inspired three-column layout, searchable hierarchical sidebar, keyboard shortcut, breadcrumb, page metadata, sticky outline, pagination, feedback, and responsive spacing. HTML/CSS checks, Ruff, and 284 tests pass."
+  - agent: "gpt-5"
+    provider: "openai"
+    date: "2026-08-21"
+    session_id: "s_20260821_star_history"
+    task: "Add requested Star History timeline"
+    changed: ["README.md",".codedna"]
+    visited: ["README.md",".codedna"]
+    message: "Replaced the legacy Date-mode Star History badge with a centered Timeline chart linked to the requested star-history.com view and bottom-right legend. Documentation tests pass."
