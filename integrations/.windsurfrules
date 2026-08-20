@@ -97,7 +97,7 @@ Read `.codedna` first. Then read only the module docstring (first 8–12 lines) 
 
 ## Session end protocol
 
-At session end, append to `.codedna` `agent_sessions:`:
+At session end, use `codedna session append` with these fields (never edit the YAML manually):
 ```yaml
 - agent: <model-id>
   provider: <provider>

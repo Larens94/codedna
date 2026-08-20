@@ -19,6 +19,7 @@ claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_init_escapes_testdata | fi
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_wiki_sync_hook | add opt-in post-commit wiki-sync hook to `codedna install` with tri-state Optional[bool] semantic (None → interactive prompt or skip in non-TTY). New `--no-wiki-sync` flag and _POST_COMMIT_WIKI_HOOK template marked with "CodeDNA" so re-install is idempotent. README §"Optional: post-commit wiki-sync hook" documents the matrix and advises agents to pass an explicit flag.
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_l2_stubs | fix #14 (yuzi-co): inject_function_rules malformed Python on (a) Protocol stub methods `async def foo(): ...` (single-line body — body[0].lineno == def.lineno → injection landed BEFORE the def) and (b) decorator-stacked inner functions where body_lineno of the outer points to body[0].lineno (the inner `def`) instead of the earliest decorator (injection landed BETWEEN @decorator and def — invalid). Two fixes in _extract_funcs: (1) FuncInfo.is_single_line_stub flag set when body[0].lineno == child.lineno; inject_function_rules guards on it and returns source unchanged. (2) body_lineno anchored to min(d.lineno) of body[0]'s decorator_list when body[0] is a decorated FunctionDef/AsyncFunctionDef/ClassDef — keeps decorator+def contiguous. 5 regression tests in TestL2InjectionEdgeCases. The skip on single-line stubs is principled: Protocol stubs and `@overload` declarations are interfaces with no body to describe; trivial `pass`/`return None` bodies are already filtered by the >60-char source filter; non-trivial one-liners are a marginal lost-annotation cost worth paying for never-malformed output.
 deepseek-v4-pro | deepseek | 2026-07-10 | s_20260710_docblock | _parse_lang_header now accepts /** */ JSDoc/PHPDoc docblock headers (each line prefixed with *), not only single-line // comments. Vibe Bridge reported refresh + wiki bootstrap yielding 0 files on a Laravel 12 + React 19 project whose PHP/TSX files carried docblock-style CodeDNA headers — the parser only stripped the language comment_prefix so ` * exports:` never matched, returning None. Fixes BOTH refresh (cli) and wiki bootstrap (wiki._extract_fields shares this parser). Header range now spans the /** opener through */ closer so _replace_lang_header rewrites the whole block cleanly. Also added Laravel bootstrap/ + storage/ to _DEFAULT_SKIP_DIRS (framework scaffolding/runtime, never source — inflated check coverage denominator). 6 tests in TestDocblockHeader. Did NOT adopt their tools/refresh-wiki.py (redundant — wiki bootstrap already covers all adapter languages) nor their block-on-write plugin design (kept warn-only; hard enforcement stays in pre-commit).
+gpt-5 | openai | 2026-08-20 | s_20260820_sessions | added canonical session append/prune commands and routed manifest/mode writes through the shared atomic lock
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -52,12 +53,22 @@ from pathlib import Path
 from typing import Optional
 
 from .languages import SUPPORTED_EXTENSIONS, get_adapter
+from .manifest_store import (
+    DEFAULT_MAX_AGENT_SESSIONS,
+    append_session,
+    mutate_manifest,
+    parse_agent_sessions,
+    replace_agent_sessions,
+    replace_top_level_section,
+    prune_sessions,
+)
 
 try:
     import litellm as _litellm
 
     HAS_LITELLM = True
 except ImportError:
+    _litellm = None
     HAS_LITELLM = False
 
 try:
@@ -65,6 +76,7 @@ try:
 
     HAS_ANTHROPIC = True
 except ImportError:
+    _anthropic = None
     HAS_ANTHROPIC = False
 
 
@@ -2126,6 +2138,7 @@ _CODEDNA_TEMPLATE = """# .codedna — CodeDNA project manifest
 project: {project_name}
 description: "{project_name} project"
 mode: semi    # human | semi | agent
+max_agent_sessions: 5
 
 packages: {{}}
 
@@ -2999,7 +3012,7 @@ def _write_codedna(
         # Rolling window: keep only the last _SESSIONS_MAX entries.
         # Each entry starts with '  - agent:' — split on that marker and trim oldest.
         import re as _re
-        _SESSIONS_MAX = 3
+        _SESSIONS_MAX = DEFAULT_MAX_AGENT_SESSIONS
         header_line = "agent_sessions:\n"
         entries_raw = agent_sessions_block
         # Strip leading 'agent_sessions:' line for splitting
@@ -3017,7 +3030,17 @@ def _write_codedna(
 
     content = "\n".join(lines)
     if not dry_run:
-        codedna_path.write_text(content, encoding="utf-8")
+        # Rules: merge the latest session cache while holding the common manifest
+        # lock. A concurrent `session append` must never be lost by regeneration.
+        def _merge_manifest(current: str) -> str:
+            # Preserve the user's top-level comments, custom keys, ordering, and
+            # metadata after agent_sessions; manifest owns only packages.
+            merged = replace_top_level_section(current, content, "packages") if current else content
+            return replace_agent_sessions(
+                merged,
+                parse_agent_sessions(current) or parse_agent_sessions(content),
+            )
+        content = mutate_manifest(codedna_path, _merge_manifest)
     return content
 
 
@@ -3203,17 +3226,17 @@ def cmd_self_update(*, force: bool = False, check_only: bool = False) -> int:
     print(f"Current version: {current}")
 
     if check_only:
-        print(f"Run 'codedna self-update' to upgrade to the latest commit on main.")
+        print("Run 'codedna self-update' to upgrade to the latest commit on main.")
         return 0
 
     if is_editable and not force:
         print()
-        print(f"CodeDNA appears to be installed in editable/dev mode at:")
+        print("CodeDNA appears to be installed in editable/dev mode at:")
         print(f"  {pkg_dir}")
         print()
-        print(f"Refusing to overwrite a dev checkout. Options:")
+        print("Refusing to overwrite a dev checkout. Options:")
         print(f"  - pull latest from the dev checkout:  cd {pkg_dir} && git pull")
-        print(f"  - force pip upgrade anyway:           codedna self-update --force")
+        print("  - force pip upgrade anyway:           codedna self-update --force")
         return 1
 
     cmd = [sys.executable, "-m", "pip", "install", "--upgrade",
@@ -3232,7 +3255,7 @@ def cmd_self_update(*, force: bool = False, check_only: bool = False) -> int:
 
     print()
     print(f"✓ CodeDNA updated: {current} → {new_version}")
-    print(f"  Restart your shell session to use the new version.")
+    print("  Restart your shell session to use the new version.")
     return 0
 
 
@@ -3320,6 +3343,31 @@ def main():
                         help="Mode to set (omit to show current)")
     mode_p.add_argument("--path", type=Path, default=Path("."),
                         help="Project root (default: current directory)")
+
+    # ── session ───────────────────────────────────────────────────────────────
+    session_p = subs.add_parser(
+        "session",
+        help="Append or prune the recent agent session cache in .codedna",
+        description=(
+            "Canonical, concurrency-safe writer for agent_sessions. Git trailers remain\n"
+            "the complete audit log; .codedna retains only max_agent_sessions entries."
+        ),
+    )
+    session_sub = session_p.add_subparsers(dest="session_command", metavar="SESSION_COMMAND")
+    session_append = session_sub.add_parser("append", help="Append one canonical session entry")
+    session_append.add_argument("--path", type=Path, default=Path("."), help="Project root")
+    session_append.add_argument("--agent", required=True)
+    session_append.add_argument("--provider", required=True)
+    session_append.add_argument("--date", default=None, help="ISO date (default: today)")
+    session_append.add_argument("--session-id", required=True)
+    session_append.add_argument("--task", required=True)
+    session_append.add_argument("--changed", nargs="*", default=[])
+    session_append.add_argument("--visited", nargs="*", default=[])
+    session_append.add_argument("--message", required=True)
+    session_prune = session_sub.add_parser("prune", help="Enforce session retention")
+    session_prune.add_argument("--path", type=Path, default=Path("."), help="Project root")
+    session_prune.add_argument("--keep", type=int, default=None,
+                               help="Override max_agent_sessions for this prune")
 
     # ── update ────────────────────────────────────────────────────────────────
     update_p = subs.add_parser(
@@ -3464,16 +3512,49 @@ def main():
     args = p.parse_args()
 
     # ── dispatch ──────────────────────────────────────────────────────────────
+    if args.command == "session":
+        sub = getattr(args, "session_command", None)
+        if sub == "append":
+            codedna_path = (args.path.resolve() / ".codedna")
+            if not codedna_path.exists():
+                print("No .codedna found. Run: codedna install", file=sys.stderr)
+                return 1
+            append_session(codedna_path, {
+                "agent": args.agent,
+                "provider": args.provider,
+                "date": args.date or date.today().isoformat(),
+                "session_id": args.session_id,
+                "task": args.task,
+                "changed": args.changed,
+                "visited": args.visited,
+                "message": args.message,
+            })
+            print(f"Session appended: {args.session_id}")
+            return 0
+        if sub == "prune":
+            if args.keep is not None and args.keep <= 0:
+                print("Error: --keep must be greater than zero", file=sys.stderr)
+                return 2
+            codedna_path = (args.path.resolve() / ".codedna")
+            if not codedna_path.exists():
+                print("No .codedna found. Run: codedna install", file=sys.stderr)
+                return 1
+            prune_sessions(codedna_path, args.keep)
+            print(f"Sessions pruned: keeping {args.keep or 'configured maximum'}")
+            return 0
+        session_p.print_help()
+        return 1
+
     if args.command == "mode":
         codedna_path = (args.path / ".codedna").resolve()
         if not codedna_path.exists():
             if args.value:
                 # Create .codedna with mode
-                codedna_path.write_text(
-                    _CODEDNA_TEMPLATE.format(project_name=args.path.resolve().name).replace(
+                mutate_manifest(
+                    codedna_path,
+                    lambda _content: _CODEDNA_TEMPLATE.format(project_name=args.path.resolve().name).replace(
                         "mode: semi", f"mode: {args.value}"
                     ),
-                    encoding="utf-8",
                 )
                 print(f"Created .codedna with mode: {args.value}")
             else:
@@ -3489,7 +3570,14 @@ def main():
             else:
                 # Add mode after description line
                 content = content.replace("\n\npackages:", f"\nmode: {args.value}\n\npackages:")
-            codedna_path.write_text(content, encoding="utf-8")
+            # Re-read after taking the lock so mode cannot overwrite a concurrent
+            # session append or manifest regeneration.
+            def _set_mode(current: str) -> str:
+                if re.search(r"^mode:\s*\w+", current, re.MULTILINE):
+                    return re.sub(r"^mode:\s*\w+.*$", f"mode: {args.value}", current,
+                                  count=1, flags=re.MULTILINE)
+                return current.replace("\n\npackages:", f"\nmode: {args.value}\n\npackages:")
+            mutate_manifest(codedna_path, _set_mode)
             print(f"Mode set to: {args.value}")
         else:
             # Show current mode

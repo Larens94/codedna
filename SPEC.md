@@ -415,7 +415,7 @@ agent_sessions:
 
 ### 3.2 `agent_sessions:` Field
 
-`agent_sessions:` is the **project-level session log** — the manifest-scope counterpart to the file-level `agent:` entries. Each entry captures what an agent did in a session and why, at project scope.
+`agent_sessions:` is the **recent project-level session cache** — the manifest-scope counterpart to the file-level `agent:` entries. Each entry captures what an agent did in a session and why. Git trailers are the complete, authoritative audit log.
 
 **Required subfields per entry:**
 
@@ -428,8 +428,9 @@ agent_sessions:
 | `message` | Narrative: what was done, what was discovered, what the next agent should know |
 
 **Agent behaviour:**
-- On session start: read the last 3 `agent_sessions:` entries to understand recent project history
-- On session end: append a new entry — never edit existing ones
+- On session start: read the retained `agent_sessions:` entries to understand recent project history
+- On session end: use `codedna session append`; never edit the YAML manually
+- Retain the newest `max_agent_sessions` entries exactly (default: 5); use `codedna session prune` to normalize legacy manifests
 - If new packages were discovered: also update `packages:` with their `purpose:` and `depends_on:`
 
 ### 3.3 Generation
@@ -1403,4 +1404,3 @@ ReturnType myFunction(Type arg) {
 | **0.7.1** | **2026-03-18** | **Added §2.5 codedna file format requirement (docstring + full source). Added §2.4 task-type analysis (dependency chains vs cross-cutting). Benchmark extended to 5 tasks, ≥5 runs/task, multi-model. Tool harness hardened with `list_files`/`read_file` directory guards.** |
 | **0.8 (proposed)** | — | **`cross_cutting_patterns:` section in `.codedna` manifest. Written by agents post-fix to capture patterns that span files with no dependency relationship. Enables navigation for cross-cutting tasks where `used_by:` graphs have no shared ancestor.** |
 | **0.9 (proposed)** | — | **Multi-language support: TypeScript/JS, Go, Rust, Java, Ruby, C/C++. Each language uses its native documentation comment syntax. Field names (`exports:`, `used_by:`, `rules:`, `agent:`, `message:`) are identical across all languages. See §11.** |
-

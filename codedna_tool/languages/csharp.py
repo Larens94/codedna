@@ -12,7 +12,7 @@ claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | GATE 3: add inject_
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_secfix | fix ReDoS in _METHOD_RE — nested quantifier (?:[\\w<>\\[\\]?,\\s]+\\s+)+ replaced with non-greedy single group (CodeQL #1099, #1098)
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | remove unused _NS_RE regex global (dead declaration) — CodeQL #1100
 claude-opus-4-7 | anthropic | 2026-05-02 | s_20260501_codedna_exclude | escape backslashes in the s_20260421_secfix narrative — pre-fix the literal `\\w<>\\[\\]?,\\s` substring fired SyntaxWarning at module import on Python 3.12+ (invalid escape `\\w` in docstring). Doubled the backslashes; behaviour unchanged, this is pure string content.
-message: 
+message:
 """
 
 from __future__ import annotations

@@ -104,7 +104,7 @@ def my_function():
 
 ## On session end
 
-Append to `.codedna` → `agent_sessions:` with agent, provider, date, session_id, task, changed, visited, message.
+Run `codedna session append` with agent, provider, session-id, task, changed, visited, and message. Do not edit `agent_sessions:` manually; `.codedna` is a bounded recent cache and Git trailers are the complete audit log.
 
 Commit with AI git trailers: `AI-Agent`, `AI-Provider`, `AI-Session`, `AI-Visited`, `AI-Message`.
 

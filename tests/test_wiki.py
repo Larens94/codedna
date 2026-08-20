@@ -15,8 +15,6 @@ from __future__ import annotations
 
 from pathlib import Path
 
-import pytest
-
 from codedna_tool.wiki import (
     _AGENT_NOTES_MARKER,
     _AUTO_HEADER,

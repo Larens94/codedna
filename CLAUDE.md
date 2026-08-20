@@ -121,7 +121,9 @@ for order in active:
 
 At the end of every session that modifies files:
 
-1. Append an `agent_sessions:` entry to `.codedna`:
+1. Append through the canonical writer: `codedna session append --agent <model-id> --provider <provider> --session-id <id> --task "<task>" --changed <files...> --visited <files...> --message "<message>"`. Never edit `agent_sessions:` manually; the writer locks and atomically updates the cache, retaining `max_agent_sessions` entries (default 5).
+
+Canonical stored shape:
 
 ```yaml
 agent_sessions:
@@ -224,7 +226,7 @@ Wire `codedna wiki sync` to a post-commit hook so the project wiki stays current
 
 Use manifest-only read mode: read only the module docstring (first 8–12 lines) of each file to build an architectural map before deciding which files to open fully.
 
-At session start, also read the last 3 `agent_sessions:` entries in `.codedna` to understand recent project history. Older sessions are automatically pruned — full history is in git.
+At session start, read the retained `agent_sessions:` entries in `.codedna` to understand recent project history. Older sessions are automatically pruned — full history is in git.
 
 Filter by priority:
 - File has `used_by:` mentioning the file you're editing → always include

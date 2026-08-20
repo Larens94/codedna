@@ -764,12 +764,9 @@ class TestLLM:
         monkeypatch.setattr(cli, "_litellm",
                             SimpleNamespace(completion=lambda **kw: None))
         monkeypatch.setattr(cli, "HAS_LITELLM", True)
-        before = dict(_os.environ)
-
         cli.LLM(model="xyz/random-model", api_key="should-not-leak")
 
         # No new env var was created (xyz isn't in our mapping).
-        new_keys = set(_os.environ) - set(before)
         assert "should-not-leak" not in _os.environ.values() or (
             # api_key never assigned to any tracked provider env var
             not any(_os.environ.get(k) == "should-not-leak" for k in (

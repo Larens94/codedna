@@ -10,7 +10,7 @@ claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | remove .rs from
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | add TestWikiField — 4 tests for the experimental wiki: pointer field (parse, rebuild, refresh preservation, opt-in absence)
 claude-sonnet-4-6 | anthropic | 2026-04-22 | s_20260422_refresh | add TestRefreshPreservesLLMAnnotations — 3 regression tests for bug where refresh degraded real annotations to "none" on PHP config + Python files with no AST importers
 claude-sonnet-4-6 | anthropic | 2026-04-22 | s_20260422_matrix | add TestRefreshPreserveMatrix — exhaustive 14-case matrix covering Python+PHP paths, all combinations of old/new exports/used_by values (preserve vs update vs no-change)
-message: 
+message:
 """
 
 from __future__ import annotations
@@ -167,7 +167,8 @@ class TestReducedHeader:
 
     def test_validator_accepts_full_php(self, tmp_path):
         """Validator should accept PHP with full header (exports + used_by + rules + agent)."""
-        import sys; sys.path.insert(0, str(Path(__file__).parent.parent / "tools"))
+        import sys
+        sys.path.insert(0, str(Path(__file__).parent.parent / "tools"))
         import validate_manifests as vm
         p = tmp_path / "Foo.php"
         p.write_text(
@@ -185,7 +186,8 @@ class TestReducedHeader:
 
     def test_validator_rejects_python_without_exports(self, tmp_path):
         """Validator should reject Python with only rules + agent (missing exports/used_by)."""
-        import sys; sys.path.insert(0, str(Path(__file__).parent.parent / "tools"))
+        import sys
+        sys.path.insert(0, str(Path(__file__).parent.parent / "tools"))
         import validate_manifests as vm
         p = tmp_path / "app.py"
         p.write_text('"""app.py — test.\n\nrules: none\nagent: test | 2026-04-15 | test\n"""\ndef foo(): pass\n')
@@ -778,4 +780,3 @@ class TestDocblockHeader:
     def test_no_header_returns_none(self):
         from codedna_tool.cli import _parse_lang_header
         assert _parse_lang_header("<?php\nclass Foo {}\n", "//") is None
-
