@@ -274,6 +274,13 @@ tr:last-child td { border-bottom: none; }
 
 <!-- LEFT SIDEBAR -->
 <aside>
+  <div class="docs-search-wrap">
+    <svg aria-hidden="true" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="7"/><path d="m20 20-3.5-3.5"/></svg>
+    <input id="docs-search" type="search" placeholder="Search documentation..." aria-label="Search documentation" oninput="filterDocs(this.value)">
+    <kbd>⌘K</kbd>
+  </div>
+  <p class="docs-search-empty" id="docs-search-empty" hidden>No matching pages</p>
+
   <div class="sb-group">
     <span class="sb-label">Get started</span>
     <a class="sb-link" href="#overview">
@@ -332,10 +339,13 @@ tr:last-child td { border-bottom: none; }
 <div class="content-wrap">
 <main>
 
-  <div style="margin-bottom:2rem">
-    <p class="page-meta">Documentation</p>
+  <div class="docs-page-head">
+    <nav class="docs-breadcrumb" aria-label="Breadcrumb">
+      <a href="index.html">CodeDNA</a><span>/</span><span>Documentation</span><span>/</span><strong>Installation</strong>
+    </nav>
     <h1>Install CodeDNA</h1>
-    <p style="font-size:15.5px;max-width:590px;color:var(--gray-600)">One CLI connects every coding agent to the same protocol, annotates all supported languages, and verifies the setup.</p>
+    <p class="docs-page-description">One CLI connects every coding agent to the same protocol, annotates all supported languages, and verifies the setup.</p>
+    <div class="docs-page-meta"><span>CodeDNA v0.9</span><span>11 languages</span><span>Updated August 2026</span></div>
   </div>
 
   <!-- OVERVIEW -->
@@ -975,6 +985,13 @@ const something = require('./something');</pre></div>
     <p>No API key. No extra cost. Uses your existing Claude subscription. Adds interactive setup via <span class="ic">/codedna:init</span> + coverage check via <span class="ic">/codedna:check</span> + architectural map via <span class="ic">/codedna:manifest</span> + impact analysis via <span class="ic">/codedna:impact</span>.</p>
   </section>
 
+  <nav class="docs-pagination" aria-label="Documentation pagination">
+    <a href="index.html"><small>Previous</small><strong>← CodeDNA overview</strong></a>
+    <a href="#languages"><small>Next</small><strong>Language support →</strong></a>
+  </nav>
+
+  <div class="docs-feedback"><span>Was this page helpful?</span><a href="https://github.com/Larens94/codedna/issues/new" target="_blank">Yes</a><a href="https://github.com/Larens94/codedna/issues/new" target="_blank">No</a></div>
+
 </main>
 
 <!-- RIGHT TOC -->
@@ -1017,6 +1034,29 @@ function toggleDrawer() {
 function closeDrawer() {
   document.getElementById('mobile-drawer').classList.remove('open');
 }
+
+// Lightweight GitBook-style navigation search.
+function filterDocs(query) {
+  const normalized = query.trim().toLowerCase();
+  let visible = 0;
+  document.querySelectorAll('aside .sb-link').forEach(link => {
+    const match = !normalized || link.textContent.toLowerCase().includes(normalized);
+    link.style.display = match ? 'flex' : 'none';
+    if (match) visible += 1;
+  });
+  document.querySelectorAll('aside .sb-group').forEach(group => {
+    const hasVisibleLink = [...group.querySelectorAll('.sb-link')].some(link => link.style.display !== 'none');
+    group.style.display = hasVisibleLink ? 'block' : 'none';
+  });
+  document.getElementById('docs-search-empty').hidden = visible !== 0;
+}
+
+document.addEventListener('keydown', event => {
+  if ((event.metaKey || event.ctrlKey) && event.key.toLowerCase() === 'k') {
+    event.preventDefault();
+    document.getElementById('docs-search').focus();
+  }
+});
 
 // Copy text from element
 function copyText(id, btn) {

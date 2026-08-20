@@ -33,14 +33,6 @@ agent_sessions:
   - agent: "gpt-5"
     provider: "openai"
     date: "2026-08-21"
-    session_id: "s_20260821_site_spacing"
-    task: "Fix GitHub CTA and component spacing"
-    changed: ["docs/site.css",".codedna"]
-    visited: ["docs/site.css","docs/index.html","docs/install.html","docs/privacy.html",".codedna"]
-    message: "Fixed the GitHub CTA text cascade so normal and hover states remain white. Standardized button heights, card padding, table cells, steps, callouts, tool headings, and responsive spacing. Structural checks, Ruff, and 281 tests pass."
-  - agent: "gpt-5"
-    provider: "openai"
-    date: "2026-08-21"
     session_id: "s_20260821_site_logo"
     task: "Increase site logo size"
     changed: ["docs/site.css",".codedna"]
@@ -70,3 +62,11 @@ agent_sessions:
     changed: [".gitignore",".codedna"]
     visited: [".gitignore",".vscode/settings.json",".codedna"]
     message: "Ignored local VS Code Live Server settings before committing the accumulated verified CodeDNA changes. The removed legacy logo video and updated site logo are intentional site assets."
+  - agent: "gpt-5"
+    provider: "openai"
+    date: "2026-08-21"
+    session_id: "s_20260821_gitbook_docs"
+    task: "Redesign documentation like GitBook"
+    changed: ["docs/install.html","docs/site.css",".codedna"]
+    visited: ["docs/install.html","docs/site.css",".codedna"]
+    message: "Reworked the documentation shell with a GitBook-inspired three-column layout, searchable hierarchical sidebar, keyboard shortcut, breadcrumb, page metadata, sticky outline, pagination, feedback, and responsive spacing. HTML/CSS checks, Ruff, and 284 tests pass."
