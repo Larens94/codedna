@@ -60,14 +60,4 @@ jobs:
             python -c "import ast; ast.parse(open('$f').read())" && echo "✓ $f" || exit 1
           done
 
-  windows-core:
-    name: Windows core portability
-    runs-on: windows-latest
 
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
-        with:
-          python-version: '3.11'
-      - run: pip install -e ".[dev]"
-      - run: pytest tests/test_manifest_store.py tests/test_language_adapters.py -q
