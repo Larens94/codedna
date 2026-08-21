@@ -1,6 +1,6 @@
 """test_integration_langs.py — Integration tests for all 8 non-Python language adapters.
 
-exports: FIXTURES_DIR | PYTHON | TODAY | MODEL | run_codedna() | class TestTypeScriptIntegration | class TestGoIntegration | class TestPHPIntegration | class TestJavaIntegration | class TestRustIntegration | class TestCSharpIntegration | class TestRubyIntegration | class TestKotlinIntegration | class TestCLIMultiLang
+exports: FIXTURES_DIR | PYTHON | TODAY | MODEL | run_codedna() | class TestTypeScriptIntegration | class TestGoIntegration | class TestPHPIntegration | class TestJavaIntegration | class TestRustIntegration | class TestCSharpIntegration | class TestRubyIntegration | class TestKotlinIntegration | class TestAXLIntegration | class TestCLIMultiLang
 used_by: none
 rules:   Tests use realistic fixture files from tests/fixtures/ — not toy examples.
 Each language verifies: named exports, inject_header fields, idempotency,
@@ -9,9 +9,11 @@ Fixtures represent real-world patterns (Laravel controller, Spring service, etc.
 Adapter-specific symbols (tree-sitter impl methods) are checked with any() to
 pass regardless of whether tree-sitter or regex adapter is active.
 C#, Rust, and Swift are public registry contracts and must remain executable.
+AXL CLI output must contain native frames, not comment-field spellings.
 agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | initial integration tests for 8 languages with realistic fixtures
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | skip TestRustIntegration/TestCSharpIntegration + remove rs/cs from TestCLIMultiLang
 gpt-5 | openai | 2026-08-20 | s_20260820_hardening | re-enable Rust and C# end-to-end integration tests
+gpt-5 | openai | 2026-08-21 | s_20260821_axl | add native AXL CLI and validator round-trip coverage
 message:
 """
 
@@ -414,6 +416,30 @@ class TestKotlinIntegration:
         adapter = get_adapter(".kt")
         _assert_validator_accepts(tmp_path, adapter, self.FIXTURE.read_text(),
                                   "UserService, UserServiceDefaults", "UserService.kt")
+
+
+# ── AXL ──────────────────────────────────────────────────────────────────────
+
+class TestAXLIntegration:
+    def test_cli_native_round_trip(self, tmp_path):
+        path = tmp_path / "tasks.axl"
+        path.write_text("2;\n40|createTask|input:Task;\n99\n")
+
+        rc, out, err = run_codedna(
+            "init", str(tmp_path), "--no-llm", "--extensions", "axl",
+        )
+        assert rc == 0, f"codedna init failed:\nstdout: {out}\nstderr: {err}"
+        content = path.read_text()
+        assert content.splitlines()[1].startswith("80|module|")
+        assert "81|export|createTask|" in content
+        assert "84|rule|" in content
+        assert "85|agent|" in content
+        assert validate_file(path).valid
+
+        first = content
+        rc, _, _ = run_codedna("init", str(tmp_path), "--no-llm", "--extensions", "axl")
+        assert rc == 0
+        assert path.read_text() == first
 
 
 # ── CLI round-trip tests ──────────────────────────────────────────────────────

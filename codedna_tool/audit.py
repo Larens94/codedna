@@ -7,6 +7,7 @@ related: codedna_tool/cli.py — owns structural scanners and adapter registry
 rules:   Audit commands are strictly read-only and return structured data before rendering.
 Error severities determine exit codes; warnings never silently become errors.
 agent:   gpt-5 | openai | 2026-08-20 | s_20260820_audit | implement structural verification, impact traversal, and installation diagnostics
+gpt-5 | openai | 2026-08-21 | s_20260821_axl | verify native AXL frames before comment-header fallback
 message: "Semantic rule truth is intentionally out of scope until evidence/schema exists."
 """
 
@@ -105,6 +106,9 @@ def _declared_fields(info, extension: str) -> dict[str, str]:
     if adapter is None:
         return {}
     source = info.path.read_text(encoding="utf-8", errors="replace")
+    native_fields = adapter.parse_codedna_fields(source)
+    if native_fields is not None:
+        return native_fields
     return _parse_lang_header(source, adapter.comment_prefix) or {}
 
 

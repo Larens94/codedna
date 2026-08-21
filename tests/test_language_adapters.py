@@ -1,16 +1,17 @@
 """test_language_adapters.py — Test suite for CodeDNA language adapters.
 
-exports: project(tmp_path) | write_file(project, name, content) | class TestTypeScript | class TestGo | class TestRuby | class TestCSharp | class TestPHP | class TestRust | class TestJava | class TestSwift | class TestKotlin | class TestBlade | class TestFallback | class TestErrorHandling
+exports: project(tmp_path) | write_file(project, name, content) | class TestTypeScript | class TestGo | class TestRuby | class TestCSharp | class TestPHP | class TestRust | class TestJava | class TestSwift | class TestKotlin | class TestBlade | class TestAXL | class TestFallback | class TestErrorHandling
 used_by: none
 rules:   Each language adapter must pass: export detection, private exclusion,
 header injection, and injection idempotency.
 Tree-sitter is a core test dependency for registered AST-backed languages.
 C#, Rust, and Swift adapters are advertised public contracts and must be registered.
-agent:   claude-opus-4-7 | anthropic | 2026-04-17 | s_20260417_blade | regression tests for Blade: {{-- --}} syntax (not //), idempotent inject, vendor/ excluded. Catches regression where .blade.php was being routed to PhpAdapter, corrupting Laravel views.
-claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php2 | GATE 3: add PHP L2 tests — funcs_populated, inject_function_rules (no-doc, idempotent, bottom-to-top)
+AXL annotations are native frames after the version line, never generated comments.
+agent:   claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php2 | GATE 3: add PHP L2 tests — funcs_populated, inject_function_rules (no-doc, idempotent, bottom-to-top)
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | remove C#/Rust/Swift from registry → skip those test classes; fix TestFallback/TestErrorHandling ext lists
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_unused | remove unused tempfile import and unused vendor_file/app_file vars (CodeQL #1668, #1694, #1695)
 gpt-5 | openai | 2026-08-20 | s_20260820_hardening | enforce advertised Rust, C#, and Swift registry support instead of skipping it
+gpt-5 | openai | 2026-08-21 | s_20260821_axl | cover native AXL parsing, injection, refresh, and symbol adjacency
 message:
 """
 
@@ -550,6 +551,67 @@ class TestBlade:
         assert "resources/views/welcome.blade.php" in paths
         assert not any("vendor/" in p for p in paths), \
             f"vendor/ MUST be excluded, got: {paths}"
+
+
+class TestAXL:
+    """Native AXL frame behavior remains structured and round-trip safe."""
+
+    def test_adapter_loads_and_extracts_opcode_40_exports(self, project):
+        adapter = get_adapter(".axl")
+        assert adapter is not None
+        path = write_file(project, "tasks.axl", "2;\n40|createTask|input:Task;\n99\n")
+        info = adapter.extract_info(path, project)
+        assert info.parseable
+        assert info.exports == ["createTask"]
+
+    def test_injects_native_frames_after_version_and_is_idempotent(self):
+        adapter = get_adapter(".axl")
+        source = "2;\n40|createTask|input:Task;\n99\n"
+        annotated = adapter.inject_header(
+            source, "src/tasks.axl", "createTask(Task)", "api.axl", "keep | quotes \\\"safe\\\"",
+            "gpt-5", "2026-08-21",
+        )
+        lines = annotated.splitlines()
+        assert lines[0] == "2;"
+        assert lines[1].startswith("80|module|src.tasks|")
+        assert not any(line.lstrip().startswith(("#", "//")) for line in lines)
+        assert adapter.inject_header(
+            annotated, "src/tasks.axl", "createTask(Task)", "api.axl", "ignored", "gpt-5", "2026-08-21"
+        ) == annotated
+
+    def test_parser_round_trips_quoted_delimiters_and_backslashes(self):
+        from codedna_tool.languages.axl import parse_axl_annotations
+
+        source = '2;\n80|module|tasks|"A \\"quoted\\" | C:\\\\work";\n'
+        annotation = parse_axl_annotations(source)[0]
+        assert annotation.kind == "module"
+        assert annotation.fields[-1] == 'A "quoted" | C:\\work'
+
+    def test_refresh_preserves_semantic_and_symbol_frames(self):
+        adapter = get_adapter(".axl")
+        source = (
+            "2;\n\n80|m|tasks|\"Task domain\";\n81|e|old|\"old\";\n"
+            "84|c|\"module invariant\"|human;\n\n"
+            "84|c|createTask|\"atomic\"|human;\n40|createTask|input:Task;\n99\n"
+        )
+        refreshed = adapter.refresh_header(source, "createTask(Task)", "api.axl")
+        assert refreshed is not None
+        assert '81|export|createTask|"createTask";' in refreshed
+        assert '82|used_by|"api.axl";' in refreshed
+        assert '84|c|createTask|"atomic"|human;\n40|createTask|' in refreshed
+        assert '84|c|"module invariant"|human;' in refreshed
+
+    def test_symbol_rule_is_adjacent_and_idempotent(self):
+        adapter = get_adapter(".axl")
+        source = "2;\n40|createTask|input:Task;\n99\n"
+        annotated = adapter.inject_symbol_rule(source, "createTask", "writes must be atomic", "agent")
+        assert '84|rule|createTask|"writes must be atomic"|agent;\n40|createTask|' in annotated
+        assert adapter.inject_symbol_rule(annotated, "createTask", "writes must be atomic", "agent") == annotated
+
+    def test_versionless_source_is_not_modified(self):
+        adapter = get_adapter(".axl")
+        source = "40|createTask|input:Task;\n99\n"
+        assert adapter.inject_header(source, "tasks.axl", "createTask", "none", "none", "gpt-5", "2026-08-21") == source
 
 
 class TestFallback:

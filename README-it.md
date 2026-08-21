@@ -448,7 +448,7 @@ codedna mode agent    # protocollo completo
 | | |
 |---|---|
 | [SPEC.md](./SPEC.md) | Specifica del protocollo v0.9 |
-| [docs/languages.md](docs/languages.md) | 11 linguaggi, 27 estensioni, 7 famiglie di template, framework awareness |
+| [docs/languages.md](docs/languages.md) | 12 linguaggi, 28 estensioni, 7 famiglie di template, framework awareness |
 | [docs/benchmark.md](docs/benchmark.md) | Risultati SWE-bench, integrità annotazioni |
 | [docs/experiments.md](docs/experiments.md) | Esperimenti multi-agente |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | Setup sviluppo, guida ai contributi |
@@ -462,7 +462,7 @@ Tutti i componenti sono funzionanti e testati — il protocollo, la CLI e il ben
 | Area | Cosa funziona | Prossimi passi |
 |---|---|---|
 | **Protocollo v0.9** | `exports:` `used_by:` `related:` `rules:` `agent:` `message:` — tutti i campi implementati | Auto-generazione `related:` via LLM, rilevamento annotazioni stale |
-| **CLI** | `init` `update` `refresh` `check` `verify` `impact` `doctor` `manifest` `mode` `install` — 11 linguaggi | Pubblicazione PyPI, ulteriore verifica semantica cross-cutting |
+| **CLI** | `init` `update` `refresh` `check` `verify` `impact` `doctor` `manifest` `mode` `install` — 12 linguaggi | Pubblicazione PyPI, ulteriore verifica semantica cross-cutting |
 | **Benchmark** | 10 task Django (DeepSeek +17pp p=0.001), +13pp (Gemini Flash p=0.040) | Condizione placebo, effect size, 20+ task, 5+ modelli |
 | **Integrazioni** | Plugin Claude Code, Cursor, Copilot, Cline, OpenCode, Windsurf hooks | Estensione VS Code, GitHub Action per CI |
 | **Linguaggi** | Python, PHP, TypeScript, Go, Java, Kotlin, Ruby, Rust, C# + 7 template engine | Più test su progetti reali non-Python |

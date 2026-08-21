@@ -4,7 +4,7 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Install — CodeDNA</title>
-<meta name="description" content="Install CodeDNA for Claude Code, Codex, OpenCode, Aider, Cursor, Copilot, Cline, Windsurf and 11 programming languages.">
+<meta name="description" content="Install CodeDNA for Claude Code, Codex, OpenCode, Aider, Cursor, Copilot, Cline, Windsurf and 12 programming languages.">
 <link rel="icon" href="logo.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -345,7 +345,7 @@ tr:last-child td { border-bottom: none; }
     </nav>
     <h1>Install CodeDNA</h1>
     <p class="docs-page-description">One CLI connects every coding agent to the same protocol, annotates all supported languages, and verifies the setup.</p>
-    <div class="docs-page-meta"><span>CodeDNA v0.9</span><span>11 languages</span><span>Updated August 2026</span></div>
+    <div class="docs-page-meta"><span>CodeDNA v0.9</span><span>12 languages</span><span>Updated August 2026</span></div>
   </div>
 
   <!-- OVERVIEW -->
@@ -565,7 +565,7 @@ codedna doctor --path .</pre></div>
     <div class="table-wrap"><table>
       <tr><th>File</th><th>What it does</th></tr>
       <tr><td><span class="ic">AGENTS.md</span></td><td>CodeDNA v0.9 instructions — loaded automatically as system prompt</td></tr>
-      <tr><td><span class="ic">.opencode/plugins/codedna.js</span></td><td>After every file write → warns on missing headers (11 languages). At session end → reminds to update <span class="ic">.codedna</span> and commit with AI trailers.</td></tr>
+      <tr><td><span class="ic">.opencode/plugins/codedna.js</span></td><td>After every file write → warns on missing headers in comment-based languages. At session end → reminds to update <span class="ic">.codedna</span> and commit with AI trailers. Native AXL validation runs through the CLI.</td></tr>
     </table></div>
 
     <div class="callout callout-blue"><strong>Fallback:</strong> if no <span class="ic">AGENTS.md</span> is found, OpenCode falls back to <span class="ic">CLAUDE.md</span> automatically — projects using the Claude Code integration work out of the box.</div>
@@ -702,7 +702,7 @@ ANTHROPIC_API_KEY=sk-... codedna init /path/to/project --model claude-haiku-4-5-
   <!-- LANGUAGES -->
   <section id="languages">
     <h2>Language Annotation Format</h2>
-    <p>Field names are identical across all languages; only native comment syntax changes. CodeDNA registers 27 extensions across Python, TypeScript, JavaScript, Go, PHP, Java, Kotlin, Ruby, Rust, C#, Swift, and seven template families. Explore representative formats below:</p>
+    <p>Logical field names are identical across all languages. Comment-based languages use their native comment syntax; experimental AXL support uses structured opcode frames. CodeDNA registers 28 extensions across Python, TypeScript, JavaScript, Go, PHP, Java, Kotlin, Ruby, Rust, C#, Swift, AXL, and seven template families. Explore representative formats below:</p>
 
     <div class="lang-grid" id="lang-cards">
       <div class="lang-card active" data-lang="python" onclick="showLang('python',this)">

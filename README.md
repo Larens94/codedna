@@ -479,7 +479,7 @@ codedna mode agent    # full protocol
 |---|---|
 | [SPEC.md](./SPEC.md) | Protocol specification v0.9 |
 | [AGENTS.md](./AGENTS.md) | Protocol v0.9 for Codex, OpenCode, Aider, and other runtimes |
-| [docs/languages.md](docs/languages.md) | 11 programming languages, 27 extensions, template engines, framework awareness |
+| [docs/languages.md](docs/languages.md) | 12 programming languages, 28 extensions, template engines, framework awareness |
 | [docs/benchmark.md](docs/benchmark.md) | SWE-bench results, annotation integrity |
 | [docs/agent-tests.md](docs/agent-tests.md) | Real AI agent sessions — control vs CodeDNA on SWE-bench tasks |
 | [docs/experiments.md](docs/experiments.md) | Multi-agent experiments |
@@ -494,7 +494,7 @@ All components are functional and tested — the protocol, CLI, and benchmark ar
 | Area | What works | What's next |
 |---|---|---|
 | **Protocol v0.9** | `exports:` `used_by:` `related:` `rules:` `agent:` `message:` — all fields implemented | `related:` auto-generation via LLM, stale annotation detection |
-| **CLI** | `init` `update` `refresh` `check` `verify` `impact` `doctor` `manifest` `mode` `install` — 11 programming languages | PyPI publish, cross-cutting semantic verification |
+| **CLI** | `init` `update` `refresh` `check` `verify` `impact` `doctor` `manifest` `mode` `install` — 12 programming languages | PyPI publish, cross-cutting semantic verification |
 | **Benchmark** | 10 Django tasks (DeepSeek +17pp p=0.001), +13pp (Gemini Flash p=0.040) | Placebo condition, effect size, 20+ tasks, 5+ models |
 | **Integrations** | Claude Code plugin, Cursor, Copilot, Cline, OpenCode, Windsurf hooks | VS Code extension, GitHub Action for CI |
 | **Languages** | Python, PHP, TypeScript/JavaScript, Go, Java, Kotlin, Ruby, Rust, C#, Swift + 7 template families | More real-world testing on non-Python projects |

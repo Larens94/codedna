@@ -16,11 +16,11 @@ scan_file handles 3 import patterns: (1) from .mod import X, (2) from . import X
 (submodule-first then __init__.py symbol), (3) from pkg import X (tries pkg/X.py
 before falling back to pkg/__init__.py). All 3 were previously under-resolved.
 _parse_lang_header accepts BOTH single-line (// #) AND docblock (/** * */) headers.
-agent:   claude-opus-4-7 | anthropic | 2026-05-02 | s_20260502_l2_stubs | fix #14 (yuzi-co): inject_function_rules malformed Python on (a) Protocol stub methods `async def foo(): ...` (single-line body — body[0].lineno == def.lineno → injection landed BEFORE the def) and (b) decorator-stacked inner functions where body_lineno of the outer points to body[0].lineno (the inner `def`) instead of the earliest decorator (injection landed BETWEEN @decorator and def — invalid). Two fixes in _extract_funcs: (1) FuncInfo.is_single_line_stub flag set when body[0].lineno == child.lineno; inject_function_rules guards on it and returns source unchanged. (2) body_lineno anchored to min(d.lineno) of body[0]'s decorator_list when body[0] is a decorated FunctionDef/AsyncFunctionDef/ClassDef — keeps decorator+def contiguous. 5 regression tests in TestL2InjectionEdgeCases. The skip on single-line stubs is principled: Protocol stubs and `@overload` declarations are interfaces with no body to describe; trivial `pass`/`return None` bodies are already filtered by the >60-char source filter; non-trivial one-liners are a marginal lost-annotation cost worth paying for never-malformed output.
-deepseek-v4-pro | deepseek | 2026-07-10 | s_20260710_docblock | _parse_lang_header now accepts /** */ JSDoc/PHPDoc docblock headers (each line prefixed with *), not only single-line // comments. Vibe Bridge reported refresh + wiki bootstrap yielding 0 files on a Laravel 12 + React 19 project whose PHP/TSX files carried docblock-style CodeDNA headers — the parser only stripped the language comment_prefix so ` * exports:` never matched, returning None. Fixes BOTH refresh (cli) and wiki bootstrap (wiki._extract_fields shares this parser). Header range now spans the /** opener through */ closer so _replace_lang_header rewrites the whole block cleanly. Also added Laravel bootstrap/ + storage/ to _DEFAULT_SKIP_DIRS (framework scaffolding/runtime, never source — inflated check coverage denominator). 6 tests in TestDocblockHeader. Did NOT adopt their tools/refresh-wiki.py (redundant — wiki bootstrap already covers all adapter languages) nor their block-on-write plugin design (kept warn-only; hard enforcement stays in pre-commit).
+agent:   deepseek-v4-pro | deepseek | 2026-07-10 | s_20260710_docblock | _parse_lang_header now accepts /** */ JSDoc/PHPDoc docblock headers (each line prefixed with *), not only single-line // comments. Vibe Bridge reported refresh + wiki bootstrap yielding 0 files on a Laravel 12 + React 19 project whose PHP/TSX files carried docblock-style CodeDNA headers — the parser only stripped the language comment_prefix so ` * exports:` never matched, returning None. Fixes BOTH refresh (cli) and wiki bootstrap (wiki._extract_fields shares this parser). Header range now spans the /** opener through */ closer so _replace_lang_header rewrites the whole block cleanly. Also added Laravel bootstrap/ + storage/ to _DEFAULT_SKIP_DIRS (framework scaffolding/runtime, never source — inflated check coverage denominator). 6 tests in TestDocblockHeader. Did NOT adopt their tools/refresh-wiki.py (redundant — wiki bootstrap already covers all adapter languages) nor their block-on-write plugin design (kept warn-only; hard enforcement stays in pre-commit).
 gpt-5 | openai | 2026-08-20 | s_20260820_hardening | make source rewrites atomic, lock install-time manifest creation, and align session semantics
 gpt-5 | openai | 2026-08-20 | s_20260820_audit | expose read-only doctor, impact, and verify gates with human and JSON output
 gpt-5 | openai | 2026-08-20 | s_20260820_adoption | add explicit Codex and Aider installers and prevent AGENTS.md from implying OpenCode hooks
+gpt-5 | openai | 2026-08-21 | s_20260821_axl | route refresh through native AXL frame parsing without comment rewrites
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -36,8 +36,8 @@ Non-Python files: 1 LLM call per file for rules: (or none with --no-llm).
 Requires: ANTHROPIC_API_KEY env var (or --api-key) for Anthropic models.
 No API key needed for local models via Ollama (pip install 'codedna[litellm]').
 Provider priority: litellm (all providers) > anthropic (fallback, Claude only).
-Multi-language: pass --extensions ts go php rs java kt rb cs swift (or with dots).
-Supported: .ts .tsx .js .jsx .mjs | .go | .php | .rs | .java | .kt .kts | .rb | .cs | .swift
+Multi-language: pass --extensions ts go php rs java kt rb cs swift axl (or with dots).
+Supported: .ts .tsx .js .jsx .mjs | .go | .php | .rs | .java | .kt .kts | .rb | .cs | .swift | .axl
 message:
 """
 
@@ -1763,7 +1763,10 @@ def cmd_refresh(target: Path, repo_root: Optional[Path], exclude: list[str],
                 skipped += 1
                 continue
             source = info.path.read_text(encoding="utf-8", errors="replace")
-            fields = _parse_lang_header(source, adapter.comment_prefix)
+            fields = adapter.parse_codedna_fields(source)
+            native_header = fields is not None
+            if fields is None:
+                fields = _parse_lang_header(source, adapter.comment_prefix)
             if fields is None:
                 skipped += 1
                 continue
@@ -1785,9 +1788,15 @@ def cmd_refresh(target: Path, repo_root: Optional[Path], exclude: list[str],
                     print(f"  unchanged          {rel}")
                 continue
 
-            new_header = _rebuild_lang_header(fields, new_exports, new_used_by,
-                                              adapter.comment_prefix)
-            new_source = _replace_lang_header(source, fields, new_header)
+            if native_header:
+                new_source = adapter.refresh_header(source, new_exports, new_used_by)
+                if new_source is None:
+                    skipped += 1
+                    continue
+            else:
+                new_header = _rebuild_lang_header(fields, new_exports, new_used_by,
+                                                  adapter.comment_prefix)
+                new_source = _replace_lang_header(source, fields, new_header)
 
             if not dry_run:
                 atomic_write_text(info.path, new_source)
@@ -2090,7 +2099,7 @@ REPO_ROOT="$(git rev-parse --show-toplevel)"
 
 # Collect staged source files (new, modified, copied)
 STAGED=$(git diff --cached --name-only --diff-filter=ACM \
-    | grep -E '\.(py|ts|tsx|js|jsx|mjs|go|php|rs|java|kt|kts|rb|cs|swift|blade\.php|j2|jinja2|twig|erb|ejs|hbs|mustache|cshtml|razor|vue|svelte)$' \
+    | grep -E '\.(py|ts|tsx|js|jsx|mjs|go|php|rs|java|kt|kts|rb|cs|swift|axl|blade\.php|j2|jinja2|twig|erb|ejs|hbs|mustache|cshtml|razor|vue|svelte)$' \
     || true)
 
 if [[ -z "$STAGED" ]]; then
@@ -2116,7 +2125,7 @@ for f in $STAGED; do
         kt|kts)            EXTS="$EXTS kt" ;;
         rb)                EXTS="$EXTS rb" ;;
         cs)                EXTS="$EXTS cs" ;;
-        swift)             EXTS="$EXTS swift" ;;
+        swift|axl)         EXTS="$EXTS $ext" ;;
         j2|jinja2)         EXTS="$EXTS j2" ;;
         twig)              EXTS="$EXTS twig" ;;
         erb)               EXTS="$EXTS erb" ;;

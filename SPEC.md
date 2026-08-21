@@ -1392,6 +1392,7 @@ ReturnType myFunction(Type arg) {
 | Kotlin | `// ...` before package/imports | `/** Rules: ... */` KDoc on method | `camelCase` prefixed | Supported |
 | C# | `// ...` before namespace/imports | `/// Rules: ...` on public method | `camelCase` prefixed | Supported |
 | Swift | `// ...` at file top | `/// Rules: ...` on declaration | `camelCase` prefixed | Supported (structural parser) |
+| AXL | Native opcode 80–85 frames after version | Opcode 84 adjacent to opcode 40 declaration | Symbol IDs | Experimental (native frames) |
 | Templates | Native template comments | L1 only | Engine-native | Supported (7 families) |
 
 ---
@@ -1409,4 +1410,4 @@ ReturnType myFunction(Type arg) {
 | **0.7** | **2026-03-18** | **Header reduced to 3 fields: `exports:`, `used_by:`, `rules:`. `rules:` promoted to required — the inter-agent communication channel. `cascade:` absorbed into `used_by:` as `[cascade]` tag. Removed redundant fields: `tested_by:`, `tables:`, `raises:` (all inferrable from code). Python-only focus.** |
 | **0.7.1** | **2026-03-18** | **Added §2.5 codedna file format requirement (docstring + full source). Added §2.4 task-type analysis (dependency chains vs cross-cutting). Benchmark extended to 5 tasks, ≥5 runs/task, multi-model. Tool harness hardened with `list_files`/`read_file` directory guards.** |
 | **0.8** | **2026-03** | **Added the `message:` agent-chat layer and cross-cutting context design.** |
-| **0.9** | **2026-04** | **Shipped multi-language support for 11 programming languages, 27 registered extensions, and 7 template families. Added `related:`, opt-in `wiki:`, retained session history, audit commands, and native agent integrations. See §11 and `docs/languages.md`.** |
+| **0.9** | **2026-04** | **Shipped multi-language support, now covering 12 programming languages and 28 registered extensions including experimental native AXL frames, plus 7 template families. Added `related:`, opt-in `wiki:`, retained session history, audit commands, and native agent integrations. See §11 and `docs/languages.md`.** |

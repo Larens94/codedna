@@ -1,11 +1,12 @@
 """test_validator.py — Tests for validate_manifests.py.
 
-exports: class TestPythonValidation | class TestPHPValidation | class TestGoValidation | class TestTypeScriptValidation | class TestCSharpValidation | class TestRubyValidation | class TestUnsupported | class TestDirectoryValidation | class TestCodeDNAManifest
+exports: class TestPythonValidation | class TestPHPValidation | class TestGoValidation | class TestTypeScriptValidation | class TestCSharpValidation | class TestRubyValidation | class TestAXLValidation | class TestUnsupported | class TestDirectoryValidation | class TestCodeDNAManifest
 used_by: none
-rules:   Tests cover Python, PHP, Go, TS, C#, Ruby — all must FAIL without header.
+rules:   Tests cover Python, PHP, Go, TS, C#, Ruby, AXL — all must FAIL without CodeDNA metadata.
 Validator is imported directly, not via subprocess.
 agent:   claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_002 | initial validator test suite
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_unused | remove unused pytest import (CodeQL #1675)
+gpt-5 | openai | 2026-08-21 | s_20260821_axl | validate native AXL module frames and reject frame-less sources
 """
 
 from __future__ import annotations
@@ -212,6 +213,26 @@ class TestRubyValidation:
         )
         r = validate_file(p)
         assert r.valid
+
+
+# ── AXL native frames ────────────────────────────────────────────────────────
+
+class TestAXLValidation:
+    def test_native_frames_pass(self, tmp_path):
+        p = tmp_path / "tasks.axl"
+        p.write_text(
+            '2;\n80|module|tasks|"Task domain";\n81|export|createTask|"signature";\n'
+            '84|rule|"atomic"|human;\n85|agent|"gpt-5 | openai | 2026-08-21 | s_1 | test";\n99\n'
+        )
+        result = validate_file(p)
+        assert result.valid, result.errors
+
+    def test_missing_module_frame_fails(self, tmp_path):
+        p = tmp_path / "tasks.axl"
+        p.write_text("2;\n40|createTask|input:Task;\n99\n")
+        result = validate_file(p)
+        assert not result.valid
+        assert any("opcode 80" in error for error in result.errors)
 
 
 # ── Unsupported extension ────────────────────────────────────────────────────

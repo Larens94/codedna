@@ -5,6 +5,7 @@ used_by: none
 related: tests/test_cli.py — validates the commands documented here
 rules:   exported module constants must be listed; keep assertions limited to stable product contracts, not editorial wording
 agent:   gpt-5 | openai | 2026-08-21 | s_20260821_docs_consistency | added documentation drift guards
+gpt-5 | openai | 2026-08-21 | s_20260821_axl | update public language contracts for experimental native AXL support
 message: "update these contracts only when language counts, protocol version, or canonical commands intentionally change"
 """
 
@@ -39,8 +40,9 @@ def test_public_docs_share_canonical_product_facts() -> None:
     assert "C/C++" not in spec
 
     languages = _read("docs/languages.md")
-    assert "11 programming languages" in languages
-    assert "27 registered extensions" in languages
+    assert "12 programming languages" in languages
+    assert "28 registered extensions" in languages
+    assert "AXL *(experimental)*" in languages
     assert "7 template families" in languages
 
 

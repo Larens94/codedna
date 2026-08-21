@@ -1,6 +1,6 @@
 # Language Support
 
-CodeDNA v0.9 supports **11 programming languages** (counting TypeScript and JavaScript separately) across **27 registered extensions**, plus **7 template families**. All are auto-detected — no configuration needed.
+CodeDNA v0.9 supports **12 programming languages** (counting TypeScript and JavaScript separately) across **28 registered extensions**, plus **7 template families**. All are auto-detected — no configuration needed.
 
 | Language | Extensions | L1 | L2 | Parser | Framework awareness |
 |---|---|---|---|---|---|
@@ -14,6 +14,9 @@ CodeDNA v0.9 supports **11 programming languages** (counting TypeScript and Java
 | Rust | `.rs` | ✅ | ✅ | tree-sitter | — |
 | C# | `.cs` | ✅ | ✅ | tree-sitter | — |
 | Swift | `.swift` | ✅ | ✅ | structural parser | — |
+| AXL *(experimental)* | `.axl` | ✅ | native symbol rules | native opcode frames | CodeDNA frames 80–86 |
+
+AXL is intentionally different from comment-based adapters. `codedna init`, `refresh`, `check`, and `verify` read and write structured frames immediately after the numeric AXL version line. Symbol rules are placed directly before opcode `40` declarations. CodeDNA preserves these frames in source; preservation through AX-IR, `pack`, compilation, and generated backends must be implemented and tested in the AXL compiler itself.
 
 **Template engines** (L1 only, regex-based by design):
 
@@ -31,7 +34,7 @@ CodeDNA v0.9 supports **11 programming languages** (counting TypeScript and Java
 
 ## What tree-sitter extracts
 
-Python uses the standard-library AST, PHP/TypeScript/JavaScript/Go/Java/Kotlin/Ruby/Rust/C# use tree-sitter, and Swift uses its dedicated structural parser. Together they provide:
+Python uses the standard-library AST, PHP/TypeScript/JavaScript/Go/Java/Kotlin/Ruby/Rust/C# use tree-sitter, Swift uses its dedicated structural parser, and AXL uses native annotation/declaration frames. Together they provide:
 
 - **Exports**: classes, public methods (with full signatures), interfaces, traits, enums, constants
 - **Dependencies**: `use`, `import`, `require` statements resolved to file paths

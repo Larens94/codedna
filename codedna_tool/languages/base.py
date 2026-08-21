@@ -11,6 +11,7 @@ used_by: codedna_tool/languages/__init__.py → LanguageAdapter
          codedna_tool/languages/_ts_ruby.py → LangFileInfo, LangFuncInfo
          codedna_tool/languages/_ts_rust.py → LangFileInfo, LangFuncInfo
          codedna_tool/languages/_ts_typescript.py → LangFileInfo, LangFuncInfo
+         codedna_tool/languages/axl.py → LangFileInfo, LanguageAdapter
          codedna_tool/languages/blade.py → LangFileInfo, LanguageAdapter
          codedna_tool/languages/csharp.py → LangFileInfo, LangFuncInfo, LanguageAdapter
          codedna_tool/languages/erb.py → LangFileInfo, LanguageAdapter
@@ -31,11 +32,11 @@ extract_info() must never raise — return empty defaults on failure.
 inject_header() must be idempotent: if header already present, return source unchanged.
 _build_header_lines() MUST emit agent: with 5 fields: model-id | provider | YYYY-MM-DD | session_id | narrative.
 Never change the field order in _build_header_lines() — downstream validators parse by position.
-agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_005 | fix multi-line rules normalization; ruff cleanup: ambiguous var l→line, removed unused Optional import
-claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php2 | GATE 3: add LangFuncInfo dataclass + funcs field to LangFileInfo — enables L2 function Rules: for non-Python adapters (PHP first)
+agent:   claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php2 | GATE 3: add LangFuncInfo dataclass + funcs field to LangFileInfo — enables L2 function Rules: for non-Python adapters (PHP first)
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_msg | add message: empty field to _build_header_lines() — visible to next agent even when empty
 claude-opus-4-6 | anthropic | 2026-04-18 | s_20260418_gate2 | fix multi-line used_by missing comment prefix — _build_header_lines now normalizes used_by like rules
 gpt-5 | openai | 2026-08-20 | s_20260820_hardening | document Rules contracts on every abstract public adapter method
+gpt-5 | openai | 2026-08-21 | s_20260821_axl | add native structured-annotation extension points for AXL
 message:
 """
 
@@ -126,6 +127,23 @@ class LanguageAdapter(ABC):
             if stripped.startswith(("exports:", "used_by:", "related:", "rules:", "agent:", "message:")):
                 return True
         return False
+
+    def parse_codedna_fields(self, source: str) -> dict[str, str] | None:
+        """Parse native structured CodeDNA fields when comments are not the carrier.
+
+        Rules:   Return None for ordinary comment-based languages so callers use the
+                 canonical comment parser. Native-frame adapters must return raw field
+                 values keyed by exports, used_by, related, rules, agent, and message.
+        """
+        return None
+
+    def refresh_header(self, source: str, exports: str, used_by: str) -> str | None:
+        """Refresh native structured exports and used_by fields.
+
+        Rules:   Return None for comment-based languages. Native implementations must
+                 preserve semantic and symbol-level annotations byte-for-byte.
+        """
+        return None
 
     @staticmethod
     def _detect_provider(model_id: str) -> str:

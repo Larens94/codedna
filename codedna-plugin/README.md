@@ -43,7 +43,7 @@ CodeDNA is an inter-agent communication protocol embedded in source files. Every
 - **`agent:`** — append-only session log from previous AI agents
 - **`message:`** — agent-to-agent chat: open observations, promoted to `rules:` or dismissed
 
-This gives any AI agent instant architectural context without reading dozens of files. Supports 11 programming languages across 27 extensions, plus 7 template families.
+This gives any AI agent instant architectural context without reading dozens of files. Supports 12 programming languages across 28 extensions, plus 7 template families; AXL uses experimental native frames rather than comments.
 
 See the [full spec](https://github.com/Larens94/codedna/blob/main/SPEC.md) for details.
 

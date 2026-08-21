@@ -4,14 +4,13 @@
 exports: REQUIRED_FIELDS_FULL | REQUIRED_FIELDS | OPTIONAL_FIELDS | KNOWN_FIELDS | SKIP_DIRS | COMMENT_PREFIX | _DATE_RE | _PURPOSE_MAX_WORDS | _AGENT_MAX_ENTRIES | class ValidationResult | validate_file(path) | validate_directory(root, extensions) | print_results(results, verbose) | main()
 used_by: none
 rules:   validates v0.9 format only (exports:/used_by:/rules:/agent: in module docstring).
-Python uses AST; other languages use regex on first 40 lines.
+Python uses AST; comment languages use regex; AXL uses native opcode frames.
 read-only — never modifies files.
-agent:   claude-sonnet-4-6 | anthropic | 2026-04-02 | s_20260402_001 | fixed _extract_python: return (None, {}) for valid Python without docstring
-claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_001 | added .php, .cs, .mjs, .kts to COMMENT_PREFIX — validator now covers all 11 languages
-claude-sonnet-4-6 | anthropic | 2026-04-15 | s_20260415_002 | all languages now require full 4-field header (exports/used_by/rules/agent) — REQUIRED_FIELDS_REDUCED = REQUIRED_FIELDS_FULL, _REDUCED_HEADER_EXTS cleared
+agent:   claude-sonnet-4-6 | anthropic | 2026-04-15 | s_20260415_002 | all languages now require full 4-field header (exports/used_by/rules/agent) — REQUIRED_FIELDS_REDUCED = REQUIRED_FIELDS_FULL, _REDUCED_HEADER_EXTS cleared
 claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | removed dead REQUIRED_FIELDS_REDUCED and _REDUCED_HEADER_EXTS variables
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | add optional wiki: field validation (experimental v0.9) — _validate_wiki checks path exists relative to repo root; _find_repo_root walks up for .codedna/.git marker
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki6 | fix: _parse_fields was only recognizing REQUIRED_FIELDS so `wiki:`/`related:`/`message:` values were being folded into the previous field. Introduced KNOWN_FIELDS = REQUIRED ∪ OPTIONAL — the wiki path validator now runs on real data.
+gpt-5 | openai | 2026-08-21 | s_20260821_axl | validate native AXL frames as structured fields rather than comments
 Usage:
 python tools/validate_manifests.py [path] [-v] [--extensions py ts go]
 python tools/validate_manifests.py .             # validate current dir (Python only)
@@ -174,6 +173,25 @@ def _extract_other(path: Path, prefix: str) -> tuple[Optional[str], Optional[dic
     return None, fields  # no purpose line for non-Python
 
 
+def _extract_axl(path: Path) -> tuple[Optional[str], Optional[dict[str, str]]]:
+    """Extract logical CodeDNA fields from native AXL annotation frames.
+
+    Rules:   AXL metadata is syntax, not a comment block; delegate decoding to the
+             registered adapter so CLI and standalone validation cannot drift.
+    """
+    try:
+        source = path.read_text(encoding="utf-8", errors="replace")
+    except OSError:
+        return None, None
+    from codedna_tool.languages import get_adapter
+
+    adapter = get_adapter(".axl")
+    if adapter is None:
+        return None, None
+    fields = adapter.parse_codedna_fields(source)
+    return None, fields
+
+
 # ── Validation rules ──────────────────────────────────────────────────────────
 
 
@@ -306,6 +324,11 @@ def validate_file(path: Path) -> ValidationResult:
             result.err("Module docstring is empty")
             return result
 
+    elif ext == ".axl":
+        _, fields = _extract_axl(path)
+        if fields is None:
+            result.err("No native CodeDNA module frame found — add opcode 80 after the AXL version")
+            return result
     elif ext in COMMENT_PREFIX:
         _, fields = _extract_other(path, COMMENT_PREFIX[ext])
         if fields is None:
