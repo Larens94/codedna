@@ -33,14 +33,6 @@ agent_sessions:
   - agent: "gpt-5"
     provider: "openai"
     date: "2026-08-21"
-    session_id: "s_20260821_docs_consistency"
-    task: "Align Markdown documentation and agent templates"
-    changed: ["README.md","README-it.md","QUICKSTART.md","SPEC.md","AGENTS.md","CLAUDE.md","integrations/AGENTS.md","integrations/CLAUDE.md","codedna-plugin/README.md","docs/languages.md","tests/test_docs.py",".codedna"]
-    visited: ["README.md","README-it.md","QUICKSTART.md","SPEC.md","AGENTS.md","CLAUDE.md","CONTRIBUTING.md","SECURITY.md","CHANGELOG.md","integrations/README.md","integrations/AGENTS.md","integrations/CLAUDE.md","codedna-plugin/README.md","codedna-plugin/SUBMIT.md","docs/languages.md","docs/benchmark.md","integrations/install.sh","pyproject.toml","codedna_tool/cli.py","tests/test_docs.py",".codedna"]
-    message: "Aligned public docs on protocol 0.9, 11 languages, 27 extensions, 7 template families, and the canonical no-LLM install workflow. Removed unsupported C/C++ claims, updated installable agent templates with session append, and added documentation drift/link tests. 284 tests pass and CodeDNA verify is clean."
-  - agent: "gpt-5"
-    provider: "openai"
-    date: "2026-08-21"
     session_id: "s_20260821_commit_push"
     task: "Prepare verified release changes for push"
     changed: [".gitignore",".codedna"]
@@ -70,3 +62,11 @@ agent_sessions:
     changed: ["README-it.md","README.md","SPEC.md","codedna-plugin/README.md","codedna_tool/audit.py","codedna_tool/cli.py","codedna_tool/languages/__init__.py","codedna_tool/languages/base.py","codedna_tool/languages/axl.py","docs/index.html","docs/install.html","docs/languages.md","tests/test_docs.py","tests/test_integration_langs.py","tests/test_language_adapters.py","tests/test_validator.py","tools/pre-commit","tools/validate_manifests.py"]
     visited: [".codedna","AGENTS.md","README-it.md","README.md","SPEC.md","codedna-plugin/README.md","codedna_tool/audit.py","codedna_tool/cli.py","codedna_tool/languages/__init__.py","codedna_tool/languages/base.py","codedna_tool/languages/axl.py","docs/index.html","docs/install.html","docs/languages.md","tests/test_docs.py","tests/test_integration_langs.py","tests/test_language_adapters.py","tests/test_validator.py","tools/pre-commit","tools/validate_manifests.py"]
     message: "Implemented experimental native AXL opcode frames for module and symbol CodeDNA metadata across init, refresh, check, verify, validation, hooks, tests, and docs. Source preservation is covered; AX-IR and compiler propagation remain external AXL compiler responsibilities."
+  - agent: "gpt-5"
+    provider: "openai"
+    date: "2026-08-27"
+    session_id: "s_20260827_header_parser"
+    task: "Unify header parsing and lazy-load LLM"
+    changed: ["codedna_tool/cli.py","codedna_tool/languages/base.py","tests/test_language_adapters.py","tests/test_refresh.py",".codedna"]
+    visited: [".codedna","codedna_tool/cli.py","codedna_tool/audit.py","codedna_tool/wiki.py","codedna_tool/languages/__init__.py","codedna_tool/languages/base.py","codedna_tool/languages/php.py","codedna_tool/languages/_ts_php.py","tests/test_cli.py","tests/test_refresh.py","tests/test_validator.py","tests/test_language_adapters.py"]
+    message: "Centralized compact block-comment L1 parsing, preserved reduced headers, proved PHP imports are not exports, and removed LiteLLM initialization from zero-LLM commands. 296 tests pass; verify and doctor are clean."

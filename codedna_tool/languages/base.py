@@ -1,7 +1,8 @@
 """base.py — Abstract base class for CodeDNA v0.9 language adapters.
 
-exports: class LangFuncInfo | class LangFileInfo | class LanguageAdapter
-used_by: codedna_tool/languages/__init__.py → LanguageAdapter
+exports: parse_codedna_comment_header(source, comment_prefix) | class LangFuncInfo | class LangFileInfo | class LanguageAdapter
+used_by: codedna_tool/cli.py → parse_codedna_comment_header
+         codedna_tool/languages/__init__.py → LanguageAdapter
          codedna_tool/languages/_treesitter.py → LanguageAdapter
          codedna_tool/languages/_ts_csharp.py → LangFileInfo, LangFuncInfo
          codedna_tool/languages/_ts_go.py → LangFileInfo, LangFuncInfo
@@ -30,13 +31,14 @@ used_by: codedna_tool/languages/__init__.py → LanguageAdapter
 rules:   All adapters must be stateless (no instance state).
 extract_info() must never raise — return empty defaults on failure.
 inject_header() must be idempotent: if header already present, return source unchanged.
+parse_codedna_comment_header() is the single parser for check, verify, refresh, and wiki.
 _build_header_lines() MUST emit agent: with 5 fields: model-id | provider | YYYY-MM-DD | session_id | narrative.
 Never change the field order in _build_header_lines() — downstream validators parse by position.
-agent:   claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php2 | GATE 3: add LangFuncInfo dataclass + funcs field to LangFileInfo — enables L2 function Rules: for non-Python adapters (PHP first)
-claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_msg | add message: empty field to _build_header_lines() — visible to next agent even when empty
+agent:   claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_msg | add message: empty field to _build_header_lines() — visible to next agent even when empty
 claude-opus-4-6 | anthropic | 2026-04-18 | s_20260418_gate2 | fix multi-line used_by missing comment prefix — _build_header_lines now normalizes used_by like rules
 gpt-5 | openai | 2026-08-20 | s_20260820_hardening | document Rules contracts on every abstract public adapter method
 gpt-5 | openai | 2026-08-21 | s_20260821_axl | add native structured-annotation extension points for AXL
+gpt-5 | openai | 2026-08-27 | s_20260827_header_parser | centralize comment-header parsing and accept compact PHPDoc/JSDoc blocks without leading stars
 message:
 """
 
@@ -45,6 +47,91 @@ from __future__ import annotations
 from abc import ABC, abstractmethod
 from dataclasses import dataclass, field
 from pathlib import Path
+
+
+def parse_codedna_comment_header(source: str, comment_prefix: str) -> dict[str, str] | None:
+    """Parse a comment-carried CodeDNA L1 header and its source range.
+
+    Rules:   This is the canonical parser used by coverage, verify, refresh, and wiki.
+             Accept //, #, /*, /**, optional leading *, and unprefixed lines inside
+             a block comment; never treat unprefixed source outside a block as fields.
+    """
+    fields: dict[str, str] = {}
+    current_field: str | None = None
+    current_lines: list[str] = []
+    header_started = False
+    in_block = False
+    header_line_indices: list[int] = []
+    pending_open_idx: int | None = None
+    field_names = ("exports:", "used_by:", "related:", "wiki:",
+                   "rules:", "agent:", "message:")
+
+    for int_line_index, str_line_raw in enumerate(source.splitlines()):
+        str_line_stripped = str_line_raw.strip()
+        bool_block_opener = str_line_stripped.startswith(("/**", "/*"))
+        if bool_block_opener:
+            in_block = True
+            if not header_started:
+                pending_open_idx = int_line_index
+            str_content = str_line_stripped[3 if str_line_stripped.startswith("/**") else 2:].strip()
+        elif in_block and str_line_stripped.endswith("*/"):
+            str_content = str_line_stripped[:-2].strip()
+            if str_content.startswith("*"):
+                str_content = str_content[1:].strip()
+            if header_started:
+                header_line_indices.append(int_line_index)
+            in_block = False
+            if not str_content:
+                break
+        elif in_block:
+            str_content = str_line_stripped[1:].strip() if str_line_stripped.startswith("*") else str_line_stripped
+        elif comment_prefix and str_line_stripped.startswith(comment_prefix):
+            str_content = str_line_stripped[len(comment_prefix):].strip()
+        elif str_line_stripped.startswith("//"):
+            str_content = str_line_stripped[2:].strip()
+        elif str_line_stripped.startswith("#"):
+            str_content = str_line_stripped[1:].strip()
+        else:
+            if header_started:
+                break
+            continue
+
+        if not header_started:
+            if any(str_content.startswith(str_field) for str_field in field_names):
+                header_started = True
+                fields["first_line"] = ""
+            elif " — " in str_content:
+                header_started = True
+                fields["first_line"] = str_content
+                if pending_open_idx is not None:
+                    header_line_indices.append(pending_open_idx)
+                header_line_indices.append(int_line_index)
+                continue
+            else:
+                continue
+            if pending_open_idx is not None:
+                header_line_indices.append(pending_open_idx)
+
+        header_line_indices.append(int_line_index)
+        for str_field_name in field_names:
+            if str_content.startswith(str_field_name):
+                if current_field:
+                    fields[current_field] = "\n".join(current_lines)
+                current_field = str_field_name.rstrip(":")
+                current_lines = [str_content]
+                break
+        else:
+            if current_field and str_content:
+                current_lines.append(str_content)
+
+    if current_field:
+        fields[current_field] = "\n".join(current_lines)
+    if not any(str_field in fields for str_field in
+               ("exports", "used_by", "related", "wiki", "rules", "agent", "message")):
+        return None
+    fields["_header_start"] = str(min(header_line_indices)) if header_line_indices else "0"
+    fields["_header_end"] = str(max(header_line_indices)) if header_line_indices else "0"
+    return fields
 
 
 @dataclass
@@ -117,16 +204,7 @@ class LanguageAdapter(ABC):
                  when re-running codedna init on already-annotated files.
                  Detects both full headers (exports:/used_by:) and reduced headers (rules:/agent:).
         """
-        for line in source.splitlines()[:30]:
-            # Strip all common comment prefixes: //, #, *, {{--, {#, <%#, @*, <!--
-            stripped = line.strip()
-            for prefix in (self.comment_prefix, "//", "#", "*", "{{--", "{#", "<%#", "@*", "<!--"):
-                if stripped.startswith(prefix):
-                    stripped = stripped[len(prefix):].strip()
-                    break
-            if stripped.startswith(("exports:", "used_by:", "related:", "rules:", "agent:", "message:")):
-                return True
-        return False
+        return parse_codedna_comment_header(source[:16 * 1024], self.comment_prefix) is not None
 
     def parse_codedna_fields(self, source: str) -> dict[str, str] | None:
         """Parse native structured CodeDNA fields when comments are not the carrier.

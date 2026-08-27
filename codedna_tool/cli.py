@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """cli.py — CodeDNA v0.9 annotation tool: init, update, check, install.
 
-exports: class FuncInfo | class FileInfo | scan_file(path, repo_root) | scan_file_lang(path, repo_root, adapter) | build_used_by(infos) | build_ast_skeleton(source, rel) | class LLM | _EXPORTS_CAP | _CODEDNA_FIELD_RE | build_module_docstring(info, ub, rules, model_id) | inject_module_docstring(source, docstring) | inject_function_rules(source, func, rules_text) | _DEFAULT_SKIP_DIRS | collect_files(target, exclude, extensions) | run_lang_files(target, extensions, repo_root, exclude, model, dry_run, force, no_llm, verbose, api_key) | run(target, levels, model, dry_run, exclude, force, no_llm, only_public, verbose, api_key, repo_root, extensions) | cmd_refresh(target, repo_root, exclude, dry_run, verbose) | cmd_check(target, repo_root, exclude, verbose, extensions) | _TOOL_FILES | _TOOL_HOOKS_MAP | (+13 more)
+exports: HAS_LITELLM | HAS_ANTHROPIC | class FuncInfo | class FileInfo | scan_file(path, repo_root) | scan_file_lang(path, repo_root, adapter) | build_used_by(infos) | build_ast_skeleton(source, rel) | class LLM | _EXPORTS_CAP | _CODEDNA_FIELD_RE | build_module_docstring(info, ub, rules, model_id) | inject_module_docstring(source, docstring) | inject_function_rules(source, func, rules_text) | _DEFAULT_SKIP_DIRS | collect_files(target, exclude, extensions) | run_lang_files(target, extensions, repo_root, exclude, model, dry_run, force, no_llm, verbose, api_key) | run(target, levels, model, dry_run, exclude, force, no_llm, only_public, verbose, api_key, repo_root, extensions) | cmd_refresh(target, repo_root, exclude, dry_run, verbose) | cmd_check(target, repo_root, exclude, verbose, extensions) | (+15 more)
 used_by: codedna_tool/audit.py → _auto_detect_extensions, _get_extension, _normalize_extensions, _parse_existing_docstring, _parse_lang_header, _read_codedna_excludes, build_used_by, collect_files, scan_file, scan_file_lang
          codedna_tool/wiki.py → _DEFAULT_SKIP_DIRS, _parse_existing_docstring, _parse_lang_header
          tests/test_audit.py → run
@@ -16,11 +16,12 @@ scan_file handles 3 import patterns: (1) from .mod import X, (2) from . import X
 (submodule-first then __init__.py symbol), (3) from pkg import X (tries pkg/X.py
 before falling back to pkg/__init__.py). All 3 were previously under-resolved.
 _parse_lang_header accepts BOTH single-line (// #) AND docblock (/** * */) headers.
-agent:   deepseek-v4-pro | deepseek | 2026-07-10 | s_20260710_docblock | _parse_lang_header now accepts /** */ JSDoc/PHPDoc docblock headers (each line prefixed with *), not only single-line // comments. Vibe Bridge reported refresh + wiki bootstrap yielding 0 files on a Laravel 12 + React 19 project whose PHP/TSX files carried docblock-style CodeDNA headers — the parser only stripped the language comment_prefix so ` * exports:` never matched, returning None. Fixes BOTH refresh (cli) and wiki bootstrap (wiki._extract_fields shares this parser). Header range now spans the /** opener through */ closer so _replace_lang_header rewrites the whole block cleanly. Also added Laravel bootstrap/ + storage/ to _DEFAULT_SKIP_DIRS (framework scaffolding/runtime, never source — inflated check coverage denominator). 6 tests in TestDocblockHeader. Did NOT adopt their tools/refresh-wiki.py (redundant — wiki bootstrap already covers all adapter languages) nor their block-on-write plugin design (kept warn-only; hard enforcement stays in pre-commit).
-gpt-5 | openai | 2026-08-20 | s_20260820_hardening | make source rewrites atomic, lock install-time manifest creation, and align session semantics
+LiteLLM and provider SDKs must be imported only when LLM() is instantiated.
+agent:   gpt-5 | openai | 2026-08-20 | s_20260820_hardening | make source rewrites atomic, lock install-time manifest creation, and align session semantics
 gpt-5 | openai | 2026-08-20 | s_20260820_audit | expose read-only doctor, impact, and verify gates with human and JSON output
 gpt-5 | openai | 2026-08-20 | s_20260820_adoption | add explicit Codex and Aider installers and prevent AGENTS.md from implying OpenCode hooks
 gpt-5 | openai | 2026-08-21 | s_20260821_axl | route refresh through native AXL frame parsing without comment rewrites
+gpt-5 | openai | 2026-08-27 | s_20260827_header_parser | delegate all comment headers to the canonical parser and lazy-load LLM provider SDKs
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -44,6 +45,8 @@ message:
 import argparse
 import ast
 import fnmatch
+import importlib
+import importlib.util
 import json
 import os
 import re
@@ -54,6 +57,7 @@ from pathlib import Path
 from typing import Optional
 
 from .languages import SUPPORTED_EXTENSIONS, get_adapter
+from .languages.base import parse_codedna_comment_header
 from .manifest_store import (
     atomic_write_text,
     append_session,
@@ -64,21 +68,10 @@ from .manifest_store import (
     prune_sessions,
 )
 
-try:
-    import litellm as _litellm
-
-    HAS_LITELLM = True
-except ImportError:
-    _litellm = None
-    HAS_LITELLM = False
-
-try:
-    import anthropic as _anthropic
-
-    HAS_ANTHROPIC = True
-except ImportError:
-    _anthropic = None
-    HAS_ANTHROPIC = False
+_litellm = None
+_anthropic = None
+HAS_LITELLM = importlib.util.find_spec("litellm") is not None
+HAS_ANTHROPIC = importlib.util.find_spec("anthropic") is not None
 
 
 # ── Data classes ─────────────────────────────────────────────────────────────
@@ -492,11 +485,16 @@ class LLM:
     """
 
     def __init__(self, model: str, api_key: Optional[str] = None):
+        global _litellm, _anthropic
         self.model = model
         self._use_litellm = HAS_LITELLM
         self._client = None
 
         if HAS_LITELLM:
+            # Rules: import LiteLLM only when an LLM client is actually requested;
+            # read-only and --no-llm commands must never initialize its network cost map.
+            if _litellm is None:
+                _litellm = importlib.import_module("litellm")
             # litellm reads API keys from env vars automatically.
             # If the caller passes --api-key, inject it into the right env var.
             if api_key:
@@ -513,6 +511,8 @@ class LLM:
                 if env_key:
                     os.environ[env_key] = api_key
         elif HAS_ANTHROPIC:
+            if _anthropic is None:
+                _anthropic = importlib.import_module("anthropic")
             # Legacy fallback — only works for Claude models.
             self._client = _anthropic.Anthropic(api_key=api_key or os.environ.get("ANTHROPIC_API_KEY"))
         else:
@@ -1527,83 +1527,7 @@ def _parse_lang_header(source: str, comment_prefix: str) -> dict[str, str] | Non
              refresh and wiki bootstrap silently skipped every docblock-annotated file.
              Preserves multi-line continuation values (indented lines after a field).
     """
-    fields: dict[str, str] = {}
-    current_field = None
-    current_lines: list[str] = []
-    header_started = False
-    header_line_indices: list[int] = []
-    pending_open_idx: int | None = None
-
-    for i, line in enumerate(source.splitlines()):
-        stripped = line.strip()
-        # Strip comment prefix — supports single-line (//, #) and docblock
-        # (/** ... */ with leading *) styles. Order matters: check the language's
-        # own prefix first, then the docblock markers.
-        if comment_prefix and stripped.startswith(comment_prefix):
-            content = stripped[len(comment_prefix):].strip()
-        elif stripped.startswith("/**") or stripped == "/*":
-            # Docblock opener — remember its index so the whole block can be
-            # replaced cleanly by _replace_lang_header; no field content here.
-            if not header_started:
-                pending_open_idx = i
-            content = stripped.lstrip("/*").strip()
-        elif stripped.startswith("*/"):
-            # Docblock closer — end of the header block.
-            if header_started:
-                header_line_indices.append(i)
-                break
-            continue
-        elif stripped.startswith("*"):
-            content = stripped[1:].strip()
-        else:
-            if header_started:
-                break
-            continue
-
-        # First line of header (filename — purpose)
-        if not header_started:
-            if any(content.startswith(f) for f in ("exports:", "used_by:", "related:", "wiki:", "rules:", "agent:")):
-                header_started = True
-                fields["first_line"] = ""
-                # Include the docblock opener line in the replaceable range.
-                if pending_open_idx is not None:
-                    header_line_indices.append(pending_open_idx)
-            elif " — " in content or content.endswith("."):
-                fields["first_line"] = content
-                header_started = True
-                if pending_open_idx is not None:
-                    header_line_indices.append(pending_open_idx)
-                header_line_indices.append(i)
-                continue
-            else:
-                continue
-
-        header_line_indices.append(i)
-
-        # Check if line starts a new field
-        for field_name in ("exports:", "used_by:", "related:", "wiki:", "rules:", "agent:", "message:"):
-            if content.startswith(field_name):
-                if current_field:
-                    fields[current_field] = "\n".join(current_lines)
-                current_field = field_name.rstrip(":")
-                current_lines = [content]
-                break
-        else:
-            if current_field and content:
-                current_lines.append(content)
-            elif not content:
-                # Blank comment line — skip
-                pass
-
-    if current_field:
-        fields[current_field] = "\n".join(current_lines)
-
-    if not fields or "exports" not in fields:
-        return None
-
-    fields["_header_start"] = str(min(header_line_indices)) if header_line_indices else "0"
-    fields["_header_end"] = str(max(header_line_indices)) if header_line_indices else "0"
-    return fields
+    return parse_codedna_comment_header(source, comment_prefix)
 
 
 def _rebuild_lang_header(fields: dict[str, str], new_exports: str, new_used_by: str,

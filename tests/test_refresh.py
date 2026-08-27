@@ -4,12 +4,12 @@ exports: PYTHON | run_codedna() | class TestRefresh | class TestRelativeImports 
 used_by: none
 rules:   Tests verify that refresh updates exports/used_by without touching rules/agent/message.
 Tests also verify Python relative imports (from .module) are resolved correctly.
-agent:   claude-opus-4-6 | anthropic | 2026-04-15 | s_20260415_003 | initial refresh + relative import tests
-claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | updated TestReducedHeader: all languages now emit full headers (exports+used_by+rules+agent); updated validator test to require full PHP header
+agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_002 | updated TestReducedHeader: all languages now emit full headers (exports+used_by+rules+agent); updated validator test to require full PHP header
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | remove .rs from TestReducedHeader ext list — Rust removed from registry
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_wiki | add TestWikiField — 4 tests for the experimental wiki: pointer field (parse, rebuild, refresh preservation, opt-in absence)
 claude-sonnet-4-6 | anthropic | 2026-04-22 | s_20260422_refresh | add TestRefreshPreservesLLMAnnotations — 3 regression tests for bug where refresh degraded real annotations to "none" on PHP config + Python files with no AST importers
 claude-sonnet-4-6 | anthropic | 2026-04-22 | s_20260422_matrix | add TestRefreshPreserveMatrix — exhaustive 14-case matrix covering Python+PHP paths, all combinations of old/new exports/used_by values (preserve vs update vs no-change)
+gpt-5 | openai | 2026-08-27 | s_20260827_header_parser | cover compact PHPDoc and JSDoc L1 headers whose inner lines omit leading stars
 message:
 """
 
@@ -780,3 +780,37 @@ class TestDocblockHeader:
     def test_no_header_returns_none(self):
         from codedna_tool.cli import _parse_lang_header
         assert _parse_lang_header("<?php\nclass Foo {}\n", "//") is None
+
+    def test_compact_phpdoc_without_star_prefixes(self):
+        """The exact Laravel format from the 1.2.0 parser regression is valid."""
+        from codedna_tool.cli import _parse_lang_header
+        source = """<?php
+
+/**TriggerDeploy.php — Triggera il deploy Plesk via webhook Git in loopback.
+
+exports: handle(Request) -> string
+used_by: app/Ai/Agents/DeployAgent.php → tools
+rules:   chiama il webhook Plesk in loopback 127.0.0.1:8443
+agent:   test | openai | 2026-08-27 | s_test | regression
+*/
+"""
+        fields = _parse_lang_header(source, "//")
+        assert fields is not None
+        assert "handle(Request)" in fields["exports"]
+        assert int(fields["_header_start"]) == 2
+        assert int(fields["_header_end"]) == 8
+
+    def test_compact_jsdoc_without_star_prefixes(self):
+        """JSX compact block comments share the canonical parser."""
+        from codedna_tool.cli import _parse_lang_header
+        source = """/*ToolActivityGroup.jsx — Renders compact execution activity.
+
+exports: ToolActivityGroup, ContextCompactionActivity
+used_by: resources/js/AdminPanel.jsx
+rules:   collapsed summary remains one accessible button
+agent:   test | openai | 2026-08-27 | s_test | regression
+*/
+"""
+        fields = _parse_lang_header(source, "//")
+        assert fields is not None
+        assert "ContextCompactionActivity" in fields["exports"]

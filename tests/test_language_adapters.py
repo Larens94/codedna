@@ -7,11 +7,11 @@ header injection, and injection idempotency.
 Tree-sitter is a core test dependency for registered AST-backed languages.
 C#, Rust, and Swift adapters are advertised public contracts and must be registered.
 AXL annotations are native frames after the version line, never generated comments.
-agent:   claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php2 | GATE 3: add PHP L2 tests — funcs_populated, inject_function_rules (no-doc, idempotent, bottom-to-top)
-claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | remove C#/Rust/Swift from registry → skip those test classes; fix TestFallback/TestErrorHandling ext lists
+agent:   claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_l0meta | remove C#/Rust/Swift from registry → skip those test classes; fix TestFallback/TestErrorHandling ext lists
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_unused | remove unused tempfile import and unused vendor_file/app_file vars (CodeQL #1668, #1694, #1695)
 gpt-5 | openai | 2026-08-20 | s_20260820_hardening | enforce advertised Rust, C#, and Swift registry support instead of skipping it
 gpt-5 | openai | 2026-08-21 | s_20260821_axl | cover native AXL parsing, injection, refresh, and symbol adjacency
+gpt-5 | openai | 2026-08-27 | s_20260827_header_parser | prove PHP imports and return types remain signature context rather than module exports
 message:
 """
 
@@ -106,6 +106,7 @@ export class Server {}
         r1 = ts.inject_header(source, "foo.ts", "foo()", "none", "none", "test", "2026-04-14")
         r2 = ts.inject_header(r1, "foo.ts", "foo()", "none", "none", "test", "2026-04-14")
         assert r1 == r2
+
         assert "rules:" in r1  # reduced header — no exports:/used_by:
         assert "export function foo()" in r1
 
@@ -312,6 +313,21 @@ class UserController extends Controller
         assert "UserController" in info.exports
         assert any("index" in e for e in info.exports)
         assert not any("validate" in e for e in info.exports)
+
+    def test_imported_return_type_is_not_module_export(self, project):
+        """Imported PHP types stay dependencies/signature context, never exports."""
+        php = get_adapter(".php")
+        p = write_file(project, "RunController.php", """<?php
+namespace App\\Http\\Controllers;
+use Illuminate\\Http\\JsonResponse;
+class RunController {
+    public function stream(): JsonResponse {}
+}
+""")
+        info = php.extract_info(p, project)
+        assert "RunController" in info.exports
+        assert "JsonResponse" not in info.exports
+        assert any("RunController::stream" in item for item in info.exports)
 
     def test_injection_idempotent(self, project):
         php = get_adapter(".php")
