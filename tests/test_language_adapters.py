@@ -86,6 +86,23 @@ export function start() {}
         assert "config.ts" in info.deps
         assert not any("express" in d for d in info.deps)
 
+    def test_nodenext_js_suffix_resolves_to_ts(self, project):
+        # NodeNext / moduleResolution "bundler" projects import "./x.js"
+        # while the source file on disk is x.ts (or x.tsx / index.ts).
+        ts = get_adapter(".ts")
+        write_file(project, "lib/schemas/domain.ts", "export type Project = {};")
+        write_file(project, "ui/Button.tsx", "export function Button() {}")
+        write_file(project, "lib/index.ts", "export const Y = 2;")
+        p = write_file(project, "types.ts", """
+import type { Project } from "./lib/schemas/domain.js";
+import { Button } from "./ui/Button.jsx";
+import { Y } from "./lib/index.js";
+""")
+        info = ts.extract_info(p, project)
+        assert "lib/schemas/domain.ts" in info.deps
+        assert "ui/Button.tsx" in info.deps
+        assert "lib/index.ts" in info.deps
+
     def test_js_extension(self, project):
         js = get_adapter(".js")
         assert js is not None

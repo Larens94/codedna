@@ -39,6 +39,7 @@ claude-opus-4-6 | anthropic | 2026-04-18 | s_20260418_gate2 | fix multi-line use
 gpt-5 | openai | 2026-08-20 | s_20260820_hardening | document Rules contracts on every abstract public adapter method
 gpt-5 | openai | 2026-08-21 | s_20260821_axl | add native structured-annotation extension points for AXL
 gpt-5 | openai | 2026-08-27 | s_20260827_header_parser | centralize comment-header parsing and accept compact PHPDoc/JSDoc blocks without leading stars
+claude-opus | anthropic | 2026-09-03 | s_20260903_singleline_block | single-line /** */ no longer leaves parse_codedna_comment_header in block mode (refresh deleted code)
 message:
 """
 
@@ -70,10 +71,18 @@ def parse_codedna_comment_header(source: str, comment_prefix: str) -> dict[str, 
         str_line_stripped = str_line_raw.strip()
         bool_block_opener = str_line_stripped.startswith(("/**", "/*"))
         if bool_block_opener:
-            in_block = True
+            str_content = str_line_stripped[3 if str_line_stripped.startswith("/**") else 2:].strip()
+            # Single-line block comment (`/** foo */`): never enter in_block,
+            # otherwise every later code line is read as comment content and a
+            # stray " — " or `agent:` in source becomes a phantom header that
+            # refresh then overwrites — deleting real code.
+            if len(str_line_stripped) > 2 and str_content.endswith("*/"):
+                str_content = str_content[:-2].strip()
+                in_block = False
+            else:
+                in_block = True
             if not header_started:
                 pending_open_idx = int_line_index
-            str_content = str_line_stripped[3 if str_line_stripped.startswith("/**") else 2:].strip()
         elif in_block and str_line_stripped.endswith("*/"):
             str_content = str_line_stripped[:-2].strip()
             if str_content.startswith("*"):

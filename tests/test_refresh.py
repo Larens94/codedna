@@ -610,6 +610,36 @@ class TestRelatedField:
         assert "shares logic" in rebuilt
         assert "same pattern" in rebuilt
 
+    def test_rebuild_preserves_prose_body(self):
+        """Issue #10 for refresh: hand-written prose between the summary line
+        and the first field must survive a refresh, not just an init --force."""
+        from codedna_tool.cli import _parse_existing_docstring, _rebuild_docstring
+
+        doc = (
+            "test.py — DNS adapter interface.\n"
+            "\n"
+            "Every provider adapter implements `DnsAdapter` so skills can\n"
+            "treat DNS as a provider-neutral surface.\n"
+            "\n"
+            "  indented note with a backslash \\\\n kept verbatim\n"
+            "\n"
+            "exports: foo()\n"
+            "used_by: bar.py → baz\n"
+            "rules:   none\n"
+            "agent:   test | anthropic | 2026-04-20 | s_001 | test\n"
+            "message: \n"
+        )
+        fields = _parse_existing_docstring(doc)
+        assert fields["body"].startswith("Every provider adapter")
+        assert "  indented note with a backslash \\\\n kept verbatim" in fields["body"]
+        rebuilt = _rebuild_docstring(fields, "new_foo()", "new_bar.py → new_baz")
+        assert "treat DNS as a provider-neutral surface." in rebuilt
+        assert "  indented note with a backslash \\\\n kept verbatim" in rebuilt
+        assert rebuilt.index("provider-neutral") < rebuilt.index("exports: new_foo()")
+        # Round-trip is stable: a second parse/rebuild yields identical text.
+        again = _rebuild_docstring(_parse_existing_docstring(rebuilt[3:-5]), "new_foo()", "new_bar.py → new_baz")
+        assert again == rebuilt
+
     def test_refresh_preserves_related(self, tmp_path):
         """codedna refresh must not strip related: when updating used_by."""
         (tmp_path / "utils.py").write_text(
@@ -780,6 +810,41 @@ class TestDocblockHeader:
     def test_no_header_returns_none(self):
         from codedna_tool.cli import _parse_lang_header
         assert _parse_lang_header("<?php\nclass Foo {}\n", "//") is None
+
+    def test_single_line_jsdoc_does_not_open_block(self):
+        """Regression: `/** foo */` on one line must not leave the parser in
+        block mode. Before the fix, every later code line was read as comment
+        content, a template literal containing " — " became first_line,
+        `agent: o.agent,` became the agent field, and refresh replaced the
+        whole phantom range — deleting real code."""
+        from codedna_tool.cli import _parse_lang_header
+        from codedna_tool.languages import get_adapter
+        src = (
+            "import { x } from './x.js';\n"
+            "\n"
+            "/** Map the band to a priority. */\n"
+            "function band(b: string): string { return b; }\n"
+            "\n"
+            "function line(o: any): string {\n"
+            "  return `- **${o.title}** — _${o.severity}_`;\n"
+            "}\n"
+            "export function render(o: any) {\n"
+            "  return {\n"
+            "    agent: o.agent,\n"
+            "    rules: o.rules,\n"
+            "  };\n"
+            "}\n"
+        )
+        assert _parse_lang_header(src, "//") is None
+        assert get_adapter(".ts").has_codedna_header(src) is False
+
+        annotated = get_adapter(".ts").inject_header(
+            src, "render.ts", "render", "none", "none", "test", "2026-09-03")
+        fields = _parse_lang_header(annotated, "//")
+        assert fields is not None
+        assert "render" in fields["exports"]
+        # Header range stops at the header — never reaches the code below.
+        assert int(fields["_header_end"]) < annotated.splitlines().index("/** Map the band to a priority. */")
 
     def test_compact_phpdoc_without_star_prefixes(self):
         """The exact Laravel format from the 1.2.0 parser regression is valid."""
