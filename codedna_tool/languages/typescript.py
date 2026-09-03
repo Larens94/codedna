@@ -7,6 +7,7 @@ Detects exports via 'export function', 'export class', 'export const', 'export d
 Import resolution is path-only (relative imports starting with '.' or './').
 inject_function_rules uses JSDoc /** ... */ blocks (same style as PHPDoc).
 agent:   claude-sonnet-4-6 | anthropic | 2026-03-27 | s_20260327_002 | CodeDNA v0.9 compliance pass: added session_id to agent: field, added Rules: docstrings to extract_info and inject_header
+claude-opus | anthropic | 2026-09-03 | s_20260903_nodenext | resolve NodeNext `./x.js` imports to x.ts/x.tsx so used_by: is populated
 claude-opus-4-6 | anthropic | 2026-04-14 | s_20260414_002 | fixed _resolve_import: check is_file() not exists() to avoid resolving directories as files
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_ts | add inject_function_rules() — JSDoc Rules: injection; handles existing doc block (append before */) and no-doc (new /** */ block)
 message:
@@ -146,7 +147,13 @@ class TypeScriptAdapter(LanguageAdapter):
 
     @staticmethod
     def _resolve_import(current_file: Path, import_path: str, repo_root: Path) -> str | None:
-        """Resolve a relative TS/JS import to a repo-relative path."""
+        """Resolve a relative TS/JS import to a repo-relative path.
+
+        Rules:   NodeNext/ESM TypeScript imports name the *emitted* file
+                 (`./foo.js`) while the source on disk is `foo.ts`/`foo.tsx`.
+                 When the literal path does not exist, retry with the .js/.jsx/
+                 .mjs suffix stripped so the .ts/.tsx candidates are tried.
+        """
         base = current_file.parent / import_path
         # Try common extensions — file extensions first, then index files
         for suffix in [".ts", ".tsx", ".js", ".jsx", "/index.ts", "/index.js"]:
@@ -162,4 +169,9 @@ class TypeScriptAdapter(LanguageAdapter):
                 return str(base.relative_to(repo_root))
             except ValueError:
                 return None
+        # NodeNext: `./foo.js` written in source, `foo.ts` on disk.
+        for emitted in (".js", ".jsx", ".mjs"):
+            if import_path.endswith(emitted):
+                stem = import_path[: -len(emitted)]
+                return TypeScriptAdapter._resolve_import(current_file, stem, repo_root)
         return None
