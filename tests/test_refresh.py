@@ -781,6 +781,41 @@ class TestDocblockHeader:
         from codedna_tool.cli import _parse_lang_header
         assert _parse_lang_header("<?php\nclass Foo {}\n", "//") is None
 
+    def test_single_line_jsdoc_does_not_open_block(self):
+        """Regression: `/** foo */` on one line must not leave the parser in
+        block mode. Before the fix, every later code line was read as comment
+        content, a template literal containing " — " became first_line,
+        `agent: o.agent,` became the agent field, and refresh replaced the
+        whole phantom range — deleting real code."""
+        from codedna_tool.cli import _parse_lang_header
+        from codedna_tool.languages import get_adapter
+        src = (
+            "import { x } from './x.js';\n"
+            "\n"
+            "/** Map the band to a priority. */\n"
+            "function band(b: string): string { return b; }\n"
+            "\n"
+            "function line(o: any): string {\n"
+            "  return `- **${o.title}** — _${o.severity}_`;\n"
+            "}\n"
+            "export function render(o: any) {\n"
+            "  return {\n"
+            "    agent: o.agent,\n"
+            "    rules: o.rules,\n"
+            "  };\n"
+            "}\n"
+        )
+        assert _parse_lang_header(src, "//") is None
+        assert get_adapter(".ts").has_codedna_header(src) is False
+
+        annotated = get_adapter(".ts").inject_header(
+            src, "render.ts", "render", "none", "none", "test", "2026-09-03")
+        fields = _parse_lang_header(annotated, "//")
+        assert fields is not None
+        assert "render" in fields["exports"]
+        # Header range stops at the header — never reaches the code below.
+        assert int(fields["_header_end"]) < annotated.splitlines().index("/** Map the band to a priority. */")
+
     def test_compact_phpdoc_without_star_prefixes(self):
         """The exact Laravel format from the 1.2.0 parser regression is valid."""
         from codedna_tool.cli import _parse_lang_header
