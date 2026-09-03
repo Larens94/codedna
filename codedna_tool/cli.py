@@ -22,6 +22,7 @@ gpt-5 | openai | 2026-08-20 | s_20260820_audit | expose read-only doctor, impact
 gpt-5 | openai | 2026-08-20 | s_20260820_adoption | add explicit Codex and Aider installers and prevent AGENTS.md from implying OpenCode hooks
 gpt-5 | openai | 2026-08-21 | s_20260821_axl | route refresh through native AXL frame parsing without comment rewrites
 gpt-5 | openai | 2026-08-27 | s_20260827_header_parser | delegate all comment headers to the canonical parser and lazy-load LLM provider SDKs
+claude-opus | anthropic | 2026-09-03 | s_20260903_refresh_body | refresh preserves Python docstring prose body and parses the raw slice
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -1457,11 +1458,16 @@ def _parse_existing_docstring(docstring: str) -> dict[str, str]:
     """Parse a CodeDNA docstring into field dict, preserving raw values.
 
     Rules:   Must preserve multi-line field values (rules: with continuations).
-             Returns dict with keys: first_line, exports, used_by, rules, agent (+ any message: lines).
+             Returns dict with keys: first_line, body, exports, used_by, rules, agent (+ any message: lines).
+             body = prose between the summary line and the first CodeDNA field
+             (Issue #10 — hand-authored module documentation). Kept verbatim
+             (indentation, blank lines) minus leading/trailing blank lines so
+             _rebuild_docstring can round-trip it; refresh used to drop it.
     """
     fields: dict[str, str] = {}
     current_field = None
     current_lines: list[str] = []
+    body_lines: list[str] = []
 
     for i, line in enumerate(docstring.splitlines()):
         stripped = line.strip()
@@ -1478,12 +1484,21 @@ def _parse_existing_docstring(docstring: str) -> dict[str, str]:
                 current_lines = [stripped]
                 break
         else:
+            if current_field is None:
+                body_lines.append(line.rstrip())
             # Continuation line (indented) or blank
-            if current_field and stripped:
+            elif stripped:
                 current_lines.append(stripped)
 
     if current_field:
         fields[current_field] = "\n".join(current_lines)
+
+    while body_lines and not body_lines[0].strip():
+        body_lines.pop(0)
+    while body_lines and not body_lines[-1].strip():
+        body_lines.pop()
+    if body_lines:
+        fields["body"] = "\n".join(body_lines)
 
     return fields
 
@@ -1502,12 +1517,14 @@ def _rebuild_docstring(fields: dict[str, str], new_exports: str, new_used_by: st
     agent = fields.get("agent", "agent:   unknown")
     message = fields.get("message", "message: ")
 
-    lines = [
-        f'"""{first_line}',
-        "",
+    lines = [f'"""{first_line}', ""]
+    body = fields.get("body", "")
+    if body:
+        lines.extend([body, ""])
+    lines.extend([
         f"exports: {new_exports}",
         f"used_by: {new_used_by}",
-    ]
+    ])
     if related:
         lines.append(related)
     if wiki:
@@ -1739,7 +1756,10 @@ def cmd_refresh(target: Path, repo_root: Optional[Path], exclude: list[str],
             skipped += 1
             continue
 
-        old_fields = _parse_existing_docstring(info.docstring)
+        # Issue #12: prefer the raw slice so backslash escapes round-trip.
+        old_fields = _parse_existing_docstring(
+            info.docstring_raw_body if info.docstring_raw_body is not None else info.docstring
+        )
 
         # Check if anything changed
         old_exports_raw = old_fields.get("exports", "")
