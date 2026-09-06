@@ -1,6 +1,6 @@
 # Language Support
 
-CodeDNA v0.9 supports **12 programming languages** (counting TypeScript and JavaScript separately) across **28 registered extensions**, plus **7 template families**. All are auto-detected — no configuration needed.
+CodeDNA v0.9 supports **13 programming languages** (counting TypeScript and JavaScript separately) across **29 registered extensions**, plus **7 template families**. All are auto-detected — no configuration needed.
 
 | Language | Extensions | L1 | L2 | Parser | Framework awareness |
 |---|---|---|---|---|---|
@@ -13,6 +13,7 @@ CodeDNA v0.9 supports **12 programming languages** (counting TypeScript and Java
 | Ruby | `.rb` | ✅ | ✅ | tree-sitter | — |
 | Rust | `.rs` | ✅ | ✅ | tree-sitter | — |
 | C# | `.cs` | ✅ | ✅ | tree-sitter | — |
+| VB.NET | `.vb` | ✅ | ✅ | structural parser | — |
 | Swift | `.swift` | ✅ | ✅ | structural parser | — |
 | AXL *(experimental)* | `.axl` | ✅ | native symbol rules | native opcode frames | CodeDNA frames 80–86 |
 
@@ -34,7 +35,7 @@ AXL is intentionally different from comment-based adapters. `codedna init`, `ref
 
 ## What tree-sitter extracts
 
-Python uses the standard-library AST, PHP/TypeScript/JavaScript/Go/Java/Kotlin/Ruby/Rust/C# use tree-sitter, Swift uses its dedicated structural parser, and AXL uses native annotation/declaration frames. Together they provide:
+Python uses the standard-library AST, PHP/TypeScript/JavaScript/Go/Java/Kotlin/Ruby/Rust/C# use tree-sitter, Swift and VB.NET use dedicated structural parsers, and AXL uses native annotation/declaration frames. Together they provide:
 
 - **Exports**: classes, public methods (with full signatures), interfaces, traits, enums, constants
 - **Dependencies**: `use`, `import`, `require` statements resolved to file paths

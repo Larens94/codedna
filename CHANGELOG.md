@@ -4,6 +4,15 @@ All notable changes to CodeDNA will be documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- **VB.NET language adapter (`.vb`)** — structural regex adapter with `'` comment headers, Public Class/Module/Sub/Function/Property exports, and Option/Imports-aware injection (issue #6).
+- **Roo Code install target** — `codedna install --tools roo` writes `.roorules` (issue #7).
+
+### Fixed
+
+- **PHP mixed HTML templates** — `inject_header` now inserts CodeDNA comments inside the first `<?php`/`<?=`/`<?` block (or wraps a new `<?php` block when none exists), so annotations are never HTML-visible. `has_codedna_header` no longer truncates at 16KB, preventing duplicate headers after large HTML prefixes (issue #4).
+
 ### Fixed
 
 - **`codedna refresh` no longer deletes source code below a single-line `/** … */` comment.** `parse_codedna_comment_header` entered block-comment mode on any line starting with `/**`/`/*` and only left it on a *later* line ending in `*/`, so a one-line JSDoc (`/** Map the band. */`) put the parser in block mode for the rest of the file. From there every code line was read as comment content: a template literal containing ` — ` became `first_line`, `agent: o.agent,` inside an object literal became the `agent` field, and `_header_end` landed ~100 lines into the file. `has_codedna_header()` then returned True for the un-annotated file (so `init` skipped it) and `refresh` replaced the whole phantom range — deleting the code. Reproduced on 8 TypeScript files in a real 770-file monorepo. Single-line block comments now close immediately. Regression test in `tests/test_refresh.py`.

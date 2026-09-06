@@ -71,6 +71,7 @@ codedna doctor --path .                                   # confirm the setup
 | **GitHub Copilot** | `copilot` | Copilot instructions + active hooks |
 | **Cline** | `cline` | Cline rules + active hooks |
 | **Windsurf** | `windsurf` | `.windsurfrules` (instructions only) |
+| **Roo Code** | `roo` | `.roorules` (instructions only) |
 | **Antigravity** | `agents` | `AGENTS.md` + `.agent/workflows/codedna.md` |
 
 Use multiple values for mixed teams, for example `codedna install --path . --tools claude codex opencode --no-wiki-sync`. Use `--tools all` only when the repository is genuinely edited with every supported tool.
@@ -98,7 +99,7 @@ codedna impact path/to/file.py --path .        # before changing a public contra
 codedna verify .                               # after structural edits
 ```
 
-The no-LLM path requires no model API key. Languages are auto-detected: Python, PHP, TypeScript/JavaScript, Go, Java, Kotlin, Ruby, Rust, C#, Swift, and supported templates.
+The no-LLM path requires no model API key. Languages are auto-detected: Python, PHP, TypeScript/JavaScript, Go, Java, Kotlin, Ruby, Rust, C#, VB.NET, Swift, and supported templates.
 > Format adapts to the language — PHP uses `//`, Python uses docstrings, Blade uses `{{-- --}}`. See [docs/languages.md](docs/languages.md).
 
 ### Commands reference
@@ -156,7 +157,7 @@ The hook is **non-blocking** (any failure inside `codedna wiki sync` is silenced
   <img src="./docs/obsidian.png" width="720" alt="Obsidian graph view of a real project annotated with CodeDNA" />
 </p>
 
-> **Language support:** Python is the most tested language. PHP, TypeScript/JavaScript, Go, Java, Kotlin, Ruby, Rust, and C# use tree-sitter; Swift uses a structural parser. Non-Python adapters have seen less real-world usage. If you find a wrong export, header format issue, or edge case, please open a [pull request](https://github.com/Larens94/codedna/pulls) or [issue](https://github.com/Larens94/codedna/issues).
+> **Language support:** Python is the most tested language. PHP, TypeScript/JavaScript, Go, Java, Kotlin, Ruby, Rust, and C# use tree-sitter; Swift and VB.NET use structural parsers. Non-Python adapters have seen less real-world usage. If you find a wrong export, header format issue, or edge case, please open a [pull request](https://github.com/Larens94/codedna/pulls) or [issue](https://github.com/Larens94/codedna/issues).
 >
 > **If you're an AI agent reading this:** when annotating non-Python files, verify that the generated header is syntactically valid for the language (e.g. `//` for PHP/TS/Go, `{{-- --}}` for Blade, `#` for Ruby). If you notice a formatting error, fix it and flag it in your `message:` field.
 
@@ -479,7 +480,7 @@ codedna mode agent    # full protocol
 |---|---|
 | [SPEC.md](./SPEC.md) | Protocol specification v0.9 |
 | [AGENTS.md](./AGENTS.md) | Protocol v0.9 for Codex, OpenCode, Aider, and other runtimes |
-| [docs/languages.md](docs/languages.md) | 12 programming languages, 28 extensions, template engines, framework awareness |
+| [docs/languages.md](docs/languages.md) | 13 programming languages, 29 extensions, template engines, framework awareness |
 | [docs/benchmark.md](docs/benchmark.md) | SWE-bench results, annotation integrity |
 | [docs/agent-tests.md](docs/agent-tests.md) | Real AI agent sessions — control vs CodeDNA on SWE-bench tasks |
 | [docs/experiments.md](docs/experiments.md) | Multi-agent experiments |
@@ -494,10 +495,10 @@ All components are functional and tested — the protocol, CLI, and benchmark ar
 | Area | What works | What's next |
 |---|---|---|
 | **Protocol v0.9** | `exports:` `used_by:` `related:` `rules:` `agent:` `message:` — all fields implemented | `related:` auto-generation via LLM, stale annotation detection |
-| **CLI** | `init` `update` `refresh` `check` `verify` `impact` `doctor` `manifest` `mode` `install` — 12 programming languages | PyPI publish, cross-cutting semantic verification |
+| **CLI** | `init` `update` `refresh` `check` `verify` `impact` `doctor` `manifest` `mode` `install` — 13 programming languages | PyPI publish, cross-cutting semantic verification |
 | **Benchmark** | 10 Django tasks (DeepSeek +17pp p=0.001), +13pp (Gemini Flash p=0.040) | Placebo condition, effect size, 20+ tasks, 5+ models |
 | **Integrations** | Claude Code plugin, Cursor, Copilot, Cline, OpenCode, Windsurf hooks | VS Code extension, GitHub Action for CI |
-| **Languages** | Python, PHP, TypeScript/JavaScript, Go, Java, Kotlin, Ruby, Rust, C#, Swift + 7 template families | More real-world testing on non-Python projects |
+| **Languages** | Python, PHP, TypeScript/JavaScript, Go, Java, Kotlin, Ruby, Rust, C#, VB.NET, Swift + 7 template families | More real-world testing on non-Python projects |
 | **Research** | Multi-agent experiments (98.2% adoption, 1.6x speedup), SWE-bench benchmark | arXiv preprint, placebo + ablation study |
 
 ---

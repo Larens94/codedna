@@ -39,7 +39,7 @@ Requires: ANTHROPIC_API_KEY env var (or --api-key) for Anthropic models.
 No API key needed for local models via Ollama (pip install 'codedna[litellm]').
 Provider priority: litellm (all providers) > anthropic (fallback, Claude only).
 Multi-language: pass --extensions ts go php rs java kt rb cs swift axl (or with dots).
-Supported: .ts .tsx .js .jsx .mjs | .go | .php | .rs | .java | .kt .kts | .rb | .cs | .swift | .axl
+Supported: .ts .tsx .js .jsx .mjs | .go | .php | .rs | .java | .kt .kts | .rb | .cs | .vb | .swift | .axl
 message:
 """
 
@@ -1969,6 +1969,7 @@ _TOOL_FILES = {
     "copilot":  ("copilot-instructions.md", ".github/copilot-instructions.md"),
     "cline":    (".clinerules",  ".clinerules"),
     "windsurf": (".windsurfrules", ".windsurfrules"),
+    "roo":      (".roorules", ".roorules"),
     "opencode": ("AGENTS.md",   "AGENTS.md"),
     "agents":   [("AGENTS.md", "AGENTS.md"),
                  (".agent/workflows/codedna.md", ".agent/workflows/codedna.md")],
@@ -2069,6 +2070,7 @@ for f in $STAGED; do
         kt|kts)            EXTS="$EXTS kt" ;;
         rb)                EXTS="$EXTS rb" ;;
         cs)                EXTS="$EXTS cs" ;;
+        vb)                EXTS="$EXTS vb" ;;
         swift|axl)         EXTS="$EXTS $ext" ;;
         j2|jinja2)         EXTS="$EXTS j2" ;;
         twig)              EXTS="$EXTS twig" ;;
@@ -2148,6 +2150,7 @@ def _detect_ai_tools(repo_root: Path) -> list[str]:
         "copilot":  [".github/copilot-instructions.md"],
         "cline":    [".clinerules", ".cline"],
         "windsurf": [".windsurfrules", ".windsurf"],
+        "roo":      [".roo", ".roorules"],
         "opencode": [".opencode"],
         # Antigravity uses .agent/ (singular) + GEMINI.md — see
         # https://antigravity.google/docs/rules-workflows
@@ -3269,7 +3272,7 @@ def main():
     )
     install_p.add_argument(
         "--tools", nargs="*", default=None,
-        help="AI tools: claude codex aider cursor copilot cline windsurf opencode agents, their supported *-hooks variants, or all (default: auto-detect). 'agents' installs the Antigravity workflow.",
+        help="AI tools: claude codex aider cursor copilot cline windsurf roo opencode agents, their supported *-hooks variants, or all (default: auto-detect). 'agents' installs the Antigravity workflow.",
     )
     install_p.add_argument("--skip-hook", action="store_true", help="Skip pre-commit hook installation")
     install_p.add_argument("--skip-prompt", action="store_true", help="Skip AI tool prompt installation")
