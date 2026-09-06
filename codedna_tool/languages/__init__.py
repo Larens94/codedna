@@ -18,6 +18,7 @@ claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_001 | added tree-sitter 
 claude-opus-4-6 | anthropic | 2026-04-18 | s_20260418_gate6 | GATE 6: removed regex fallback — tree-sitter is now required for all source languages; regex adapters kept only as utility classes
 gpt-5 | openai | 2026-08-20 | s_20260820_hardening | restore advertised Rust, C#, and Swift registry support with executable tests
 gpt-5 | openai | 2026-08-21 | s_20260821_axl | register native .axl structured annotation support
+composer | cursor | 2026-09-06 | s_20260906_vbnet | register .vb VbNetAdapter (issue #6)
 message:
 """
 
@@ -31,6 +32,7 @@ from .jinja import JinjaAdapter
 from .razor import RazorAdapter
 from .vue import VueAdapter, SvelteAdapter
 from .swift import SwiftAdapter
+from .vbnet import VbNetAdapter
 from .axl import AxlAdapter
 
 # ── Tree-sitter adapters (required) ──────────────────────────────────────────
@@ -68,6 +70,7 @@ _REGISTRY: dict[str, LanguageAdapter] = {
     ".rs":    _rust_adapter,
     ".cs":    _csharp_adapter,
     ".swift": SwiftAdapter(),
+    ".vb":    VbNetAdapter(),  # structural regex (Swift precedent; no tree-sitter-vb on Linux)
     ".axl":   AxlAdapter(),
     # Template engines (regex-based by design)
     ".blade.php": BladeAdapter(),

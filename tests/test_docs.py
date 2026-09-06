@@ -40,8 +40,8 @@ def test_public_docs_share_canonical_product_facts() -> None:
     assert "C/C++" not in spec
 
     languages = _read("docs/languages.md")
-    assert "12 programming languages" in languages
-    assert "28 registered extensions" in languages
+    assert "13 programming languages" in languages
+    assert "29 registered extensions" in languages
     assert "AXL *(experimental)*" in languages
     assert "7 template families" in languages
 

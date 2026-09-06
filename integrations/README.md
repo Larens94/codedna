@@ -22,6 +22,7 @@ The curl installer shown in the tool-specific sections is a legacy fallback for 
 | **Cline** | **`cline-hooks`** | **`.clinerules` + hook scripts in `.clinerules/hooks/`** | ✅ Active (v3.36+) |
 | **OpenCode** | **`opencode`** | **`AGENTS.md` + `.opencode/plugins/codedna.js`** | ✅ Active |
 | Windsurf | `windsurf` | `.windsurfrules` | ⚠️ Instructions only |
+| Roo Code | `roo` | `.roorules` | ⚠️ Instructions only |
 | **Antigravity** | `agents` | **`AGENTS.md` + `.agent/workflows/codedna.md`** | ⚠️ Instructions only |
 | Aider | `aider` | `AGENTS.md` loaded with `--read` | ⚠️ Instructions + Git pre-commit gate |
 
@@ -202,6 +203,14 @@ Installs `.clinerules` + enforcement hooks in `.clinerules/hooks/` — Cline run
 
 ---
 
+## Roo Code
+
+```bash
+codedna install --path . --tools roo --no-wiki-sync
+```
+
+Installs `.roorules` in your repo root — Roo Code loads it as project custom instructions (fallback path; equivalent in spirit to Cline/Windsurf rule files).
+
 ## Windsurf (Codeium)
 
 ```bash
@@ -299,7 +308,7 @@ Note: Antigravity uses `.agent/` (singular), **not** `.agents/`. See the [offici
 | No session audit trail | Agent writes `.codedna` entry at end | Hook reminds at stop, blocks commit without AI trailers |
 
 **Tools with active enforcement (hooks):** Claude Code, Cursor (v1.7+), GitHub Copilot, Cline (v3.36+), OpenCode
-**Tools with instructions only:** Windsurf, Aider, Antigravity
+**Tools with instructions only:** Windsurf, Roo Code, Aider, Antigravity
 
 ---
 

@@ -12,6 +12,7 @@ agent:   claude-sonnet-4-6 | anthropic | 2026-04-16 | s_20260416_005 | remove un
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php | fix _resolve_use: lowercase-first candidate order + resolve() for real fs path — fixes macOS case-insensitive match returning App/ instead of app/ (Laravel PSR-4 convention)
 claude-sonnet-4-6 | anthropic | 2026-04-18 | s_20260418_php2 | GATE 3: add inject_function_rules() — injects PHPDoc Rules: above public methods; handles existing PHPDoc (append before */) and no-doc (new block)
 claude-opus-4-6 | anthropic | 2026-04-21 | s_20260421_codeql | remove unused regex globals _NAMESPACE_RE and _PHALCON_EXTENDS_RE (dead declarations) — CodeQL #1662, #1690
+composer | cursor | 2026-09-06 | s_20260906_php_mixed | issue #4: inject_header keeps annotations inside PHP tags for mixed HTML/PHP
 message:
 """
 
@@ -165,37 +166,43 @@ class PhpAdapter(LanguageAdapter):
 
     def inject_header(self, source: str, rel: str, exports: str, used_by: str,
                       rules: str, model_id: str, today: str) -> str:
-        """Prepend a CodeDNA // comment block. Returns source unchanged if already present.
+        """Insert a CodeDNA // comment block inside the first PHP open tag.
 
         Rules:   Must be idempotent — if has_codedna_header() returns True, return unchanged.
                  Header uses // comments, NOT /** PHPDoc */ — avoids IDE PHPDoc conflicts.
-                 The PHP opening tag (<?php) must remain the very first line of the file;
-                 CodeDNA block is inserted immediately after <?php on line 2.
-                 declare(strict_types=1) lines are preserved after the CodeDNA block.
+                 NEVER emit raw // comments into the HTML stream: mixed HTML/PHP templates
+                 (issue #4) must keep the annotation inside <?php … ?> so browsers do not
+                 render it. Insertion is immediately after the first <?php / <?= / <? tag
+                 anywhere in the file (not only at line start). If no PHP tag exists, wrap
+                 the header in a leading <?php … ?> block. declare(strict_types=1) on the
+                 same line as <?php stays after the header inside the PHP block.
         """
         if self.has_codedna_header(source):
             return source
 
         header_lines = self._build_header_lines(rel, exports, used_by, rules, model_id, today)
-        header = "\n".join(header_lines) + "\n"
+        header = "\n".join(header_lines)
 
-        lines = source.splitlines(keepends=True)
+        # Match <?php, <?=, or short <? but never <?xml
+        open_re = re.compile(r"<\?php|<\?=|<\?(?!xml)", re.IGNORECASE)
+        m = open_re.search(source)
+        if m is None:
+            # HTML-only / no PHP tag — wrap so // never becomes visible text.
+            return f"<?php\n{header}\n?>\n" + source
 
-        # Find insertion point: after <?php and optional declare(strict_types)
-        insert_idx = 0
-        for i, line in enumerate(lines):
-            stripped = line.strip()
-            if stripped.startswith("<?php") or stripped.startswith("<?PHP"):
-                insert_idx = i + 1
-                break
+        tag = m.group(0)
+        start, end = m.span()
+        if tag.lower() != "<?php":
+            # <?= or <?  — emit a dedicated <?php block before the short tag.
+            return source[:start] + f"<?php\n{header}\n?>\n" + source[start:]
 
-        # Skip blank lines right after <?php
-        while insert_idx < len(lines) and not lines[insert_idx].strip():
-            insert_idx += 1
-
-        before = "".join(lines[:insert_idx])
-        after = "".join(lines[insert_idx:])
-        return before + "\n" + header + "\n" + after
+        # <?php — splice header immediately after the opening tag (inside PHP).
+        rest = source[end:]
+        if rest.startswith("\r\n"):
+            rest = rest[2:]
+        elif rest.startswith("\n") or rest.startswith("\r"):
+            rest = rest[1:]
+        return source[:end] + "\n" + header + "\n" + rest
 
     def inject_function_rules(self, source: str, func: LangFuncInfo, rules_text: str) -> str:
         """Inject a PHPDoc Rules: block above a public PHP method.

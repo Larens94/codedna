@@ -33,14 +33,6 @@ agent_sessions:
   - agent: "gpt-5"
     provider: "openai"
     date: "2026-08-21"
-    session_id: "s_20260821_commit_push"
-    task: "Prepare verified release changes for push"
-    changed: [".gitignore",".codedna"]
-    visited: [".gitignore",".vscode/settings.json",".codedna"]
-    message: "Ignored local VS Code Live Server settings before committing the accumulated verified CodeDNA changes. The removed legacy logo video and updated site logo are intentional site assets."
-  - agent: "gpt-5"
-    provider: "openai"
-    date: "2026-08-21"
     session_id: "s_20260821_gitbook_docs"
     task: "Redesign documentation like GitBook"
     changed: ["docs/install.html","docs/site.css",".codedna"]
@@ -70,3 +62,11 @@ agent_sessions:
     changed: ["codedna_tool/cli.py","codedna_tool/languages/base.py","tests/test_language_adapters.py","tests/test_refresh.py",".codedna"]
     visited: [".codedna","codedna_tool/cli.py","codedna_tool/audit.py","codedna_tool/wiki.py","codedna_tool/languages/__init__.py","codedna_tool/languages/base.py","codedna_tool/languages/php.py","codedna_tool/languages/_ts_php.py","tests/test_cli.py","tests/test_refresh.py","tests/test_validator.py","tests/test_language_adapters.py"]
     message: "Centralized compact block-comment L1 parsing, preserved reduced headers, proved PHP imports are not exports, and removed LiteLLM initialization from zero-LLM commands. 296 tests pass; verify and doctor are clean."
+  - agent: "composer"
+    provider: "cursor"
+    date: "2026-09-06"
+    session_id: "s_20260906_issues467"
+    task: "Fix issues #4 #6 #7"
+    changed: ["codedna_tool/languages/php.py","codedna_tool/languages/base.py","codedna_tool/languages/vbnet.py","codedna_tool/languages/__init__.py","codedna_tool/cli.py","integrations/.roorules","integrations/install.sh","integrations/README.md","docs/languages.md","README.md","README-it.md","CHANGELOG.md","tests/test_issues_4_6_7.py","tests/test_docs.py"]
+    visited: ["codedna_tool/languages/php.py","codedna_tool/languages/base.py","codedna_tool/languages/csharp.py","codedna_tool/languages/__init__.py","codedna_tool/cli.py","integrations/.clinerules"]
+    message: "Validated #4/#6/#7 still open. Fixed PHP mixed-HTML injection + full-file has_codedna_header; added VbNetAdapter; added Roo --tools roo. 306 tests pass."

@@ -1,0 +1,92 @@
+# CodeDNA v0.9 — In-Source Communication Protocol
+# Setup: pipx install git+https://github.com/Larens94/codedna.git && codedna install --path . --tools roo --no-wiki-sync && codedna init . --no-llm
+
+This project uses CodeDNA. Every supported source file starts with a native CodeDNA header; Python uses a module docstring, while other languages use their valid comment syntax.
+
+On SESSION START:
+- Read `.codedna` at repo root — project map, last 3-5 agent_sessions entries
+- Run `codedna doctor --path .`; resolve errors before editing
+- CodeDNA is additive — it complements Roo Code's native memory, not replaces it
+
+On EDIT:
+- Before changing a public contract, run `codedna impact <file-or-symbol> --path .`
+- Re-read `rules:` before writing any logic — never violate these constraints
+- Read `Rules:` in function docstrings before writing logic there
+- Check `used_by:` after changes and update callers if needed
+- If you discover a constraint or fix a bug, add it to `rules:` for the next agent
+- Append a new `agent:` line to the module docstring after editing. Keep only the last 5 entries — drop the oldest if adding a 6th. Full history is in git and `.codedna`.
+
+On CREATE:
+- Write module docstring before any imports (exports/used_by/rules/agent)
+- Every public function **must** have a `Rules:` docstring
+- Use semantic naming: `list_dict_users_from_db = get_users()`
+
+## Writing good `rules:`
+
+`rules:` must be **specific and actionable** — never vague.
+
+```python
+# ✅ Good rules:
+rules:   get_invoices() returns ALL tenants — caller MUST filter is_suspended() before aggregating
+rules:   amount is in cents not euros — divide by 100 before display
+rules:   soft-delete via deleted_at — NEVER use DELETE, always SET deleted_at = NOW()
+
+# ❌ Bad rules:
+rules:   handle errors gracefully
+rules:   follow best practices
+rules:   none  ← when there ARE constraints but nobody wrote them
+```
+
+Update rules: every time you discover a constraint, fix a bug, or notice a non-obvious behavior.
+
+## Writing critical functions
+
+Every public function **must** have a `Rules:` docstring:
+
+```python
+def my_function(arg: type) -> return_type:
+    """Short description.
+
+    Rules:   What the agent MUST or MUST NOT do here.
+    message: model-id | YYYY-MM-DD | observation for next agent
+    """
+```
+
+## Inline annotations on complex logic
+
+When writing or editing code blocks with non-obvious logic, add a `# Rules:` or `# message:` comment above the block:
+
+```python
+# Rules: skip cancelled orders — status=4 means cancelled in legacy DB
+active = [o for o in orders if o.status != 4]
+
+# message: exchange rate uses daily rate, not real-time
+amount = order.amount * get_exchange_rate(order.currency)
+```
+
+When to add: business-rule conditionals, loops with filtering, algorithm steps where order matters, edge cases.
+When NOT to add: simple getters, obvious control flow, standard library usage.
+
+`message:` field (v0.8) — use for open observations not yet certain enough to become `rules:`:
+- In module docstring: `message: "<hypothesis or note for the next agent>"`
+- In function docstring: `message: <model-id> | <date> | <open observation>`
+- Lifecycle: promote to `rules:` or dismiss. Always append-only — never delete.
+
+On SESSION END:
+- Run `codedna verify .`; if stale, review evidence, run `codedna refresh .`, then verify again
+- Use `codedna session append` with agent, provider, session-id, task, changed, visited, and message; never edit `agent_sessions:` manually
+- Commit with AI git trailers: AI-Agent, AI-Provider, AI-Session, AI-Visited, AI-Message
+
+`exports:` are contracts — never rename without explicit instruction and updating all `used_by:` callers.
+
+Module docstring format:
+```
+"""filename.py — <purpose ≤15 words>.
+
+exports: fn(args) -> type
+used_by: consumer.py → fn
+rules:   <hard constraint>
+agent:   <model-id> | <provider> | <YYYY-MM-DD> | <session_id> | <what you did and noticed>
+         message: "<open hypothesis>"
+"""
+```

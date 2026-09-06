@@ -657,7 +657,7 @@ class TestFallback:
 
     def test_advertised_languages_are_registered(self):
         """README-advertised C#, Rust, and Swift adapters must be callable."""
-        for ext in [".cs", ".rs", ".swift"]:
+        for ext in [".cs", ".rs", ".swift", ".vb"]:
             assert get_adapter(ext) is not None, f"{ext} should be registered"
 
     def test_unsupported_extension_returns_none(self):

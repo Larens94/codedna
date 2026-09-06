@@ -96,7 +96,7 @@ codedna check .                                # report di copertura
 codedna refresh .                              # aggiorna exports + used_by (zero costo LLM)
 ```
 
-> Linguaggi rilevati automaticamente — Python, PHP, TypeScript/JavaScript, Go, Java, Kotlin, Ruby, Rust, C# e Swift, oltre ai template supportati.
+> Linguaggi rilevati automaticamente — Python, PHP, TypeScript/JavaScript, Go, Java, Kotlin, Ruby, Rust, C#, VB.NET e Swift, oltre ai template supportati.
 > Il formato si adatta al linguaggio — PHP usa `//`, Python usa docstring, Blade usa `{{-- --}}`. Vedi [docs/languages.md](docs/languages.md).
 
 ### Riferimento comandi
@@ -128,7 +128,7 @@ codedna refresh .                              # aggiorna exports + used_by (zer
 | `codedna wiki sync <path>` | Rigenera `docs/codedna-wiki.md` — wiki narrativo di progetto a 7 sezioni (pattern LLM-wiki di Karpathy). Da agganciare al post-commit. |
 | `codedna self-update` | Aggiorna il CLI stesso via `pip install --upgrade --force-reinstall git+...`. Rifiuta di sovrascrivere checkout editable/dev se non passi `--force`. Usa `--check` per vedere la versione installata. |
 
-> **Supporto linguaggi:** Python è il linguaggio più testato. PHP, TypeScript/JavaScript, Go, Java, Kotlin, Ruby, Rust e C# usano tree-sitter; Swift usa un parser strutturale. Gli adapter non-Python hanno avuto meno utilizzo reale. Per export errati, problemi di formato o casi limite, apri una [pull request](https://github.com/Larens94/codedna/pulls) o una [issue](https://github.com/Larens94/codedna/issues).
+> **Supporto linguaggi:** Python è il linguaggio più testato. PHP, TypeScript/JavaScript, Go, Java, Kotlin, Ruby, Rust e C# usano tree-sitter; Swift e VB.NET usano parser strutturali. Gli adapter non-Python hanno avuto meno utilizzo reale. Per export errati, problemi di formato o casi limite, apri una [pull request](https://github.com/Larens94/codedna/pulls) o una [issue](https://github.com/Larens94/codedna/issues).
 >
 > **Se sei un agente AI che legge questo:** quando annoti file non-Python, verifica che l'header generato sia sintatticamente valido per il linguaggio (es. `//` per PHP/TS/Go, `{{-- --}}` per Blade, `#` per Ruby). Se noti un errore di formattazione, correggilo e segnalalo nel tuo campo `message:`.
 
@@ -465,7 +465,7 @@ Tutti i componenti sono funzionanti e testati — il protocollo, la CLI e il ben
 | **CLI** | `init` `update` `refresh` `check` `verify` `impact` `doctor` `manifest` `mode` `install` — 12 linguaggi | Pubblicazione PyPI, ulteriore verifica semantica cross-cutting |
 | **Benchmark** | 10 task Django (DeepSeek +17pp p=0.001), +13pp (Gemini Flash p=0.040) | Condizione placebo, effect size, 20+ task, 5+ modelli |
 | **Integrazioni** | Plugin Claude Code, Cursor, Copilot, Cline, OpenCode, Windsurf hooks | Estensione VS Code, GitHub Action per CI |
-| **Linguaggi** | Python, PHP, TypeScript, Go, Java, Kotlin, Ruby, Rust, C# + 7 template engine | Più test su progetti reali non-Python |
+| **Linguaggi** | Python, PHP, TypeScript, Go, Java, Kotlin, Ruby, Rust, C#, VB.NET, Swift + 7 template engine | Più test su progetti reali non-Python |
 | **Ricerca** | Esperimenti multi-agente (98.2% adozione, 1.6x più veloce), benchmark SWE-bench | Preprint arXiv, studio placebo + ablazione |
 
 ---

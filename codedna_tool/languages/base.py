@@ -40,6 +40,7 @@ gpt-5 | openai | 2026-08-20 | s_20260820_hardening | document Rules contracts on
 gpt-5 | openai | 2026-08-21 | s_20260821_axl | add native structured-annotation extension points for AXL
 gpt-5 | openai | 2026-08-27 | s_20260827_header_parser | centralize comment-header parsing and accept compact PHPDoc/JSDoc blocks without leading stars
 claude-opus | anthropic | 2026-09-03 | s_20260903_singleline_block | single-line /** */ no longer leaves parse_codedna_comment_header in block mode (refresh deleted code)
+composer | cursor | 2026-09-06 | s_20260906_php_mixed | has_codedna_header scans full source (no 16KB cut) to prevent PHP mixed-file duplicates
 message:
 """
 
@@ -212,8 +213,10 @@ class LanguageAdapter(ABC):
                  and {# #} / {{-- --}} template blocks. Prevents duplicate headers
                  when re-running codedna init on already-annotated files.
                  Detects both full headers (exports:/used_by:) and reduced headers (rules:/agent:).
+                 Scan the FULL source — a 16KB truncation missed headers after large HTML
+                 prefixes in mixed PHP templates (issue #4), causing duplicate injection.
         """
-        return parse_codedna_comment_header(source[:16 * 1024], self.comment_prefix) is not None
+        return parse_codedna_comment_header(source, self.comment_prefix) is not None
 
     def parse_codedna_fields(self, source: str) -> dict[str, str] | None:
         """Parse native structured CodeDNA fields when comments are not the carrier.
