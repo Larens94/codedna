@@ -53,3 +53,5 @@
 - [ ] Nessun secret / sorgente proprietaria in questa PR
 - [ ] Solo log redatti
 - [ ] Modalità + parity di stack dichiarate nel JSON (`mode`, `stack`)
+- [ ] Metriche e narrativa sono veritiere (non inventate); posso ripercorrerle in una call di review (Meet / simile) se richiesto
+- [ ] Capisco che claim inventati = squalifica

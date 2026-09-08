@@ -48,7 +48,7 @@ Nessuna infrastruttura. Nessuna pipeline di retrieval. Nessuna memoria esterna. 
 
 ## CodeDNA Challenge — €200
 
-Valutazione pubblica sul **tuo** progetto (non SWE-bench). Almeno 10 task con/senza CodeDNA, stack L0/L1/L2 a pari livello, PR con metriche — anche se vanno contro CodeDNA.
+Valutazione pubblica sul **tuo** progetto (non SWE-bench). Almeno 10 task con/senza CodeDNA, stack L0/L1/L2 a pari livello, PR con metriche — anche se vanno contro CodeDNA. Affermazioni oneste: il team può chiedere una review Meet; live sui test quando possibile.
 
 - Bacheca: [larens94.github.io/codedna/challenge.html](https://larens94.github.io/codedna/challenge.html)
 - Regolamento: [`docs/challenge.it.md`](docs/challenge.it.md) (IT) · [`docs/challenge.md`](docs/challenge.md) (EN)

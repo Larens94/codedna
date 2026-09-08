@@ -212,6 +212,13 @@ footer.site-footer {
       <a class="btn-secondary" href="challenge.md" data-i18n="ctaRules">Full rules (EN)</a>
       <a class="btn-secondary" href="challenge.it.md" data-i18n="ctaRulesIt">Regolamento (IT)</a>
     </div>
+    <p class="note" style="margin-top:1.75rem;max-width:640px" data-i18n-html="experimentalNote">
+      <strong>Experimental.</strong> Results can vary by AI coding agent and language.
+      If annotations or the CLI misbehave on your stack, open a
+      <a href="https://github.com/Larens94/codedna/issues/new">GitHub issue</a> or a fix
+      <a href="https://github.com/Larens94/codedna/compare">pull request</a> so we can harden support.
+      That feedback is part of the challenge.
+    </p>
   </div>
 </header>
 
@@ -276,6 +283,10 @@ footer.site-footer {
       <p data-i18n="l2">Graph / structural memory — parity required.</p>
     </div>
   </div>
+  <p class="note" style="margin-top:1.5rem" data-i18n-html="honestyNote">
+    <strong>Honesty.</strong> Do not invent results. Fabrizio or the review team may request a live review (e.g. Google Meet) to verify your runs.
+    When possible we will also host public lives discussing submitted tests.
+  </p>
 </section>
 
 <section class="section" id="board">
@@ -333,6 +344,7 @@ const I18N = {
     h1:'CodeDNA Challenge<br><em>€200</em>',
     lead:'Test CodeDNA on your own project. Open a metrics PR to enroll — no separate signup. We update this board when submissions are merged.',
     ctaExample:'Copy metrics.json →', ctaRules:'Full rules (EN)', ctaRulesIt:'Regolamento (IT)',
+    experimentalNote:'<strong>Experimental.</strong> Results can vary by AI coding agent and language. If annotations or the CLI misbehave on your stack, open a <a href="https://github.com/Larens94/codedna/issues/new">GitHub issue</a> or a fix <a href="https://github.com/Larens94/codedna/compare">pull request</a> so we can harden support. That feedback is part of the challenge.',
     statusTitle:'Challenge status',
     statusLead:'Maintainer-updated board. Source file: docs/challenge-board.json.',
     metaPrize:'Prize', metaPrizeSub:'paid after review',
@@ -346,11 +358,12 @@ const I18N = {
     l0:'In-source headers — the layer under test.',
     l1:'LLM wiki, skill packs, instruction files — parity required.',
     l2:'Graph / structural memory — parity required.',
+    honestyNote:'<strong>Honesty.</strong> Do not invent results. Fabrizio or the review team may request a live review (e.g. Google Meet) to verify your runs. When possible we will also host public lives discussing submitted tests.',
     boardTitle:'Public board',
     boardLead:'Language + framework, project size and file count are required so comparisons stay honest.',
     emptyTitle:'No submissions on the board yet',
     emptyBody:'When a metrics PR is reviewed and merged, we add a row here by editing challenge-board.json.',
-    boardNote:'This board is static and curated. Opening a PR enrolls you automatically; appearing here means maintainers accepted the submission format.',
+    boardNote:'This board is static and curated. Opening a PR enrolls you automatically; appearing here means maintainers accepted the submission format. Agent × language gaps are expected — file issues or fix PRs.',
     thHandle:'Entrant', thStack:'Language / framework', thSize:'Size', thFiles:'Files',
     thMode:'Mode', thScore:'Pass C / DNA', thFavors:'Favors', thPr:'PR',
     unlock:'min {n} to unlock', windowFallback:'dates TBD'
@@ -361,6 +374,7 @@ const I18N = {
     h1:'CodeDNA Challenge<br><em>€200</em>',
     lead:'Prova CodeDNA sul tuo progetto. Apri una PR con le metriche per iscriverti — niente signup separato. Aggiorniamo questa bacheca quando le submission vengono mergiate.',
     ctaExample:'Copia metrics.json →', ctaRules:'Rules (EN)', ctaRulesIt:'Regolamento (IT)',
+    experimentalNote:'<strong>Sperimentale.</strong> I risultati possono variare per agente AI di coding e linguaggio. Se annotazioni o CLI si comportano male sul tuo stack, apri una <a href="https://github.com/Larens94/codedna/issues/new">issue</a> o una <a href="https://github.com/Larens94/codedna/compare">pull request</a> di fix così possiamo rafforzare il supporto. Quel feedback fa parte della challenge.',
     statusTitle:'Stato challenge',
     statusLead:'Bacheca aggiornata dai maintainer. File sorgente: docs/challenge-board.json.',
     metaPrize:'Premio', metaPrizeSub:'pagato dopo review',
@@ -374,11 +388,12 @@ const I18N = {
     l0:'Header in-source — layer sotto test.',
     l1:'Wiki LLM, skill pack, instruction file — parity obbligatoria.',
     l2:'Memoria graph / strutturale — parity obbligatoria.',
+    honestyNote:'<strong>Onestà.</strong> Non inventare i risultati. Fabrizio o il team di review possono chiedere una review live (es. Google Meet) per verificare le run. Quando possibile faremo anche live pubbliche sui test inviati.',
     boardTitle:'Bacheca pubblica',
     boardLead:'Linguaggio + framework, dimensione progetto e numero file sono obbligatori per confronti onesti.',
     emptyTitle:'Ancora nessuna submission in bacheca',
     emptyBody:'Quando una PR metrics viene accettata e mergiata, aggiungiamo una riga modificando challenge-board.json.',
-    boardNote:'Bacheca statica e curata. Aprire una PR ti iscrive automaticamente; comparire qui significa che i maintainer hanno accettato il formato.',
+    boardNote:'Bacheca statica e curata. Aprire una PR ti iscrive automaticamente; comparire qui significa che i maintainer hanno accettato il formato. Gap agente × linguaggio sono attesi — apri issue o PR di fix.',
     thHandle:'Partecipante', thStack:'Linguaggio / framework', thSize:'Size', thFiles:'File',
     thMode:'Mode', thScore:'Pass C / DNA', thFavors:'Favors', thPr:'PR',
     unlock:'min {n} per sbloccare', windowFallback:'date TBD'

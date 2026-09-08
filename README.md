@@ -48,7 +48,7 @@ No infrastructure. No retrieval pipeline. No external memory. The code carries i
 
 ## CodeDNA Challenge — €200
 
-Public **own-project** evaluation (not SWE-bench). ≥10 tasks with/without CodeDNA, fair L0/L1/L2 stack parity, metrics PR — even if results go against CodeDNA.
+Public **own-project** evaluation (not SWE-bench). ≥10 tasks with/without CodeDNA, fair L0/L1/L2 stack parity, metrics PR — even if results go against CodeDNA. Claims must be honest: the team may request a Meet review; live sessions on submitted tests when possible.
 
 - Board: [larens94.github.io/codedna/challenge.html](https://larens94.github.io/codedna/challenge.html)
 - Rules: [`docs/challenge.md`](docs/challenge.md) (EN) · [`docs/challenge.it.md`](docs/challenge.it.md) (IT)

@@ -53,3 +53,5 @@
 - [ ] No secrets / proprietary source in this PR
 - [ ] Redacted logs only
 - [ ] Mode + stack parity declared in JSON (`mode`, `stack`)
+- [ ] Metrics and narrative are truthful (not invented); I can walk through them on a review call (Meet / similar) if asked
+- [ ] I understand fabricated claims = disqualification

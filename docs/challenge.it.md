@@ -12,7 +12,7 @@ Questa challenge pone una sola domanda:
 
 > CodeDNA aiuta (o no) quando fai sviluppo reale assistito da AI — e possiamo misurarlo in modo onesto?
 
-I bug trovati durante la challenge sono benvenuti: apri una GitHub issue e li correggiamo upstream.
+**Sperimentale.** La qualità di CodeDNA dipende ancora dall’**agente AI di coding** e dal **linguaggio / framework** che usi. Alcune combinazioni funzionano meglio di altre. Se install, annotation, hook o refresh non si comportano bene sul tuo stack, **apri una GitHub issue o una PR di fix** — fa parte della challenge, e sistemiamo upstream a partire dai tuoi report.
 
 ---
 
@@ -36,14 +36,24 @@ I bug trovati durante la challenge sono benvenuti: apri una GitHub issue e li co
 | Submission valide minime | **5** per sbloccare il premio (obiettivo stretch: 10) |
 | Se ci sono meno di 5 PR valide | I risultati si pubblicano comunque; il premio **non** viene assegnato (o passa all’edizione successiva) |
 | Vincitore | Scelto da Fabrizio Corpora + team di review (non voto community) |
+| Onestà | Le affermazioni devono essere vere e supportate da evidenze — metriche o narrative inventate = squalifica |
+| Verifica | Fabrizio o il team di review possono chiedere una review live (Google Meet / simile) per ripercorrere run, log e setup del repo |
+| Live | Quando possibile ospiteremo live pubbliche sui test inviati (con consenso del partecipante dove serve) |
 
 ### Cosa valutiamo (in ordine)
 
-1. **Onestà del protocollo** — stack equo, modalità dichiarata, note riproducibili  
+1. **Onestà del protocollo** — stack equo, modalità dichiarata, note riproducibili; **niente risultati inventati**  
 2. **Qualità dei task** — mix reale facili/medi/difficili su una codebase vera  
 3. **Evidenze** — metriche + breve narrativa; a favore **o** contro CodeDNA va bene  
 4. **Bug report** — issue actionable aperte upstream contano positivamente  
 5. **Chiarezza** — un altro engineer può ripetere il confronto  
+
+### Onestà, call di review e live
+
+- **Non puoi inventare** esiti pass/fail, tempi, dettagli di stack o claim narrativi. Se non riesci a riprodurre un numero, marca il task come inconclusive e dillo.
+- Fabrizio Corpora e/o il team di review **possono chiedere una video call** (es. Google Meet) per verificare la submission: screen-share del progetto, riesecuzione di un task campione, walkthrough di `metrics.json` / note.
+- Rifiutare senza motivo valido una richiesta ragionevole di verifica può annullare l’eleggibilità al premio per quella entry.
+- Quando possibile faremo anche **live pubbliche** sui test della challenge (metodologia, sorprese, gap agente × linguaggio). Partecipare a una live è opzionale, salvo finalisti chiamati in verifica.
 
 ---
 
@@ -194,6 +204,16 @@ codedna init . --no-llm   # oppure con LLM per le rules:
 
 Solo domande (opzionale): GitHub Discussions / Discord — il vecchio template “entry issue” non è obbligatorio.
 
+### Se qualcosa si rompe sul tuo agente o linguaggio
+
+CodeDNA è ancora sperimentale tra agenti e linguaggi. Percorso consigliato:
+
+1. Riproduci una volta (agente + linguaggio/framework + comando).
+2. Apri una **issue** (bug) o una **PR** con fix minimo / test di regressione.
+3. Continua la challenge se puoi; annota l’incidente in `metrics.json` → `bugs_reported` e in `notes.md`.
+
+Tooling rotto su un certo stack **non** ti squalifica — segnalarlo è utile.
+
 ---
 
 ## Cosa non è questa challenge
@@ -209,6 +229,8 @@ Solo domande (opzionale): GitHub Discussions / Discord — il vecchio template �
 - Issue / bug: GitHub Issues  
 - Q&A challenge: GitHub Discussions (Announcements / Q&A)  
 - Community: Discord (vedi badge in README)  
+- Call di verifica: Google Meet (o simile) su richiesta dei maintainer  
+- Live pubbliche: annunciate su Discussions / Discord quando programmate  
 - Maintainer: Fabrizio Corpora  
 
 ---
