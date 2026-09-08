@@ -44,7 +44,8 @@
       "NestJS",
       "FastAPI"
     ],
-    "size_band": "M"
+    "size_band": "M",
+    "tech_stack_notes": "NestJS API + FastAPI workers, Postgres, monorepo apps/api + apps/worker"
   },
   "success_definition": "Task passes if the agent produced a correct change without the human rewriting the core logic.",
   "tasks": [
@@ -313,5 +314,12 @@
     "favors": "codedna",
     "one_line_verdict": "CodeDNA reduced wrong-file mistakes on hard tasks; still honest about one medium task needing a steer."
   },
-  "bugs_reported": []
+  "bugs_reported": [],
+  "install": {
+    "agent": "cursor",
+    "tools_flag": "cursor",
+    "steps": "pipx install git+https://github.com/Larens94/codedna.git\ncodedna install --path . --tools cursor\ncodedna init . --no-llm",
+    "worked": true,
+    "notes": "Install OK on Cursor; no adapter issues on this NestJS/FastAPI stack."
+  }
 }

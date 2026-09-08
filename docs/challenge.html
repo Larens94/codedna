@@ -206,17 +206,17 @@ footer.site-footer {
   <div class="page-hero-inner">
     <div class="eyebrow"><span class="eyebrow-dot"></span><span data-i18n="eyebrow">Public evaluation · €200</span></div>
     <h1 data-i18n-html="h1">CodeDNA Challenge<br><em>€200</em></h1>
-    <p class="lead" data-i18n="lead">Test CodeDNA on your own project. Open a metrics PR to enroll — no separate signup. We update this board when submissions are merged.</p>
+    <p class="lead" data-i18n="lead">Test CodeDNA on your own real project. Declare stack + install. Same tasks with vs without CodeDNA. Open a metrics PR to enroll — the public board updates as valid PRs arrive.</p>
     <div class="hero-actions">
       <a class="btn-primary" href="https://github.com/Larens94/codedna/blob/main/challenge/metrics.example.json" target="_blank" data-i18n="ctaExample">Copy metrics.json →</a>
       <a class="btn-secondary" href="challenge.md" data-i18n="ctaRules">Full rules (EN)</a>
       <a class="btn-secondary" href="challenge.it.md" data-i18n="ctaRulesIt">Regolamento (IT)</a>
     </div>
     <p class="note" style="margin-top:1.75rem;max-width:640px" data-i18n-html="experimentalNote">
-      <strong>Experimental.</strong> Results can vary by AI coding agent and language.
-      If annotations or the CLI misbehave on your stack, open a
+      <strong>Experimental.</strong> Results can vary by AI coding agent and language (Claude Code, OpenCode, Cursor, Codex, …).
+      Publish how you installed CodeDNA. If annotations or the CLI misbehave, open a
       <a href="https://github.com/Larens94/codedna/issues/new">GitHub issue</a> or a fix
-      <a href="https://github.com/Larens94/codedna/compare">pull request</a> so we can harden support.
+      <a href="https://github.com/Larens94/codedna/compare">pull request</a>.
       That feedback is part of the challenge.
     </p>
   </div>
@@ -251,22 +251,22 @@ footer.site-footer {
 
 <section class="section" id="how">
   <h2 data-i18n="howTitle">How it works</h2>
-  <p class="section-lead" data-i18n="howLead">Own project · ≥10 tasks · with vs without CodeDNA · fair L0/L1/L2 stack · metrics.json PR.</p>
+  <p class="section-lead" data-i18n="howLead">Real working project (≥25 files) · declare languages/frameworks/agent · ≥10 same tasks with vs without CodeDNA · publish install · report bugs · metrics.json PR.</p>
   <div class="steps">
     <div class="step">
       <div class="step-num">01</div>
-      <h3 data-i18n="s1t">Run on your repo</h3>
-      <p data-i18n="s1p">Declare languages, frameworks, file count and size band. Easy / medium / hard mix.</p>
+      <h3 data-i18n="s1t">Real project + stack</h3>
+      <p data-i18n="s1p">No toy sites. Declare languages, frameworks, file count, size band, and how you installed CodeDNA.</p>
     </div>
     <div class="step">
       <div class="step-num">02</div>
-      <h3 data-i18n="s2t">Keep the stack fair</h3>
-      <p data-i18n="s2p">If you use wiki, skills or Graphify, both conditions get them — unless you declare codedna-only mode.</p>
+      <h3 data-i18n="s2t">Same tasks, fair stack</h3>
+      <p data-i18n="s2p">Run the same ≥10 tasks with and without CodeDNA. Keep L1/L2 parity unless you declare codedna-only mode.</p>
     </div>
     <div class="step">
       <div class="step-num">03</div>
-      <h3 data-i18n="s3t">Open the PR</h3>
-      <p data-i18n="s3p">Add <code class="mono">challenge/&lt;handle&gt;/metrics.json</code>. That PR enrolls you. We merge and update this board.</p>
+      <h3 data-i18n="s3t">PR → live board</h3>
+      <p data-i18n="s3p">Open a metrics PR to enroll. The public ranking updates as valid PRs arrive. We may ask for a Meet presentation.</p>
     </div>
   </div>
   <div class="levels">
@@ -284,14 +284,14 @@ footer.site-footer {
     </div>
   </div>
   <p class="note" style="margin-top:1.5rem" data-i18n-html="honestyNote">
-    <strong>Honesty.</strong> Do not invent results. Fabrizio or the review team may request a live review (e.g. Google Meet) to verify your runs.
+    <strong>Honesty.</strong> Do not invent results or fake projects. Fabrizio or the review team may require a conference call + presentation to verify your project and test process.
     When possible we will also host public lives discussing submitted tests.
   </p>
 </section>
 
 <section class="section" id="board">
   <h2 data-i18n="boardTitle">Public board</h2>
-  <p class="section-lead" data-i18n="boardLead">Language + framework, project size and file count are required so comparisons stay honest.</p>
+  <p class="section-lead" data-i18n="boardLead">Language + framework + install path and project size are required. Ranking updates as valid PRs arrive and stays public.</p>
 
   <div class="board-toolbar">
     <div class="board-updated" id="board-updated">updated —</div>
@@ -342,28 +342,28 @@ const I18N = {
     navHome:'Home', navChallenge:'Challenge', navInstall:'Install',
     eyebrow:'Public evaluation · €200',
     h1:'CodeDNA Challenge<br><em>€200</em>',
-    lead:'Test CodeDNA on your own project. Open a metrics PR to enroll — no separate signup. We update this board when submissions are merged.',
+    lead:'Test CodeDNA on your own real project. Declare stack + install. Same tasks with vs without CodeDNA. Open a metrics PR to enroll — the public board updates as valid PRs arrive.',
     ctaExample:'Copy metrics.json →', ctaRules:'Full rules (EN)', ctaRulesIt:'Regolamento (IT)',
-    experimentalNote:'<strong>Experimental.</strong> Results can vary by AI coding agent and language. If annotations or the CLI misbehave on your stack, open a <a href="https://github.com/Larens94/codedna/issues/new">GitHub issue</a> or a fix <a href="https://github.com/Larens94/codedna/compare">pull request</a> so we can harden support. That feedback is part of the challenge.',
+    experimentalNote:'<strong>Experimental.</strong> Results can vary by AI coding agent and language (Claude Code, OpenCode, Cursor, Codex, …). Publish how you installed CodeDNA. If annotations or the CLI misbehave, open a <a href="https://github.com/Larens94/codedna/issues/new">GitHub issue</a> or a fix <a href="https://github.com/Larens94/codedna/compare">pull request</a>. That feedback is part of the challenge.',
     statusTitle:'Challenge status',
-    statusLead:'Maintainer-updated board. Source file: docs/challenge-board.json.',
+    statusLead:'Public ranking updated as valid PRs arrive. Source file: docs/challenge-board.json.',
     metaPrize:'Prize', metaPrizeSub:'paid after review',
     metaSubs:'Submissions', metaStatus:'Status',
     metaEnroll:'Enrollment', metaEnrollVal:'PR = in', metaEnrollSub:'no official signup',
     howTitle:'How it works',
-    howLead:'Own project · ≥10 tasks · with vs without CodeDNA · fair L0/L1/L2 stack · metrics.json PR.',
-    s1t:'Run on your repo', s1p:'Declare languages, frameworks, file count and size band. Easy / medium / hard mix.',
-    s2t:'Keep the stack fair', s2p:'If you use wiki, skills or Graphify, both conditions get them — unless you declare codedna-only mode.',
-    s3t:'Open the PR', s3p:'Add challenge/<handle>/metrics.json. That PR enrolls you. We merge and update this board.',
+    howLead:'Real working project (≥25 files) · declare languages/frameworks/agent · ≥10 same tasks with vs without CodeDNA · publish install · report bugs · metrics.json PR.',
+    s1t:'Real project + stack', s1p:'No toy sites. Declare languages, frameworks, file count, size band, and how you installed CodeDNA.',
+    s2t:'Same tasks, fair stack', s2p:'Run the same ≥10 tasks with and without CodeDNA. Keep L1/L2 parity unless you declare codedna-only mode.',
+    s3t:'PR → live board', s3p:'Open a metrics PR to enroll. The public ranking updates as valid PRs arrive. We may ask for a Meet presentation.',
     l0:'In-source headers — the layer under test.',
     l1:'LLM wiki, skill packs, instruction files — parity required.',
     l2:'Graph / structural memory — parity required.',
-    honestyNote:'<strong>Honesty.</strong> Do not invent results. Fabrizio or the review team may request a live review (e.g. Google Meet) to verify your runs. When possible we will also host public lives discussing submitted tests.',
+    honestyNote:'<strong>Honesty.</strong> Do not invent results or fake projects. Fabrizio or the review team may require a conference call + presentation to verify your project and test process. When possible we will also host public lives discussing submitted tests.',
     boardTitle:'Public board',
-    boardLead:'Language + framework, project size and file count are required so comparisons stay honest.',
+    boardLead:'Language + framework + install path and project size are required. Ranking updates as valid PRs arrive and stays public.',
     emptyTitle:'No submissions on the board yet',
-    emptyBody:'When a metrics PR is reviewed and merged, we add a row here by editing challenge-board.json.',
-    boardNote:'This board is static and curated. Opening a PR enrolls you automatically; appearing here means maintainers accepted the submission format. Agent × language gaps are expected — file issues or fix PRs.',
+    emptyBody:'As soon as a valid metrics PR is reviewed, we add a row here by editing challenge-board.json.',
+    boardNote:'Live ranking, curated by maintainers. Opening a PR enrolls you; appearing here means the submission format and stack declaration were accepted. Agent × language gaps are expected — file issues or fix PRs.',
     thHandle:'Entrant', thStack:'Language / framework', thSize:'Size', thFiles:'Files',
     thMode:'Mode', thScore:'Pass C / DNA', thFavors:'Favors', thPr:'PR',
     unlock:'min {n} to unlock', windowFallback:'dates TBD'
@@ -372,28 +372,28 @@ const I18N = {
     navHome:'Home', navChallenge:'Challenge', navInstall:'Install',
     eyebrow:'Valutazione pubblica · €200',
     h1:'CodeDNA Challenge<br><em>€200</em>',
-    lead:'Prova CodeDNA sul tuo progetto. Apri una PR con le metriche per iscriverti — niente signup separato. Aggiorniamo questa bacheca quando le submission vengono mergiate.',
+    lead:'Prova CodeDNA sul tuo progetto reale. Dichiara stack + install. Stessi task con vs senza CodeDNA. Apri una PR metrics per iscriverti — la bacheca pubblica si aggiorna quando arrivano PR valide.',
     ctaExample:'Copia metrics.json →', ctaRules:'Rules (EN)', ctaRulesIt:'Regolamento (IT)',
-    experimentalNote:'<strong>Sperimentale.</strong> I risultati possono variare per agente AI di coding e linguaggio. Se annotazioni o CLI si comportano male sul tuo stack, apri una <a href="https://github.com/Larens94/codedna/issues/new">issue</a> o una <a href="https://github.com/Larens94/codedna/compare">pull request</a> di fix così possiamo rafforzare il supporto. Quel feedback fa parte della challenge.',
+    experimentalNote:'<strong>Sperimentale.</strong> I risultati possono variare per agente AI e linguaggio (Claude Code, OpenCode, Cursor, Codex, …). Pubblica come hai installato CodeDNA. Se annotazioni o CLI si comportano male, apri una <a href="https://github.com/Larens94/codedna/issues/new">issue</a> o una <a href="https://github.com/Larens94/codedna/compare">pull request</a> di fix. Quel feedback fa parte della challenge.',
     statusTitle:'Stato challenge',
-    statusLead:'Bacheca aggiornata dai maintainer. File sorgente: docs/challenge-board.json.',
+    statusLead:'Classifica pubblica aggiornata quando arrivano PR valide. File sorgente: docs/challenge-board.json.',
     metaPrize:'Premio', metaPrizeSub:'pagato dopo review',
     metaSubs:'Submission', metaStatus:'Stato',
     metaEnroll:'Iscrizione', metaEnrollVal:'PR = dentro', metaEnrollSub:'niente signup ufficiale',
     howTitle:'Come funziona',
-    howLead:'Progetto tuo · ≥10 task · con vs senza CodeDNA · stack L0/L1/L2 equo · PR metrics.json.',
-    s1t:'Sul tuo repo', s1p:'Dichiara linguaggi, framework, numero file e size band. Mix facili / medi / difficili.',
-    s2t:'Stack equo', s2p:'Se usi wiki, skill o Graphify, ci devono essere in entrambe le condizioni — salvo modalità codedna-only dichiarata.',
-    s3t:'Apri la PR', s3p:'Aggiungi challenge/<handle>/metrics.json. Quella PR ti iscrive. Merge e aggiornamento bacheca a cura nostra.',
+    howLead:'Progetto reale funzionante (≥25 file) · dichiara linguaggi/framework/agente · ≥10 stessi task con vs senza CodeDNA · pubblica install · segnala bug · PR metrics.json.',
+    s1t:'Progetto reale + stack', s1p:'Niente siti giocattolo. Dichiara linguaggi, framework, numero file, size band e come hai installato CodeDNA.',
+    s2t:'Stessi task, stack equo', s2p:'Esegui gli stessi ≥10 task con e senza CodeDNA. Tieni la parity L1/L2 salvo modalità codedna-only dichiarata.',
+    s3t:'PR → bacheca live', s3p:'Apri una PR metrics per iscriverti. La classifica pubblica si aggiorna quando arrivano PR valide. Possiamo chiedere una presentazione Meet.',
     l0:'Header in-source — layer sotto test.',
     l1:'Wiki LLM, skill pack, instruction file — parity obbligatoria.',
     l2:'Memoria graph / strutturale — parity obbligatoria.',
-    honestyNote:'<strong>Onestà.</strong> Non inventare i risultati. Fabrizio o il team di review possono chiedere una review live (es. Google Meet) per verificare le run. Quando possibile faremo anche live pubbliche sui test inviati.',
+    honestyNote:'<strong>Onestà.</strong> Non inventare risultati o progetti finti. Fabrizio o il team di review possono richiedere una call + presentazione per verificare progetto e processo di test. Quando possibile faremo anche live pubbliche sui test inviati.',
     boardTitle:'Bacheca pubblica',
-    boardLead:'Linguaggio + framework, dimensione progetto e numero file sono obbligatori per confronti onesti.',
+    boardLead:'Linguaggio + framework + percorso di install e dimensione progetto sono obbligatori. La classifica si aggiorna quando arrivano PR valide e resta pubblica.',
     emptyTitle:'Ancora nessuna submission in bacheca',
-    emptyBody:'Quando una PR metrics viene accettata e mergiata, aggiungiamo una riga modificando challenge-board.json.',
-    boardNote:'Bacheca statica e curata. Aprire una PR ti iscrive automaticamente; comparire qui significa che i maintainer hanno accettato il formato. Gap agente × linguaggio sono attesi — apri issue o PR di fix.',
+    emptyBody:'Appena una PR metrics valida viene reviewata, aggiungiamo una riga modificando challenge-board.json.',
+    boardNote:'Classifica live, curata dai maintainer. Aprire una PR ti iscrive; comparire qui significa che formato e dichiarazione di stack sono stati accettati. Gap agente × linguaggio sono attesi — apri issue o PR di fix.',
     thHandle:'Partecipante', thStack:'Linguaggio / framework', thSize:'Size', thFiles:'File',
     thMode:'Mode', thScore:'Pass C / DNA', thFavors:'Favors', thPr:'PR',
     unlock:'min {n} per sbloccare', windowFallback:'date TBD'

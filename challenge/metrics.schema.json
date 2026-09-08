@@ -10,8 +10,10 @@
     "mode",
     "stack",
     "project",
+    "install",
     "tasks",
-    "summary"
+    "summary",
+    "bugs_reported"
   ],
   "properties": {
     "schema_version": {
@@ -154,8 +156,8 @@
         },
         "approx_source_files": {
           "type": "integer",
-          "minimum": 1,
-          "description": "Approximate number of source files in the project under test."
+          "minimum": 25,
+          "description": "Approximate number of source files. Minimum 25. Toy landing pages / hello-world demos are rejected; must be a real working project (small is OK)."
         },
         "visibility": {
           "type": "string",
@@ -193,6 +195,13 @@
             "XL"
           ],
           "description": "S=<50 files, M=50-199, L=200-999, XL=1000+"
+        },
+        "tech_stack_notes": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Optional free-text stack notes (DB, infra, monorepo layout, etc.)."
         }
       }
     },
@@ -334,7 +343,44 @@
           }
         }
       },
-      "default": []
+      "default": [],
+      "description": "Bugs found in CodeDNA during the challenge. Empty array if none. If you hit agent/language issues you MUST file issues or fix PRs and list them here."
+    },
+    "install": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "agent",
+        "steps"
+      ],
+      "description": "How CodeDNA was installed for this run (required \u2014 publish your install path).",
+      "properties": {
+        "agent": {
+          "type": "string",
+          "minLength": 1,
+          "description": "AI coding agent used (e.g. cursor, claude-code, opencode, codex)."
+        },
+        "tools_flag": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Value passed to `codedna install --tools`, if any."
+        },
+        "steps": {
+          "type": "string",
+          "minLength": 1,
+          "description": "Exact install/init commands and steps you ran."
+        },
+        "worked": {
+          "type": "boolean",
+          "description": "Whether install + annotation completed successfully on this agent/stack."
+        },
+        "notes": {
+          "type": "string",
+          "description": "Problems, workarounds, agent-specific gaps."
+        }
+      }
     }
   },
   "$defs": {
