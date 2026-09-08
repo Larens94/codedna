@@ -7,6 +7,7 @@ Thank you for your interest in contributing! CodeDNA is a language-adaptable in-
 - **Add examples** in a new language (`examples/<language>/`)
 - **Improve the spec** — open an issue to discuss first
 - **Run and share benchmarks** — submit your results
+- **Enter the CodeDNA Challenge** — see [`docs/challenge.md`](docs/challenge.md) / [`docs/challenge.it.md`](docs/challenge.it.md)
 - **Report bugs** in the spec or examples
 
 ## Adding a Language Example

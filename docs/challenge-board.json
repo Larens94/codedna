@@ -1,0 +1,13 @@
+{
+  "updated_at": "2026-09-08",
+  "status": "open",
+  "prize_eur": 200,
+  "min_submissions_to_unlock": 5,
+  "stretch_goal": 10,
+  "window": {
+    "start": null,
+    "end": null,
+    "note": "Dates TBD — set before public launch"
+  },
+  "submissions": []
+}

@@ -1,0 +1,317 @@
+{
+  "schema_version": "1.0",
+  "entrant": {
+    "github_handle": "your-handle",
+    "entry_issue": "https://github.com/Larens94/codedna/issues/0",
+    "agents": [
+      "cursor"
+    ],
+    "models": [
+      "claude-sonnet"
+    ]
+  },
+  "mode": "parity",
+  "stack": {
+    "l0_codedna": {
+      "control": false,
+      "codedna": true,
+      "notes": "CodeDNA headers only in codedna condition"
+    },
+    "l1": {
+      "items": [
+        "AGENTS.md",
+        "project wiki"
+      ],
+      "present_in_control": true,
+      "present_in_codedna": true
+    },
+    "l2": {
+      "items": [],
+      "present_in_control": false,
+      "present_in_codedna": false
+    }
+  },
+  "project": {
+    "languages": [
+      "TypeScript",
+      "Python"
+    ],
+    "approx_source_files": 120,
+    "visibility": "private",
+    "url": null,
+    "domain": "web-api",
+    "frameworks": [
+      "NestJS",
+      "FastAPI"
+    ],
+    "size_band": "M"
+  },
+  "success_definition": "Task passes if the agent produced a correct change without the human rewriting the core logic.",
+  "tasks": [
+    {
+      "id": "T01",
+      "title": "Rename helper and update callers",
+      "difficulty": "easy",
+      "description": "Rename formatAmount and fix all imports.",
+      "control": {
+        "passed": true,
+        "minutes": 8,
+        "turns": 6,
+        "tool_calls": 12,
+        "wrong_file_or_module": false,
+        "human_interventions": 0,
+        "confidence_1_to_5": 4
+      },
+      "codedna": {
+        "passed": true,
+        "minutes": 5,
+        "turns": 4,
+        "tool_calls": 8,
+        "wrong_file_or_module": false,
+        "human_interventions": 0,
+        "confidence_1_to_5": 5
+      },
+      "notes": ""
+    },
+    {
+      "id": "T02",
+      "title": "Add optional field to DTO + validation",
+      "difficulty": "easy",
+      "description": "",
+      "control": {
+        "passed": true,
+        "minutes": 10,
+        "turns": 7,
+        "tool_calls": 14,
+        "wrong_file_or_module": false,
+        "human_interventions": 1,
+        "confidence_1_to_5": 3
+      },
+      "codedna": {
+        "passed": true,
+        "minutes": 7,
+        "turns": 5,
+        "tool_calls": 10,
+        "wrong_file_or_module": false,
+        "human_interventions": 0,
+        "confidence_1_to_5": 4
+      },
+      "notes": ""
+    },
+    {
+      "id": "T03",
+      "title": "Fix null crash in list endpoint",
+      "difficulty": "easy",
+      "description": "",
+      "control": {
+        "passed": false,
+        "minutes": 15,
+        "turns": 12,
+        "tool_calls": 20,
+        "wrong_file_or_module": true,
+        "human_interventions": 2,
+        "confidence_1_to_5": 2
+      },
+      "codedna": {
+        "passed": true,
+        "minutes": 9,
+        "turns": 6,
+        "tool_calls": 11,
+        "wrong_file_or_module": false,
+        "human_interventions": 0,
+        "confidence_1_to_5": 4
+      },
+      "notes": ""
+    },
+    {
+      "id": "T04",
+      "title": "Cross-file feature: export CSV",
+      "difficulty": "medium",
+      "description": "",
+      "control": {
+        "passed": true,
+        "minutes": 25,
+        "turns": 18,
+        "tool_calls": 30,
+        "wrong_file_or_module": false,
+        "human_interventions": 1,
+        "confidence_1_to_5": 3
+      },
+      "codedna": {
+        "passed": true,
+        "minutes": 18,
+        "turns": 12,
+        "tool_calls": 22,
+        "wrong_file_or_module": false,
+        "human_interventions": 0,
+        "confidence_1_to_5": 4
+      },
+      "notes": ""
+    },
+    {
+      "id": "T05",
+      "title": "Refactor payment amount handling (cents)",
+      "difficulty": "medium",
+      "description": "",
+      "control": {
+        "passed": false,
+        "minutes": 40,
+        "turns": 28,
+        "tool_calls": 45,
+        "wrong_file_or_module": true,
+        "human_interventions": 3,
+        "confidence_1_to_5": 2
+      },
+      "codedna": {
+        "passed": true,
+        "minutes": 22,
+        "turns": 14,
+        "tool_calls": 24,
+        "wrong_file_or_module": false,
+        "human_interventions": 1,
+        "confidence_1_to_5": 4
+      },
+      "notes": "Control ignored cents rule."
+    },
+    {
+      "id": "T06",
+      "title": "API change with backward-compatible wrapper",
+      "difficulty": "medium",
+      "description": "",
+      "control": {
+        "passed": true,
+        "minutes": 30,
+        "turns": 20,
+        "tool_calls": 33,
+        "wrong_file_or_module": false,
+        "human_interventions": 1,
+        "confidence_1_to_5": 3
+      },
+      "codedna": {
+        "passed": true,
+        "minutes": 24,
+        "turns": 15,
+        "tool_calls": 26,
+        "wrong_file_or_module": false,
+        "human_interventions": 0,
+        "confidence_1_to_5": 4
+      },
+      "notes": ""
+    },
+    {
+      "id": "T07",
+      "title": "Add soft-delete filter to admin list",
+      "difficulty": "medium",
+      "description": "",
+      "control": {
+        "passed": true,
+        "minutes": 20,
+        "turns": 14,
+        "tool_calls": 21,
+        "wrong_file_or_module": false,
+        "human_interventions": 0,
+        "confidence_1_to_5": 4
+      },
+      "codedna": {
+        "passed": true,
+        "minutes": 16,
+        "turns": 10,
+        "tool_calls": 17,
+        "wrong_file_or_module": false,
+        "human_interventions": 0,
+        "confidence_1_to_5": 5
+      },
+      "notes": ""
+    },
+    {
+      "id": "T08",
+      "title": "Multi-module authz bug",
+      "difficulty": "hard",
+      "description": "",
+      "control": {
+        "passed": false,
+        "minutes": 55,
+        "turns": 40,
+        "tool_calls": 60,
+        "wrong_file_or_module": true,
+        "human_interventions": 4,
+        "confidence_1_to_5": 2
+      },
+      "codedna": {
+        "passed": true,
+        "minutes": 35,
+        "turns": 22,
+        "tool_calls": 34,
+        "wrong_file_or_module": false,
+        "human_interventions": 1,
+        "confidence_1_to_5": 4
+      },
+      "notes": ""
+    },
+    {
+      "id": "T09",
+      "title": "Architecture constraint: do not call billing from UI",
+      "difficulty": "hard",
+      "description": "",
+      "control": {
+        "passed": false,
+        "minutes": 45,
+        "turns": 32,
+        "tool_calls": 50,
+        "wrong_file_or_module": true,
+        "human_interventions": 3,
+        "confidence_1_to_5": 2
+      },
+      "codedna": {
+        "passed": true,
+        "minutes": 28,
+        "turns": 18,
+        "tool_calls": 29,
+        "wrong_file_or_module": false,
+        "human_interventions": 1,
+        "confidence_1_to_5": 4
+      },
+      "notes": ""
+    },
+    {
+      "id": "T10",
+      "title": "Locate safe extension point for new provider",
+      "difficulty": "hard",
+      "description": "",
+      "control": {
+        "passed": true,
+        "minutes": 50,
+        "turns": 35,
+        "tool_calls": 55,
+        "wrong_file_or_module": false,
+        "human_interventions": 2,
+        "confidence_1_to_5": 3
+      },
+      "codedna": {
+        "passed": true,
+        "minutes": 30,
+        "turns": 19,
+        "tool_calls": 31,
+        "wrong_file_or_module": false,
+        "human_interventions": 0,
+        "confidence_1_to_5": 5
+      },
+      "notes": ""
+    }
+  ],
+  "summary": {
+    "tasks_total": 10,
+    "easy_count": 3,
+    "medium_count": 4,
+    "hard_count": 3,
+    "control_passed": 6,
+    "codedna_passed": 10,
+    "control_total_minutes": 298,
+    "codedna_total_minutes": 194,
+    "control_total_turns": 212,
+    "codedna_total_turns": 125,
+    "favors": "codedna",
+    "one_line_verdict": "CodeDNA reduced wrong-file mistakes on hard tasks; still honest about one medium task needing a steer."
+  },
+  "bugs_reported": []
+}

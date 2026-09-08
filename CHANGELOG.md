@@ -6,6 +6,10 @@ All notable changes to CodeDNA will be documented in this file.
 
 ### Added
 
+- **CodeDNA Challenge (€200)** — bilingual rules, required `metrics.json` (languages + frameworks + size/files), docs site page + static board (`docs/challenge.html`, `docs/challenge-board.json`). PR opens enrollment (no separate signup). Separate from historical SWE-bench benchmarks.
+
+### Added
+
 - **VB.NET language adapter (`.vb`)** — structural regex adapter with `'` comment headers, Public Class/Module/Sub/Function/Property exports, and Option/Imports-aware injection (issue #6).
 - **Roo Code install target** — `codedna install --tools roo` writes `.roorules` (issue #7).
 
