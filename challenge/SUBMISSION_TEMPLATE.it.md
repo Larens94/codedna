@@ -29,6 +29,15 @@
 - Valore di `codedna install --tools` (se usato):
 - Install + annotation ok? sì / no — note:
 
+### Setup Control vs CodeDNA (obbligatorio)
+
+- [ ] `two_branches` (es. `challenge/control` + `challenge/codedna`)
+- [ ] `two_checkouts` (due cartelle)
+- [ ] `two_projects` (progetti gemelli)
+- Ref Control / CodeDNA:
+- [ ] Prompt agente usato: [`docs/challenge-agent-prompt.it.md`](../docs/challenge-agent-prompt.it.md)
+- [ ] Lista task congelata: [`TASKS_TEMPLATE.it.md`](./TASKS_TEMPLATE.it.md)
+
 ### Stack sotto test (L0/L1/L2)
 
 | Livello | Tool / file | Presente in Control? | Presente in CodeDNA? |
@@ -44,6 +53,7 @@
 - [ ] `schema_version` = `"1.0"`
 - [ ] Compilati `project.languages` + `project.frameworks` + `approx_source_files` (≥25) + `size_band`
 - [ ] Compilati `install.agent` + `install.steps`
+- [ ] Compilato `setup.layout` (`two_branches` | `two_checkouts` | `two_projects`)
 - [ ] Presente `bugs_reported` (array vuoto OK se nessuno)
 - [ ] ≥10 task con mix `difficulty` (easy ≥3, medium ≥3, hard ≥2)
 - [ ] Gli **stessi task** hanno risultati `control` e `codedna`

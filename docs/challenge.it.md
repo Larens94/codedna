@@ -20,13 +20,14 @@ Questa challenge pone una sola domanda:
 
 1. Lavori sul **tuo progetto reale e funzionante** (non sui nostri vecchi benchmark — non un sito giocattolo).
 2. Dichiari lo **stack tecnologico** completo (linguaggi, framework, agente, percorso di install).
-3. Esegui **almeno 10 task** (mix facili / medi / difficili) — gli **stessi task due volte**: una **senza** CodeDNA e una **con** CodeDNA.
+3. Usi la **stessa metodologia per tutti**: **≥10 stessi task** due volte — senza CodeDNA e con CodeDNA — tramite **due branch**, **due checkout** o **due progetti gemelli**.
 4. Tieni lo stack AI **equo** (vedi Livelli sotto).
 5. Documenti **come hai installato CodeDNA**; segnali bug / apri PR di fix quando qualcosa si rompe (atteso — è ancora sperimentale).
-6. Apri una **Pull Request** con `metrics.json` — anche se CodeDNA risulta peggiore. **Quella PR è la tua iscrizione.**
-7. La **bacheca / classifica pubblica si aggiorna quando arrivano PR valide** e resta visibile sul sito docs.
-8. Il progetto può essere chiamato a una **review live / presentazione** (call) così verifichiamo che i test siano reali.
-9. Il premio si sblocca solo se si raggiunge il **minimo di partecipanti**.
+6. Opzionale: incolla il **[prompt agente](challenge-agent-prompt.it.md)** nel tuo agente AI così segue protocollo + lista attività.
+7. Apri una **Pull Request** con `metrics.json` — anche se CodeDNA risulta peggiore. **Quella PR è la tua iscrizione.**
+8. La **bacheca / classifica pubblica si aggiorna quando arrivano PR valide** e resta visibile sul sito docs.
+9. Il progetto può essere chiamato a una **review live / presentazione** (call) così verifichiamo che i test siano reali.
+10. Il premio si sblocca solo se si raggiunge il **minimo di partecipanti**.
 
 ---
 
@@ -126,14 +127,32 @@ Per ogni task registra: obiettivo, difficoltà, agente/tool, successo/fallimento
 
 ### 3. Due condizioni: senza vs con CodeDNA
 
-Per **ciascuno degli stessi task** esegui:
+**La metodologia è uguale per tutti.** Per **ciascuno degli stessi task** esegui:
 
 | Condizione | Setup |
 |---|---|
 | **A — Control** | Il tuo workflow AI normale **senza** annotation CodeDNA / senza affidarti agli header CodeDNA |
 | **B — CodeDNA** | Stesso workflow **con** CodeDNA installato e annotato (`codedna init` / header mantenuti) |
 
+#### Come separare A e B (scegline uno — dichiaralo in `metrics.json` → `setup.layout`)
+
+| Layout | `setup.layout` | Esempio |
+|---|---|---|
+| Due branch nello stesso repo | `two_branches` | `challenge/control` + `challenge/codedna` |
+| Due checkout / cartelle | `two_checkouts` | due clone locali dello stesso progetto |
+| Due progetti gemelli | `two_projects` | due repo/cartelle dallo stesso codice di partenza |
+
 Mantieni **agente, modello e layer superiori identici** tra A e B, tranne CodeDNA stesso (salvo modalità dichiarata — vedi sotto).
+
+### 3b. Copia per il tuo agente (consigliato)
+
+Incolla il prompt pronto nel tuo agente AI così riceve regole + scheletro attività:
+
+- Italiano: [`challenge-agent-prompt.it.md`](challenge-agent-prompt.it.md)
+- English: [`challenge-agent-prompt.md`](challenge-agent-prompt.md)
+- Checklist task: [`../challenge/TASKS_TEMPLATE.it.md`](../challenge/TASKS_TEMPLATE.it.md) · [EN](../challenge/TASKS_TEMPLATE.md)
+
+Sulla pagina pubblica: **Copia per il tuo agente** copia il prompt nella lingua corrente.
 
 ### 4. Stack equo — Livelli (critico)
 
@@ -176,6 +195,7 @@ Compila anche:
 
 - `summary.favors`: `codedna` | `control` | `tie` | `inconclusive`
 - `install` — **obbligatorio**: agente + passi esatti di install/init (e se ha funzionato)
+- `setup.layout` — **obbligatorio**: `two_branches` | `two_checkouts` | `two_projects`
 - `bugs_reported` — array **obbligatorio** (vuoto se nessuno); se qualcosa si è rotto, apri issue o PR di fix e elencala qui
 
 I numeri grezzi possono favorire CodeDNA **oppure no**. L’onestà batte il tifo.  

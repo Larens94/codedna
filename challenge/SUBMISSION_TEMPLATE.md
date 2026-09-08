@@ -29,6 +29,15 @@
 - `codedna install --tools` value (if any):
 - Did install + annotation work? yes / no — notes:
 
+### Control vs CodeDNA setup (required)
+
+- [ ] `two_branches` (e.g. `challenge/control` + `challenge/codedna`)
+- [ ] `two_checkouts` (two folders)
+- [ ] `two_projects` (twin projects)
+- Control / CodeDNA refs:
+- [ ] Agent prompt used: [`docs/challenge-agent-prompt.md`](../docs/challenge-agent-prompt.md)
+- [ ] Frozen task list: [`TASKS_TEMPLATE.md`](./TASKS_TEMPLATE.md)
+
 ### Stack under test (L0/L1/L2)
 
 | Level | Tools / files | Present in Control? | Present in CodeDNA? |
@@ -44,6 +53,7 @@
 - [ ] `schema_version` = `"1.0"`
 - [ ] `project.languages` + `project.frameworks` + `approx_source_files` (≥25) + `size_band` filled
 - [ ] `install.agent` + `install.steps` filled
+- [ ] `setup.layout` filled (`two_branches` | `two_checkouts` | `two_projects`)
 - [ ] `bugs_reported` present (empty array OK if none)
 - [ ] ≥10 tasks with `difficulty` mix (easy ≥3, medium ≥3, hard ≥2)
 - [ ] **Same tasks** each have both `control` and `codedna` results

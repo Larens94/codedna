@@ -4,21 +4,28 @@
 
 ```text
 challenge/<github-handle>/
-  metrics.json    # REQUIRED (stack + install + same-task control/codedna results)
+  metrics.json    # REQUIRED (stack + install + setup.layout + same-task control/codedna results)
   README.md       # optional
   notes.md        # optional
 ```
 
-No official signup. Public board / ranking (updated as valid PRs arrive): [`docs/challenge.html`](../docs/challenge.html) · data [`docs/challenge-board.json`](../docs/challenge-board.json)
+No official signup. Public ranking (updated as valid PRs arrive): [`docs/challenge.html`](../docs/challenge.html) · data [`docs/challenge-board.json`](../docs/challenge-board.json)
+
+**Copy for your agent**
+
+- Italiano: [`docs/challenge-agent-prompt.it.md`](../docs/challenge-agent-prompt.it.md)
+- English: [`docs/challenge-agent-prompt.md`](../docs/challenge-agent-prompt.md)
+- Task lists: [`TASKS_TEMPLATE.it.md`](./TASKS_TEMPLATE.it.md) · [`TASKS_TEMPLATE.md`](./TASKS_TEMPLATE.md)
+- Pointer: [`AGENT_PROMPT.md`](./AGENT_PROMPT.md)
+
+Methodology (same for everyone): same ≥10 tasks with vs without CodeDNA via `two_branches` / `two_checkouts` / `two_projects`.
 
 **Metrics format**
 
 - Example: [`metrics.example.json`](./metrics.example.json)
 - Schema: [`metrics.schema.json`](./metrics.schema.json)
 
-Required: `languages`, `frameworks`, `approx_source_files` (≥25), `size_band` (`S`/`M`/`L`/`XL`), `install` (agent + steps), `bugs_reported` (array; empty OK).
-
-Real working projects only — toy sites / hello-world demos are rejected. Same tasks must be run with and without CodeDNA. Meet presentation may be required.
+Required: `languages`, `frameworks`, `approx_source_files` (≥25), `size_band`, `install`, `setup.layout`, `bugs_reported`.
 
 **Rules**
 

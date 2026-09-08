@@ -11,6 +11,7 @@
     "stack",
     "project",
     "install",
+    "setup",
     "tasks",
     "summary",
     "bugs_reported"
@@ -379,6 +380,42 @@
         "notes": {
           "type": "string",
           "description": "Problems, workarounds, agent-specific gaps."
+        }
+      }
+    },
+    "setup": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "layout"
+      ],
+      "description": "How Control vs CodeDNA workspaces were separated.",
+      "properties": {
+        "layout": {
+          "type": "string",
+          "enum": [
+            "two_branches",
+            "two_checkouts",
+            "two_projects"
+          ],
+          "description": "two_branches | two_checkouts | two_projects"
+        },
+        "control_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Branch name, path, or URL for Control"
+        },
+        "codedna_ref": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Branch name, path, or URL for CodeDNA"
+        },
+        "notes": {
+          "type": "string"
         }
       }
     }

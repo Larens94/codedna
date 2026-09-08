@@ -91,10 +91,14 @@ nav {
   display: inline-flex; align-items: center; gap: 0.5rem;
   padding: 0.75rem 1.5rem; border-radius: var(--radius); font-size: 0.875rem; font-weight: 600;
   text-decoration: none; border: 1px solid var(--black); transition: opacity .15s, border-color .15s;
+  cursor: pointer; font-family: inherit; background: transparent; color: var(--black);
 }
 .btn-primary { background: var(--black); color: #fff; }
 .btn-secondary { background: transparent; color: var(--black); border-color: var(--gray-200); }
 .btn-secondary:hover { border-color: var(--black); }
+.copy-status {
+  margin-top: 0.75rem; font-size: 0.85rem; color: var(--gray-600);
+}
 
 .section { max-width: 1100px; margin: 0 auto; padding: 64px 28px; }
 .section + .section { border-top: 1px solid var(--gray-200); }
@@ -286,13 +290,15 @@ body.challenge-page .nav-links .lang-toggle {
   <div class="page-hero-inner">
     <div class="eyebrow"><span class="eyebrow-dot"></span><span data-i18n="eyebrow">Valutazione pubblica · €200</span></div>
     <h1 data-i18n-html="h1">CodeDNA Challenge<br><em>€200</em></h1>
-    <p class="lead" data-i18n="lead">Prova CodeDNA sul tuo progetto reale. Dichiara stack + install. Stessi task con vs senza CodeDNA. Apri una PR metrics per iscriverti — la bacheca pubblica si aggiorna quando arrivano PR valide.</p>
+    <p class="lead" data-i18n="lead">Prova CodeDNA sul tuo progetto reale. Metodologia uguale per tutti: due branch o progetti gemelli, stessi task con vs senza CodeDNA. Copia il prompt per l’agente, poi apri la PR metrics.</p>
     <div class="hero-actions">
       <a class="btn-primary" href="#ranking" data-i18n="ctaRanking">Vedi classifica →</a>
+      <button type="button" class="btn-secondary" id="copy-agent-prompt" data-i18n="ctaCopyAgent">Copia per il tuo agente</button>
       <a class="btn-secondary" href="challenge.it.md" data-i18n="ctaRulesIt">Regolamento (IT)</a>
       <a class="btn-secondary" href="challenge.md" data-i18n="ctaRules">Rules (EN)</a>
       <a class="btn-secondary" href="https://github.com/Larens94/codedna/blob/main/challenge/metrics.example.json" target="_blank" data-i18n="ctaExample">Copia metrics.json →</a>
     </div>
+    <p class="copy-status" id="copy-status" hidden></p>
     <p class="note" style="margin-top:1.75rem;max-width:640px" data-i18n-html="experimentalNote">
       <strong>Sperimentale.</strong> I risultati possono variare per agente AI e linguaggio (Claude Code, OpenCode, Cursor, Codex, …).
       Pubblica come hai installato CodeDNA. Se annotazioni o CLI si comportano male, apri una
@@ -332,7 +338,7 @@ body.challenge-page .nav-links .lang-toggle {
 
 <section class="section" id="how">
   <h2 data-i18n="howTitle">Come funziona</h2>
-  <p class="section-lead" data-i18n="howLead">Progetto reale funzionante (≥25 file) · dichiara linguaggi/framework/agente · ≥10 stessi task con vs senza CodeDNA · pubblica install · segnala bug · PR metrics.json.</p>
+  <p class="section-lead" data-i18n="howLead">Metodologia uguale per tutti: progetto reale · due branch/checkout/progetti · ≥10 stessi task con vs senza CodeDNA · copia prompt per l’agente · pubblica install · segnala bug.</p>
   <div class="steps">
     <div class="step">
       <div class="step-num">01</div>
@@ -341,13 +347,13 @@ body.challenge-page .nav-links .lang-toggle {
     </div>
     <div class="step">
       <div class="step-num">02</div>
-      <h3 data-i18n="s2t">Stessi task, stack equo</h3>
-      <p data-i18n="s2p">Esegui gli stessi ≥10 task con e senza CodeDNA. Tieni la parity L1/L2 salvo modalità codedna-only dichiarata.</p>
+      <h3 data-i18n="s2t">Due branch o due progetti</h3>
+      <p data-i18n="s2p">Stessi ≥10 task su Control e CodeDNA. Separa con due branch, due checkout o due progetti gemelli — dichiara `setup.layout`.</p>
     </div>
     <div class="step">
       <div class="step-num">03</div>
-      <h3 data-i18n="s3t">PR → bacheca live</h3>
-      <p data-i18n="s3p">Apri una PR metrics per iscriverti. La classifica pubblica si aggiorna quando arrivano PR valide. Possiamo chiedere una presentazione Meet.</p>
+      <h3 data-i18n="s3t">Copia prompt → PR</h3>
+      <p data-i18n="s3p">Copia il prompt per il tuo agente, esegui la lista attività, apri la PR metrics. La classifica si aggiorna quando arrivano PR valide.</p>
     </div>
   </div>
   <div class="levels">
@@ -428,8 +434,8 @@ const I18N = {
     navHome:'Home', navChallenge:'Challenge', navInstall:'Install',
     eyebrow:'Public evaluation · €200',
     h1:'CodeDNA Challenge<br><em>€200</em>',
-    lead:'Test CodeDNA on your own real project. Declare stack + install. Same tasks with vs without CodeDNA. Open a metrics PR to enroll — the public board updates as valid PRs arrive.',
-    ctaRanking:'View ranking →', ctaExample:'Copy metrics.json →', ctaRules:'Full rules (EN)', ctaRulesIt:'Regolamento (IT)',
+    lead:'Test CodeDNA on your own real project. Same methodology for everyone: two branches or twin projects, same tasks with vs without CodeDNA. Copy the agent prompt, then open a metrics PR.',
+    ctaRanking:'View ranking →', ctaCopyAgent:'Copy for your agent', ctaExample:'Copy metrics.json →', ctaRules:'Full rules (EN)', ctaRulesIt:'Regolamento (IT)', ctaCopied:'Copied — paste into your AI agent', ctaCopyFail:'Could not copy — open challenge-agent-prompt.md',
     experimentalNote:'<strong>Experimental.</strong> Results can vary by AI coding agent and language (Claude Code, OpenCode, Cursor, Codex, …). Publish how you installed CodeDNA. If annotations or the CLI misbehave, open a <a href="https://github.com/Larens94/codedna/issues/new">GitHub issue</a> or a fix <a href="https://github.com/Larens94/codedna/compare">pull request</a>. That feedback is part of the challenge.',
     statusTitle:'Challenge status',
     statusLead:'Public ranking updated as valid PRs arrive. Source file: docs/challenge-board.json.',
@@ -437,10 +443,10 @@ const I18N = {
     metaSubs:'Submissions', metaStatus:'Status',
     metaEnroll:'Enrollment', metaEnrollVal:'PR = in', metaEnrollSub:'no official signup',
     howTitle:'How it works',
-    howLead:'Real working project (≥25 files) · declare languages/frameworks/agent · ≥10 same tasks with vs without CodeDNA · publish install · report bugs · metrics.json PR.',
+    howLead:'Same methodology for everyone: real project · two branches/checkouts/projects · ≥10 same tasks with vs without CodeDNA · copy agent prompt · publish install · report bugs.',
     s1t:'Real project + stack', s1p:'No toy sites. Declare languages, frameworks, file count, size band, and how you installed CodeDNA.',
-    s2t:'Same tasks, fair stack', s2p:'Run the same ≥10 tasks with and without CodeDNA. Keep L1/L2 parity unless you declare codedna-only mode.',
-    s3t:'PR → live board', s3p:'Open a metrics PR to enroll. The public ranking updates as valid PRs arrive. We may ask for a Meet presentation.',
+    s2t:'Two branches or twin projects', s2p:'Same ≥10 tasks on Control and CodeDNA. Split with two branches, two checkouts, or twin projects — declare setup.layout.',
+    s3t:'Copy prompt → PR', s3p:'Copy the agent prompt, run the activity list, open the metrics PR. Ranking updates as valid PRs arrive.',
     l0:'In-source headers — the layer under test.',
     l1:'LLM wiki, skill packs, instruction files — parity required.',
     l2:'Graph / structural memory — parity required.',
@@ -458,8 +464,8 @@ const I18N = {
     navHome:'Home', navChallenge:'Challenge', navInstall:'Install',
     eyebrow:'Valutazione pubblica · €200',
     h1:'CodeDNA Challenge<br><em>€200</em>',
-    lead:'Prova CodeDNA sul tuo progetto reale. Dichiara stack + install. Stessi task con vs senza CodeDNA. Apri una PR metrics per iscriverti — la bacheca pubblica si aggiorna quando arrivano PR valide.',
-    ctaRanking:'Vedi classifica →', ctaExample:'Copia metrics.json →', ctaRules:'Rules (EN)', ctaRulesIt:'Regolamento (IT)',
+    lead:'Prova CodeDNA sul tuo progetto reale. Metodologia uguale per tutti: due branch o progetti gemelli, stessi task con vs senza CodeDNA. Copia il prompt per l’agente, poi apri la PR metrics.',
+    ctaRanking:'Vedi classifica →', ctaCopyAgent:'Copia per il tuo agente', ctaExample:'Copia metrics.json →', ctaRules:'Rules (EN)', ctaRulesIt:'Regolamento (IT)', ctaCopied:'Copiato — incollalo nel tuo agente AI', ctaCopyFail:'Copia non riuscita — apri challenge-agent-prompt.it.md',
     experimentalNote:'<strong>Sperimentale.</strong> I risultati possono variare per agente AI e linguaggio (Claude Code, OpenCode, Cursor, Codex, …). Pubblica come hai installato CodeDNA. Se annotazioni o CLI si comportano male, apri una <a href="https://github.com/Larens94/codedna/issues/new">issue</a> o una <a href="https://github.com/Larens94/codedna/compare">pull request</a> di fix. Quel feedback fa parte della challenge.',
     statusTitle:'Stato challenge',
     statusLead:'Classifica pubblica aggiornata quando arrivano PR valide. File sorgente: docs/challenge-board.json.',
@@ -467,10 +473,10 @@ const I18N = {
     metaSubs:'Submission', metaStatus:'Stato',
     metaEnroll:'Iscrizione', metaEnrollVal:'PR = dentro', metaEnrollSub:'niente signup ufficiale',
     howTitle:'Come funziona',
-    howLead:'Progetto reale funzionante (≥25 file) · dichiara linguaggi/framework/agente · ≥10 stessi task con vs senza CodeDNA · pubblica install · segnala bug · PR metrics.json.',
+    howLead:'Metodologia uguale per tutti: progetto reale · due branch/checkout/progetti · ≥10 stessi task con vs senza CodeDNA · copia prompt per l’agente · pubblica install · segnala bug.',
     s1t:'Progetto reale + stack', s1p:'Niente siti giocattolo. Dichiara linguaggi, framework, numero file, size band e come hai installato CodeDNA.',
-    s2t:'Stessi task, stack equo', s2p:'Esegui gli stessi ≥10 task con e senza CodeDNA. Tieni la parity L1/L2 salvo modalità codedna-only dichiarata.',
-    s3t:'PR → bacheca live', s3p:'Apri una PR metrics per iscriverti. La classifica pubblica si aggiorna quando arrivano PR valide. Possiamo chiedere una presentazione Meet.',
+    s2t:'Due branch o due progetti', s2p:'Stessi ≥10 task su Control e CodeDNA. Separa con due branch, due checkout o due progetti gemelli — dichiara setup.layout.',
+    s3t:'Copia prompt → PR', s3p:'Copia il prompt per il tuo agente, esegui la lista attività, apri la PR metrics. La classifica si aggiorna quando arrivano PR valide.',
     l0:'Header in-source — layer sotto test.',
     l1:'Wiki LLM, skill pack, instruction file — parity obbligatoria.',
     l2:'Memoria graph / strutturale — parity obbligatoria.',
@@ -590,8 +596,29 @@ async function loadBoard() {
 document.getElementById('filter-favors').addEventListener('change', () => boardData && renderBoard(boardData));
 document.getElementById('filter-size').addEventListener('change', () => boardData && renderBoard(boardData));
 
+
+async function copyAgentPrompt() {
+  const dict = I18N[currentLang];
+  const status = document.getElementById('copy-status');
+  const file = currentLang === 'it' ? 'challenge-agent-prompt.it.md' : 'challenge-agent-prompt.md';
+  try {
+    const res = await fetch(file, { cache: 'no-store' });
+    if (!res.ok) throw new Error(res.statusText);
+    const text = await res.text();
+    await navigator.clipboard.writeText(text);
+    status.hidden = false;
+    status.textContent = dict.ctaCopied;
+  } catch (e) {
+    status.hidden = false;
+    status.textContent = dict.ctaCopyFail;
+    window.open(file, '_blank');
+  }
+}
+document.getElementById('copy-agent-prompt').addEventListener('click', copyAgentPrompt);
+
 applyI18n();
 loadBoard();
+
 </script>
 </body>
 </html>

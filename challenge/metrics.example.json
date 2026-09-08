@@ -321,5 +321,11 @@
     "steps": "pipx install git+https://github.com/Larens94/codedna.git\ncodedna install --path . --tools cursor\ncodedna init . --no-llm",
     "worked": true,
     "notes": "Install OK on Cursor; no adapter issues on this NestJS/FastAPI stack."
+  },
+  "setup": {
+    "layout": "two_branches",
+    "control_ref": "challenge/control",
+    "codedna_ref": "challenge/codedna",
+    "notes": "Same commit base; CodeDNA branch has codedna init annotations"
   }
 }
