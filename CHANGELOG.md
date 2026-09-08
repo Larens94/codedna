@@ -6,7 +6,7 @@ All notable changes to CodeDNA will be documented in this file.
 
 ### Added
 
-- **CodeDNA Challenge (€200)** — public own-project evaluation rules in `docs/challenge.md` / `docs/challenge.it.md`, bilingual submission checklists under `challenge/`, and signup issue template. Separate from historical SWE-bench benchmarks.
+- **CodeDNA Challenge (€200)** — public own-project evaluation rules in `docs/challenge.md` / `docs/challenge.it.md`, bilingual submission checklists, and required mergeable `metrics.json` (`challenge/metrics.schema.json`). Separate from historical SWE-bench benchmarks.
 
 ### Added
 

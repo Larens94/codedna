@@ -113,20 +113,31 @@ If you already use extra AI-dev layers, CodeDNA must be tested **on top of the s
 **Declared solo-L0 mode (optional):**  
 If you deliberately test whether **CodeDNA alone** can replace L1/L2, you **must** say so in the PR (`mode: codedna-only-vs-higher-stack` or similar) and describe what you removed. Curiosity-only or undeclared unequal stacks are **invalid**.
 
-### 5. Metrics (minimum set)
+### 5. Metrics (minimum set) — **JSON required**
 
-Report at least:
+The mergeable source of truth is a single file:
 
-| Metric | Notes |
+```text
+challenge/<your-github-handle>/metrics.json
+```
+
+Copy [`challenge/metrics.example.json`](../challenge/metrics.example.json) and fill it.  
+Schema: [`challenge/metrics.schema.json`](../challenge/metrics.schema.json) (`schema_version: "1.0"`).
+
+Required per task (Control + CodeDNA):
+
+| Field | Notes |
 |---|---|
-| Task success (pass/fail) | Your definition stated in the PR |
-| Time or turns | Wall-clock and/or agent turns / tool calls |
-| Wrong-file / wrong-module rate | When applicable |
-| Human intervention count | How often you had to steer |
-| Subjective confidence (1–5) | Optional but useful |
-| Bugs in CodeDNA | Link issues if any |
+| `passed` | Your success definition must be stated in `success_definition` |
+| `minutes` / `turns` / `tool_calls` | Use what you can measure; `null` if unknown |
+| `wrong_file_or_module` | When applicable |
+| `human_interventions` | How often you had to steer |
+| `confidence_1_to_5` | Optional but useful |
 
-Raw numbers can favor CodeDNA **or not**. Honesty beats cheerleading.
+Also fill `summary.favors`: `codedna` | `control` | `tie` | `inconclusive`.
+
+Raw numbers can favor CodeDNA **or not**. Honesty beats cheerleading.  
+Markdown notes (`notes.md`) are optional narrative — **do not replace** `metrics.json`.
 
 ### 6. Submission = Pull Request
 
@@ -139,10 +150,9 @@ Add this folder:
 
 ```text
 challenge/<your-github-handle>/
+  metrics.json       # REQUIRED — machine-readable results (merged + aggregated later)
   README.md          # summary + mode declaration + stack levels used
-  tasks.md           # the ≥10 tasks + difficulties
-  metrics.md         # tables Control vs CodeDNA
-  notes.md           # narrative, surprises, bugs
+  notes.md           # optional narrative, surprises, bugs
   (optional) logs/   # redacted session excerpts
 ```
 
@@ -152,6 +162,7 @@ Use the PR title:
 challenge: <handle> — CodeDNA Challenge submission
 ```
 
+**Why JSON:** each entrant lands in their own folder, PRs merge cleanly, and we can aggregate all `metrics.json` files after the window closes.
 ---
 
 ## Signup

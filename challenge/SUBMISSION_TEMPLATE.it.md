@@ -26,24 +26,27 @@
 - Dimensione (file sorgente approx.):
 - URL pubblico (opzionale) / “privato — solo metriche”:
 
-### Task
+### Metrics JSON (obbligatorio)
 
-- [ ] `challenge/<handle>/tasks.md` con ≥10 task
-- [ ] Facili ≥3, Medi ≥3, Difficili ≥2
-
-### Metriche
-
-- [ ] `challenge/<handle>/metrics.md` con tabelle Control vs CodeDNA
-- [ ] Criteri di successo definiti
-- [ ] Tempo e/o turni registrati
+- [ ] Presente `challenge/<handle>/metrics.json`
+- [ ] Partito da [`metrics.example.json`](./metrics.example.json) / conforme a [`metrics.schema.json`](./metrics.schema.json)
+- [ ] `schema_version` = `"1.0"`
+- [ ] ≥10 task con mix `difficulty` (easy ≥3, medium ≥3, hard ≥2)
+- [ ] Ogni task ha risultati `control` e `codedna`
+- [ ] `summary.favors` impostato (`codedna` | `control` | `tie` | `inconclusive`)
 - [ ] I risultati possono favorire **oppure** sfavorire CodeDNA (onestà OK)
+
+### Opzionale
+
+- [ ] Narrativa in `README.md` / `notes.md`
+- [ ] `logs/` redatti
 
 ### Bug trovati in CodeDNA
 
-- Link (oppure “nessuno”):
+- Link (oppure “nessuno”) — elencarli anche in `metrics.json` → `bugs_reported`:
 
 ### Checklist
 
 - [ ] Nessun secret / sorgente proprietaria in questa PR
 - [ ] Solo log redatti
-- [ ] Il README dichiara chiaramente modalità + parity di stack
+- [ ] Modalità + parity di stack dichiarate nel JSON (`mode`, `stack`)

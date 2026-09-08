@@ -113,20 +113,31 @@ Se già usi layer extra per lo sviluppo AI, CodeDNA va testato **sopra lo stesso
 **Modalità solo-L0 dichiarata (opzionale):**  
 Se testi deliberatamente se **solo CodeDNA** può sostituire L1/L2, lo **devi** dire nella PR (`mode: codedna-only-vs-higher-stack` o simile) e descrivere cosa hai rimosso. Curiosità non dichiarata o stack diseguali non dichiarati = submission **non valida**.
 
-### 5. Metriche (set minimo)
+### 5. Metriche (set minimo) — **JSON obbligatorio**
 
-Riporta almeno:
+La fonte di verità (mergeabile) è un solo file:
 
-| Metrica | Note |
+```text
+challenge/<tuo-github-handle>/metrics.json
+```
+
+Copia [`challenge/metrics.example.json`](../challenge/metrics.example.json) e compilalo.  
+Schema: [`challenge/metrics.schema.json`](../challenge/metrics.schema.json) (`schema_version: "1.0"`).
+
+Obbligatorio per ogni task (Control + CodeDNA):
+
+| Campo | Note |
 |---|---|
-| Successo task (pass/fail) | La tua definizione va dichiarata nella PR |
-| Tempo o turni | Wall-clock e/o turni agente / tool call |
-| Tasso file/modulo sbagliato | Quando applicabile |
-| Interventi umani | Quante volte hai dovuto guidare |
-| Confidenza soggettiva (1–5) | Opzionale ma utile |
-| Bug in CodeDNA | Link alle issue, se ci sono |
+| `passed` | La definizione di successo va in `success_definition` |
+| `minutes` / `turns` / `tool_calls` | Usa ciò che riesci a misurare; `null` se sconosciuto |
+| `wrong_file_or_module` | Quando applicabile |
+| `human_interventions` | Quante volte hai dovuto guidare |
+| `confidence_1_to_5` | Opzionale ma utile |
 
-I numeri grezzi possono favorire CodeDNA **oppure no**. L’onestà batte il tifo.
+Compila anche `summary.favors`: `codedna` | `control` | `tie` | `inconclusive`.
+
+I numeri grezzi possono favorire CodeDNA **oppure no**. L’onestà batte il tifo.  
+`notes.md` è narrativa opzionale — **non sostituisce** `metrics.json`.
 
 ### 6. Submission = Pull Request
 
@@ -139,10 +150,9 @@ Aggiungi questa cartella:
 
 ```text
 challenge/<tuo-github-handle>/
+  metrics.json       # OBBLIGATORIO — risultati machine-readable (merge + aggregazione dopo)
   README.md          # sintesi + dichiarazione modalità + livelli di stack
-  tasks.md           # i ≥10 task + difficoltà
-  metrics.md         # tabelle Control vs CodeDNA
-  notes.md           # narrativa, sorprese, bug
+  notes.md           # narrativa opzionale, sorprese, bug
   (opzionale) logs/  # estratti di sessione redatti
 ```
 
@@ -152,6 +162,7 @@ Titolo PR:
 challenge: <handle> — CodeDNA Challenge submission
 ```
 
+**Perché JSON:** ogni partecipante ha la sua cartella, le PR si mergiano senza conflitti, e a fine challenge aggreghiamo tutti i `metrics.json`.
 ---
 
 ## Iscrizione

@@ -4,11 +4,17 @@ Entrants open PRs that add a folder:
 
 ```text
 challenge/<github-handle>/
-  README.md
-  tasks.md
-  metrics.md
-  notes.md
+  metrics.json    # REQUIRED — mergeable machine-readable results
+  README.md       # optional short summary
+  notes.md        # optional narrative
 ```
+
+**Metrics format**
+
+- Example: [`metrics.example.json`](./metrics.example.json)
+- Schema: [`metrics.schema.json`](./metrics.schema.json)
+
+After the challenge window we merge PRs (one folder per entrant, low conflict risk) and aggregate every `metrics.json`.
 
 **Rules**
 

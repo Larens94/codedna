@@ -1,0 +1,192 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/Larens94/codedna/challenge/metrics.schema.json",
+  "title": "CodeDNA Challenge metrics",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "entrant",
+    "mode",
+    "stack",
+    "project",
+    "tasks",
+    "summary"
+  ],
+  "properties": {
+    "schema_version": {
+      "type": "string",
+      "const": "1.0"
+    },
+    "entrant": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["github_handle"],
+      "properties": {
+        "github_handle": { "type": "string", "minLength": 1 },
+        "entry_issue": { "type": ["string", "null"] },
+        "agents": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        },
+        "models": {
+          "type": "array",
+          "items": { "type": "string" },
+          "default": []
+        }
+      }
+    },
+    "mode": {
+      "type": "string",
+      "enum": ["parity", "codedna_only"]
+    },
+    "stack": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["l0_codedna", "l1", "l2"],
+      "properties": {
+        "l0_codedna": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["control", "codedna"],
+          "properties": {
+            "control": { "type": "boolean" },
+            "codedna": { "type": "boolean" },
+            "notes": { "type": "string" }
+          }
+        },
+        "l1": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["items", "present_in_control", "present_in_codedna"],
+          "properties": {
+            "items": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "present_in_control": { "type": "boolean" },
+            "present_in_codedna": { "type": "boolean" }
+          }
+        },
+        "l2": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["items", "present_in_control", "present_in_codedna"],
+          "properties": {
+            "items": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "present_in_control": { "type": "boolean" },
+            "present_in_codedna": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "project": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["languages", "approx_source_files", "visibility"],
+      "properties": {
+        "languages": {
+          "type": "array",
+          "items": { "type": "string" },
+          "minItems": 1
+        },
+        "approx_source_files": { "type": "integer", "minimum": 1 },
+        "visibility": { "type": "string", "enum": ["public", "private"] },
+        "url": { "type": ["string", "null"] },
+        "domain": { "type": ["string", "null"] }
+      }
+    },
+    "success_definition": {
+      "type": "string",
+      "description": "How pass/fail was decided for tasks."
+    },
+    "tasks": {
+      "type": "array",
+      "minItems": 10,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "id",
+          "title",
+          "difficulty",
+          "control",
+          "codedna"
+        ],
+        "properties": {
+          "id": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "difficulty": { "type": "string", "enum": ["easy", "medium", "hard"] },
+          "description": { "type": "string" },
+          "control": { "$ref": "#/$defs/condition_result" },
+          "codedna": { "$ref": "#/$defs/condition_result" },
+          "notes": { "type": "string" }
+        }
+      }
+    },
+    "summary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "tasks_total",
+        "control_passed",
+        "codedna_passed",
+        "favors"
+      ],
+      "properties": {
+        "tasks_total": { "type": "integer", "minimum": 10 },
+        "easy_count": { "type": "integer", "minimum": 0 },
+        "medium_count": { "type": "integer", "minimum": 0 },
+        "hard_count": { "type": "integer", "minimum": 0 },
+        "control_passed": { "type": "integer", "minimum": 0 },
+        "codedna_passed": { "type": "integer", "minimum": 0 },
+        "control_total_minutes": { "type": ["number", "null"] },
+        "codedna_total_minutes": { "type": ["number", "null"] },
+        "control_total_turns": { "type": ["integer", "null"] },
+        "codedna_total_turns": { "type": ["integer", "null"] },
+        "favors": {
+          "type": "string",
+          "enum": ["codedna", "control", "tie", "inconclusive"]
+        },
+        "one_line_verdict": { "type": "string" }
+      }
+    },
+    "bugs_reported": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["url"],
+        "properties": {
+          "url": { "type": "string" },
+          "title": { "type": "string" }
+        }
+      },
+      "default": []
+    }
+  },
+  "$defs": {
+    "condition_result": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["passed"],
+      "properties": {
+        "passed": { "type": "boolean" },
+        "minutes": { "type": ["number", "null"] },
+        "turns": { "type": ["integer", "null"] },
+        "tool_calls": { "type": ["integer", "null"] },
+        "wrong_file_or_module": { "type": ["boolean", "null"] },
+        "human_interventions": { "type": ["integer", "null"] },
+        "confidence_1_to_5": {
+          "type": ["integer", "null"],
+          "minimum": 1,
+          "maximum": 5
+        }
+      }
+    }
+  }
+}
