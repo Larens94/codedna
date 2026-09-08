@@ -50,7 +50,7 @@ No infrastructure. No retrieval pipeline. No external memory. The code carries i
 
 Public **own-project** evaluation (not SWE-bench). Real working project (≥25 files), declared tech stack + CodeDNA install, ≥10 **same** tasks with/without CodeDNA, fair L0/L1/L2 parity, metrics PR — even if results go against CodeDNA. Bugs must be reported (experimental across agents). Meet presentation may be required; public board updates as valid PRs arrive.
 
-- Board: [larens94.github.io/codedna/challenge.html](https://larens94.github.io/codedna/challenge.html)
+- Ranking / board: [larens94.github.io/codedna/challenge.html](https://larens94.github.io/codedna/challenge.html)
 - Rules: [`docs/challenge.md`](docs/challenge.md) (EN) · [`docs/challenge.it.md`](docs/challenge.it.md) (IT)
 - Submission: `challenge/<handle>/metrics.json` ([example](challenge/metrics.example.json)) — **opening the PR enrolls you**
 

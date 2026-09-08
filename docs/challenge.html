@@ -3,8 +3,14 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CodeDNA Challenge — €200</title>
-<meta name="description" content="Public CodeDNA Challenge: test on your own project, open a metrics PR to enroll, €200 prize. Live board on the docs site.">
+<title>CodeDNA Challenge — €200 · Public ranking</title>
+<meta name="description" content="CodeDNA Challenge €200: real-project evaluation with a live public ranking. Same tasks with vs without CodeDNA. Open a metrics PR to enroll.">
+<meta property="og:title" content="CodeDNA Challenge — €200">
+<meta property="og:description" content="Public ranking for the CodeDNA Challenge. Real projects · same tasks with/without CodeDNA · €200 prize.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://larens94.github.io/codedna/challenge.html">
+<meta property="og:image" content="https://larens94.github.io/codedna/logo.png">
+<meta name="twitter:card" content="summary">
 <link rel="icon" href="logo.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -150,10 +156,21 @@ table.board a { text-decoration: underline; text-underline-offset: 2px; }
 .favors-control { color: #d97706; font-weight: 600; }
 .favors-tie, .favors-inconclusive { color: var(--gray-600); font-weight: 600; }
 .empty {
-  padding: 3rem 1.5rem; text-align: center; color: var(--gray-600);
+  padding: 3.25rem 1.75rem; text-align: center; color: var(--gray-600);
   border: 1px dashed var(--gray-200); border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, #fafafa 0%, #fff 100%);
 }
-.empty strong { display: block; color: var(--black); margin-bottom: 0.4rem; }
+.empty strong { display: block; color: var(--black); font-size: 1.05rem; margin-bottom: 0.55rem; }
+.empty span { display: block; max-width: 420px; margin: 0 auto 1.25rem; line-height: 1.65; }
+.empty-meta {
+  display: inline-flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gray-600);
+}
+.empty-meta span {
+  display: inline-block; margin: 0; padding: 0.35rem 0.65rem;
+  border: 1px solid var(--gray-200); border-radius: var(--radius); background: var(--white);
+}
 
 .note {
   margin-top: 1.25rem; font-size: 0.85rem; color: var(--gray-600);
@@ -208,7 +225,8 @@ footer.site-footer {
     <h1 data-i18n-html="h1">CodeDNA Challenge<br><em>€200</em></h1>
     <p class="lead" data-i18n="lead">Test CodeDNA on your own real project. Declare stack + install. Same tasks with vs without CodeDNA. Open a metrics PR to enroll — the public board updates as valid PRs arrive.</p>
     <div class="hero-actions">
-      <a class="btn-primary" href="https://github.com/Larens94/codedna/blob/main/challenge/metrics.example.json" target="_blank" data-i18n="ctaExample">Copy metrics.json →</a>
+      <a class="btn-primary" href="#ranking" data-i18n="ctaRanking">View ranking →</a>
+      <a class="btn-secondary" href="https://github.com/Larens94/codedna/blob/main/challenge/metrics.example.json" target="_blank" data-i18n="ctaExample">Copy metrics.json →</a>
       <a class="btn-secondary" href="challenge.md" data-i18n="ctaRules">Full rules (EN)</a>
       <a class="btn-secondary" href="challenge.it.md" data-i18n="ctaRulesIt">Regolamento (IT)</a>
     </div>
@@ -224,7 +242,7 @@ footer.site-footer {
 
 <section class="section" id="status">
   <h2 data-i18n="statusTitle">Challenge status</h2>
-  <p class="section-lead" data-i18n="statusLead">Maintainer-updated board. Source file: <code class="mono">docs/challenge-board.json</code>.</p>
+  <p class="section-lead" data-i18n="statusLead">Public ranking updated as valid PRs arrive. Source file: <code class="mono">docs/challenge-board.json</code>.</p>
   <div class="meta-strip">
     <div class="meta-cell">
       <div class="meta-label" data-i18n="metaPrize">Prize</div>
@@ -239,7 +257,7 @@ footer.site-footer {
     <div class="meta-cell">
       <div class="meta-label" data-i18n="metaStatus">Status</div>
       <div class="meta-value" id="meta-status">open</div>
-      <div class="meta-sub" id="meta-window">dates TBD</div>
+      <div class="meta-sub" id="meta-window">coming soon</div>
     </div>
     <div class="meta-cell">
       <div class="meta-label" data-i18n="metaEnroll">Enrollment</div>
@@ -289,8 +307,8 @@ footer.site-footer {
   </p>
 </section>
 
-<section class="section" id="board">
-  <h2 data-i18n="boardTitle">Public board</h2>
+<section class="section" id="ranking">
+  <h2 data-i18n="boardTitle">Public ranking</h2>
   <p class="section-lead" data-i18n="boardLead">Language + framework + install path and project size are required. Ranking updates as valid PRs arrive and stays public.</p>
 
   <div class="board-toolbar">
@@ -315,12 +333,17 @@ footer.site-footer {
 
   <div id="board-root">
     <div class="empty">
-      <strong data-i18n="emptyTitle">No submissions on the board yet</strong>
-      <span data-i18n="emptyBody">When a metrics PR is reviewed and merged, we add a row here by editing challenge-board.json.</span>
+      <strong data-i18n="emptyTitle">Ranking ready — waiting for first PRs</strong>
+      <span data-i18n="emptyBody">This is the live public leaderboard. As soon as valid metrics PRs arrive and are reviewed, rows appear here.</span>
+      <div class="empty-meta" aria-hidden="true">
+        <span>€200</span>
+        <span>min 5 to unlock</span>
+        <span>PR = enroll</span>
+      </div>
     </div>
   </div>
 
-  <p class="note" data-i18n="boardNote">This board is static and curated. Opening a PR enrolls you automatically; appearing here means maintainers accepted the submission format.</p>
+  <p class="note" data-i18n="boardNote">Live ranking, curated by maintainers. Opening a PR enrolls you; appearing here means the submission format and stack declaration were accepted. Agent × language gaps are expected — file issues or fix PRs.</p>
 </section>
 
 <footer class="site-footer">
@@ -343,7 +366,7 @@ const I18N = {
     eyebrow:'Public evaluation · €200',
     h1:'CodeDNA Challenge<br><em>€200</em>',
     lead:'Test CodeDNA on your own real project. Declare stack + install. Same tasks with vs without CodeDNA. Open a metrics PR to enroll — the public board updates as valid PRs arrive.',
-    ctaExample:'Copy metrics.json →', ctaRules:'Full rules (EN)', ctaRulesIt:'Regolamento (IT)',
+    ctaRanking:'View ranking →', ctaExample:'Copy metrics.json →', ctaRules:'Full rules (EN)', ctaRulesIt:'Regolamento (IT)',
     experimentalNote:'<strong>Experimental.</strong> Results can vary by AI coding agent and language (Claude Code, OpenCode, Cursor, Codex, …). Publish how you installed CodeDNA. If annotations or the CLI misbehave, open a <a href="https://github.com/Larens94/codedna/issues/new">GitHub issue</a> or a fix <a href="https://github.com/Larens94/codedna/compare">pull request</a>. That feedback is part of the challenge.',
     statusTitle:'Challenge status',
     statusLead:'Public ranking updated as valid PRs arrive. Source file: docs/challenge-board.json.',
@@ -359,21 +382,21 @@ const I18N = {
     l1:'LLM wiki, skill packs, instruction files — parity required.',
     l2:'Graph / structural memory — parity required.',
     honestyNote:'<strong>Honesty.</strong> Do not invent results or fake projects. Fabrizio or the review team may require a conference call + presentation to verify your project and test process. When possible we will also host public lives discussing submitted tests.',
-    boardTitle:'Public board',
+    boardTitle:'Public ranking',
     boardLead:'Language + framework + install path and project size are required. Ranking updates as valid PRs arrive and stays public.',
-    emptyTitle:'No submissions on the board yet',
+    emptyTitle:'Ranking ready — waiting for first PRs',
     emptyBody:'As soon as a valid metrics PR is reviewed, we add a row here by editing challenge-board.json.',
     boardNote:'Live ranking, curated by maintainers. Opening a PR enrolls you; appearing here means the submission format and stack declaration were accepted. Agent × language gaps are expected — file issues or fix PRs.',
     thHandle:'Entrant', thStack:'Language / framework', thSize:'Size', thFiles:'Files',
     thMode:'Mode', thScore:'Pass C / DNA', thFavors:'Favors', thPr:'PR',
-    unlock:'min {n} to unlock', windowFallback:'dates TBD'
+    unlock:'min {n} to unlock', windowFallback:'coming soon'
   },
   it: {
     navHome:'Home', navChallenge:'Challenge', navInstall:'Install',
     eyebrow:'Valutazione pubblica · €200',
     h1:'CodeDNA Challenge<br><em>€200</em>',
     lead:'Prova CodeDNA sul tuo progetto reale. Dichiara stack + install. Stessi task con vs senza CodeDNA. Apri una PR metrics per iscriverti — la bacheca pubblica si aggiorna quando arrivano PR valide.',
-    ctaExample:'Copia metrics.json →', ctaRules:'Rules (EN)', ctaRulesIt:'Regolamento (IT)',
+    ctaRanking:'Vedi classifica →', ctaExample:'Copia metrics.json →', ctaRules:'Rules (EN)', ctaRulesIt:'Regolamento (IT)',
     experimentalNote:'<strong>Sperimentale.</strong> I risultati possono variare per agente AI e linguaggio (Claude Code, OpenCode, Cursor, Codex, …). Pubblica come hai installato CodeDNA. Se annotazioni o CLI si comportano male, apri una <a href="https://github.com/Larens94/codedna/issues/new">issue</a> o una <a href="https://github.com/Larens94/codedna/compare">pull request</a> di fix. Quel feedback fa parte della challenge.',
     statusTitle:'Stato challenge',
     statusLead:'Classifica pubblica aggiornata quando arrivano PR valide. File sorgente: docs/challenge-board.json.',
@@ -389,14 +412,14 @@ const I18N = {
     l1:'Wiki LLM, skill pack, instruction file — parity obbligatoria.',
     l2:'Memoria graph / strutturale — parity obbligatoria.',
     honestyNote:'<strong>Onestà.</strong> Non inventare risultati o progetti finti. Fabrizio o il team di review possono richiedere una call + presentazione per verificare progetto e processo di test. Quando possibile faremo anche live pubbliche sui test inviati.',
-    boardTitle:'Bacheca pubblica',
+    boardTitle:'Classifica pubblica',
     boardLead:'Linguaggio + framework + percorso di install e dimensione progetto sono obbligatori. La classifica si aggiorna quando arrivano PR valide e resta pubblica.',
-    emptyTitle:'Ancora nessuna submission in bacheca',
-    emptyBody:'Appena una PR metrics valida viene reviewata, aggiungiamo una riga modificando challenge-board.json.',
+    emptyTitle:'Classifica pronta — in attesa delle prime PR',
+    emptyBody:'Questa è la leaderboard pubblica live. Appena arrivano PR metrics valide e vengono reviewate, le righe compaiono qui.',
     boardNote:'Classifica live, curata dai maintainer. Aprire una PR ti iscrive; comparire qui significa che formato e dichiarazione di stack sono stati accettati. Gap agente × linguaggio sono attesi — apri issue o PR di fix.',
     thHandle:'Partecipante', thStack:'Linguaggio / framework', thSize:'Size', thFiles:'File',
     thMode:'Mode', thScore:'Pass C / DNA', thFavors:'Favors', thPr:'PR',
-    unlock:'min {n} per sbloccare', windowFallback:'date TBD'
+    unlock:'min {n} per sbloccare', windowFallback:'in arrivo'
   }
 };
 
@@ -449,7 +472,13 @@ function renderBoard(data) {
 
   const root = document.getElementById('board-root');
   if (!rows.length) {
-    root.innerHTML = `<div class="empty"><strong>${dict.emptyTitle}</strong><span>${dict.emptyBody}</span></div>`;
+    root.innerHTML = `<div class="empty"><strong>${dict.emptyTitle}</strong><span>${dict.emptyBody}</span>
+      <div class="empty-meta" aria-hidden="true">
+        <span>€${data.prize_eur ?? 200}</span>
+        <span>${dict.unlock.replace('{n}', data.min_submissions_to_unlock ?? 5)}</span>
+        <span>${dict.metaEnrollVal}</span>
+      </div>
+    </div>`;
     return;
   }
 
