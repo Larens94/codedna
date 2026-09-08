@@ -22,11 +22,17 @@ It reads [`docs/challenge-board.json`](../docs/challenge-board.json) (static —
   "tasks_total": 10,
   "control_passed": 7,
   "codedna_passed": 9,
+  "control_file_f1_avg": 0.72,
+  "codedna_file_f1_avg": 0.91,
+  "delta_file_f1": 0.19,
+  "judge_favors": "codedna",
   "favors": "codedna",
+  "favors_basis": "judge + pass_rate",
   "merged": true
 }
 ```
 
+Optional board fields (`control_file_f1_avg`, `codedna_file_f1_avg`, `delta_file_f1`, `judge_favors`, `favors_basis`) are shown when present — file lists / F1 are **not** required from entrants.
 3. Bump `updated_at` (ISO date).
 4. Commit + push `main` so GitHub Pages refreshes.
 

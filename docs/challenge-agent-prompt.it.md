@@ -79,17 +79,24 @@ Usa questa checklist come scheletro (sostituisci i titoli con task **reali** del
 
 Per **ogni** task registra Control e CodeDNA: `passed`, `minutes`/`turns`/`tool_calls` se disponibili, `wrong_file_or_module`, `human_interventions`, note.
 
+**Opzionale (non obbligatorio):**
+
+- `files_expected` solo se li conosci; altrimenti ometti (niente precision/recall inventate)
+- `files_opened` / `files_edited` se riesci a traccarli
+- Dopo entrambe le sessioni: usa un **agente giudice** con [`challenge-judge-prompt.it.md`](challenge-judge-prompt.it.md) e salva `tasks[].judge` + eventuale `judge` top-level
+
 ## Deliverable
 
 1. Congela la lista task **prima** delle run cronometrate.
 2. Esegui tutti i task in **A**, poi gli **stessi** in **B** (o interleaved, ma stessi ID).
-3. Compila `challenge/<mio-github-handle>/metrics.json` da  
+3. (Consigliato) Fai giudicare le due sessioni da un agente separato col prompt giudice.
+4. Compila `challenge/<mio-github-handle>/metrics.json` da  
    https://github.com/Larens94/codedna/blob/main/challenge/metrics.example.json  
    (schema: `metrics.schema.json`).
-4. Apri PR su `Larens94/codedna` con titolo:  
+5. Apri PR su `Larens94/codedna` con titolo:  
    `challenge: <handle> — CodeDNA Challenge submission`  
    Checklist: `challenge/SUBMISSION_TEMPLATE.it.md`
-5. Onestà: niente risultati inventati. Possibile Meet di verifica.
+6. Onestà: niente risultati inventati. Possibile Meet di verifica.
 
 ## Cosa fare ora
 
@@ -97,3 +104,4 @@ Per **ogni** task registra Control e CodeDNA: `passed`, `minutes`/`turns`/`tool_
 2. Chiedimi quale setup uso: **due branch** / **due checkout** / **due progetti**.
 3. Prepara i comandi di install per la condizione B.
 4. Solo dopo conferma mia: esegui i task e compila le metriche.
+5. Dopo le run: proponi il passaggio giudice (prompt già pronto) se voglio confrontare le sessioni.

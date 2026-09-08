@@ -15,10 +15,12 @@ No official signup. Public ranking (updated as valid PRs arrive): [`docs/challen
 
 - Italiano: [`docs/challenge-agent-prompt.it.md`](../docs/challenge-agent-prompt.it.md)
 - English: [`docs/challenge-agent-prompt.md`](../docs/challenge-agent-prompt.md)
+- Judge (optional, after both sessions): [`docs/challenge-judge-prompt.it.md`](../docs/challenge-judge-prompt.it.md) · [EN](../docs/challenge-judge-prompt.md)
 - Task lists: [`TASKS_TEMPLATE.it.md`](./TASKS_TEMPLATE.it.md) · [`TASKS_TEMPLATE.md`](./TASKS_TEMPLATE.md)
 - Pointer: [`AGENT_PROMPT.md`](./AGENT_PROMPT.md)
 
-Methodology (same for everyone): same ≥10 tasks with vs without CodeDNA via `two_branches` / `two_checkouts` / `two_projects`.
+Methodology (same for everyone): same ≥10 tasks with vs without CodeDNA via `two_branches` / `two_checkouts` / `two_projects`.  
+File-localization fields (`files_expected`, F1, …) are **optional** — use when known; otherwise a judge agent can still compare sessions.
 
 **Metrics format**
 

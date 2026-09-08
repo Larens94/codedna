@@ -61,7 +61,30 @@
         "tool_calls": 12,
         "wrong_file_or_module": false,
         "human_interventions": 0,
-        "confidence_1_to_5": 4
+        "confidence_1_to_5": 4,
+        "outcome": "pass",
+        "files_opened": [
+          "apps/api/src/billing/formatAmount.ts",
+          "apps/api/src/billing/invoice.service.ts",
+          "apps/api/src/users/user.service.ts",
+          "apps/api/src/billing/invoice.service.spec.ts"
+        ],
+        "files_edited": [
+          "apps/api/src/billing/formatAmount.ts",
+          "apps/api/src/billing/invoice.service.ts"
+        ],
+        "files_missed": [
+          "apps/api/src/billing/invoice.service.spec.ts"
+        ],
+        "files_extra": [],
+        "file_precision": 1.0,
+        "file_recall": 0.667,
+        "file_f1": 0.8,
+        "first_relevant_file_turn": 3,
+        "opened_before_first_edit": 2,
+        "tests_green": false,
+        "rules_followed": true,
+        "human_rewrote_core": false
       },
       "codedna": {
         "passed": true,
@@ -70,9 +93,46 @@
         "tool_calls": 8,
         "wrong_file_or_module": false,
         "human_interventions": 0,
-        "confidence_1_to_5": 5
+        "confidence_1_to_5": 5,
+        "outcome": "pass",
+        "files_opened": [
+          "apps/api/src/billing/formatAmount.ts",
+          "apps/api/src/billing/invoice.service.ts",
+          "apps/api/src/billing/invoice.service.spec.ts"
+        ],
+        "files_edited": [
+          "apps/api/src/billing/formatAmount.ts",
+          "apps/api/src/billing/invoice.service.ts",
+          "apps/api/src/billing/invoice.service.spec.ts"
+        ],
+        "files_missed": [],
+        "files_extra": [],
+        "file_precision": 1.0,
+        "file_recall": 1.0,
+        "file_f1": 1.0,
+        "first_relevant_file_turn": 1,
+        "opened_before_first_edit": 1,
+        "tests_green": true,
+        "rules_followed": true,
+        "human_rewrote_core": false
       },
-      "notes": ""
+      "notes": "",
+      "files_expected": [
+        "apps/api/src/billing/formatAmount.ts",
+        "apps/api/src/billing/invoice.service.ts",
+        "apps/api/src/billing/invoice.service.spec.ts"
+      ],
+      "judge": {
+        "agent": "cursor",
+        "prompt_ref": "docs/challenge-judge-prompt.it.md",
+        "favors": "codedna",
+        "score_control_1_to_5": 3,
+        "score_codedna_1_to_5": 5,
+        "navigation_notes": "Control opened an unrelated user service file first.",
+        "correctness_notes": "Control missed updating the unit test.",
+        "files_assessment": "CodeDNA edited all three expected files; Control missed the spec.",
+        "raw_verdict": "CodeDNA clearer navigation and complete caller/test updates."
+      }
     },
     {
       "id": "T02",
@@ -312,7 +372,18 @@
     "control_total_turns": 212,
     "codedna_total_turns": 125,
     "favors": "codedna",
-    "one_line_verdict": "CodeDNA reduced wrong-file mistakes on hard tasks; still honest about one medium task needing a steer."
+    "one_line_verdict": "CodeDNA reduced wrong-file mistakes on hard tasks; still honest about one medium task needing a steer.",
+    "control_pass_rate": 0.7,
+    "codedna_pass_rate": 0.9,
+    "delta_pass_rate": 0.2,
+    "control_file_f1_avg": 0.8,
+    "codedna_file_f1_avg": 1.0,
+    "delta_file_f1": 0.2,
+    "control_wrong_file_rate": 0.3,
+    "codedna_wrong_file_rate": 0.0,
+    "control_total_interventions": 8,
+    "codedna_total_interventions": 2,
+    "favors_basis": "judge + pass_rate + file_f1"
   },
   "bugs_reported": [],
   "install": {
@@ -327,5 +398,18 @@
     "control_ref": "challenge/control",
     "codedna_ref": "challenge/codedna",
     "notes": "Same commit base; CodeDNA branch has codedna init annotations"
+  },
+  "judge": {
+    "used": true,
+    "agent": "cursor",
+    "model": "claude-sonnet",
+    "prompt_ref": "docs/challenge-judge-prompt.it.md",
+    "method": "per_task",
+    "favors": "codedna",
+    "tasks_judged": 10,
+    "codedna_wins": 7,
+    "control_wins": 1,
+    "ties": 2,
+    "notes": "Judge compared diffs/logs after both sessions; did not need files_expected on every task."
   }
 }

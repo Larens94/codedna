@@ -251,6 +251,90 @@
           },
           "notes": {
             "type": "string"
+          },
+          "files_expected": {
+            "type": [
+              "array",
+              "null"
+            ],
+            "items": {
+              "type": "string"
+            },
+            "description": "Optional ground-truth files for this task. Omit if unknown before/during the run. Needed only to compute precision/recall/F1."
+          },
+          "judge": {
+            "type": [
+              "object",
+              "null"
+            ],
+            "additionalProperties": false,
+            "description": "Optional judge-agent comparison of Control vs CodeDNA for this task.",
+            "properties": {
+              "agent": {
+                "type": "string",
+                "description": "Judge agent/model used."
+              },
+              "prompt_ref": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Link or path to the judge prompt used."
+              },
+              "favors": {
+                "type": "string",
+                "enum": [
+                  "codedna",
+                  "control",
+                  "tie",
+                  "inconclusive"
+                ]
+              },
+              "score_control_1_to_5": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "maximum": 5
+              },
+              "score_codedna_1_to_5": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1,
+                "maximum": 5
+              },
+              "navigation_notes": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "correctness_notes": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              },
+              "files_assessment": {
+                "type": [
+                  "string",
+                  "null"
+                ],
+                "description": "Judge notes on right/wrong/missed files even without a predeclared expected list."
+              },
+              "raw_verdict": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            },
+            "required": [
+              "favors"
+            ]
           }
         }
       }
@@ -324,6 +408,89 @@
         },
         "one_line_verdict": {
           "type": "string"
+        },
+        "control_pass_rate": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "codedna_pass_rate": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "delta_pass_rate": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "control_file_f1_avg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Optional average file_f1 over tasks where measurable."
+        },
+        "codedna_file_f1_avg": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "delta_file_f1": {
+          "type": [
+            "number",
+            "null"
+          ]
+        },
+        "control_wrong_file_rate": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Optional share of tasks with missed/extra or wrong_file_or_module."
+        },
+        "codedna_wrong_file_rate": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1
+        },
+        "control_total_interventions": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "codedna_total_interventions": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "favors_basis": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "description": "Optional note: human / judge / pass_rate+file_f1 / etc."
         }
       }
     },
@@ -418,6 +585,90 @@
           "type": "string"
         }
       }
+    },
+    "judge": {
+      "type": [
+        "object",
+        "null"
+      ],
+      "additionalProperties": false,
+      "description": "Optional overall judge-agent review across sessions (Control vs CodeDNA).",
+      "properties": {
+        "used": {
+          "type": "boolean"
+        },
+        "agent": {
+          "type": "string"
+        },
+        "model": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "prompt_ref": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "method": {
+          "type": "string",
+          "enum": [
+            "per_task",
+            "batch",
+            "spot_check"
+          ],
+          "description": "How the judge reviewed the runs."
+        },
+        "favors": {
+          "type": "string",
+          "enum": [
+            "codedna",
+            "control",
+            "tie",
+            "inconclusive"
+          ]
+        },
+        "tasks_judged": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "codedna_wins": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "control_wins": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "ties": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0
+        },
+        "notes": {
+          "type": [
+            "string",
+            "null"
+          ]
+        }
+      },
+      "required": [
+        "used",
+        "favors"
+      ]
     }
   },
   "$defs": {
@@ -468,6 +719,127 @@
           ],
           "minimum": 1,
           "maximum": 5
+        },
+        "outcome": {
+          "description": "Optional finer outcome; if set, passed should match outcome==pass.",
+          "anyOf": [
+            {
+              "type": "string",
+              "enum": [
+                "pass",
+                "partial",
+                "fail",
+                "inconclusive"
+              ]
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "files_opened": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional. Files opened/read during the run."
+        },
+        "files_edited": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional. Files actually modified."
+        },
+        "files_missed": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional. Expected files not edited (only if files_expected known)."
+        },
+        "files_extra": {
+          "type": [
+            "array",
+            "null"
+          ],
+          "items": {
+            "type": "string"
+          },
+          "description": "Optional. Edited files not in expected (only if files_expected known)."
+        },
+        "file_precision": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Optional. |edited \u2229 expected| / |edited|."
+        },
+        "file_recall": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Optional. |edited \u2229 expected| / |expected|."
+        },
+        "file_f1": {
+          "type": [
+            "number",
+            "null"
+          ],
+          "minimum": 0,
+          "maximum": 1,
+          "description": "Optional. Harmonic mean of file_precision and file_recall."
+        },
+        "first_relevant_file_turn": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "description": "Optional. Turn when the first relevant/expected file was opened."
+        },
+        "opened_before_first_edit": {
+          "type": [
+            "integer",
+            "null"
+          ],
+          "minimum": 0,
+          "description": "Optional. Files opened before the first useful edit."
+        },
+        "tests_green": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Optional. Relevant tests green after the change."
+        },
+        "rules_followed": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Optional. Applicable CodeDNA Rules: constraints followed."
+        },
+        "human_rewrote_core": {
+          "type": [
+            "boolean",
+            "null"
+          ],
+          "description": "Optional. Human had to rewrite core logic after the agent."
         }
       }
     }

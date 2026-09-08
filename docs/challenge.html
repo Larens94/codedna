@@ -457,7 +457,7 @@ const I18N = {
     emptyBody:'This is the live public leaderboard. As soon as valid metrics PRs arrive and are reviewed, rows appear here.',
     boardNote:'Live ranking, curated by maintainers. Opening a PR enrolls you; appearing here means the submission format and stack declaration were accepted. Agent × language gaps are expected — file issues or fix PRs.',
     thHandle:'Entrant', thStack:'Language / framework', thSize:'Size', thFiles:'Files',
-    thMode:'Mode', thScore:'Pass C / DNA', thFavors:'Favors', thPr:'PR',
+    thMode:'Mode', thScore:'Pass C / DNA', thF1:'File-F1 C / DNA', thFavors:'Favors', thJudge:'Judge', thPr:'PR',
     unlock:'min {n} to unlock', windowFallback:'coming soon'
   },
   it: {
@@ -487,7 +487,7 @@ const I18N = {
     emptyBody:'Questa è la leaderboard pubblica live. Appena arrivano PR metrics valide e vengono reviewate, le righe compaiono qui.',
     boardNote:'Classifica live, curata dai maintainer. Aprire una PR ti iscrive; comparire qui significa che formato e dichiarazione di stack sono stati accettati. Gap agente × linguaggio sono attesi — apri issue o PR di fix.',
     thHandle:'Partecipante', thStack:'Linguaggio / framework', thSize:'Size', thFiles:'File',
-    thMode:'Mode', thScore:'Pass C / DNA', thFavors:'Favors', thPr:'PR',
+    thMode:'Mode', thScore:'Pass C / DNA', thF1:'File-F1 C / DNA', thFavors:'Favors', thJudge:'Giudice', thPr:'PR',
     unlock:'min {n} per sbloccare', windowFallback:'in arrivo'
   }
 };
@@ -556,6 +556,12 @@ function renderBoard(data) {
     const langs = (s.languages || []).map(x => `<span class="pill">${escapeHtml(x)}</span>`).join('');
     const fws = (s.frameworks || []).map(x => `<span class="pill">${escapeHtml(x)}</span>`).join('');
     const pr = s.pr_url ? `<a href="${escapeAttr(s.pr_url)}" target="_blank" rel="noopener">#${escapeHtml(String(s.pr_number || 'PR'))}</a>` : '—';
+    const f1c = s.control_file_f1_avg;
+    const f1d = s.codedna_file_f1_avg;
+    const f1 = (f1c != null || f1d != null)
+      ? `${f1c != null ? Number(f1c).toFixed(2) : '—'} / ${f1d != null ? Number(f1d).toFixed(2) : '—'}`
+      : '—';
+    const judge = s.judge_favors || '—';
     return `<tr>
       <td><strong>${escapeHtml(s.handle || '—')}</strong></td>
       <td>${langs}<div style="margin-top:4px">${fws || '<span class="pill">—</span>'}</div></td>
@@ -563,7 +569,9 @@ function renderBoard(data) {
       <td class="mono">${s.approx_source_files != null ? escapeHtml(String(s.approx_source_files)) : '—'}</td>
       <td class="mono">${escapeHtml(s.mode || '—')}</td>
       <td class="mono">${escapeHtml(String(s.control_passed ?? '—'))} / ${escapeHtml(String(s.codedna_passed ?? '—'))}</td>
+      <td class="mono">${escapeHtml(f1)}</td>
       <td class="${favorsClass(s.favors)}">${escapeHtml(s.favors || '—')}</td>
+      <td class="${favorsClass(s.judge_favors)}">${escapeHtml(String(judge))}</td>
       <td>${pr}</td>
     </tr>`;
   }).join('');
@@ -571,7 +579,7 @@ function renderBoard(data) {
   root.innerHTML = `<div class="table-wrap"><table class="board">
     <thead><tr>
       <th>${dict.thHandle}</th><th>${dict.thStack}</th><th>${dict.thSize}</th><th>${dict.thFiles}</th>
-      <th>${dict.thMode}</th><th>${dict.thScore}</th><th>${dict.thFavors}</th><th>${dict.thPr}</th>
+      <th>${dict.thMode}</th><th>${dict.thScore}</th><th>${dict.thF1}</th><th>${dict.thFavors}</th><th>${dict.thJudge}</th><th>${dict.thPr}</th>
     </tr></thead>
     <tbody>${body}</tbody>
   </table></div>`;

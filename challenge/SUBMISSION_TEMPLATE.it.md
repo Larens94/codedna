@@ -58,6 +58,8 @@
 - [ ] ≥10 task con mix `difficulty` (easy ≥3, medium ≥3, hard ≥2)
 - [ ] Gli **stessi task** hanno risultati `control` e `codedna`
 - [ ] `summary.favors` impostato (`codedna` | `control` | `tie` | `inconclusive`)
+- [ ] (Opzionale) `files_expected` / file F1 solo se conosciuti — non inventati
+- [ ] (Opzionale) giudice usato: [`docs/challenge-judge-prompt.it.md`](../docs/challenge-judge-prompt.it.md) → `judge` / `tasks[].judge`
 - [ ] I risultati possono favorire **oppure** sfavorire CodeDNA (onestà OK)
 
 ### Opzionale

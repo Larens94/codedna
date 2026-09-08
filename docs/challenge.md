@@ -191,15 +191,36 @@ Required per task (Control + CodeDNA):
 | `human_interventions` | How often you had to steer |
 | `confidence_1_to_5` | Optional but useful |
 
+Optional (recommended when available — **not required**):
+
+| Field | Notes |
+|---|---|
+| `files_expected` (task-level) | Only if you know/ground the files beforehand or after; omit if unknown |
+| `files_opened` / `files_edited` | Navigation & edit footprint |
+| `files_missed` / `files_extra` / `file_precision` / `file_recall` / `file_f1` | Only meaningful when `files_expected` exists |
+| `first_relevant_file_turn` / `opened_before_first_edit` | Navigation efficiency |
+| `outcome` / `tests_green` / `rules_followed` / `human_rewrote_core` | Finer quality signals |
+| `tasks[].judge` + top-level `judge` | Optional **judge agent** comparing Control vs CodeDNA after both sessions — see [`challenge-judge-prompt.md`](challenge-judge-prompt.md) |
+
 Also fill:
 
 - `summary.favors`: `codedna` | `control` | `tie` | `inconclusive`
 - `install` — **required**: agent + exact install/init steps (and whether it worked)
 - `setup.layout` — **required**: `two_branches` | `two_checkouts` | `two_projects`
 - `bugs_reported` — **required** array (empty if none); if something broke, file an issue or fix PR and list it here
+- Optional summary extras: `*_file_f1_avg`, `delta_file_f1`, `*_wrong_file_rate`, `favors_basis` (`human` / `judge` / mixed)
 
 Raw numbers can favor CodeDNA **or not**. Honesty beats cheerleading.  
 Markdown notes (`notes.md`) are optional narrative — **do not replace** `metrics.json`.
+
+### 5b. Optional judge agent (recommended)
+
+You do **not** need `files_expected` to compare runs. After both sessions you may paste the [judge prompt](challenge-judge-prompt.md) into a separate agent with the two diffs/logs and record:
+
+- per-task `tasks[].judge` (favors, scores, file assessment in natural language)
+- optional top-level `judge` summary (`method`: `per_task` | `batch` | `spot_check`)
+
+The judge enriches the ranking story; it does not replace required fields.
 
 ### 6. Install path + bug reports (mandatory when relevant)
 

@@ -79,17 +79,24 @@ Use this checklist as a skeleton (replace titles with **real** tasks from my pro
 
 For **each** task record Control and CodeDNA: `passed`, `minutes`/`turns`/`tool_calls` when available, `wrong_file_or_module`, `human_interventions`, notes.
 
+**Optional (not required):**
+
+- `files_expected` only if known; otherwise omit (do not invent precision/recall)
+- `files_opened` / `files_edited` if you can track them
+- After both sessions: run a **judge agent** with [`challenge-judge-prompt.md`](challenge-judge-prompt.md) and save `tasks[].judge` + optional top-level `judge`
+
 ## Deliverable
 
 1. Freeze the task list **before** timed runs.
 2. Run every task in **A**, then the **same** ones in **B** (or interleaved, but same IDs).
-3. Fill `challenge/<my-github-handle>/metrics.json` from  
+3. (Recommended) Have a separate agent judge both sessions with the judge prompt.
+4. Fill `challenge/<my-github-handle>/metrics.json` from  
    https://github.com/Larens94/codedna/blob/main/challenge/metrics.example.json  
    (schema: `metrics.schema.json`).
-4. Open a PR on `Larens94/codedna` titled:  
+5. Open a PR on `Larens94/codedna` titled:  
    `challenge: <handle> — CodeDNA Challenge submission`  
    Checklist: `challenge/SUBMISSION_TEMPLATE.md`
-5. Honesty: no invented results. A Meet verification may be requested.
+6. Honesty: no invented results. A Meet verification may be requested.
 
 ## What to do now
 
@@ -97,3 +104,4 @@ For **each** task record Control and CodeDNA: `passed`, `minutes`/`turns`/`tool_
 2. Ask which setup I will use: **two branches** / **two checkouts** / **two projects**.
 3. Prepare install commands for condition B.
 4. Only after I confirm: run the tasks and fill the metrics.
+5. After the runs: offer the judge pass (prompt ready) if I want a structured comparison.

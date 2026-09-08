@@ -191,15 +191,36 @@ Obbligatorio per ogni task (Control + CodeDNA):
 | `human_interventions` | Quante volte hai dovuto guidare |
 | `confidence_1_to_5` | Opzionale ma utile |
 
+Opzionali (consigliati quando disponibili — **non obbligatori**):
+
+| Campo | Note |
+|---|---|
+| `files_expected` (a livello task) | Solo se conosci/congeli i file; ometti se sconosciuti |
+| `files_opened` / `files_edited` | Impronta di navigazione e edit |
+| `files_missed` / `files_extra` / `file_precision` / `file_recall` / `file_f1` | Solo se esiste `files_expected` |
+| `first_relevant_file_turn` / `opened_before_first_edit` | Efficienza di navigazione |
+| `outcome` / `tests_green` / `rules_followed` / `human_rewrote_core` | Qualità più fine |
+| `tasks[].judge` + `judge` top-level | Opzionale **agente giudice** che confronta Control vs CodeDNA dopo entrambe le sessioni — vedi [`challenge-judge-prompt.it.md`](challenge-judge-prompt.it.md) |
+
 Compila anche:
 
 - `summary.favors`: `codedna` | `control` | `tie` | `inconclusive`
 - `install` — **obbligatorio**: agente + passi esatti di install/init (e se ha funzionato)
 - `setup.layout` — **obbligatorio**: `two_branches` | `two_checkouts` | `two_projects`
 - `bugs_reported` — array **obbligatorio** (vuoto se nessuno); se qualcosa si è rotto, apri issue o PR di fix e elencala qui
+- Extra summary opzionali: `*_file_f1_avg`, `delta_file_f1`, `*_wrong_file_rate`, `favors_basis` (`human` / `judge` / misto)
 
 I numeri grezzi possono favorire CodeDNA **oppure no**. L’onestà batte il tifo.  
 `notes.md` è narrativa opzionale — **non sostituisce** `metrics.json`.
+
+### 5b. Agente giudice opzionale (consigliato)
+
+**Non** serve avere `files_expected` per confrontare le run. Dopo entrambe le sessioni puoi incollare il [prompt giudice](challenge-judge-prompt.it.md) in un agente separato con i due diff/log e registrare:
+
+- per task `tasks[].judge` (favors, score, assessment file in linguaggio naturale)
+- opzionale summary top-level `judge` (`method`: `per_task` | `batch` | `spot_check`)
+
+Il giudice arricchisce la storia in classifica; non sostituisce i campi obbligatori.
 
 ### 6. Percorso di install + bug report (obbligatori quando rilevanti)
 
