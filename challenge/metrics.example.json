@@ -3,8 +3,12 @@
   "entrant": {
     "github_handle": "your-handle",
     "entry_issue": "https://github.com/Larens94/codedna/issues/0",
-    "agents": ["cursor"],
-    "models": ["claude-sonnet"]
+    "agents": [
+      "cursor"
+    ],
+    "models": [
+      "claude-sonnet"
+    ]
   },
   "mode": "parity",
   "stack": {
@@ -14,7 +18,10 @@
       "notes": "CodeDNA headers only in codedna condition"
     },
     "l1": {
-      "items": ["AGENTS.md", "project wiki"],
+      "items": [
+        "AGENTS.md",
+        "project wiki"
+      ],
       "present_in_control": true,
       "present_in_codedna": true
     },
@@ -25,11 +32,19 @@
     }
   },
   "project": {
-    "languages": ["TypeScript", "Python"],
+    "languages": [
+      "TypeScript",
+      "Python"
+    ],
     "approx_source_files": 120,
     "visibility": "private",
     "url": null,
-    "domain": "web-api"
+    "domain": "web-api",
+    "frameworks": [
+      "NestJS",
+      "FastAPI"
+    ],
+    "size_band": "M"
   },
   "success_definition": "Task passes if the agent produced a correct change without the human rewriting the core logic.",
   "tasks": [

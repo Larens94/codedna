@@ -23,7 +23,9 @@
 ### Project
 
 - Language(s):
-- Size (approx. source files):
+- Framework(s) (required — not language alone):
+- Approx. source files:
+- Size band (`S`/`M`/`L`/`XL`):
 - Public URL (optional) / “private — metrics only”:
 
 ### Metrics JSON (required)
@@ -31,6 +33,7 @@
 - [ ] `challenge/<handle>/metrics.json` present
 - [ ] Copied from [`metrics.example.json`](./metrics.example.json) / matches [`metrics.schema.json`](./metrics.schema.json)
 - [ ] `schema_version` = `"1.0"`
+- [ ] `project.languages` + `project.frameworks` + `approx_source_files` + `size_band` filled
 - [ ] ≥10 tasks with `difficulty` mix (easy ≥3, medium ≥3, hard ≥2)
 - [ ] Each task has both `control` and `codedna` results
 - [ ] `summary.favors` set (`codedna` | `control` | `tie` | `inconclusive`)

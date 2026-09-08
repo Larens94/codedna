@@ -1,10 +1,12 @@
 # CodeDNA Challenge — €200
 
 > **Language:** English · [Italiano](challenge.it.md)  
-> **Status:** draft / open for signup  
+> **Status:** draft / open  
 > **Prize:** €200  
 > **Duration:** 1 month from the official start date  
-> **Not a SWE-bench rerun.** You test CodeDNA on **your own project**.
+> **Enrollment:** opening a metrics PR = you are enrolled (no separate signup)  
+> **Not a SWE-bench rerun.** You test CodeDNA on **your own project**.  
+> **Public board:** [challenge.html](challenge.html) on the docs site
 
 This challenge asks one question:
 
@@ -20,8 +22,8 @@ Bugs found during the challenge are welcome: open a GitHub issue and we will fix
 2. Run **at least 10 tasks** (easy / medium / hard mix).
 3. Compare **with CodeDNA** vs **without CodeDNA**.
 4. Keep your AI stack **fair** (see Levels below).
-5. Open a **Pull Request** with your metrics — even if CodeDNA looks worse.
-6. Fabrizio + team review complexity, protocol compliance, and evidence.
+5. Open a **Pull Request** with `metrics.json` — even if CodeDNA looks worse. **That PR is your enrollment.**
+6. Fabrizio + team review complexity, protocol compliance, and evidence; the public board is updated manually.
 7. Prize unlocks only if the **minimum participant count** is met.
 
 ---
@@ -70,7 +72,16 @@ Bugs found during the challenge are welcome: open a GitHub issue and we will fix
 
 ### 1. Your project
 
-Use a repo **you** maintain (work or personal). Size guideline: enough surface that 10 tasks are meaningful (roughly ≥20 source files). Language: any CodeDNA-supported stack.
+Use a repo **you** maintain (work or personal). Size guideline: enough surface that 10 tasks are meaningful (roughly ≥20 source files).
+
+In `metrics.json` you **must** declare:
+
+| Field | Example |
+|---|---|
+| `languages` | `["TypeScript", "Python"]` |
+| `frameworks` | `["NestJS", "FastAPI"]` — language alone is not enough |
+| `approx_source_files` | `120` |
+| `size_band` | `S` (<50) · `M` (50–199) · `L` (200–999) · `XL` (1000+) |
 
 ### 2. Ten tasks minimum
 
@@ -165,17 +176,23 @@ challenge: <handle> — CodeDNA Challenge submission
 **Why JSON:** each entrant lands in their own folder, PRs merge cleanly, and we can aggregate all `metrics.json` files after the window closes.
 ---
 
-## Signup
+## How to enter (no official signup)
 
-1. Open a GitHub issue with the **CodeDNA Challenge entry** template  
-2. Comment on the announcement Discussion (when published)  
-3. Install CodeDNA and annotate your project when the window starts:
+There is **no separate registration**. When you open a valid challenge PR with `metrics.json`, you are enrolled.
+
+1. Install CodeDNA and annotate your project:
 
 ```bash
 pipx install git+https://github.com/Larens94/codedna.git
 codedna install --path . --tools <your-agent>
 codedna init . --no-llm   # or with an LLM for rules:
 ```
+
+2. Run your ≥10 tasks (Control vs CodeDNA, fair stack).
+3. Open a PR adding `challenge/<handle>/metrics.json`.
+4. We review, merge, and update the [public board](challenge.html).
+
+Questions only (optional): GitHub Discussions / Discord — the old “entry issue” template is not required.
 
 ---
 

@@ -1,41 +1,18 @@
 ---
-name: CodeDNA Challenge entry
-about: Sign up for the €200 CodeDNA Challenge (own-project evaluation)
-title: "challenge-entry: <your-handle>"
+name: CodeDNA Challenge question
+about: Optional question about the €200 CodeDNA Challenge (PR = enrollment, no signup required)
+title: "challenge-question: <short topic>"
 ---
 
-## Entrant
+> **No signup needed.** Opening a valid challenge PR with `metrics.json` enrolls you automatically.
+> Rules: https://github.com/Larens94/codedna/blob/main/docs/challenge.md · Board: https://larens94.github.io/codedna/challenge.html
 
-- GitHub handle:
-- Preferred contact (optional):
-- Agent(s) you will use (Cursor / Claude Code / …):
+## Question
 
-## Project (no secrets)
+(ask anything about protocol, stack parity, metrics.json, board updates…)
 
-- Public or private?
-- Primary language(s):
-- Approx. size (# source files, rough):
-- Domain (web, CLI, data, …):
+## Context (optional)
 
-## Stack levels you already use
-
-Mark what you bring into **both** Control and CodeDNA runs (parity rule):
-
-- [ ] **L0 CodeDNA** (only on the CodeDNA condition)
-- [ ] **L1** LLM wiki / curated markdown / skill packs / agent instruction files — list:
-- [ ] **L2** Graphify or other graph/memory layer — list:
-
-## Mode
-
-- [ ] **Parity mode** — same L1/L2 in Control and CodeDNA
-- [ ] **Declared codedna-only mode** — I am testing whether CodeDNA alone can replace higher levels (I will document what I remove)
-
-## Commitment
-
-- [ ] I will define ≥10 tasks (easy / medium / hard mix)
-- [ ] I will submit a metrics PR within the challenge window
-- [ ] I will not upload secrets or proprietary source in the PR
-
-## Questions for maintainers
-
-(optional)
+- Agent(s):
+- Languages / frameworks:
+- Approx. source files / size band:

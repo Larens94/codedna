@@ -1,10 +1,12 @@
 # CodeDNA Challenge — €200
 
 > **Lingua:** Italiano · [English](challenge.md)  
-> **Stato:** bozza / iscrizioni aperte  
+> **Stato:** bozza / aperta  
 > **Premio:** €200  
 > **Durata:** 1 mese dalla data ufficiale di inizio  
-> **Non è un rerun di SWE-bench.** Provi CodeDNA sul **tuo** progetto.
+> **Iscrizione:** aprire la PR con le metriche = sei iscritto (niente signup ufficiale)  
+> **Non è un rerun di SWE-bench.** Provi CodeDNA sul **tuo** progetto.  
+> **Bacheca pubblica:** [challenge.html](challenge.html) sul sito docs
 
 Questa challenge pone una sola domanda:
 
@@ -20,8 +22,8 @@ I bug trovati durante la challenge sono benvenuti: apri una GitHub issue e li co
 2. Esegui **almeno 10 task** (mix facili / medi / difficili).
 3. Confronti **con CodeDNA** vs **senza CodeDNA**.
 4. Tieni lo stack AI **equo** (vedi Livelli sotto).
-5. Apri una **Pull Request** con le metriche — anche se CodeDNA risulta peggiore.
-6. Fabrizio + team valutano complessità, rispetto del protocollo ed evidenze.
+5. Apri una **Pull Request** con `metrics.json` — anche se CodeDNA risulta peggiore. **Quella PR è la tua iscrizione.**
+6. Fabrizio + team valutano complessità, protocollo ed evidenze; la bacheca pubblica si aggiorna a mano.
 7. Il premio si sblocca solo se si raggiunge il **minimo di partecipanti**.
 
 ---
@@ -70,7 +72,16 @@ I bug trovati durante la challenge sono benvenuti: apri una GitHub issue e li co
 
 ### 1. Il tuo progetto
 
-Usa un repo che **mantieni tu** (lavoro o personale). Linea guida dimensione: abbastanza superficie perché 10 task siano significativi (indicativamente ≥20 file sorgente). Linguaggio: qualsiasi stack supportato da CodeDNA.
+Usa un repo che **mantieni tu** (lavoro o personale). Linea guida dimensione: abbastanza superficie perché 10 task siano significativi (indicativamente ≥20 file sorgente).
+
+In `metrics.json` **devi** dichiarare:
+
+| Campo | Esempio |
+|---|---|
+| `languages` | `["TypeScript", "Python"]` |
+| `frameworks` | `["NestJS", "FastAPI"]` — il solo linguaggio non basta |
+| `approx_source_files` | `120` |
+| `size_band` | `S` (<50) · `M` (50–199) · `L` (200–999) · `XL` (1000+) |
 
 ### 2. Almeno dieci task
 
@@ -165,17 +176,23 @@ challenge: <handle> — CodeDNA Challenge submission
 **Perché JSON:** ogni partecipante ha la sua cartella, le PR si mergiano senza conflitti, e a fine challenge aggreghiamo tutti i `metrics.json`.
 ---
 
-## Iscrizione
+## Come entrare (niente signup ufficiale)
 
-1. Apri una GitHub issue con il template **CodeDNA Challenge entry**  
-2. Commenta nella Discussion di annuncio (quando pubblicata)  
-3. Installa CodeDNA e annota il progetto all’apertura della finestra:
+**Non c’è iscrizione separata.** Quando apri una PR valida di challenge con `metrics.json`, sei iscritto.
+
+1. Installa CodeDNA e annota il progetto:
 
 ```bash
 pipx install git+https://github.com/Larens94/codedna.git
 codedna install --path . --tools <tuo-agente>
 codedna init . --no-llm   # oppure con LLM per le rules:
 ```
+
+2. Esegui i ≥10 task (Control vs CodeDNA, stack equo).
+3. Apri una PR con `challenge/<handle>/metrics.json`.
+4. Facciamo review, merge e aggiorniamo la [bacheca pubblica](challenge.html).
+
+Solo domande (opzionale): GitHub Discussions / Discord — il vecchio template “entry issue” non è obbligatorio.
 
 ---
 

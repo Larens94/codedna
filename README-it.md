@@ -50,9 +50,9 @@ Nessuna infrastruttura. Nessuna pipeline di retrieval. Nessuna memoria esterna. 
 
 Valutazione pubblica sul **tuo** progetto (non SWE-bench). Almeno 10 task con/senza CodeDNA, stack L0/L1/L2 a pari livello, PR con metriche — anche se vanno contro CodeDNA.
 
+- Bacheca: [larens94.github.io/codedna/challenge.html](https://larens94.github.io/codedna/challenge.html)
 - Regolamento: [`docs/challenge.it.md`](docs/challenge.it.md) (IT) · [`docs/challenge.md`](docs/challenge.md) (EN)
-- Checklist submission: [`challenge/SUBMISSION_TEMPLATE.it.md`](challenge/SUBMISSION_TEMPLATE.it.md) · [`challenge/SUBMISSION_TEMPLATE.md`](challenge/SUBMISSION_TEMPLATE.md)
-- Iscrizione: issue **CodeDNA Challenge entry**
+- Submission: `challenge/<handle>/metrics.json` ([esempio](challenge/metrics.example.json)) — **aprire la PR ti iscrive**
 
 Il premio si sblocca con **≥5 submission valide**. Durata: **1 mese**.
 
