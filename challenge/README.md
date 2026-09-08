@@ -10,6 +10,14 @@ challenge/<github-handle>/
   notes.md
 ```
 
-Rules: [`docs/challenge.md`](../docs/challenge.md)  
-PR body checklist: [`SUBMISSION_TEMPLATE.md`](./SUBMISSION_TEMPLATE.md)  
-Signup issue: GitHub → New issue → **CodeDNA Challenge entry**
+**Rules**
+
+- English: [`docs/challenge.md`](../docs/challenge.md)
+- Italiano: [`docs/challenge.it.md`](../docs/challenge.it.md)
+
+**PR body checklist**
+
+- English: [`SUBMISSION_TEMPLATE.md`](./SUBMISSION_TEMPLATE.md)
+- Italiano: [`SUBMISSION_TEMPLATE.it.md`](./SUBMISSION_TEMPLATE.it.md)
+
+**Signup:** GitHub → New issue → **CodeDNA Challenge entry**

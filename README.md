@@ -50,9 +50,9 @@ No infrastructure. No retrieval pipeline. No external memory. The code carries i
 
 Public **own-project** evaluation (not SWE-bench). ≥10 tasks with/without CodeDNA, fair L0/L1/L2 stack parity, metrics PR — even if results go against CodeDNA.
 
-- Rules: [`docs/challenge.md`](docs/challenge.md)
+- Rules: [`docs/challenge.md`](docs/challenge.md) (EN) · [`docs/challenge.it.md`](docs/challenge.it.md) (IT)
+- Submission checklist: [`challenge/SUBMISSION_TEMPLATE.md`](challenge/SUBMISSION_TEMPLATE.md) · [`challenge/SUBMISSION_TEMPLATE.it.md`](challenge/SUBMISSION_TEMPLATE.it.md)
 - Signup: GitHub issue template **CodeDNA Challenge entry**
-- Video script (for the announcement recording): [`docs/challenge-video-script.md`](docs/challenge-video-script.md)
 
 Prize unlocks at **≥5 valid submissions**. Duration: **1 month**.
 

@@ -1,6 +1,8 @@
 ## CodeDNA Challenge submission
 
-<!-- Use this template for challenge PRs. Title: challenge: <handle> — CodeDNA Challenge submission -->
+> **Language:** English · [Italiano](SUBMISSION_TEMPLATE.it.md)  
+> Use this template for challenge PRs.  
+> Title: `challenge: <handle> — CodeDNA Challenge submission`
 
 ### Entrant
 

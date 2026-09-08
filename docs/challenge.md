@@ -1,5 +1,6 @@
 # CodeDNA Challenge — €200
 
+> **Language:** English · [Italiano](challenge.it.md)  
 > **Status:** draft / open for signup  
 > **Prize:** €200  
 > **Duration:** 1 month from the official start date  
@@ -129,7 +130,12 @@ Raw numbers can favor CodeDNA **or not**. Honesty beats cheerleading.
 
 ### 6. Submission = Pull Request
 
-Open a PR against `Larens94/codedna`. Copy [`challenge/SUBMISSION_TEMPLATE.md`](../challenge/SUBMISSION_TEMPLATE.md) into the PR body, and add:
+Open a PR against `Larens94/codedna`. Copy the checklist into the PR body:
+
+- English: [`challenge/SUBMISSION_TEMPLATE.md`](../challenge/SUBMISSION_TEMPLATE.md)
+- Italiano: [`challenge/SUBMISSION_TEMPLATE.it.md`](../challenge/SUBMISSION_TEMPLATE.it.md)
+
+Add this folder:
 
 ```text
 challenge/<your-github-handle>/
@@ -145,8 +151,6 @@ Use the PR title:
 ```text
 challenge: <handle> — CodeDNA Challenge submission
 ```
-
-Copy the checklist from [`challenge/SUBMISSION_TEMPLATE.md`](../challenge/SUBMISSION_TEMPLATE.md).
 
 ---
 
