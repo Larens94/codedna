@@ -189,17 +189,80 @@ footer.site-footer {
   .meta-cell { border-right: none; border-bottom: 1px solid var(--gray-200); }
 }
 @media (max-width: 720px) {
-  .nav-links { display: none; position: absolute; top: 60px; left: 0; right: 0; flex-direction: column; gap: 0; background: var(--white); border-bottom: 1px solid var(--gray-200); padding: 0.75rem 1rem 1rem; }
+  .nav-links { display: none; position: absolute; top: 68px; left: 0; right: 0; flex-direction: column; gap: 0.5rem; background: var(--white); border-bottom: 1px solid var(--gray-200); padding: 0.85rem 1.1rem 1.15rem; }
   .nav-links.open { display: flex; }
-  .nav-links a { padding: 0.65rem 0; }
+  .nav-links a { padding: 0.7rem 0; }
+  .nav-links a.nav-cta { margin-top: 0.35rem; margin-bottom: 0.35rem; }
+  .nav-links .lang-toggle { margin-top: 0.15rem; align-self: stretch; }
   .nav-hamburger { display: flex; }
   .meta-strip, .steps, .levels { grid-template-columns: 1fr; }
   .page-hero h1 { max-width: none; }
+  .page-hero, .section, footer.site-footer { padding-left: 20px; padding-right: 20px; }
 }
 </style>
 <link rel="stylesheet" href="site.css">
+<style>
+/* Challenge page overrides — site.css zeros horizontal .section padding */
+body.challenge-page .page-hero {
+  padding: 120px clamp(18px, 5vw, 28px) 56px !important;
+}
+body.challenge-page .section {
+  max-width: 1100px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding: 64px clamp(18px, 5vw, 28px) !important;
+}
+body.challenge-page footer.site-footer {
+  padding: 2rem clamp(18px, 5vw, 28px) !important;
+}
+body.challenge-page .note {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+body.challenge-page .nav-links .lang-toggle {
+  margin-top: 0;
+  align-self: flex-start;
+}
+@media (max-width: 720px) {
+  body.challenge-page .page-hero {
+    padding: 108px 20px 40px !important;
+  }
+  body.challenge-page .section {
+    padding: 48px 20px !important;
+  }
+  body.challenge-page footer.site-footer {
+    padding: 1.75rem 20px !important;
+  }
+  body.challenge-page .nav-links {
+    gap: 0.35rem !important;
+    padding: 0.85rem 1.1rem 1.15rem !important;
+    top: 68px !important;
+  }
+  body.challenge-page .nav-links a {
+    padding: 0.7rem 0 !important;
+  }
+  body.challenge-page .nav-links a.nav-cta {
+    margin-top: 0.55rem !important;
+    margin-bottom: 0.65rem !important;
+    width: 100%;
+    justify-content: center;
+  }
+  body.challenge-page .nav-links .lang-toggle {
+    margin-top: 0.15rem !important;
+    align-self: stretch;
+    min-height: 40px;
+  }
+  body.challenge-page .hero-actions {
+    width: 100%;
+  }
+  body.challenge-page .hero-actions .btn-primary,
+  body.challenge-page .hero-actions .btn-secondary {
+    width: 100%;
+  }
+}
+</style>
 </head>
-<body>
+<body class="challenge-page">
 
 <nav>
   <a class="nav-logo" href="index.html">
