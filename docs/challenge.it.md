@@ -6,25 +6,28 @@
 > **Durata:** 1 mese dalla data ufficiale di inizio  
 > **Iscrizione:** aprire la PR con le metriche = sei iscritto (niente signup ufficiale)  
 > **Non è un rerun di SWE-bench.** Provi CodeDNA sul **tuo** progetto.  
-> **Bacheca pubblica:** [challenge.html](challenge.html) sul sito docs
+> **Classifica pubblica:** [challenge.html](challenge.html) sul sito docs
 
 Questa challenge pone una sola domanda:
 
 > CodeDNA aiuta (o no) quando fai sviluppo reale assistito da AI — e possiamo misurarlo in modo onesto?
 
-I bug trovati durante la challenge sono benvenuti: apri una GitHub issue e li correggiamo upstream.
+**Sperimentale.** La qualità di CodeDNA dipende ancora dall’**agente AI di coding** e dal **linguaggio / framework** che usi. Alcune combinazioni funzionano meglio di altre. Se install, annotation, hook o refresh non si comportano bene sul tuo stack, **apri una GitHub issue o una PR di fix** — fa parte della challenge, e sistemiamo upstream a partire dai tuoi report.
 
 ---
 
 ## In sintesi
 
-1. Lavori sul **tuo** repo (non sui nostri vecchi benchmark).
-2. Esegui **almeno 10 task** (mix facili / medi / difficili).
-3. Confronti **con CodeDNA** vs **senza CodeDNA**.
+1. Lavori sul **tuo progetto reale e funzionante** (non sui nostri vecchi benchmark — non un sito giocattolo).
+2. Dichiari lo **stack tecnologico** completo (linguaggi, framework, agente, percorso di install).
+3. Usi la **stessa metodologia per tutti**: **≥10 stessi task** due volte — senza CodeDNA e con CodeDNA — tramite **due branch**, **due checkout** o **due progetti gemelli**.
 4. Tieni lo stack AI **equo** (vedi Livelli sotto).
-5. Apri una **Pull Request** con `metrics.json` — anche se CodeDNA risulta peggiore. **Quella PR è la tua iscrizione.**
-6. Fabrizio + team valutano complessità, protocollo ed evidenze; la bacheca pubblica si aggiorna a mano.
-7. Il premio si sblocca solo se si raggiunge il **minimo di partecipanti**.
+5. Documenti **come hai installato CodeDNA**; segnali bug / apri PR di fix quando qualcosa si rompe (atteso — è ancora sperimentale).
+6. Opzionale: incolla il **[prompt agente](challenge-agent-prompt.it.md)** nel tuo agente AI così segue protocollo + lista attività.
+7. Apri una **Pull Request** con `metrics.json` — anche se CodeDNA risulta peggiore. **Quella PR è la tua iscrizione.**
+8. La **bacheca / classifica pubblica si aggiorna quando arrivano PR valide** e resta visibile sul sito docs.
+9. Il progetto può essere chiamato a una **review live / presentazione** (call) così verifichiamo che i test siano reali.
+10. Il premio si sblocca solo se si raggiunge il **minimo di partecipanti**.
 
 ---
 
@@ -36,14 +39,30 @@ I bug trovati durante la challenge sono benvenuti: apri una GitHub issue e li co
 | Submission valide minime | **5** per sbloccare il premio (obiettivo stretch: 10) |
 | Se ci sono meno di 5 PR valide | I risultati si pubblicano comunque; il premio **non** viene assegnato (o passa all’edizione successiva) |
 | Vincitore | Scelto da Fabrizio Corpora + team di review (non voto community) |
+| Onestà | Le affermazioni devono essere vere e supportate da evidenze — metriche inventate, progetti finti o narrative false = squalifica |
+| Verifica | Fabrizio o il team di review possono richiedere una **call + presentazione** (Google Meet / simile): mostrare il progetto reale, spiegare come hai fatto i test, ripercorrere install + `metrics.json` |
+| Bacheca pubblica | La classifica su [challenge.html](challenge.html) si aggiorna **appena arrivano PR valide** (review maintainer → riga in bacheca) e resta visibile |
+| Live | Quando possibile ospiteremo live pubbliche sui test inviati (con consenso del partecipante dove serve) |
 
 ### Cosa valutiamo (in ordine)
 
-1. **Onestà del protocollo** — stack equo, modalità dichiarata, note riproducibili  
-2. **Qualità dei task** — mix reale facili/medi/difficili su una codebase vera  
-3. **Evidenze** — metriche + breve narrativa; a favore **o** contro CodeDNA va bene  
-4. **Bug report** — issue actionable aperte upstream contano positivamente  
+1. **Onestà del protocollo** — progetto reale, stack equo, modalità dichiarata, note riproducibili; **niente risultati inventati**  
+2. **Qualità dei task** — mix reale facili/medi/difficili su una codebase funzionante  
+3. **Evidenze** — metriche + percorso di install + breve narrativa; a favore **o** contro CodeDNA va bene  
+4. **Bug report / PR di fix** — obbligatori quando CodeDNA si rompe sul tuo agente o linguaggio; le issue actionable contano positivamente  
 5. **Chiarezza** — un altro engineer può ripetere il confronto  
+
+### Onestà, call di review e live
+
+- **Non puoi inventare** esiti pass/fail, tempi, dettagli di stack o claim narrativi. Se non riesci a riprodurre un numero, marca il task come inconclusive e dillo.
+- **Progetti finti o throwaway non sono ammessi.** Possiamo richiedere una **conferenza live + breve presentazione** in cui:
+  - dimostri che il progetto è reale e funzionante;
+  - spieghi lo stack tecnologico;
+  - mostri come hai installato CodeDNA;
+  - mostri come hai eseguito gli **stessi task** con e senza CodeDNA;
+  - rispondi su `metrics.json` / note.
+- Rifiutare senza motivo valido una richiesta ragionevole di verifica può annullare l’eleggibilità al premio per quella entry.
+- Quando possibile faremo anche **live pubbliche** sui test della challenge (metodologia, sorprese, gap agente × linguaggio). Partecipare a una live è opzionale, salvo richiesta di verifica.
 
 ---
 
@@ -52,10 +71,11 @@ I bug trovati durante la challenge sono benvenuti: apri una GitHub issue e li co
 | Fase | Quando |
 |---|---|
 | Annuncio + video | **TBD** |
-| Apertura iscrizioni | **TBD** |
+| Apertura submission (PR = iscrizione) | **TBD** |
 | Finestra challenge | **1 mese** dalla data di inizio |
 | Scadenza submission | fine della finestra (le PR devono essere aperte) |
-| Review | ~1–2 settimane dopo la scadenza |
+| Bacheca / classifica | aggiornata in continuo quando arrivano PR valide |
+| Review | ~1–2 settimane dopo la scadenza (più eventuali presentazioni Meet) |
 | Annuncio vincitore | **TBD** |
 
 ---
@@ -70,20 +90,26 @@ I bug trovati durante la challenge sono benvenuti: apri una GitHub issue e li co
 
 ## Protocollo centrale (obbligatorio)
 
-### 1. Il tuo progetto
+### 1. Il tuo progetto (deve essere reale)
 
-Usa un repo che **mantieni tu** (lavoro o personale). Linea guida dimensione: abbastanza superficie perché 10 task siano significativi (indicativamente ≥20 file sorgente).
+Usa un repo che **mantieni tu** (lavoro o personale). Deve essere un **progetto reale e funzionante** — anche piccolo va bene; una pagina vetrina, un hello-world o una demo throwaway **no**.
 
-In `metrics.json` **devi** dichiarare:
+**Esempi rifiutati:** sito vetrina monostrato, CRUD vuoto senza logica di dominio, repo sintetici costruiti solo per la challenge.
+
+**Esempi accettati:** un servizio che usi o shippi davvero, un tool interno, una libreria con caller reali, un prodotto piccolo ma completo (≥ **25** file sorgente come soglia dura).
+
+In `metrics.json` **devi** dichiarare lo **stack tecnologico**:
 
 | Campo | Esempio |
 |---|---|
 | `languages` | `["TypeScript", "Python"]` |
-| `frameworks` | `["NestJS", "FastAPI"]` — il solo linguaggio non basta |
-| `approx_source_files` | `120` |
+| `frameworks` | `["NestJS", "FastAPI"]` — il solo linguaggio **non** basta |
+| `approx_source_files` | `120` (minimo **25**) |
 | `size_band` | `S` (<50) · `M` (50–199) · `L` (200–999) · `XL` (1000+) |
+| `tech_stack_notes` | opzionale — DB, layout monorepo, infra, lib principali |
+| `install.agent` + `install.steps` | quale agente AI + comandi esatti di install/init CodeDNA |
 
-### 2. Almeno dieci task
+### 2. Almeno dieci task — gli stessi in entrambe le condizioni
 
 Definisci **≥10** task **prima** delle run cronometrate (o congela l’elenco nella PR).
 
@@ -97,16 +123,36 @@ Mix suggerito:
 
 Per ogni task registra: obiettivo, difficoltà, agente/tool, successo/fallimento, note.
 
+**Critico:** ogni task va eseguito in **entrambe** le condizioni. Non inventare liste di task diverse per Control vs CodeDNA.
+
 ### 3. Due condizioni: senza vs con CodeDNA
 
-Per ogni task (o batch accoppiati) esegui:
+**La metodologia è uguale per tutti.** Per **ciascuno degli stessi task** esegui:
 
 | Condizione | Setup |
 |---|---|
 | **A — Control** | Il tuo workflow AI normale **senza** annotation CodeDNA / senza affidarti agli header CodeDNA |
 | **B — CodeDNA** | Stesso workflow **con** CodeDNA installato e annotato (`codedna init` / header mantenuti) |
 
+#### Come separare A e B (scegline uno — dichiaralo in `metrics.json` → `setup.layout`)
+
+| Layout | `setup.layout` | Esempio |
+|---|---|---|
+| Due branch nello stesso repo | `two_branches` | `challenge/control` + `challenge/codedna` |
+| Due checkout / cartelle | `two_checkouts` | due clone locali dello stesso progetto |
+| Due progetti gemelli | `two_projects` | due repo/cartelle dallo stesso codice di partenza |
+
 Mantieni **agente, modello e layer superiori identici** tra A e B, tranne CodeDNA stesso (salvo modalità dichiarata — vedi sotto).
+
+### 3b. Copia per il tuo agente (consigliato)
+
+Incolla il prompt pronto nel tuo agente AI così riceve regole + scheletro attività:
+
+- Italiano: [`challenge-agent-prompt.it.md`](challenge-agent-prompt.it.md)
+- English: [`challenge-agent-prompt.md`](challenge-agent-prompt.md)
+- Checklist task: [`../challenge/TASKS_TEMPLATE.it.md`](../challenge/TASKS_TEMPLATE.it.md) · [EN](../challenge/TASKS_TEMPLATE.md)
+
+Sulla pagina pubblica: **Copia per il tuo agente** copia il prompt nella lingua corrente.
 
 ### 4. Stack equo — Livelli (critico)
 
@@ -145,12 +191,51 @@ Obbligatorio per ogni task (Control + CodeDNA):
 | `human_interventions` | Quante volte hai dovuto guidare |
 | `confidence_1_to_5` | Opzionale ma utile |
 
-Compila anche `summary.favors`: `codedna` | `control` | `tie` | `inconclusive`.
+Opzionali (consigliati quando disponibili — **non obbligatori**):
+
+| Campo | Note |
+|---|---|
+| `files_expected` (a livello task) | Solo se conosci/congeli i file; ometti se sconosciuti |
+| `files_opened` / `files_edited` | Impronta di navigazione e edit |
+| `files_missed` / `files_extra` / `file_precision` / `file_recall` / `file_f1` | Solo se esiste `files_expected` |
+| `first_relevant_file_turn` / `opened_before_first_edit` | Efficienza di navigazione |
+| `outcome` / `tests_green` / `rules_followed` / `human_rewrote_core` | Qualità più fine |
+| `tasks[].judge` + `judge` top-level | Opzionale **agente giudice** che confronta Control vs CodeDNA dopo entrambe le sessioni — vedi [`challenge-judge-prompt.it.md`](challenge-judge-prompt.it.md) |
+
+Compila anche:
+
+- `summary.favors`: `codedna` | `control` | `tie` | `inconclusive`
+- `install` — **obbligatorio**: agente + passi esatti di install/init (e se ha funzionato)
+- `setup.layout` — **obbligatorio**: `two_branches` | `two_checkouts` | `two_projects`
+- `bugs_reported` — array **obbligatorio** (vuoto se nessuno); se qualcosa si è rotto, apri issue o PR di fix e elencala qui
+- Extra summary opzionali: `*_file_f1_avg`, `delta_file_f1`, `*_wrong_file_rate`, `favors_basis` (`human` / `judge` / misto)
 
 I numeri grezzi possono favorire CodeDNA **oppure no**. L’onestà batte il tifo.  
 `notes.md` è narrativa opzionale — **non sostituisce** `metrics.json`.
 
-### 6. Submission = Pull Request
+### 5b. Agente giudice opzionale (consigliato)
+
+**Non** serve avere `files_expected` per confrontare le run. Dopo entrambe le sessioni puoi incollare il [prompt giudice](challenge-judge-prompt.it.md) in un agente separato con i due diff/log e registrare:
+
+- per task `tasks[].judge` (favors, score, assessment file in linguaggio naturale)
+- opzionale summary top-level `judge` (`method`: `per_task` | `batch` | `spot_check`)
+
+Il giudice arricchisce la storia in classifica; non sostituisce i campi obbligatori.
+
+### 6. Percorso di install + bug report (obbligatori quando rilevanti)
+
+Pubblica **come hai installato CodeDNA** in `metrics.json` → `install` (comandi, flag `--tools`, agente).  
+CodeDNA è ancora **sperimentale**: può fallire o comportarsi male con alcuni tool agentici (Claude Code, OpenCode, Cursor, Codex, …) o linguaggi.
+
+Se install, annotation, hook o refresh si comportano male:
+
+1. Riproduci una volta (agente + linguaggio/framework + comando).
+2. Apri una **GitHub issue** o una **PR di fix**.
+3. Elencala in `bugs_reported` e menzionala in `notes.md`.
+
+Tooling rotto su un certo stack **non** ti squalifica — **nasconderlo** sì.
+
+### 7. Submission = Pull Request
 
 Apri una PR su `Larens94/codedna`. Copia la checklist nel body della PR:
 
@@ -174,13 +259,21 @@ challenge: <handle> — CodeDNA Challenge submission
 ```
 
 **Perché JSON:** ogni partecipante ha la sua cartella, le PR si mergiano senza conflitti, e a fine challenge aggreghiamo tutti i `metrics.json`.
+
+### 8. Bacheca / classifica pubblica
+
+La classifica live è [challenge.html](challenge.html) (dati: [`challenge-board.json`](challenge-board.json)).
+
+- Appena una PR metrics valida viene reviewata, aggiungiamo/aggiorniamo una riga — la bacheca resta **visibile pubblicamente**.
+- Aprire una PR ti iscrive; comparire in bacheca significa che i maintainer hanno accettato formato e dichiarazione di stack.
+
 ---
 
 ## Come entrare (niente signup ufficiale)
 
 **Non c’è iscrizione separata.** Quando apri una PR valida di challenge con `metrics.json`, sei iscritto.
 
-1. Installa CodeDNA e annota il progetto:
+1. Installa CodeDNA e annota il progetto (registra i passi esatti in `install`):
 
 ```bash
 pipx install git+https://github.com/Larens94/codedna.git
@@ -188,11 +281,21 @@ codedna install --path . --tools <tuo-agente>
 codedna init . --no-llm   # oppure con LLM per le rules:
 ```
 
-2. Esegui i ≥10 task (Control vs CodeDNA, stack equo).
-3. Apri una PR con `challenge/<handle>/metrics.json`.
-4. Facciamo review, merge e aggiorniamo la [bacheca pubblica](challenge.html).
+2. Esegui i ≥10 **stessi** task due volte (Control vs CodeDNA, stack equo).
+3. Apri una PR con `challenge/<handle>/metrics.json` (includi `install` + `bugs_reported`).
+4. Facciamo review, aggiorniamo la [bacheca pubblica](challenge.html) e possiamo invitarti a una presentazione Meet.
 
 Solo domande (opzionale): GitHub Discussions / Discord — il vecchio template “entry issue” non è obbligatorio.
+
+### Se qualcosa si rompe sul tuo agente o linguaggio
+
+CodeDNA è ancora sperimentale tra agenti e linguaggi (Claude Code, OpenCode, Cursor, Codex, …). Percorso consigliato:
+
+1. Riproduci una volta (agente + linguaggio/framework + comando).
+2. Apri una **issue** (bug) o una **PR** con fix minimo / test di regressione.
+3. Continua la challenge se puoi; annota l’incidente in `metrics.json` → `bugs_reported` e in `notes.md`.
+
+Tooling rotto su un certo stack **non** ti squalifica — **nasconderlo** sì.
 
 ---
 
@@ -200,7 +303,8 @@ Solo domande (opzionale): GitHub Discussions / Discord — il vecchio template �
 
 - Non è un rerun di SWE-bench / delle nostre tabelle F1 storiche  
 - Non è “annota solo i nostri repo di fixture”  
-- Non è consulenza gratis per noi — tieni l’IP del tuo progetto; noi reviewiamo solo la PR delle metriche  
+- Non è un sito throwaway o hello-world costruito solo per il premio  
+- Non è consulenza gratis per noi — tieni l’IP del tuo progetto; noi reviewiamo solo la PR delle metriche (+ eventuale presentazione Meet)  
 
 ---
 
@@ -209,6 +313,8 @@ Solo domande (opzionale): GitHub Discussions / Discord — il vecchio template �
 - Issue / bug: GitHub Issues  
 - Q&A challenge: GitHub Discussions (Announcements / Q&A)  
 - Community: Discord (vedi badge in README)  
+- Call di verifica / presentazione: Google Meet (o simile) su richiesta dei maintainer  
+- Live pubbliche: annunciate su Discussions / Discord quando programmate  
 - Maintainer: Fabrizio Corpora  
 
 ---

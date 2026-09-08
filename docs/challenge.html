@@ -1,10 +1,16 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CodeDNA Challenge — €200</title>
-<meta name="description" content="Public CodeDNA Challenge: test on your own project, open a metrics PR to enroll, €200 prize. Live board on the docs site.">
+<title>CodeDNA Challenge — €200 · Classifica pubblica</title>
+<meta name="description" content="CodeDNA Challenge €200: valutazione sul tuo progetto reale con classifica pubblica live. Stessi task con e senza CodeDNA. Apri una PR metrics per iscriverti.">
+<meta property="og:title" content="CodeDNA Challenge — €200">
+<meta property="og:description" content="Public ranking for the CodeDNA Challenge. Real projects · same tasks with/without CodeDNA · €200 prize.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://larens94.github.io/codedna/challenge.html">
+<meta property="og:image" content="https://larens94.github.io/codedna/logo.png">
+<meta name="twitter:card" content="summary">
 <link rel="icon" href="logo.png" type="image/png">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
@@ -85,10 +91,14 @@ nav {
   display: inline-flex; align-items: center; gap: 0.5rem;
   padding: 0.75rem 1.5rem; border-radius: var(--radius); font-size: 0.875rem; font-weight: 600;
   text-decoration: none; border: 1px solid var(--black); transition: opacity .15s, border-color .15s;
+  cursor: pointer; font-family: inherit; background: transparent; color: var(--black);
 }
 .btn-primary { background: var(--black); color: #fff; }
 .btn-secondary { background: transparent; color: var(--black); border-color: var(--gray-200); }
 .btn-secondary:hover { border-color: var(--black); }
+.copy-status {
+  margin-top: 0.75rem; font-size: 0.85rem; color: var(--gray-600);
+}
 
 .section { max-width: 1100px; margin: 0 auto; padding: 64px 28px; }
 .section + .section { border-top: 1px solid var(--gray-200); }
@@ -150,10 +160,21 @@ table.board a { text-decoration: underline; text-underline-offset: 2px; }
 .favors-control { color: #d97706; font-weight: 600; }
 .favors-tie, .favors-inconclusive { color: var(--gray-600); font-weight: 600; }
 .empty {
-  padding: 3rem 1.5rem; text-align: center; color: var(--gray-600);
+  padding: 3.25rem 1.75rem; text-align: center; color: var(--gray-600);
   border: 1px dashed var(--gray-200); border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, #fafafa 0%, #fff 100%);
 }
-.empty strong { display: block; color: var(--black); margin-bottom: 0.4rem; }
+.empty strong { display: block; color: var(--black); font-size: 1.05rem; margin-bottom: 0.55rem; }
+.empty span { display: block; max-width: 420px; margin: 0 auto 1.25rem; line-height: 1.65; }
+.empty-meta {
+  display: inline-flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gray-600);
+}
+.empty-meta span {
+  display: inline-block; margin: 0; padding: 0.35rem 0.65rem;
+  border: 1px solid var(--gray-200); border-radius: var(--radius); background: var(--white);
+}
 
 .note {
   margin-top: 1.25rem; font-size: 0.85rem; color: var(--gray-600);
@@ -172,17 +193,80 @@ footer.site-footer {
   .meta-cell { border-right: none; border-bottom: 1px solid var(--gray-200); }
 }
 @media (max-width: 720px) {
-  .nav-links { display: none; position: absolute; top: 60px; left: 0; right: 0; flex-direction: column; gap: 0; background: var(--white); border-bottom: 1px solid var(--gray-200); padding: 0.75rem 1rem 1rem; }
+  .nav-links { display: none; position: absolute; top: 68px; left: 0; right: 0; flex-direction: column; gap: 0.5rem; background: var(--white); border-bottom: 1px solid var(--gray-200); padding: 0.85rem 1.1rem 1.15rem; }
   .nav-links.open { display: flex; }
-  .nav-links a { padding: 0.65rem 0; }
+  .nav-links a { padding: 0.7rem 0; }
+  .nav-links a.nav-cta { margin-top: 0.35rem; margin-bottom: 0.35rem; }
+  .nav-links .lang-toggle { margin-top: 0.15rem; align-self: stretch; }
   .nav-hamburger { display: flex; }
   .meta-strip, .steps, .levels { grid-template-columns: 1fr; }
   .page-hero h1 { max-width: none; }
+  .page-hero, .section, footer.site-footer { padding-left: 20px; padding-right: 20px; }
 }
 </style>
 <link rel="stylesheet" href="site.css">
+<style>
+/* Challenge page overrides — site.css zeros horizontal .section padding */
+body.challenge-page .page-hero {
+  padding: 120px clamp(18px, 5vw, 28px) 56px !important;
+}
+body.challenge-page .section {
+  max-width: 1100px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding: 64px clamp(18px, 5vw, 28px) !important;
+}
+body.challenge-page footer.site-footer {
+  padding: 2rem clamp(18px, 5vw, 28px) !important;
+}
+body.challenge-page .note {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+body.challenge-page .nav-links .lang-toggle {
+  margin-top: 0;
+  align-self: flex-start;
+}
+@media (max-width: 720px) {
+  body.challenge-page .page-hero {
+    padding: 108px 20px 40px !important;
+  }
+  body.challenge-page .section {
+    padding: 48px 20px !important;
+  }
+  body.challenge-page footer.site-footer {
+    padding: 1.75rem 20px !important;
+  }
+  body.challenge-page .nav-links {
+    gap: 0.35rem !important;
+    padding: 0.85rem 1.1rem 1.15rem !important;
+    top: 68px !important;
+  }
+  body.challenge-page .nav-links a {
+    padding: 0.7rem 0 !important;
+  }
+  body.challenge-page .nav-links a.nav-cta {
+    margin-top: 0.55rem !important;
+    margin-bottom: 0.65rem !important;
+    width: 100%;
+    justify-content: center;
+  }
+  body.challenge-page .nav-links .lang-toggle {
+    margin-top: 0.15rem !important;
+    align-self: stretch;
+    min-height: 40px;
+  }
+  body.challenge-page .hero-actions {
+    width: 100%;
+  }
+  body.challenge-page .hero-actions .btn-primary,
+  body.challenge-page .hero-actions .btn-secondary {
+    width: 100%;
+  }
+}
+</style>
 </head>
-<body>
+<body class="challenge-page">
 
 <nav>
   <a class="nav-logo" href="index.html">
@@ -195,7 +279,7 @@ footer.site-footer {
     <a href="challenge.html" class="active" data-i18n="navChallenge">Challenge</a>
     <a href="install.html" data-i18n="navInstall">Install</a>
     <a href="https://github.com/Larens94/codedna" target="_blank" class="nav-cta">GitHub →</a>
-    <button class="lang-toggle" id="lang-toggle" onclick="toggleLang()">IT</button>
+    <button class="lang-toggle" id="lang-toggle" onclick="toggleLang()">EN</button>
   </div>
   <button class="nav-hamburger" onclick="document.getElementById('nav-links').classList.toggle('open')" aria-label="Menu">
     <span></span><span></span><span></span>
@@ -204,83 +288,97 @@ footer.site-footer {
 
 <header class="page-hero">
   <div class="page-hero-inner">
-    <div class="eyebrow"><span class="eyebrow-dot"></span><span data-i18n="eyebrow">Public evaluation · €200</span></div>
+    <div class="eyebrow"><span class="eyebrow-dot"></span><span data-i18n="eyebrow">Valutazione pubblica · €200</span></div>
     <h1 data-i18n-html="h1">CodeDNA Challenge<br><em>€200</em></h1>
-    <p class="lead" data-i18n="lead">Test CodeDNA on your own project. Open a metrics PR to enroll — no separate signup. We update this board when submissions are merged.</p>
+    <p class="lead" data-i18n="lead">Prova CodeDNA sul tuo progetto reale. Metodologia uguale per tutti: due branch o progetti gemelli, stessi task con vs senza CodeDNA. Copia il prompt per l’agente, poi apri la PR metrics.</p>
     <div class="hero-actions">
-      <a class="btn-primary" href="https://github.com/Larens94/codedna/blob/main/challenge/metrics.example.json" target="_blank" data-i18n="ctaExample">Copy metrics.json →</a>
-      <a class="btn-secondary" href="challenge.md" data-i18n="ctaRules">Full rules (EN)</a>
+      <a class="btn-primary" href="#ranking" data-i18n="ctaRanking">Vedi classifica →</a>
+      <button type="button" class="btn-secondary" id="copy-agent-prompt" data-i18n="ctaCopyAgent">Copia per il tuo agente</button>
       <a class="btn-secondary" href="challenge.it.md" data-i18n="ctaRulesIt">Regolamento (IT)</a>
+      <a class="btn-secondary" href="challenge.md" data-i18n="ctaRules">Rules (EN)</a>
+      <a class="btn-secondary" href="https://github.com/Larens94/codedna/blob/main/challenge/metrics.example.json" target="_blank" data-i18n="ctaExample">Copia metrics.json →</a>
     </div>
+    <p class="copy-status" id="copy-status" hidden></p>
+    <p class="note" style="margin-top:1.75rem;max-width:640px" data-i18n-html="experimentalNote">
+      <strong>Sperimentale.</strong> I risultati possono variare per agente AI e linguaggio (Claude Code, OpenCode, Cursor, Codex, …).
+      Pubblica come hai installato CodeDNA. Se annotazioni o CLI si comportano male, apri una
+      <a href="https://github.com/Larens94/codedna/issues/new">issue</a> o una
+      <a href="https://github.com/Larens94/codedna/compare">pull request</a> di fix.
+      Quel feedback fa parte della challenge.
+    </p>
   </div>
 </header>
 
 <section class="section" id="status">
-  <h2 data-i18n="statusTitle">Challenge status</h2>
-  <p class="section-lead" data-i18n="statusLead">Maintainer-updated board. Source file: <code class="mono">docs/challenge-board.json</code>.</p>
+  <h2 data-i18n="statusTitle">Stato challenge</h2>
+  <p class="section-lead" data-i18n="statusLead">Classifica pubblica aggiornata quando arrivano PR valide. File sorgente: <code class="mono">docs/challenge-board.json</code>.</p>
   <div class="meta-strip">
     <div class="meta-cell">
-      <div class="meta-label" data-i18n="metaPrize">Prize</div>
+      <div class="meta-label" data-i18n="metaPrize">Premio</div>
       <div class="meta-value" id="meta-prize">€200</div>
-      <div class="meta-sub" data-i18n="metaPrizeSub">paid after review</div>
+      <div class="meta-sub" data-i18n="metaPrizeSub">pagato dopo review</div>
     </div>
     <div class="meta-cell">
-      <div class="meta-label" data-i18n="metaSubs">Submissions</div>
+      <div class="meta-label" data-i18n="metaSubs">Submission</div>
       <div class="meta-value" id="meta-subs">0</div>
-      <div class="meta-sub" id="meta-unlock">min 5 to unlock</div>
+      <div class="meta-sub" id="meta-unlock">min 5 per sbloccare</div>
     </div>
     <div class="meta-cell">
-      <div class="meta-label" data-i18n="metaStatus">Status</div>
+      <div class="meta-label" data-i18n="metaStatus">Stato</div>
       <div class="meta-value" id="meta-status">open</div>
-      <div class="meta-sub" id="meta-window">dates TBD</div>
+      <div class="meta-sub" id="meta-window">in arrivo</div>
     </div>
     <div class="meta-cell">
-      <div class="meta-label" data-i18n="metaEnroll">Enrollment</div>
-      <div class="meta-value" style="font-size:1.05rem" data-i18n="metaEnrollVal">PR = in</div>
-      <div class="meta-sub" data-i18n="metaEnrollSub">no official signup</div>
+      <div class="meta-label" data-i18n="metaEnroll">Iscrizione</div>
+      <div class="meta-value" style="font-size:1.05rem" data-i18n="metaEnrollVal">PR = dentro</div>
+      <div class="meta-sub" data-i18n="metaEnrollSub">niente signup ufficiale</div>
     </div>
   </div>
 </section>
 
 <section class="section" id="how">
-  <h2 data-i18n="howTitle">How it works</h2>
-  <p class="section-lead" data-i18n="howLead">Own project · ≥10 tasks · with vs without CodeDNA · fair L0/L1/L2 stack · metrics.json PR.</p>
+  <h2 data-i18n="howTitle">Come funziona</h2>
+  <p class="section-lead" data-i18n="howLead">Metodologia uguale per tutti: progetto reale · due branch/checkout/progetti · ≥10 stessi task con vs senza CodeDNA · copia prompt per l’agente · pubblica install · segnala bug.</p>
   <div class="steps">
     <div class="step">
       <div class="step-num">01</div>
-      <h3 data-i18n="s1t">Run on your repo</h3>
-      <p data-i18n="s1p">Declare languages, frameworks, file count and size band. Easy / medium / hard mix.</p>
+      <h3 data-i18n="s1t">Progetto reale + stack</h3>
+      <p data-i18n="s1p">Niente siti giocattolo. Dichiara linguaggi, framework, numero file, size band e come hai installato CodeDNA.</p>
     </div>
     <div class="step">
       <div class="step-num">02</div>
-      <h3 data-i18n="s2t">Keep the stack fair</h3>
-      <p data-i18n="s2p">If you use wiki, skills or Graphify, both conditions get them — unless you declare codedna-only mode.</p>
+      <h3 data-i18n="s2t">Due branch o due progetti</h3>
+      <p data-i18n="s2p">Stessi ≥10 task su Control e CodeDNA. Separa con due branch, due checkout o due progetti gemelli — dichiara `setup.layout`.</p>
     </div>
     <div class="step">
       <div class="step-num">03</div>
-      <h3 data-i18n="s3t">Open the PR</h3>
-      <p data-i18n="s3p">Add <code class="mono">challenge/&lt;handle&gt;/metrics.json</code>. That PR enrolls you. We merge and update this board.</p>
+      <h3 data-i18n="s3t">Copia prompt → PR</h3>
+      <p data-i18n="s3p">Copia il prompt per il tuo agente, esegui la lista attività, apri la PR metrics. La classifica si aggiorna quando arrivano PR valide.</p>
     </div>
   </div>
   <div class="levels">
     <div class="level">
       <div class="level-tag">L0 · CodeDNA</div>
-      <p data-i18n="l0">In-source headers — the layer under test.</p>
+      <p data-i18n="l0">Header in-source — layer sotto test.</p>
     </div>
     <div class="level">
       <div class="level-tag">L1 · Wiki / skills</div>
-      <p data-i18n="l1">LLM wiki, skill packs, instruction files — parity required.</p>
+      <p data-i18n="l1">Wiki LLM, skill pack, instruction file — parity obbligatoria.</p>
     </div>
     <div class="level">
       <div class="level-tag">L2 · Graphify</div>
-      <p data-i18n="l2">Graph / structural memory — parity required.</p>
+      <p data-i18n="l2">Memoria graph / strutturale — parity obbligatoria.</p>
     </div>
   </div>
+  <p class="note" style="margin-top:1.5rem" data-i18n-html="honestyNote">
+    <strong>Onestà.</strong> Non inventare risultati o progetti finti. Fabrizio o il team di review possono richiedere una call + presentazione per verificare progetto e processo di test.
+    Quando possibile faremo anche live pubbliche sui test inviati.
+  </p>
 </section>
 
-<section class="section" id="board">
-  <h2 data-i18n="boardTitle">Public board</h2>
-  <p class="section-lead" data-i18n="boardLead">Language + framework, project size and file count are required so comparisons stay honest.</p>
+<section class="section" id="ranking">
+  <h2 data-i18n="boardTitle">Classifica pubblica</h2>
+  <p class="section-lead" data-i18n="boardLead">Linguaggio + framework + percorso di install e dimensione progetto sono obbligatori. La classifica si aggiorna quando arrivano PR valide e resta pubblica.</p>
 
   <div class="board-toolbar">
     <div class="board-updated" id="board-updated">updated —</div>
@@ -304,12 +402,17 @@ footer.site-footer {
 
   <div id="board-root">
     <div class="empty">
-      <strong data-i18n="emptyTitle">No submissions on the board yet</strong>
-      <span data-i18n="emptyBody">When a metrics PR is reviewed and merged, we add a row here by editing challenge-board.json.</span>
+      <strong data-i18n="emptyTitle">Classifica pronta — in attesa delle prime PR</strong>
+      <span data-i18n="emptyBody">Questa è la leaderboard pubblica live. Appena arrivano PR metrics valide e vengono reviewate, le righe compaiono qui.</span>
+      <div class="empty-meta" aria-hidden="true">
+        <span>€200</span>
+        <span>min 5 to unlock</span>
+        <span>PR = enroll</span>
+      </div>
     </div>
   </div>
 
-  <p class="note" data-i18n="boardNote">This board is static and curated. Opening a PR enrolls you automatically; appearing here means maintainers accepted the submission format.</p>
+  <p class="note" data-i18n="boardNote">Classifica live, curata dai maintainer. Aprire una PR ti iscrive; comparire qui significa che formato e dichiarazione di stack sono stati accettati. Gap agente × linguaggio sono attesi — apri issue o PR di fix.</p>
 </section>
 
 <footer class="site-footer">
@@ -331,65 +434,70 @@ const I18N = {
     navHome:'Home', navChallenge:'Challenge', navInstall:'Install',
     eyebrow:'Public evaluation · €200',
     h1:'CodeDNA Challenge<br><em>€200</em>',
-    lead:'Test CodeDNA on your own project. Open a metrics PR to enroll — no separate signup. We update this board when submissions are merged.',
-    ctaExample:'Copy metrics.json →', ctaRules:'Full rules (EN)', ctaRulesIt:'Regolamento (IT)',
+    lead:'Test CodeDNA on your own real project. Same methodology for everyone: two branches or twin projects, same tasks with vs without CodeDNA. Copy the agent prompt, then open a metrics PR.',
+    ctaRanking:'View ranking →', ctaCopyAgent:'Copy for your agent', ctaExample:'Copy metrics.json →', ctaRules:'Full rules (EN)', ctaRulesIt:'Regolamento (IT)', ctaCopied:'Copied — paste into your AI agent', ctaCopyFail:'Could not copy — open challenge-agent-prompt.md',
+    experimentalNote:'<strong>Experimental.</strong> Results can vary by AI coding agent and language (Claude Code, OpenCode, Cursor, Codex, …). Publish how you installed CodeDNA. If annotations or the CLI misbehave, open a <a href="https://github.com/Larens94/codedna/issues/new">GitHub issue</a> or a fix <a href="https://github.com/Larens94/codedna/compare">pull request</a>. That feedback is part of the challenge.',
     statusTitle:'Challenge status',
-    statusLead:'Maintainer-updated board. Source file: docs/challenge-board.json.',
+    statusLead:'Public ranking updated as valid PRs arrive. Source file: docs/challenge-board.json.',
     metaPrize:'Prize', metaPrizeSub:'paid after review',
     metaSubs:'Submissions', metaStatus:'Status',
     metaEnroll:'Enrollment', metaEnrollVal:'PR = in', metaEnrollSub:'no official signup',
     howTitle:'How it works',
-    howLead:'Own project · ≥10 tasks · with vs without CodeDNA · fair L0/L1/L2 stack · metrics.json PR.',
-    s1t:'Run on your repo', s1p:'Declare languages, frameworks, file count and size band. Easy / medium / hard mix.',
-    s2t:'Keep the stack fair', s2p:'If you use wiki, skills or Graphify, both conditions get them — unless you declare codedna-only mode.',
-    s3t:'Open the PR', s3p:'Add challenge/<handle>/metrics.json. That PR enrolls you. We merge and update this board.',
+    howLead:'Same methodology for everyone: real project · two branches/checkouts/projects · ≥10 same tasks with vs without CodeDNA · copy agent prompt · publish install · report bugs.',
+    s1t:'Real project + stack', s1p:'No toy sites. Declare languages, frameworks, file count, size band, and how you installed CodeDNA.',
+    s2t:'Two branches or twin projects', s2p:'Same ≥10 tasks on Control and CodeDNA. Split with two branches, two checkouts, or twin projects — declare setup.layout.',
+    s3t:'Copy prompt → PR', s3p:'Copy the agent prompt, run the activity list, open the metrics PR. Ranking updates as valid PRs arrive.',
     l0:'In-source headers — the layer under test.',
     l1:'LLM wiki, skill packs, instruction files — parity required.',
     l2:'Graph / structural memory — parity required.',
-    boardTitle:'Public board',
-    boardLead:'Language + framework, project size and file count are required so comparisons stay honest.',
-    emptyTitle:'No submissions on the board yet',
-    emptyBody:'When a metrics PR is reviewed and merged, we add a row here by editing challenge-board.json.',
-    boardNote:'This board is static and curated. Opening a PR enrolls you automatically; appearing here means maintainers accepted the submission format.',
+    honestyNote:'<strong>Honesty.</strong> Do not invent results or fake projects. Fabrizio or the review team may require a conference call + presentation to verify your project and test process. When possible we will also host public lives discussing submitted tests.',
+    boardTitle:'Public ranking',
+    boardLead:'Language + framework + install path and project size are required. Ranking updates as valid PRs arrive and stays public.',
+    emptyTitle:'Ranking ready — waiting for first PRs',
+    emptyBody:'This is the live public leaderboard. As soon as valid metrics PRs arrive and are reviewed, rows appear here.',
+    boardNote:'Live ranking, curated by maintainers. Opening a PR enrolls you; appearing here means the submission format and stack declaration were accepted. Agent × language gaps are expected — file issues or fix PRs.',
     thHandle:'Entrant', thStack:'Language / framework', thSize:'Size', thFiles:'Files',
-    thMode:'Mode', thScore:'Pass C / DNA', thFavors:'Favors', thPr:'PR',
-    unlock:'min {n} to unlock', windowFallback:'dates TBD'
+    thMode:'Mode', thScore:'Pass C / DNA', thF1:'File-F1 C / DNA', thFavors:'Favors', thJudge:'Judge', thPr:'PR',
+    unlock:'min {n} to unlock', windowFallback:'coming soon'
   },
   it: {
     navHome:'Home', navChallenge:'Challenge', navInstall:'Install',
     eyebrow:'Valutazione pubblica · €200',
     h1:'CodeDNA Challenge<br><em>€200</em>',
-    lead:'Prova CodeDNA sul tuo progetto. Apri una PR con le metriche per iscriverti — niente signup separato. Aggiorniamo questa bacheca quando le submission vengono mergiate.',
-    ctaExample:'Copia metrics.json →', ctaRules:'Rules (EN)', ctaRulesIt:'Regolamento (IT)',
+    lead:'Prova CodeDNA sul tuo progetto reale. Metodologia uguale per tutti: due branch o progetti gemelli, stessi task con vs senza CodeDNA. Copia il prompt per l’agente, poi apri la PR metrics.',
+    ctaRanking:'Vedi classifica →', ctaCopyAgent:'Copia per il tuo agente', ctaExample:'Copia metrics.json →', ctaRules:'Rules (EN)', ctaRulesIt:'Regolamento (IT)', ctaCopied:'Copiato — incollalo nel tuo agente AI', ctaCopyFail:'Copia non riuscita — apri challenge-agent-prompt.it.md',
+    experimentalNote:'<strong>Sperimentale.</strong> I risultati possono variare per agente AI e linguaggio (Claude Code, OpenCode, Cursor, Codex, …). Pubblica come hai installato CodeDNA. Se annotazioni o CLI si comportano male, apri una <a href="https://github.com/Larens94/codedna/issues/new">issue</a> o una <a href="https://github.com/Larens94/codedna/compare">pull request</a> di fix. Quel feedback fa parte della challenge.',
     statusTitle:'Stato challenge',
-    statusLead:'Bacheca aggiornata dai maintainer. File sorgente: docs/challenge-board.json.',
+    statusLead:'Classifica pubblica aggiornata quando arrivano PR valide. File sorgente: docs/challenge-board.json.',
     metaPrize:'Premio', metaPrizeSub:'pagato dopo review',
     metaSubs:'Submission', metaStatus:'Stato',
     metaEnroll:'Iscrizione', metaEnrollVal:'PR = dentro', metaEnrollSub:'niente signup ufficiale',
     howTitle:'Come funziona',
-    howLead:'Progetto tuo · ≥10 task · con vs senza CodeDNA · stack L0/L1/L2 equo · PR metrics.json.',
-    s1t:'Sul tuo repo', s1p:'Dichiara linguaggi, framework, numero file e size band. Mix facili / medi / difficili.',
-    s2t:'Stack equo', s2p:'Se usi wiki, skill o Graphify, ci devono essere in entrambe le condizioni — salvo modalità codedna-only dichiarata.',
-    s3t:'Apri la PR', s3p:'Aggiungi challenge/<handle>/metrics.json. Quella PR ti iscrive. Merge e aggiornamento bacheca a cura nostra.',
+    howLead:'Metodologia uguale per tutti: progetto reale · due branch/checkout/progetti · ≥10 stessi task con vs senza CodeDNA · copia prompt per l’agente · pubblica install · segnala bug.',
+    s1t:'Progetto reale + stack', s1p:'Niente siti giocattolo. Dichiara linguaggi, framework, numero file, size band e come hai installato CodeDNA.',
+    s2t:'Due branch o due progetti', s2p:'Stessi ≥10 task su Control e CodeDNA. Separa con due branch, due checkout o due progetti gemelli — dichiara setup.layout.',
+    s3t:'Copia prompt → PR', s3p:'Copia il prompt per il tuo agente, esegui la lista attività, apri la PR metrics. La classifica si aggiorna quando arrivano PR valide.',
     l0:'Header in-source — layer sotto test.',
     l1:'Wiki LLM, skill pack, instruction file — parity obbligatoria.',
     l2:'Memoria graph / strutturale — parity obbligatoria.',
-    boardTitle:'Bacheca pubblica',
-    boardLead:'Linguaggio + framework, dimensione progetto e numero file sono obbligatori per confronti onesti.',
-    emptyTitle:'Ancora nessuna submission in bacheca',
-    emptyBody:'Quando una PR metrics viene accettata e mergiata, aggiungiamo una riga modificando challenge-board.json.',
-    boardNote:'Bacheca statica e curata. Aprire una PR ti iscrive automaticamente; comparire qui significa che i maintainer hanno accettato il formato.',
+    honestyNote:'<strong>Onestà.</strong> Non inventare risultati o progetti finti. Fabrizio o il team di review possono richiedere una call + presentazione per verificare progetto e processo di test. Quando possibile faremo anche live pubbliche sui test inviati.',
+    boardTitle:'Classifica pubblica',
+    boardLead:'Linguaggio + framework + percorso di install e dimensione progetto sono obbligatori. La classifica si aggiorna quando arrivano PR valide e resta pubblica.',
+    emptyTitle:'Classifica pronta — in attesa delle prime PR',
+    emptyBody:'Questa è la leaderboard pubblica live. Appena arrivano PR metrics valide e vengono reviewate, le righe compaiono qui.',
+    boardNote:'Classifica live, curata dai maintainer. Aprire una PR ti iscrive; comparire qui significa che formato e dichiarazione di stack sono stati accettati. Gap agente × linguaggio sono attesi — apri issue o PR di fix.',
     thHandle:'Partecipante', thStack:'Linguaggio / framework', thSize:'Size', thFiles:'File',
-    thMode:'Mode', thScore:'Pass C / DNA', thFavors:'Favors', thPr:'PR',
-    unlock:'min {n} per sbloccare', windowFallback:'date TBD'
+    thMode:'Mode', thScore:'Pass C / DNA', thF1:'File-F1 C / DNA', thFavors:'Favors', thJudge:'Giudice', thPr:'PR',
+    unlock:'min {n} per sbloccare', windowFallback:'in arrivo'
   }
 };
 
-let currentLang = 'en';
+let currentLang = 'it';
 let boardData = null;
 
 function applyI18n() {
   const dict = I18N[currentLang];
+  document.documentElement.lang = currentLang;
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const k = el.getAttribute('data-i18n');
     if (dict[k] != null) el.textContent = dict[k];
@@ -434,7 +542,13 @@ function renderBoard(data) {
 
   const root = document.getElementById('board-root');
   if (!rows.length) {
-    root.innerHTML = `<div class="empty"><strong>${dict.emptyTitle}</strong><span>${dict.emptyBody}</span></div>`;
+    root.innerHTML = `<div class="empty"><strong>${dict.emptyTitle}</strong><span>${dict.emptyBody}</span>
+      <div class="empty-meta" aria-hidden="true">
+        <span>€${data.prize_eur ?? 200}</span>
+        <span>${dict.unlock.replace('{n}', data.min_submissions_to_unlock ?? 5)}</span>
+        <span>${dict.metaEnrollVal}</span>
+      </div>
+    </div>`;
     return;
   }
 
@@ -442,6 +556,12 @@ function renderBoard(data) {
     const langs = (s.languages || []).map(x => `<span class="pill">${escapeHtml(x)}</span>`).join('');
     const fws = (s.frameworks || []).map(x => `<span class="pill">${escapeHtml(x)}</span>`).join('');
     const pr = s.pr_url ? `<a href="${escapeAttr(s.pr_url)}" target="_blank" rel="noopener">#${escapeHtml(String(s.pr_number || 'PR'))}</a>` : '—';
+    const f1c = s.control_file_f1_avg;
+    const f1d = s.codedna_file_f1_avg;
+    const f1 = (f1c != null || f1d != null)
+      ? `${f1c != null ? Number(f1c).toFixed(2) : '—'} / ${f1d != null ? Number(f1d).toFixed(2) : '—'}`
+      : '—';
+    const judge = s.judge_favors || '—';
     return `<tr>
       <td><strong>${escapeHtml(s.handle || '—')}</strong></td>
       <td>${langs}<div style="margin-top:4px">${fws || '<span class="pill">—</span>'}</div></td>
@@ -449,7 +569,9 @@ function renderBoard(data) {
       <td class="mono">${s.approx_source_files != null ? escapeHtml(String(s.approx_source_files)) : '—'}</td>
       <td class="mono">${escapeHtml(s.mode || '—')}</td>
       <td class="mono">${escapeHtml(String(s.control_passed ?? '—'))} / ${escapeHtml(String(s.codedna_passed ?? '—'))}</td>
+      <td class="mono">${escapeHtml(f1)}</td>
       <td class="${favorsClass(s.favors)}">${escapeHtml(s.favors || '—')}</td>
+      <td class="${favorsClass(s.judge_favors)}">${escapeHtml(String(judge))}</td>
       <td>${pr}</td>
     </tr>`;
   }).join('');
@@ -457,7 +579,7 @@ function renderBoard(data) {
   root.innerHTML = `<div class="table-wrap"><table class="board">
     <thead><tr>
       <th>${dict.thHandle}</th><th>${dict.thStack}</th><th>${dict.thSize}</th><th>${dict.thFiles}</th>
-      <th>${dict.thMode}</th><th>${dict.thScore}</th><th>${dict.thFavors}</th><th>${dict.thPr}</th>
+      <th>${dict.thMode}</th><th>${dict.thScore}</th><th>${dict.thF1}</th><th>${dict.thFavors}</th><th>${dict.thJudge}</th><th>${dict.thPr}</th>
     </tr></thead>
     <tbody>${body}</tbody>
   </table></div>`;
@@ -482,8 +604,29 @@ async function loadBoard() {
 document.getElementById('filter-favors').addEventListener('change', () => boardData && renderBoard(boardData));
 document.getElementById('filter-size').addEventListener('change', () => boardData && renderBoard(boardData));
 
+
+async function copyAgentPrompt() {
+  const dict = I18N[currentLang];
+  const status = document.getElementById('copy-status');
+  const file = currentLang === 'it' ? 'challenge-agent-prompt.it.md' : 'challenge-agent-prompt.md';
+  try {
+    const res = await fetch(file, { cache: 'no-store' });
+    if (!res.ok) throw new Error(res.statusText);
+    const text = await res.text();
+    await navigator.clipboard.writeText(text);
+    status.hidden = false;
+    status.textContent = dict.ctaCopied;
+  } catch (e) {
+    status.hidden = false;
+    status.textContent = dict.ctaCopyFail;
+    window.open(file, '_blank');
+  }
+}
+document.getElementById('copy-agent-prompt').addEventListener('click', copyAgentPrompt);
+
 applyI18n();
 loadBoard();
+
 </script>
 </body>
 </html>

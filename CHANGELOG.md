@@ -6,7 +6,7 @@ All notable changes to CodeDNA will be documented in this file.
 
 ### Added
 
-- **CodeDNA Challenge (€200)** — bilingual rules, required `metrics.json` (languages + frameworks + size/files), docs site page + static board (`docs/challenge.html`, `docs/challenge-board.json`). PR opens enrollment (no separate signup). Separate from historical SWE-bench benchmarks.
+- **CodeDNA Challenge (€200)** — bilingual rules, required `metrics.json` (languages + frameworks + size/files ≥25 + `install` + `setup.layout` + `bugs_reported`), optional file-localization metrics + optional judge-agent comparison, real-project bar (no toy sites), same-task control vs CodeDNA via two branches/checkouts/twin projects, copy-paste agent/judge prompts + task list, Meet presentation verification, docs site page + live public board (IT default) updated as valid PRs arrive. PR opens enrollment (no separate signup). Separate from historical SWE-bench benchmarks.
 
 ### Added
 
