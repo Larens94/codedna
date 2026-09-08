@@ -6,7 +6,7 @@
 > **Duration:** 1 month from the official start date  
 > **Enrollment:** opening a metrics PR = you are enrolled (no separate signup)  
 > **Not a SWE-bench rerun.** You test CodeDNA on **your own project**.  
-> **Public board:** [challenge.html](challenge.html) on the docs site
+> **Public ranking:** [challenge.html](challenge.html) on the docs site
 
 This challenge asks one question:
 

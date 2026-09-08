@@ -6,7 +6,7 @@
 > **Durata:** 1 mese dalla data ufficiale di inizio  
 > **Iscrizione:** aprire la PR con le metriche = sei iscritto (niente signup ufficiale)  
 > **Non è un rerun di SWE-bench.** Provi CodeDNA sul **tuo** progetto.  
-> **Bacheca pubblica:** [challenge.html](challenge.html) sul sito docs
+> **Classifica pubblica:** [challenge.html](challenge.html) sul sito docs
 
 Questa challenge pone una sola domanda:
 
