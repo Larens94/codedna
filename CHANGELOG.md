@@ -6,6 +6,10 @@ All notable changes to CodeDNA will be documented in this file.
 
 ### Added
 
+- **CodeDNA Challenge (€200)** — public own-project evaluation rules in `docs/challenge.md`, signup issue template, submission folder layout under `challenge/`, and announcement video script (`docs/challenge-video-script.md`). Separate from historical SWE-bench benchmarks.
+
+### Added
+
 - **VB.NET language adapter (`.vb`)** — structural regex adapter with `'` comment headers, Public Class/Module/Sub/Function/Property exports, and Option/Imports-aware injection (issue #6).
 - **Roo Code install target** — `codedna install --tools roo` writes `.roorules` (issue #7).
 

@@ -46,6 +46,17 @@ No infrastructure. No retrieval pipeline. No external memory. The code carries i
 
 ---
 
+## CodeDNA Challenge — €200
+
+Public **own-project** evaluation (not SWE-bench). ≥10 tasks with/without CodeDNA, fair L0/L1/L2 stack parity, metrics PR — even if results go against CodeDNA.
+
+- Rules: [`docs/challenge.md`](docs/challenge.md)
+- Signup: GitHub issue template **CodeDNA Challenge entry**
+- Video script (for the announcement recording): [`docs/challenge-video-script.md`](docs/challenge-video-script.md)
+
+Prize unlocks at **≥5 valid submissions**. Duration: **1 month**.
+
+
 ## Install
 
 ### Recommended setup — works with every agent

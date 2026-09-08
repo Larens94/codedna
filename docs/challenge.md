@@ -1,0 +1,186 @@
+# CodeDNA Challenge — €200
+
+> **Status:** draft / open for signup  
+> **Prize:** €200  
+> **Duration:** 1 month from the official start date  
+> **Not a SWE-bench rerun.** You test CodeDNA on **your own project**.
+
+This challenge asks one question:
+
+> Does CodeDNA help (or not) when you do real AI-assisted development work — and can we measure it honestly?
+
+Bugs found during the challenge are welcome: open a GitHub issue and we will fix them upstream.
+
+---
+
+## TL;DR
+
+1. Work on **your** repo (not our old benchmarks).
+2. Run **at least 10 tasks** (easy / medium / hard mix).
+3. Compare **with CodeDNA** vs **without CodeDNA**.
+4. Keep your AI stack **fair** (see Levels below).
+5. Open a **Pull Request** with your metrics — even if CodeDNA looks worse.
+6. Fabrizio + team review complexity, protocol compliance, and evidence.
+7. Prize unlocks only if the **minimum participant count** is met.
+
+---
+
+## Prize & minimum participants
+
+| Item | Rule |
+|---|---|
+| Prize pool | **€200** (paid to the winning submission after review) |
+| Minimum valid submissions | **5** to unlock the prize (stretch goal: 10) |
+| If fewer than 5 valid PRs | Challenge still publishes results; prize is **not** awarded (or rolled to the next edition) |
+| Winner | Selected by Fabrizio Corpora + review team (not community vote) |
+
+### What we score (in order)
+
+1. **Protocol honesty** — fair stack, declared mode, reproducible notes  
+2. **Task quality** — real easy/medium/hard mix on a real codebase  
+3. **Evidence** — metrics + short narrative; pro **or** against CodeDNA is fine  
+4. **Bug reports** — actionable issues filed upstream count positively  
+5. **Clarity** — another engineer can re-run your comparison
+
+---
+
+## Timeline (fill before publish)
+
+| Phase | When |
+|---|---|
+| Announcement + video | **TBD** |
+| Signup opens | **TBD** |
+| Challenge window | **1 month** from start date |
+| Submission deadline | end of challenge window (PRs must be open) |
+| Review | ~1–2 weeks after deadline |
+| Winner announced | **TBD** |
+
+---
+
+## Who can enter
+
+- Any developer using an AI coding agent (Cursor, Claude Code, Codex, Copilot, Cline, Roo, Windsurf, OpenCode, …)
+- Solo or small team (one PR per entrant / team)
+- Your project can be private during the run; the **metrics PR** to this repo must be public
+
+---
+
+## Core protocol (mandatory)
+
+### 1. Your project
+
+Use a repo **you** maintain (work or personal). Size guideline: enough surface that 10 tasks are meaningful (roughly ≥20 source files). Language: any CodeDNA-supported stack.
+
+### 2. Ten tasks minimum
+
+Define **≥10** tasks **before** you start the timed runs (or freeze the list in the PR).
+
+Suggested mix:
+
+| Difficulty | Count (min) | Examples |
+|---|---|---|
+| Easy | ≥3 | rename + update callers, add a field, fix a clear bug with known file |
+| Medium | ≥3 | cross-file feature, refactor with invariants, API change |
+| Hard | ≥2 | multi-module bug, architecture constraint, “where do I change this safely?” |
+
+Record for each task: goal, difficulty, agent/tool, success/fail, notes.
+
+### 3. Two conditions: without vs with CodeDNA
+
+For each task (or paired batches), run:
+
+| Condition | Setup |
+|---|---|
+| **A — Control** | Your normal AI workflow **without** CodeDNA annotations / without relying on CodeDNA headers |
+| **B — CodeDNA** | Same workflow **with** CodeDNA installed + annotated (`codedna init` / maintained headers) |
+
+Keep the **agent, model, and higher stack layers identical** between A and B except for CodeDNA itself (unless you declare an explicit mode — see below).
+
+### 4. Fair stack — Levels (critical)
+
+If you already use extra AI-dev layers, CodeDNA must be tested **on top of the same stack**, not instead of it by accident.
+
+| Level | Examples | Rule |
+|---|---|---|
+| **L0** | CodeDNA in-source headers | The layer under test |
+| **L1** | LLM wiki, curated markdown memory, skill packs, agent instruction files | If Control has it, CodeDNA run has it too |
+| **L2** | Graphify / graph memory / similar structural layers | If Control has it, CodeDNA run has it too |
+
+**Parity rule:**  
+`stack(Control) == stack(CodeDNA)` except for L0 CodeDNA being present in B.
+
+**Declared solo-L0 mode (optional):**  
+If you deliberately test whether **CodeDNA alone** can replace L1/L2, you **must** say so in the PR (`mode: codedna-only-vs-higher-stack` or similar) and describe what you removed. Curiosity-only or undeclared unequal stacks are **invalid**.
+
+### 5. Metrics (minimum set)
+
+Report at least:
+
+| Metric | Notes |
+|---|---|
+| Task success (pass/fail) | Your definition stated in the PR |
+| Time or turns | Wall-clock and/or agent turns / tool calls |
+| Wrong-file / wrong-module rate | When applicable |
+| Human intervention count | How often you had to steer |
+| Subjective confidence (1–5) | Optional but useful |
+| Bugs in CodeDNA | Link issues if any |
+
+Raw numbers can favor CodeDNA **or not**. Honesty beats cheerleading.
+
+### 6. Submission = Pull Request
+
+Open a PR against `Larens94/codedna`. Copy [`challenge/SUBMISSION_TEMPLATE.md`](../challenge/SUBMISSION_TEMPLATE.md) into the PR body, and add:
+
+```text
+challenge/<your-github-handle>/
+  README.md          # summary + mode declaration + stack levels used
+  tasks.md           # the ≥10 tasks + difficulties
+  metrics.md         # tables Control vs CodeDNA
+  notes.md           # narrative, surprises, bugs
+  (optional) logs/   # redacted session excerpts
+```
+
+Use the PR title:
+
+```text
+challenge: <handle> — CodeDNA Challenge submission
+```
+
+Copy the checklist from [`challenge/SUBMISSION_TEMPLATE.md`](../challenge/SUBMISSION_TEMPLATE.md).
+
+---
+
+## Signup
+
+1. Open a GitHub issue with the **CodeDNA Challenge entry** template  
+2. Comment on the announcement Discussion (when published)  
+3. Install CodeDNA and annotate your project when the window starts:
+
+```bash
+pipx install git+https://github.com/Larens94/codedna.git
+codedna install --path . --tools <your-agent>
+codedna init . --no-llm   # or with an LLM for rules:
+```
+
+---
+
+## What this challenge is not
+
+- Not a rerun of SWE-bench / our historical F1 tables  
+- Not “annotate our fixture repos only”  
+- Not unpaid consulting for us — you keep your project IP; we only review the metrics PR  
+
+---
+
+## Communication
+
+- Issues / bugs: GitHub Issues  
+- Challenge Q&A: GitHub Discussions (Announcements / Q&A)  
+- Community: Discord (see README badge)  
+- Maintainer: Fabrizio Corpora  
+
+---
+
+## License of submissions
+
+By opening a challenge PR you grant permission to quote **metrics and anonymized summaries** in CodeDNA docs / blog / video. Do not upload secrets, proprietary source, or credentials. Redact logs.

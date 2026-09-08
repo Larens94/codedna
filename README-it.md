@@ -46,6 +46,17 @@ Nessuna infrastruttura. Nessuna pipeline di retrieval. Nessuna memoria esterna. 
 
 ---
 
+## CodeDNA Challenge — €200
+
+Valutazione pubblica sul **tuo** progetto (non SWE-bench). Almeno 10 task con/senza CodeDNA, stack L0/L1/L2 a pari livello, PR con metriche — anche se vanno contro CodeDNA.
+
+- Regolamento: [`docs/challenge.md`](docs/challenge.md)
+- Iscrizione: issue **CodeDNA Challenge entry**
+- Scaletta video: [`docs/challenge-video-script.md`](docs/challenge-video-script.md)
+
+Il premio si sblocca con **≥5 submission valide**. Durata: **1 mese**.
+
+
 ## Installazione
 
 ### Installazione consigliata — valida per ogni agente
