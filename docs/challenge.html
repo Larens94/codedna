@@ -1,10 +1,10 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="it">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>CodeDNA Challenge — €200 · Public ranking</title>
-<meta name="description" content="CodeDNA Challenge €200: real-project evaluation with a live public ranking. Same tasks with vs without CodeDNA. Open a metrics PR to enroll.">
+<title>CodeDNA Challenge — €200 · Classifica pubblica</title>
+<meta name="description" content="CodeDNA Challenge €200: valutazione sul tuo progetto reale con classifica pubblica live. Stessi task con e senza CodeDNA. Apri una PR metrics per iscriverti.">
 <meta property="og:title" content="CodeDNA Challenge — €200">
 <meta property="og:description" content="Public ranking for the CodeDNA Challenge. Real projects · same tasks with/without CodeDNA · €200 prize.">
 <meta property="og:type" content="website">
@@ -275,7 +275,7 @@ body.challenge-page .nav-links .lang-toggle {
     <a href="challenge.html" class="active" data-i18n="navChallenge">Challenge</a>
     <a href="install.html" data-i18n="navInstall">Install</a>
     <a href="https://github.com/Larens94/codedna" target="_blank" class="nav-cta">GitHub →</a>
-    <button class="lang-toggle" id="lang-toggle" onclick="toggleLang()">IT</button>
+    <button class="lang-toggle" id="lang-toggle" onclick="toggleLang()">EN</button>
   </div>
   <button class="nav-hamburger" onclick="document.getElementById('nav-links').classList.toggle('open')" aria-label="Menu">
     <span></span><span></span><span></span>
@@ -284,95 +284,95 @@ body.challenge-page .nav-links .lang-toggle {
 
 <header class="page-hero">
   <div class="page-hero-inner">
-    <div class="eyebrow"><span class="eyebrow-dot"></span><span data-i18n="eyebrow">Public evaluation · €200</span></div>
+    <div class="eyebrow"><span class="eyebrow-dot"></span><span data-i18n="eyebrow">Valutazione pubblica · €200</span></div>
     <h1 data-i18n-html="h1">CodeDNA Challenge<br><em>€200</em></h1>
-    <p class="lead" data-i18n="lead">Test CodeDNA on your own real project. Declare stack + install. Same tasks with vs without CodeDNA. Open a metrics PR to enroll — the public board updates as valid PRs arrive.</p>
+    <p class="lead" data-i18n="lead">Prova CodeDNA sul tuo progetto reale. Dichiara stack + install. Stessi task con vs senza CodeDNA. Apri una PR metrics per iscriverti — la bacheca pubblica si aggiorna quando arrivano PR valide.</p>
     <div class="hero-actions">
-      <a class="btn-primary" href="#ranking" data-i18n="ctaRanking">View ranking →</a>
-      <a class="btn-secondary" href="https://github.com/Larens94/codedna/blob/main/challenge/metrics.example.json" target="_blank" data-i18n="ctaExample">Copy metrics.json →</a>
-      <a class="btn-secondary" href="challenge.md" data-i18n="ctaRules">Full rules (EN)</a>
+      <a class="btn-primary" href="#ranking" data-i18n="ctaRanking">Vedi classifica →</a>
+      <a class="btn-secondary" href="https://github.com/Larens94/codedna/blob/main/challenge/metrics.example.json" target="_blank" data-i18n="ctaExample">Copia metrics.json →</a>
+      <a class="btn-secondary" href="challenge.md" data-i18n="ctaRules">Rules (EN)</a>
       <a class="btn-secondary" href="challenge.it.md" data-i18n="ctaRulesIt">Regolamento (IT)</a>
     </div>
     <p class="note" style="margin-top:1.75rem;max-width:640px" data-i18n-html="experimentalNote">
-      <strong>Experimental.</strong> Results can vary by AI coding agent and language (Claude Code, OpenCode, Cursor, Codex, …).
-      Publish how you installed CodeDNA. If annotations or the CLI misbehave, open a
-      <a href="https://github.com/Larens94/codedna/issues/new">GitHub issue</a> or a fix
-      <a href="https://github.com/Larens94/codedna/compare">pull request</a>.
-      That feedback is part of the challenge.
+      <strong>Sperimentale.</strong> I risultati possono variare per agente AI e linguaggio (Claude Code, OpenCode, Cursor, Codex, …).
+      Pubblica come hai installato CodeDNA. Se annotazioni o CLI si comportano male, apri una
+      <a href="https://github.com/Larens94/codedna/issues/new">issue</a> o una
+      <a href="https://github.com/Larens94/codedna/compare">pull request</a> di fix.
+      Quel feedback fa parte della challenge.
     </p>
   </div>
 </header>
 
 <section class="section" id="status">
-  <h2 data-i18n="statusTitle">Challenge status</h2>
-  <p class="section-lead" data-i18n="statusLead">Public ranking updated as valid PRs arrive. Source file: <code class="mono">docs/challenge-board.json</code>.</p>
+  <h2 data-i18n="statusTitle">Stato challenge</h2>
+  <p class="section-lead" data-i18n="statusLead">Classifica pubblica aggiornata quando arrivano PR valide. File sorgente: <code class="mono">docs/challenge-board.json</code>.</p>
   <div class="meta-strip">
     <div class="meta-cell">
-      <div class="meta-label" data-i18n="metaPrize">Prize</div>
+      <div class="meta-label" data-i18n="metaPrize">Premio</div>
       <div class="meta-value" id="meta-prize">€200</div>
-      <div class="meta-sub" data-i18n="metaPrizeSub">paid after review</div>
+      <div class="meta-sub" data-i18n="metaPrizeSub">pagato dopo review</div>
     </div>
     <div class="meta-cell">
-      <div class="meta-label" data-i18n="metaSubs">Submissions</div>
+      <div class="meta-label" data-i18n="metaSubs">Submission</div>
       <div class="meta-value" id="meta-subs">0</div>
-      <div class="meta-sub" id="meta-unlock">min 5 to unlock</div>
+      <div class="meta-sub" id="meta-unlock">min 5 per sbloccare</div>
     </div>
     <div class="meta-cell">
-      <div class="meta-label" data-i18n="metaStatus">Status</div>
+      <div class="meta-label" data-i18n="metaStatus">Stato</div>
       <div class="meta-value" id="meta-status">open</div>
-      <div class="meta-sub" id="meta-window">coming soon</div>
+      <div class="meta-sub" id="meta-window">in arrivo</div>
     </div>
     <div class="meta-cell">
-      <div class="meta-label" data-i18n="metaEnroll">Enrollment</div>
-      <div class="meta-value" style="font-size:1.05rem" data-i18n="metaEnrollVal">PR = in</div>
-      <div class="meta-sub" data-i18n="metaEnrollSub">no official signup</div>
+      <div class="meta-label" data-i18n="metaEnroll">Iscrizione</div>
+      <div class="meta-value" style="font-size:1.05rem" data-i18n="metaEnrollVal">PR = dentro</div>
+      <div class="meta-sub" data-i18n="metaEnrollSub">niente signup ufficiale</div>
     </div>
   </div>
 </section>
 
 <section class="section" id="how">
-  <h2 data-i18n="howTitle">How it works</h2>
-  <p class="section-lead" data-i18n="howLead">Real working project (≥25 files) · declare languages/frameworks/agent · ≥10 same tasks with vs without CodeDNA · publish install · report bugs · metrics.json PR.</p>
+  <h2 data-i18n="howTitle">Come funziona</h2>
+  <p class="section-lead" data-i18n="howLead">Progetto reale funzionante (≥25 file) · dichiara linguaggi/framework/agente · ≥10 stessi task con vs senza CodeDNA · pubblica install · segnala bug · PR metrics.json.</p>
   <div class="steps">
     <div class="step">
       <div class="step-num">01</div>
-      <h3 data-i18n="s1t">Real project + stack</h3>
-      <p data-i18n="s1p">No toy sites. Declare languages, frameworks, file count, size band, and how you installed CodeDNA.</p>
+      <h3 data-i18n="s1t">Progetto reale + stack</h3>
+      <p data-i18n="s1p">Niente siti giocattolo. Dichiara linguaggi, framework, numero file, size band e come hai installato CodeDNA.</p>
     </div>
     <div class="step">
       <div class="step-num">02</div>
-      <h3 data-i18n="s2t">Same tasks, fair stack</h3>
-      <p data-i18n="s2p">Run the same ≥10 tasks with and without CodeDNA. Keep L1/L2 parity unless you declare codedna-only mode.</p>
+      <h3 data-i18n="s2t">Stessi task, stack equo</h3>
+      <p data-i18n="s2p">Esegui gli stessi ≥10 task con e senza CodeDNA. Tieni la parity L1/L2 salvo modalità codedna-only dichiarata.</p>
     </div>
     <div class="step">
       <div class="step-num">03</div>
-      <h3 data-i18n="s3t">PR → live board</h3>
-      <p data-i18n="s3p">Open a metrics PR to enroll. The public ranking updates as valid PRs arrive. We may ask for a Meet presentation.</p>
+      <h3 data-i18n="s3t">PR → bacheca live</h3>
+      <p data-i18n="s3p">Apri una PR metrics per iscriverti. La classifica pubblica si aggiorna quando arrivano PR valide. Possiamo chiedere una presentazione Meet.</p>
     </div>
   </div>
   <div class="levels">
     <div class="level">
       <div class="level-tag">L0 · CodeDNA</div>
-      <p data-i18n="l0">In-source headers — the layer under test.</p>
+      <p data-i18n="l0">Header in-source — layer sotto test.</p>
     </div>
     <div class="level">
       <div class="level-tag">L1 · Wiki / skills</div>
-      <p data-i18n="l1">LLM wiki, skill packs, instruction files — parity required.</p>
+      <p data-i18n="l1">Wiki LLM, skill pack, instruction file — parity obbligatoria.</p>
     </div>
     <div class="level">
       <div class="level-tag">L2 · Graphify</div>
-      <p data-i18n="l2">Graph / structural memory — parity required.</p>
+      <p data-i18n="l2">Memoria graph / strutturale — parity obbligatoria.</p>
     </div>
   </div>
   <p class="note" style="margin-top:1.5rem" data-i18n-html="honestyNote">
-    <strong>Honesty.</strong> Do not invent results or fake projects. Fabrizio or the review team may require a conference call + presentation to verify your project and test process.
-    When possible we will also host public lives discussing submitted tests.
+    <strong>Onestà.</strong> Non inventare risultati o progetti finti. Fabrizio o il team di review possono richiedere una call + presentazione per verificare progetto e processo di test.
+    Quando possibile faremo anche live pubbliche sui test inviati.
   </p>
 </section>
 
 <section class="section" id="ranking">
-  <h2 data-i18n="boardTitle">Public ranking</h2>
-  <p class="section-lead" data-i18n="boardLead">Language + framework + install path and project size are required. Ranking updates as valid PRs arrive and stays public.</p>
+  <h2 data-i18n="boardTitle">Classifica pubblica</h2>
+  <p class="section-lead" data-i18n="boardLead">Linguaggio + framework + percorso di install e dimensione progetto sono obbligatori. La classifica si aggiorna quando arrivano PR valide e resta pubblica.</p>
 
   <div class="board-toolbar">
     <div class="board-updated" id="board-updated">updated —</div>
@@ -396,8 +396,8 @@ body.challenge-page .nav-links .lang-toggle {
 
   <div id="board-root">
     <div class="empty">
-      <strong data-i18n="emptyTitle">Ranking ready — waiting for first PRs</strong>
-      <span data-i18n="emptyBody">This is the live public leaderboard. As soon as valid metrics PRs arrive and are reviewed, rows appear here.</span>
+      <strong data-i18n="emptyTitle">Classifica pronta — in attesa delle prime PR</strong>
+      <span data-i18n="emptyBody">Questa è la leaderboard pubblica live. Appena arrivano PR metrics valide e vengono reviewate, le righe compaiono qui.</span>
       <div class="empty-meta" aria-hidden="true">
         <span>€200</span>
         <span>min 5 to unlock</span>
@@ -406,7 +406,7 @@ body.challenge-page .nav-links .lang-toggle {
     </div>
   </div>
 
-  <p class="note" data-i18n="boardNote">Live ranking, curated by maintainers. Opening a PR enrolls you; appearing here means the submission format and stack declaration were accepted. Agent × language gaps are expected — file issues or fix PRs.</p>
+  <p class="note" data-i18n="boardNote">Classifica live, curata dai maintainer. Aprire una PR ti iscrive; comparire qui significa che formato e dichiarazione di stack sono stati accettati. Gap agente × linguaggio sono attesi — apri issue o PR di fix.</p>
 </section>
 
 <footer class="site-footer">
@@ -486,11 +486,12 @@ const I18N = {
   }
 };
 
-let currentLang = 'en';
+let currentLang = 'it';
 let boardData = null;
 
 function applyI18n() {
   const dict = I18N[currentLang];
+  document.documentElement.lang = currentLang;
   document.querySelectorAll('[data-i18n]').forEach(el => {
     const k = el.getAttribute('data-i18n');
     if (dict[k] != null) el.textContent = dict[k];
