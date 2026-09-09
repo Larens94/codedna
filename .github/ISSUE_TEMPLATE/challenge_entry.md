@@ -5,7 +5,7 @@ title: "challenge-question: <short topic>"
 ---
 
 > **No signup needed.** Opening a valid challenge PR with `metrics.json` enrolls you automatically.
-> Rules: https://github.com/Larens94/codedna/blob/main/docs/challenge.md · Board: https://larens94.github.io/codedna/challenge.html
+> Rules: https://github.com/Larens94/codedna/blob/main/docs/challenge.md · Board: https://larens94.github.io/codedna/challenge-ranking.html
 
 ## Question
 

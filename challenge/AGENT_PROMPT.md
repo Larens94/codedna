@@ -10,4 +10,4 @@ Task checklist:
 - Italiano: [`TASKS_TEMPLATE.it.md`](./TASKS_TEMPLATE.it.md)
 - English: [`TASKS_TEMPLATE.md`](./TASKS_TEMPLATE.md)
 
-On the public page use **Copia per il tuo agente** → https://larens94.github.io/codedna/challenge.html
+On the public page use **Copia per il tuo agente** → https://larens94.github.io/codedna/challenge.html (ranking: challenge-ranking.html)
