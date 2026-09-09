@@ -6,7 +6,7 @@
 > **Duration:** 1 month from the official start date  
 > **Enrollment:** opening a metrics PR = you are enrolled (no separate signup)  
 > **Not a SWE-bench rerun.** You test CodeDNA on **your own project**.  
-> **Public ranking:** [challenge.html](challenge.html) on the docs site
+> **Public ranking:** [challenge-ranking.html](challenge-ranking.html) on the docs site
 
 This challenge asks one question:
 
@@ -41,7 +41,7 @@ This challenge asks one question:
 | Winner | Selected by Fabrizio Corpora + review team (not community vote) |
 | Honesty | Claims must be true and evidence-backed — fabricated metrics, fake projects, or invented narratives = disqualification |
 | Verification | Fabrizio or the review team may require a **conference call + presentation** (Google Meet / similar): show the real project, explain how you ran the tests, walk through install + `metrics.json` |
-| Public board | Ranking on [challenge.html](challenge.html) is updated **as soon as valid PRs arrive** (maintainer review → board row) and remains publicly visible |
+| Public board | Ranking on [challenge-ranking.html](challenge-ranking.html) is updated **as soon as valid PRs arrive** (maintainer review → board row) and remains publicly visible |
 | Lives | When possible we will host public live sessions discussing submitted tests (with entrant consent where needed) |
 
 ### What we score (in order)
@@ -262,7 +262,7 @@ challenge: <handle> — CodeDNA Challenge submission
 
 ### 8. Public board / ranking
 
-The live ranking is [challenge.html](challenge.html) (data: [`challenge-board.json`](challenge-board.json)).
+The live ranking is [challenge-ranking.html](challenge-ranking.html) (data: [`challenge-board.json`](challenge-board.json)).
 
 - As soon as a valid metrics PR is reviewed, we add/update a row — the board stays **publicly visible**.
 - Opening a PR enrolls you; appearing on the board means maintainers accepted the submission format and stack declaration.
@@ -283,7 +283,7 @@ codedna init . --no-llm   # or with an LLM for rules:
 
 2. Run your ≥10 **same** tasks twice (Control vs CodeDNA, fair stack).
 3. Open a PR adding `challenge/<handle>/metrics.json` (include `install` + `bugs_reported`).
-4. We review, update the [public board](challenge.html), and may invite you to a Meet presentation.
+4. We review, update the [public board](challenge-ranking.html), and may invite you to a Meet presentation.
 
 Questions only (optional): GitHub Discussions / Discord — the old “entry issue” template is not required.
 

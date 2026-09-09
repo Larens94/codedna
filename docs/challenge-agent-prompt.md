@@ -1,7 +1,7 @@
 # Agent prompt — CodeDNA Challenge (€200)
 
 > Paste this whole message into your AI coding agent (Cursor, Claude Code, OpenCode, Codex, …).  
-> Ranking page: https://larens94.github.io/codedna/challenge.html  
+> Ranking page: https://larens94.github.io/codedna/challenge-ranking.html  
 > Rules: https://github.com/Larens94/codedna/blob/main/docs/challenge.md  
 > Italiano: [challenge-agent-prompt.it.md](challenge-agent-prompt.it.md)
 

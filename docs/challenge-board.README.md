@@ -1,6 +1,6 @@
 # Updating the public challenge board
 
-The live board / ranking is [`docs/challenge.html`](../docs/challenge.html).  
+The live board / ranking is [`docs/challenge-ranking.html`](challenge-ranking.html) (linked from [`challenge.html`](challenge.html)).  
 It reads [`docs/challenge-board.json`](../docs/challenge-board.json) (static — no backend).  
 **Update it as soon as valid PRs arrive** so the ranking stays publicly visible.
 

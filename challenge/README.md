@@ -9,7 +9,7 @@ challenge/<github-handle>/
   notes.md        # optional
 ```
 
-No official signup. Public ranking (updated as valid PRs arrive): [`docs/challenge.html`](../docs/challenge.html) · data [`docs/challenge-board.json`](../docs/challenge-board.json)
+No official signup. Public ranking (updated as valid PRs arrive): [`docs/challenge-ranking.html`](../docs/challenge-ranking.html) · data [`docs/challenge-board.json`](../docs/challenge-board.json)
 
 **Copy for your agent**
 

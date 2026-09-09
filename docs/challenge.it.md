@@ -6,7 +6,7 @@
 > **Durata:** 1 mese dalla data ufficiale di inizio  
 > **Iscrizione:** aprire la PR con le metriche = sei iscritto (niente signup ufficiale)  
 > **Non è un rerun di SWE-bench.** Provi CodeDNA sul **tuo** progetto.  
-> **Classifica pubblica:** [challenge.html](challenge.html) sul sito docs
+> **Classifica pubblica:** [challenge-ranking.html](challenge-ranking.html) sul sito docs
 
 Questa challenge pone una sola domanda:
 
@@ -41,7 +41,7 @@ Questa challenge pone una sola domanda:
 | Vincitore | Scelto da Fabrizio Corpora + team di review (non voto community) |
 | Onestà | Le affermazioni devono essere vere e supportate da evidenze — metriche inventate, progetti finti o narrative false = squalifica |
 | Verifica | Fabrizio o il team di review possono richiedere una **call + presentazione** (Google Meet / simile): mostrare il progetto reale, spiegare come hai fatto i test, ripercorrere install + `metrics.json` |
-| Bacheca pubblica | La classifica su [challenge.html](challenge.html) si aggiorna **appena arrivano PR valide** (review maintainer → riga in bacheca) e resta visibile |
+| Bacheca pubblica | La classifica su [challenge-ranking.html](challenge-ranking.html) si aggiorna **appena arrivano PR valide** (review maintainer → riga in bacheca) e resta visibile |
 | Live | Quando possibile ospiteremo live pubbliche sui test inviati (con consenso del partecipante dove serve) |
 
 ### Cosa valutiamo (in ordine)
@@ -262,7 +262,7 @@ challenge: <handle> — CodeDNA Challenge submission
 
 ### 8. Bacheca / classifica pubblica
 
-La classifica live è [challenge.html](challenge.html) (dati: [`challenge-board.json`](challenge-board.json)).
+La classifica live è [challenge-ranking.html](challenge-ranking.html) (dati: [`challenge-board.json`](challenge-board.json)).
 
 - Appena una PR metrics valida viene reviewata, aggiungiamo/aggiorniamo una riga — la bacheca resta **visibile pubblicamente**.
 - Aprire una PR ti iscrive; comparire in bacheca significa che i maintainer hanno accettato formato e dichiarazione di stack.
@@ -283,7 +283,7 @@ codedna init . --no-llm   # oppure con LLM per le rules:
 
 2. Esegui i ≥10 **stessi** task due volte (Control vs CodeDNA, stack equo).
 3. Apri una PR con `challenge/<handle>/metrics.json` (includi `install` + `bugs_reported`).
-4. Facciamo review, aggiorniamo la [bacheca pubblica](challenge.html) e possiamo invitarti a una presentazione Meet.
+4. Facciamo review, aggiorniamo la [bacheca pubblica](challenge-ranking.html) e possiamo invitarti a una presentazione Meet.
 
 Solo domande (opzionale): GitHub Discussions / Discord — il vecchio template “entry issue” non è obbligatorio.
 
