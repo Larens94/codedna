@@ -61,53 +61,56 @@ Il premio si sblocca con **≥5 submission valide**. Durata: **1 mese**.
 
 ### Installazione consigliata — valida per ogni agente
 
-Installa prima la CLI, poi l'integrazione nativa del tool usato nel repository:
-
-```bash
-pipx install git+https://github.com/Larens94/codedna.git
-codedna install --path . --tools codex --no-wiki-sync  # sostituisci codex usando la tabella
-codedna init . --no-llm
-codedna doctor --path .
-```
-
-| Agente | Comando di installazione |
-|-------|---------|
-| **Claude Code** | `claude plugin marketplace add Larens94/codedna && claude plugin install codedna@codedna` |
-| **Codex** | `codedna install --path . --tools codex --no-wiki-sync` |
-| **OpenCode** | `codedna install --path . --tools opencode --no-wiki-sync` |
-| **Aider** | `codedna install --path . --tools aider --no-wiki-sync`, poi `aider --read AGENTS.md` |
-| **Cursor** | `codedna install --path . --tools cursor --no-wiki-sync` |
-| **Copilot** | `codedna install --path . --tools copilot --no-wiki-sync` |
-| **Cline** | `codedna install --path . --tools cline --no-wiki-sync` |
-| **Windsurf** | `codedna install --path . --tools windsurf --no-wiki-sync` |
-| **Antigravity** | `codedna install --path . --tools agents --no-wiki-sync` |
-
-> **Claude Code:** dopo aver installato il plugin, avvia una nuova sessione o esegui `/clear`. I comandi `/codedna:*` appartengono al plugin Claude; tutti gli altri agenti usano i comandi CLI `codedna ...`.
-
-Se scegli il plugin Claude, esegui `/codedna:init` nel progetto. Il comando:
-
-1. Rileva automaticamente i linguaggi (PHP, TypeScript, Go, Python, ecc.)
-2. Chiede come annotare: **sessione Claude** (zero API key) o **CLI** (tree-sitter, veloce)
-3. Chiede la profondità: **human** (minimale) · **semi** (bilanciato, default) · **agent** (protocollo completo)
-4. Annota tutti i file e mostra un riepilogo
-
-### CLI standalone
-
-Per pipeline CI, scripting, o se preferisci il terminale:
+Installa la CLI una volta, poi installa le istruzioni e gli hook opzionali per il tool usato in questo repository:
 
 ```bash
 pipx install git+https://github.com/Larens94/codedna.git   # richiede Python 3.11+; install isolato (evita conflitti con env globale)
+codedna install --path . --tools codex --no-wiki-sync     # sostituisci codex usando la tabella sotto
+codedna init . --no-llm                                   # annota ogni linguaggio rilevato automaticamente
+codedna doctor --path .                                   # conferma il setup
 ```
+
+`codedna install` crea `.codedna`, installa il gate Git pre-commit e aggiunge il file di istruzioni nativo per l'agente selezionato. Preserva i file di istruzioni e gli hook Git già presenti invece di sovrascriverli.
+
+| Agente/tool | valore `--tools` | Integrazione installata |
+|---|---|---|
+| **Claude Code** | `claude` | `CLAUDE.md` + hook attivi |
+| **Codex** | `codex` | `AGENTS.md` cross-vendor |
+| **OpenCode** | `opencode` | `AGENTS.md` + plugin JS attivo |
+| **Aider** | `aider` | `AGENTS.md`; avvia con `aider --read AGENTS.md` oppure configura `read: AGENTS.md` |
+| **Cursor** | `cursor` | `.cursorrules` + hook attivi |
+| **GitHub Copilot** | `copilot` | istruzioni Copilot + hook attivi |
+| **Cline** | `cline` | regole Cline + hook attivi |
+| **Windsurf** | `windsurf` | `.windsurfrules` (solo istruzioni) |
+| **Roo Code** | `roo` | `.roorules` (solo istruzioni) |
+| **Antigravity** | `agents` | `AGENTS.md` + `.agent/workflows/codedna.md` |
+
+Per team misti usa più valori, per esempio `codedna install --path . --tools claude codex opencode --no-wiki-sync`. Usa `--tools all` solo quando il repository è davvero modificato con ogni tool supportato.
+
+### Plugin Claude Code — alternativa interattiva
+
+Chi usa Claude Code può invece installare il plugin:
+
+```bash
+claude plugin marketplace add Larens94/codedna
+claude plugin install codedna@codedna
+```
+
+Avvia una nuova sessione di Claude Code (oppure esegui `/clear`), poi esegui `/codedna:init`. I comandi `/codedna:*` appartengono al plugin Claude; gli altri agenti usano i comandi CLI `codedna ...` mostrati sopra.
+
+### Primo avvio e flusso quotidiano dell'agente
 
 ```bash
 codedna init . --no-llm                        # gratuito, solo strutturale (exports + used_by)
 codedna init . --model deepseek/deepseek-chat  # con rules: LLM (~$0.40 per 200 file)
 codedna init . --model ollama/llama3           # LLM locale, gratuito
-codedna check .                                # report di copertura
-codedna refresh .                              # aggiorna exports + used_by (zero costo LLM)
+codedna manifest . --no-llm                    # costruisce la mappa dei package
+codedna doctor --path .                        # gate di onboarding/ambiente
+codedna impact path/to/file.py --path .        # prima di cambiare un contratto pubblico
+codedna verify .                               # dopo modifiche strutturali
 ```
 
-> Linguaggi rilevati automaticamente — Python, PHP, TypeScript/JavaScript, Go, Java, Kotlin, Ruby, Rust, C#, VB.NET e Swift, oltre ai template supportati.
+Il percorso senza LLM non richiede una API key del modello. I linguaggi sono rilevati automaticamente: Python, PHP, TypeScript/JavaScript, Go, Java, Kotlin, Ruby, Rust, C#, VB.NET, Swift e i template supportati.
 > Il formato si adatta al linguaggio — PHP usa `//`, Python usa docstring, Blade usa `{{-- --}}`. Vedi [docs/languages.md](docs/languages.md).
 
 ### Riferimento comandi
@@ -129,15 +132,41 @@ codedna refresh .                              # aggiorna exports + used_by (zer
 | `codedna update <path>` | Incrementale — annota solo i file senza header (salta quelli già annotati) |
 | `codedna refresh <path>` | Ricalcola `exports:` + `used_by:` via AST/tree-sitter. Zero costo LLM. Preserva `rules:`/`agent:`. |
 | `codedna check <path>` | Report di copertura. Exit code 1 se incompleto — funziona in CI. |
-| `codedna verify <path>` | Rileva drift in `exports:` e `used_by:`. Read-only; `--json` per CI. |
-| `codedna impact <file-o-simbolo>` | Mostra regole e caller transitivi prima di modificare un contratto pubblico. |
-| `codedna doctor --path <root>` | Verifica manifesto, parser, hook, CI e configurazione locale. |
+| `codedna verify <path>` | Rileva `exports:` e `used_by:` obsoleti, con evidenza. Sola lettura; `--json` per CI. |
+| `codedna impact <file-o-simbolo>` | Mostra le regole corrispondenti e i caller transitivi prima di modificare. Sola lettura. |
+| `codedna doctor --path <root>` | Diagnostica manifesto, adapter, hook, CI e configurazione del lock. Sola lettura. |
 | `codedna manifest <path>` | Genera la mappa `.codedna` del progetto (Livello 0): packages, depends_on, key_files |
 | `codedna mode <mode>` | Legge/imposta la modalità: `human` (minimale), `semi` (default), `agent` (protocollo completo) |
-| `codedna install <path>` | Setup pre-commit hook + prompt per il tool AI + manifesto `.codedna` |
+| `codedna install <path>` | Setup pre-commit hook + prompt per il tool AI + manifesto `.codedna`. L'opzione `--with-wiki-sync` installa un hook post-commit che rigenera automaticamente la wiki di progetto (vedi [Opzionale: hook post-commit wiki-sync](#opzionale-hook-post-commit-wiki-sync)). |
 | `codedna wiki bootstrap <path>` | Genera un vault [Obsidian](https://obsidian.md) per-file sotto `docs/wiki/` con `[[wikilinks]]` derivati dai grafi `used_by:`/`related:` |
 | `codedna wiki sync <path>` | Rigenera `docs/codedna-wiki.md` — wiki narrativo di progetto a 7 sezioni (pattern LLM-wiki di Karpathy). Da agganciare al post-commit. |
 | `codedna self-update` | Aggiorna il CLI stesso via `pip install --upgrade --force-reinstall git+...`. Rifiuta di sovrascrivere checkout editable/dev se non passi `--force`. Usa `--check` per vedere la versione installata. |
+
+### Opzionale: hook post-commit wiki-sync
+
+`codedna install` può anche depositare un **hook git post-commit** che esegue `codedna wiki sync . --out docs/codedna-wiki.md` automaticamente dopo ogni commit, così la wiki di progetto riflette sempre il codice più recente senza che tu (o un agente) debba ricordartene.
+
+**È opt-in di proposito** — l'hook lascia `docs/codedna-wiki.md` come modifica non in stage dopo ogni commit: è esattamente ciò che vuoi per l'auto-sync, ma sorprende chi vuole solo l'installazione base.
+
+| Invocazione | Comportamento |
+|---|---|
+| `codedna install` | Chiede in modo interattivo (`y/N`, default no) quando gira in un TTY. In CI / contesti in pipe il default sicuro è **saltare**. |
+| `codedna install --with-wiki-sync` | Installa l'hook incondizionatamente, senza prompt. Da usare negli script. |
+| `codedna install --no-wiki-sync` | Salta l'hook incondizionatamente e sopprime il prompt. Da usare per un'installazione automatica pulita in ambienti che il runtime potrebbe scambiare per un TTY. |
+
+L'hook è **non bloccante** (qualsiasi fallimento dentro `codedna wiki sync` viene silenziato con `\|\| true`), quindi una rigenerazione della wiki non rompe mai `git commit`. Segue anche la stessa disciplina di skip-se-esiste dell'hook pre-commit — se hai già un `.git/hooks/post-commit`, `codedna install` non lo sovrascrive (cerca un marker `CodeDNA` nel corpo per decidere se saltare o reinstallare).
+
+> **Per gli agenti che leggono questo:** quando esegui un `codedna install` automatico (per esempio dentro uno script che generi per l'utente), passa `--with-wiki-sync` o `--no-wiki-sync` in modo esplicito. Non fare affidamento sul prompt — è una comodità per gli umani e può essere saltato nei contesti non-TTY.
+
+**Il layer wiki in azione** — il campo opt-in `wiki:` e la vista a grafo di Obsidian:
+
+<p align="center">
+  <img src="./docs/codedna-wiki-flow-en.gif" width="600" alt="campo wiki: — due percorsi" />
+</p>
+
+<p align="center">
+  <img src="./docs/obsidian.png" width="720" alt="Vista a grafo Obsidian di un progetto reale annotato con CodeDNA" />
+</p>
 
 > **Supporto linguaggi:** Python è il linguaggio più testato. PHP, TypeScript/JavaScript, Go, Java, Kotlin, Ruby, Rust e C# usano tree-sitter; Swift e VB.NET usano parser strutturali. Gli adapter non-Python hanno avuto meno utilizzo reale. Per export errati, problemi di formato o casi limite, apri una [pull request](https://github.com/Larens94/codedna/pulls) o una [issue](https://github.com/Larens94/codedna/issues).
 >
@@ -208,6 +237,8 @@ Nessun grep. Nessuna lettura di 18 file. Nessuna riscoperta di vincoli.
 
 ## Evidenze
 
+> Le tabelle sotto riportano esperimenti storici; gli artifact grezzi delle run non sono attualmente inclusi in questo checkout. Vedi [la nota di riproducibilità del benchmark](docs/benchmark.md) prima di interpretare le cifre come riproducibili in modo indipendente.
+
 ### Gli agenti trovano i file giusti più velocemente
 
 SWE-bench, bug Django, 3 run per condizione. Stesso prompt, stessi tool. **Unica differenza: annotazioni CodeDNA.**
@@ -220,7 +251,7 @@ SWE-bench, bug Django, 3 run per condizione. Stesso prompt, stessi tool. **Unica
 
 **Stabilità più che fortuna.** Su DeepSeek il vantaggio non è solo media più alta — è varianza più bassa. Sui task 11808 e 13121, la std di CodeDNA su 3 run è 0.00 (stesso risultato ogni volta), mentre quella del control è 0.20–0.25 (l'agente a volte indovina, a volte no). Tutti i 10/10 task favoriscono CodeDNA, nessuna inversione. L'agente con annotazioni lavora per **comprensione strutturale**, non per caso.
 
-> 6 dei 10 task DeepSeek (13121, 15629, 16263, 11400, 11883, 11808) sono stati eseguiti in modo indipendente da [@fabioscialanga](https://github.com/fabioscialanga) e contribuiti via PR. Replica indipendente su macchina separata con lo stesso protocollo.
+> 6 dei 10 task DeepSeek (13121, 15629, 16263, 11400, 11883, 11808) sono stati eseguiti in modo indipendente da [@fabioscialanga](https://github.com/fabioscialanga) e contribuiti via [PR #2](https://github.com/Larens94/codedna/pull/2). Replica indipendente su macchina separata con lo stesso protocollo.
 
 ### Gli agenti correggono il pattern giusto
 
@@ -341,7 +372,7 @@ rules:   get_fqdn() ritorna hostname unicode raw — i chiamanti devono gestire 
 
 </details>
 
-> [Benchmark completo](docs/benchmark.md) · [Dettagli esperimenti](docs/experiments.md) · [Dati grezzi](benchmark_agent/runs/)
+> [Benchmark completo](docs/benchmark.md) · [Dettagli esperimenti](docs/experiments.md) · [Sessioni di test degli agenti](docs/agent-tests.md) · [Dati grezzi](benchmark_agent/runs/)
 
 ---
 
@@ -401,7 +432,7 @@ Quattro livelli, come uno zoom:
   Livello 0            Livello 1              Livello 2            Livello 3
   .codedna        →    header modulo     →    Rules: funzione  →   # Rules: inline
   mappa progetto       exports/used_by        + message:           sopra logica complessa
-                       /related/rules/agent
+                       /rules/agent
 ```
 
 > Vedi anche: [diagramma architettura](docs/diagrams/codedna_architecture.svg)
@@ -431,7 +462,7 @@ Quattro livelli, come uno zoom:
 > Vedi anche: [diagramma ciclo di vita message](docs/diagrams/codedna_message_lifecycle.svg)
 
 **Header per linguaggio:**
-- **Tutti i linguaggi** — header L1 completo: `exports:` + `used_by:` + `related:` + `rules:` + `agent:` + `message:`
+- **Tutti i linguaggi** — header L1 completo: `exports:` + `used_by:` + `rules:` + `agent:` + `message:`
 - **Tutti i linguaggi sorgente** — anche L2: docstring `Rules:` a livello di funzione (Python, Go, TypeScript, PHP, Java, Kotlin, Ruby)
 - **Template engine** — solo L1 (Blade, Jinja2, ERB, Handlebars, Razor, Vue SFC, Svelte)
 
@@ -459,8 +490,10 @@ codedna mode agent    # protocollo completo
 | | |
 |---|---|
 | [SPEC.md](./SPEC.md) | Specifica del protocollo v0.9 |
-| [docs/languages.md](docs/languages.md) | 12 linguaggi, 28 estensioni, 7 famiglie di template, framework awareness |
+| [AGENTS.md](./AGENTS.md) | Protocollo v0.9 per Codex, OpenCode, Aider e gli altri runtime |
+| [docs/languages.md](docs/languages.md) | 13 linguaggi di programmazione, 29 estensioni, template engine, framework awareness |
 | [docs/benchmark.md](docs/benchmark.md) | Risultati SWE-bench, integrità annotazioni |
+| [docs/agent-tests.md](docs/agent-tests.md) | Sessioni reali di agenti AI — controllo vs CodeDNA su task SWE-bench |
 | [docs/experiments.md](docs/experiments.md) | Esperimenti multi-agente |
 | [CONTRIBUTING.md](./CONTRIBUTING.md) | Setup sviluppo, guida ai contributi |
 
@@ -473,10 +506,10 @@ Tutti i componenti sono funzionanti e testati — il protocollo, la CLI e il ben
 | Area | Cosa funziona | Prossimi passi |
 |---|---|---|
 | **Protocollo v0.9** | `exports:` `used_by:` `related:` `rules:` `agent:` `message:` — tutti i campi implementati | Auto-generazione `related:` via LLM, rilevamento annotazioni stale |
-| **CLI** | `init` `update` `refresh` `check` `verify` `impact` `doctor` `manifest` `mode` `install` — 12 linguaggi | Pubblicazione PyPI, ulteriore verifica semantica cross-cutting |
+| **CLI** | `init` `update` `refresh` `check` `verify` `impact` `doctor` `manifest` `mode` `install` — 13 linguaggi di programmazione | Pubblicazione PyPI, verifica semantica cross-cutting |
 | **Benchmark** | 10 task Django (DeepSeek +17pp p=0.001), +13pp (Gemini Flash p=0.040) | Condizione placebo, effect size, 20+ task, 5+ modelli |
 | **Integrazioni** | Plugin Claude Code, Cursor, Copilot, Cline, OpenCode, Windsurf hooks | Estensione VS Code, GitHub Action per CI |
-| **Linguaggi** | Python, PHP, TypeScript, Go, Java, Kotlin, Ruby, Rust, C#, VB.NET, Swift + 7 template engine | Più test su progetti reali non-Python |
+| **Linguaggi** | Python, PHP, TypeScript/JavaScript, Go, Java, Kotlin, Ruby, Rust, C#, VB.NET, Swift + 7 famiglie di template | Più test su progetti reali non-Python |
 | **Ricerca** | Esperimenti multi-agente (98.2% adozione, 1.6x più veloce), benchmark SWE-bench | Preprint arXiv, studio placebo + ablazione |
 
 ---
@@ -493,7 +526,13 @@ I dati sono riproducibili e la specifica è aperta. [ko-fi.com/codedna](https://
 
 ---
 
-[![Star History Chart](https://api.star-history.com/svg?repos=Larens94/codedna&type=Date)](https://star-history.com/#Larens94/codedna&Date)
+## Star History
+
+<p align="center">
+  <a href="https://www.star-history.com/?repos=Larens94%2Fcodedna&amp;type=timeline&amp;logscale=&amp;legend=bottom-right">
+    <img src="https://api.star-history.com/svg?repos=Larens94/codedna&amp;type=Timeline&amp;legend=bottom-right" alt="Timeline Star History di CodeDNA" />
+  </a>
+</p>
 
 ## Contributi
 
