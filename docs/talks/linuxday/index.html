@@ -1,0 +1,461 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>CodeDNA — Linux Day</title>
+<style>
+  :root {
+    --bg: #f4f1ea;
+    --ink: #1c1917;
+    --muted: #57534e;
+    --line: #e7e5e4;
+    --card: #fffcf7;
+    --indigo: #4338ca;
+    --indigo-soft: #eef2ff;
+    --stone: #d6d3d1;
+    --good: #047857;
+    --good-soft: #ecfdf5;
+    --amber: #b45309;
+    --amber-soft: #fffbeb;
+  }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: #111; overflow: hidden; font-family: "Segoe UI", "Helvetica Neue", sans-serif; color: var(--ink); }
+  #viewport { width: 100vw; height: 100vh; position: relative; }
+  .stage { width: 1920px; height: 1080px; position: absolute; left: 50%; top: 50%; transform-origin: center center; }
+  .slide { display: none; width: 1920px; height: 1080px; padding: 68px 84px 88px; background: var(--bg); position: relative; }
+  .slide.active { display: block; }
+  .kicker { font-size: 22px; letter-spacing: 0.14em; text-transform: uppercase; color: var(--indigo); font-weight: 700; margin: 0 0 18px; }
+  h1 { font-size: 84px; line-height: 1.02; margin: 0 0 22px; letter-spacing: -0.03em; font-weight: 750; }
+  h2 { font-size: 54px; line-height: 1.08; margin: 0 0 28px; letter-spacing: -0.03em; font-weight: 720; }
+  .sub { font-size: 32px; line-height: 1.35; color: var(--muted); margin: 0; max-width: 1400px; }
+  .footer { position: absolute; left: 84px; right: 84px; bottom: 32px; display: flex; justify-content: space-between; font-size: 20px; color: var(--muted); }
+  .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 28px; }
+  .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 36px; }
+  .card { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 32px 34px; }
+  .card h3 { margin: 0 0 12px; font-size: 32px; }
+  .card p { margin: 0; font-size: 28px; line-height: 1.35; color: #292524; }
+  .tag { display: inline-block; font-size: 18px; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase; color: var(--indigo); background: var(--indigo-soft); border-radius: 999px; padding: 6px 12px; margin-bottom: 16px; }
+  .banner { margin-top: 28px; background: var(--ink); color: white; border-radius: 18px; padding: 22px 28px; font-size: 32px; font-weight: 650; }
+  .levels { display: grid; grid-template-columns: repeat(4, 1fr); gap: 22px; margin-top: 12px; }
+  .level { background: var(--card); border: 1px solid var(--line); border-radius: 22px; padding: 28px 26px 32px; min-height: 460px; }
+  .level .n { font-size: 22px; font-weight: 800; color: var(--indigo); letter-spacing: 0.08em; }
+  .level h3 { font-size: 36px; margin: 18px 0 14px; letter-spacing: -0.02em; }
+  .level p { font-size: 26px; line-height: 1.35; margin: 0; color: #292524; }
+  pre { margin: 0; background: #1c1917; color: #f5f5f4; border-radius: 22px; padding: 36px 40px; font-family: "Cascadia Code", "SF Mono", ui-monospace, monospace; font-size: 28px; line-height: 1.48; overflow: hidden; }
+  .c-key { color: #a5b4fc; }
+  .c-str { color: #fde68a; }
+  .call p { font-size: 28px; line-height: 1.35; margin: 0 0 18px; }
+  .call strong { color: var(--indigo); }
+  .fields { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+  .field { background: var(--card); border-radius: 22px; padding: 28px 32px; border-top: 8px solid var(--indigo); }
+  .field h3 { margin: 0 0 10px; font-size: 36px; font-family: ui-monospace, monospace; }
+  .field p { margin: 0; font-size: 28px; line-height: 1.35; }
+  .flow { display: grid; grid-template-columns: 280px 70px 520px 70px 1fr; align-items: center; margin-top: 20px; }
+  .node { background: var(--card); border: 1px solid var(--line); border-radius: 20px; padding: 22px 24px; }
+  .node h3 { margin: 0 0 8px; font-size: 28px; }
+  .node p { margin: 0; font-size: 22px; line-height: 1.35; color: #44403c; }
+  .arrow { text-align: center; font-size: 42px; color: var(--indigo); }
+  .split-paths { display: grid; gap: 16px; }
+  .path { border-radius: 18px; padding: 18px 22px; }
+  .path.yes { background: var(--indigo-soft); }
+  .path.no { background: var(--good-soft); }
+  .path b { display: block; font-size: 22px; margin-bottom: 4px; }
+  .path span { font-size: 24px; line-height: 1.3; }
+  .legend { display: flex; gap: 28px; font-size: 22px; margin: 0 0 8px; }
+  .sw { display: inline-block; width: 18px; height: 18px; border-radius: 4px; margin-right: 8px; vertical-align: -2px; }
+  .note { font-size: 22px; color: var(--muted); margin-top: 16px; }
+  .pair { display: grid; grid-template-columns: 1fr 1fr; gap: 28px; }
+  .stat { background: var(--card); border-radius: 22px; padding: 28px 32px; border: 1px solid var(--line); }
+  .stat .lbl { font-size: 22px; color: var(--muted); font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; }
+  .stat .big { font-size: 72px; font-weight: 760; letter-spacing: -0.04em; margin: 8px 0; }
+  .stat .big.good { color: var(--good); }
+  .stat p { margin: 0; font-size: 26px; line-height: 1.35; }
+  .quote { font-size: 30px; line-height: 1.35; background: var(--amber-soft); border-radius: 18px; padding: 22px 26px; margin: 0 0 22px; }
+  .cmds { background: #1c1917; color: #f5f5f4; border-radius: 22px; padding: 28px 34px; font-family: ui-monospace, monospace; font-size: 28px; line-height: 1.7; }
+  .cmds .c { color: #a5b4fc; }
+  ul.clean { margin: 8px 0 0; padding: 0; list-style: none; }
+  ul.clean li { font-size: 32px; line-height: 1.35; padding: 14px 0 14px 36px; position: relative; }
+  ul.clean li::before { content: ""; position: absolute; left: 0; top: 28px; width: 14px; height: 14px; border-radius: 50%; background: var(--indigo); }
+  .title-slide h1 { font-size: 108px; }
+  .title-slide .sub { font-size: 40px; max-width: 1500px; color: #292524; }
+  .pills { display: flex; gap: 14px; margin-top: 36px; flex-wrap: wrap; }
+  .pill { border: 1px solid var(--line); background: var(--card); border-radius: 999px; padding: 12px 18px; font-size: 24px; }
+  #notes { display: none; position: fixed; left: 0; right: 0; bottom: 0; background: #1c1917; color: #f5f5f4; padding: 18px 28px 22px; font-size: 20px; line-height: 1.4; z-index: 5; max-height: 28vh; overflow: auto; }
+  body.show-notes #notes { display: block; }
+  @media print {
+    html, body { overflow: visible; background: white; }
+    #viewport { height: auto; }
+    .stage { position: static; transform: none !important; left: auto; top: auto; }
+    .slide { display: block; page-break-after: always; }
+    #notes { display: none !important; }
+  }
+</style>
+</head>
+<body>
+<div id="viewport">
+  <div class="stage" id="stage">
+
+    <section class="slide title-slide active" data-notes="Apri con la tesi, non con la biografia. Venti minuti: problema, protocollo portatile, wiki come piano superiore, tre misure.">
+      <p class="kicker">FreeCircle · Linux Day · 20 minuti</p>
+      <h1>CodeDNA</h1>
+      <p class="sub">Un protocollo portatile nel sorgente per gli agenti AI.</p>
+      <div class="pills">
+        <span class="pill">Il file è il canale</span>
+        <span class="pill">Portatile con git</span>
+        <span class="pill">MIT · open source</span>
+      </div>
+      <div class="footer"><span>Frecce per avanzare · N note del relatore · F schermo intero</span><span>01 / 14</span></div>
+    </section>
+
+    <section class="slide" data-notes="Tre storie vere di sessioni diverse. Non dire che gli agenti sono stupidi: non hanno il contesto. Chiudi sulla frase in basso e passa.">
+      <p class="kicker">Il problema</p>
+      <h2>La conoscenza muore tra una sessione e l’altra.</h2>
+      <div class="grid3">
+        <article class="card">
+          <span class="tag">Agente A</span>
+          <h3>Sistema il bug</h3>
+          <p>Modifica <b>utils.py</b>. Non sa che 18 file lo importano. Pubblica una rottura.</p>
+        </article>
+        <article class="card">
+          <span class="tag">Agente B</span>
+          <h3>Riscopre il vincolo</h3>
+          <p>Una settimana dopo, venti minuti per ritrovare una regola che A aveva già capito e non aveva scritto.</p>
+        </article>
+        <article class="card">
+          <span class="tag">Agente C</span>
+          <h3>Salta il filtro</h3>
+          <p>Chiama <b>get_invoices()</b> senza escludere i tenant sospesi. Il requisito stava in un altro file.</p>
+        </article>
+      </div>
+      <div class="banner">Ogni agente riparte da zero. Modello diverso, strumento diverso, sessione diversa.</div>
+      <div class="footer"><span>Il problema</span><span>02 / 14</span></div>
+    </section>
+
+    <section class="slide" data-notes="Questo è il punto che vogliono sentire in un Linux Day. Portatile al 100% perché sta nel sorgente. Nessun servizio da raggiungere. Le annotazioni sono corte di proposito: poche decine di token.">
+      <p class="kicker">La tesi</p>
+      <h2>Portatile al 100%, perché sta nel sorgente.</h2>
+      <p class="sub">Chi clona il repository ha il contesto. Su qualsiasi macchina, con qualsiasi agente.</p>
+      <div class="grid3" style="margin-top: 36px;">
+        <article class="card">
+          <h3>Viaggia con git</h3>
+          <p>Il protocollo è nel file, accanto al codice che descrive. Un clone basta.</p>
+        </article>
+        <article class="card">
+          <h3>Qualunque agente</h3>
+          <p>Altro modello, altro strumento, altra sessione. Legge le stesse note. Nessun fine-tuning.</p>
+        </article>
+        <article class="card">
+          <h3>Nessun servizio</h3>
+          <p>Per usarlo non serve una memoria esterna, un database vettoriale o un account.</p>
+        </article>
+      </div>
+      <div class="footer"><span>Portabilità</span><span>03 / 14</span></div>
+    </section>
+
+    <section class="slide" data-notes="Non è un commento in cima al file. Quattro zoom. Lo zero è la mappa di progetto .codedna. Poi header, regole di funzione, note inline. Trenta secondi per livello, senza leggere la specifica.">
+      <p class="kicker">Il protocollo</p>
+      <h2>Quattro livelli, come uno zoom.</h2>
+      <div class="levels">
+        <article class="level">
+          <div class="n">LIVELLO 0</div>
+          <h3>.codedna</h3>
+          <p>Mappa del progetto: pacchetti, dipendenze, file chiave. Si legge prima di aprire il codice.</p>
+        </article>
+        <article class="level">
+          <div class="n">LIVELLO 1</div>
+          <h3>Header del modulo</h3>
+          <p>exports, used_by, related, rules, message. Poche decine di token, in cima al file.</p>
+        </article>
+        <article class="level">
+          <div class="n">LIVELLO 2</div>
+          <h3>Rules sulla funzione</h3>
+          <p>Il vincolo sta sulla funzione che lo deve rispettare, non in un documento a parte.</p>
+        </article>
+        <article class="level">
+          <div class="n">LIVELLO 3</div>
+          <h3># Rules inline</h3>
+          <p>Una riga sopra la logica non ovvia: un if, un ordine di operazioni, un caso limite.</p>
+        </article>
+      </div>
+      <div class="footer"><span>Quattro livelli</span><span>04 / 14</span></div>
+    </section>
+
+    <section class="slide" data-notes="Leggi il file ad alta voce, solo i campi. used_by con cascade: se cambio questo, aggiorno anche quello. rules: filtrare prima della somma. wiki: il puntatore c’è, quindi la pagina va letta. Non spiegare ancora tutti i campi: la slide dopo.">
+      <p class="kicker">Esempio a video</p>
+      <h2>Un file basta per orientarsi.</h2>
+      <div class="grid2">
+        <pre><span class="c-str">"""revenue.py — Ricavi mensili.</span>
+
+<span class="c-key">exports:</span> monthly_revenue(year, month) -&gt; dict
+<span class="c-key">used_by:</span> api/reports.py → revenue_route
+        api/serializers.py → Schema [cascade]
+<span class="c-key">related:</span> billing/currency.py — multi-valuta
+<span class="c-key">wiki:</span>    docs/wiki/revenue.md
+<span class="c-key">rules:</span>   get_invoices() ritorna TUTTI i tenant
+        filtrare is_suspended() PRIMA della somma
+<span class="c-key">message:</span> arrotondamento multi-valuta
+<span class="c-str">"""</span></pre>
+        <div class="call">
+          <p><strong>used_by</strong> — due file dipendono da questo. Uno è cascade: se cambio il contratto, va aggiornato.</p>
+          <p><strong>rules</strong> — il filtro sui tenant sospesi va applicato prima della somma. C non può più saltarlo.</p>
+          <p><strong>wiki</strong> — la pagina esiste. L’agente sa che l’header non gli basta.</p>
+        </div>
+      </div>
+      <div class="footer"><span>Esempio</span><span>05 / 14</span></div>
+    </section>
+
+    <section class="slide" data-notes="Quattro domande diverse. used_by chi mi importa. related chi fa la stessa cosa senza importarmi. rules il meccanismo, non la patch. message la staffetta: si promuove a regola solo se il successivo conferma.">
+      <p class="kicker">I campi non sono sinonimi</p>
+      <h2>Quattro domande, quattro risposte.</h2>
+      <div class="fields">
+        <article class="field">
+          <h3>used_by:</h3>
+          <p>Chi importa questo file. È il grafo inverso: l’agente lo segue invece di cercare in tutto il repository.</p>
+        </article>
+        <article class="field">
+          <h3>related:</h3>
+          <p>Chi fa la stessa cosa senza importarmi. Il bug trasversale, senza una catena di import.</p>
+        </article>
+        <article class="field">
+          <h3>rules:</h3>
+          <p>Il meccanismo, non la soluzione. «La conversione timezone avviene prima», non «modifica questi tre file».</p>
+        </article>
+        <article class="field">
+          <h3>message:</h3>
+          <p>Nota per l’agente successivo. Se la conferma, diventa una rules. Se non torna, la scarta con un motivo.</p>
+        </article>
+      </div>
+      <div class="footer"><span>I campi</span><span>06 / 14</span></div>
+    </section>
+
+    <section class="slide" data-notes="Esempio di armonia, non di sostituzione. CodeDNA non rimpiazza la LLM wiki. La wiki è il piano superiore per ciò che non entra nei token. Se il puntatore manca, non si va a cercare una pagina. CodeDNA genera già questa wiki, pattern di Karpathy: codedna wiki sync. Nel file la verità strutturale, nella wiki la visione d’insieme.">
+      <p class="kicker">Memoria esterna</p>
+      <h2>La wiki collabora. Non è un prerequisito.</h2>
+      <p class="sub">Le annotazioni restano corte. Quando una regola non ci entra, il campo wiki: punta al piano superiore.</p>
+      <div class="flow">
+        <div class="node">
+          <h3>Agente</h3>
+          <p>Apre il sorgente. Il contesto è già lì.</p>
+        </div>
+        <div class="arrow">→</div>
+        <div class="node">
+          <h3>file.py</h3>
+          <p>Header di poche decine di token. Portatile con il clone.</p>
+        </div>
+        <div class="arrow">→</div>
+        <div class="split-paths">
+          <div class="path yes">
+            <b>wiki: presente</b>
+            <span>Legge la pagina LLM-wiki prima di modificare. Visione che un file solo non contiene.</span>
+          </div>
+          <div class="path no">
+            <b>wiki: assente</b>
+            <span>L’header basta. Nessuno cerca un documento che non esiste.</span>
+          </div>
+        </div>
+      </div>
+      <p class="note">CodeDNA genera già questa memoria, nel pattern LLM-wiki di Karpathy. Nel file la verità strutturale. Nella wiki il racconto più lungo. Si usano insieme.</p>
+      <div class="footer"><span>Armonia con la LLM wiki</span><span>07 / 14</span></div>
+    </section>
+
+    <section class="slide" data-notes="Stesso prompt, stessi tool, stessi bug Django di SWE-bench. Metrica: F1 dei file aperti rispetto al ground truth. DeepSeek dal 51 al 68, 10 task su 10, p=0,001. Flash dal 60 al 72, p=0,040. Pro dal 60 al 69, p=0,11, non significativo: dillo, non nasconderlo. Sei task DeepSeek replicati da un’altra persona. I numeri sono risultati riportati, le run grezze non sono nel repo.">
+      <p class="kicker">Navigazione · SWE-bench, bug Django</p>
+      <h2>Trova i file giusti.</h2>
+      <div class="legend">
+        <span><i class="sw" style="background:#d6d3d1"></i>Senza annotazioni</span>
+        <span><i class="sw" style="background:#4338ca"></i>Con CodeDNA</span>
+        <span>F1 sui file aperti · unica differenza: le annotazioni</span>
+      </div>
+      <svg viewBox="0 0 1600 560" width="1600" height="500" aria-label="F1 di navigazione per tre modelli">
+        <line x1="90" y1="40" x2="90" y2="430" stroke="#d6d3d1" stroke-width="2"/>
+        <line x1="90" y1="430" x2="1520" y2="430" stroke="#d6d3d1" stroke-width="2"/>
+        <g font-family="Segoe UI, sans-serif" font-size="20" fill="#57534e">
+          <text x="78" y="44" text-anchor="end">100</text>
+          <text x="78" y="141" text-anchor="end">75</text>
+          <text x="78" y="238" text-anchor="end">50</text>
+          <text x="78" y="335" text-anchor="end">25</text>
+          <text x="78" y="434" text-anchor="end">0</text>
+        </g>
+        <g stroke="#e7e5e4" stroke-width="1">
+          <line x1="90" y1="44" x2="1520" y2="44"/>
+          <line x1="90" y1="140" x2="1520" y2="140"/>
+          <line x1="90" y1="237" x2="1520" y2="237"/>
+          <line x1="90" y1="334" x2="1520" y2="334"/>
+        </g>
+        <!-- DeepSeek 51 / 68 -->
+        <rect x="220" y="233" width="90" height="197" rx="8" fill="#d6d3d1"/>
+        <rect x="324" y="167" width="90" height="263" rx="8" fill="#4338ca"/>
+        <text x="265" y="220" text-anchor="middle" font-size="24" font-family="Segoe UI" fill="#1c1917" font-weight="700">51%</text>
+        <text x="369" y="154" text-anchor="middle" font-size="24" font-family="Segoe UI" fill="#1c1917" font-weight="700">68%</text>
+        <text x="317" y="470" text-anchor="middle" font-size="26" font-family="Segoe UI" font-weight="700" fill="#1c1917">DeepSeek Chat</text>
+        <text x="317" y="502" text-anchor="middle" font-size="22" font-family="Segoe UI" fill="#047857">+17 · p=0,001 · 10/10</text>
+        <!-- Flash 60 / 72 -->
+        <rect x="640" y="198" width="90" height="232" rx="8" fill="#d6d3d1"/>
+        <rect x="744" y="152" width="90" height="278" rx="8" fill="#4338ca"/>
+        <text x="685" y="185" text-anchor="middle" font-size="24" font-family="Segoe UI" fill="#1c1917" font-weight="700">60%</text>
+        <text x="789" y="139" text-anchor="middle" font-size="24" font-family="Segoe UI" fill="#1c1917" font-weight="700">72%</text>
+        <text x="737" y="470" text-anchor="middle" font-size="26" font-family="Segoe UI" font-weight="700" fill="#1c1917">Gemini 2.5 Flash</text>
+        <text x="737" y="502" text-anchor="middle" font-size="22" font-family="Segoe UI" fill="#047857">+13 · p=0,040</text>
+        <!-- Pro 60 / 69 -->
+        <rect x="1060" y="198" width="90" height="232" rx="8" fill="#d6d3d1"/>
+        <rect x="1164" y="163" width="90" height="267" rx="8" fill="#a8a29e"/>
+        <text x="1105" y="185" text-anchor="middle" font-size="24" font-family="Segoe UI" fill="#1c1917" font-weight="700">60%</text>
+        <text x="1209" y="150" text-anchor="middle" font-size="24" font-family="Segoe UI" fill="#1c1917" font-weight="700">69%</text>
+        <text x="1157" y="470" text-anchor="middle" font-size="26" font-family="Segoe UI" font-weight="700" fill="#1c1917">Gemini 2.5 Pro</text>
+        <text x="1157" y="502" text-anchor="middle" font-size="22" font-family="Segoe UI" fill="#b45309">+9 · p=0,11 · non significativo</text>
+      </svg>
+      <div class="footer"><span>Risultati riportati dal progetto</span><span>08 / 14</span></div>
+    </section>
+
+    <section class="slide" data-notes="Task 11532, domini unicode, cinque file che condividono IDNA e non si importano. Controllo 2 su 5. used_by da solo ancora 2 su 5. Con related 5 su 5. È un caso, non la media del benchmark. L’annotazione diceva che condividono la logica di encoding, non quale riga cambiare. Sul benchmark largo, dove non c’è catena di chiamate, used_by da solo non basta: è il motivo per cui related esiste.">
+      <p class="kicker">Bug trasversale · Django #11532</p>
+      <h2>related: trova chi non ti importa.</h2>
+      <p class="sub">Cinque file con la stessa logica IDNA. Nessuna catena di import li collega.</p>
+      <div class="grid3" style="margin-top: 36px;">
+        <article class="stat">
+          <div class="lbl">Senza annotazioni</div>
+          <div class="big">2/5</div>
+          <svg viewBox="0 0 280 28" width="280" height="28"><rect width="280" height="28" rx="8" fill="#e7e5e4"/><rect width="112" height="28" rx="8" fill="#d6d3d1"/></svg>
+          <p style="margin-top:12px">F1 40%. Solo la cartella mail.</p>
+        </article>
+        <article class="stat">
+          <div class="lbl">Solo used_by:</div>
+          <div class="big">2/5</div>
+          <svg viewBox="0 0 280 28" width="280" height="28"><rect width="280" height="28" rx="8" fill="#e7e5e4"/><rect width="112" height="28" rx="8" fill="#a8a29e"/></svg>
+          <p style="margin-top:12px">F1 40%. Gli import non arrivano lì.</p>
+        </article>
+        <article class="stat">
+          <div class="lbl">used_by: + related:</div>
+          <div class="big good">5/5</div>
+          <svg viewBox="0 0 280 28" width="280" height="28"><rect width="280" height="28" rx="8" fill="#4338ca"/></svg>
+          <p style="margin-top:12px">F1 100%. Un caso riportato, non una media.</p>
+        </article>
+      </div>
+      <div class="footer"><span>Il link semantico</span><span>09 / 14</span></div>
+    </section>
+
+    <section class="slide" data-notes="Questo non è l’F1 di navigazione. È un altro esperimento: qualità della patch, Claude Sonnet, bug timezone su Trunc. La regola diceva che la conversione deve avvenire prima delle funzioni datetime. Senza: 6 file su 7 e 5 modifiche fallite. Con: 7 su 7 e zero modifiche fallite. Se chiedono del 13495 nella tabella F1: lì alcuni modelli peggiorano. Sono due misure diverse.">
+      <p class="kicker">Qualità della patch · Django #13495 · Claude Sonnet</p>
+      <h2>La regola dice l’ordine, non i file.</h2>
+      <div class="quote">La conversione di timezone deve avvenire prima delle funzioni datetime.</div>
+      <div class="pair">
+        <article class="stat">
+          <div class="lbl">Senza CodeDNA</div>
+          <div class="big">6/7</div>
+          <p>File allineati alla patch ufficiale. Cinque modifiche fallite. L’agente vede la funzione giusta e non la tocca.</p>
+        </article>
+        <article class="stat">
+          <div class="lbl">Con CodeDNA</div>
+          <div class="big good">7/7</div>
+          <p>File allineati alla patch ufficiale. Nessuna modifica fallita.</p>
+        </article>
+      </div>
+      <div class="footer"><span>Un bug, stesso modello</span><span>10 / 14</span></div>
+    </section>
+
+    <section class="slide" data-notes="Due squadre da 5 agenti, stesso compito. RPG: 1 ora e 59 contro 3 ore e 11, gioco giocabile contro scena statica. Senza i contratti il direttore occupa i namespace e i moduli dichiarati non vengono scritti. SaaS: 83 minuti contro 99, adozione 98% senza promemoria, complessità 2,1 contro 3,1. Il primo agente scrive used_by anche per file che non esistono ancora. Se chiedono lo score di validazione SaaS: era più basso per un trattino lungo finito in una rules. Dillo solo se emerge.">
+      <p class="kicker">Squadre da 5 agenti · stesso compito</p>
+      <h2>Il codice trasporta il contratto.</h2>
+      <div class="pair">
+        <article class="stat">
+          <div class="lbl">RPG · DeepSeek Chat</div>
+          <div class="big">1,6×</div>
+          <p>1 h 59 min contro 3 h 11 min. Con CodeDNA il gioco è giocabile. Senza, una scena statica: moduli dichiarati e mai scritti.</p>
+        </article>
+        <article class="stat">
+          <div class="lbl">SaaS · DeepSeek R1</div>
+          <div class="big">98%</div>
+          <p>File annotati senza promemoria a metà sessione. 83 min contro 99. Complessità ciclomatica 2,1 contro 3,1.</p>
+        </article>
+      </div>
+      <div class="banner">Il primo agente scrive used_by: anche per file che ancora non esistono.</div>
+      <div class="footer"><span>Coordinamento senza messaggi diretti</span><span>11 / 14</span></div>
+    </section>
+
+    <section class="slide" data-notes="Chiudi sul gesto pratico. Tre comandi. Poi una frase: domani l’altro agente, o un altro strumento, legge le stesse note. Se c’è tempo, mostra un file vero già annotato. Non aprire la specifica.">
+      <p class="kicker">Provarlo</p>
+      <h2>Tre comandi, in locale.</h2>
+      <div class="cmds">
+        <div><span class="c">pipx install</span> git+https://github.com/Larens94/codedna.git</div>
+        <div><span class="c">codedna install</span> --path . --tools codex --no-wiki-sync</div>
+        <div><span class="c">codedna init</span> . --no-llm</div>
+      </div>
+      <div class="grid3" style="margin-top: 28px;">
+        <article class="card"><h3>1 · CLI</h3><p>Python 3.11+. Installazione isolata, senza toccare l’ambiente globale.</p></article>
+        <article class="card"><h3>2 · Strumento</h3><p>Al posto di codex: claude, cursor, copilot, aider e gli altri della tabella.</p></article>
+        <article class="card"><h3>3 · Annota</h3><p>Pass strutturale gratuito: exports e used_by. Le rules semantiche sono un passo dopo, con un modello.</p></article>
+      </div>
+      <div class="footer"><span>MIT · gira in locale</span><span>12 / 14</span></div>
+    </section>
+
+    <section class="slide" data-notes="Slide di credibilità. Non scusarti. Leggi i quattro punti e vai alla chiusura. I numeri sono quelli pubblicati. Le run grezze non sono nel checkout.">
+      <p class="kicker">Come leggere i numeri</p>
+      <h2>Quattro limiti, detti subito.</h2>
+      <ul class="clean">
+        <li>Gemini 2.5 Pro guadagna meno e il risultato non è significativo (p=0,11).</li>
+        <li>Il 5/5 di related: è un caso, il bug unicode. Non è la media del benchmark.</li>
+        <li>Il 7/7 del #13495 è la qualità della patch. L’F1 di navigazione sullo stesso bug, con altri modelli, non racconta la stessa storia.</li>
+        <li>Sono risultati riportati dal progetto. Le run grezze non sono nel repository.</li>
+      </ul>
+      <div class="footer"><span>Trasparenza</span><span>13 / 14</span></div>
+    </section>
+
+    <section class="slide title-slide" data-notes="Ripeti la tesi in una frase e fermati. Il file è il canale. È portatile perché sta nel sorgente. La wiki, quando serve, sta un piano sopra. Domande.">
+      <p class="kicker">In una frase</p>
+      <h1 style="font-size: 72px; max-width: 1600px;">Il contesto viaggia col sorgente.</h1>
+      <p class="sub">CodeDNA lo tiene corto, nel file. La LLM wiki, se il puntatore c’è, tiene il resto. Insieme.</p>
+      <div class="pills">
+        <span class="pill">github.com/Larens94/codedna</span>
+        <span class="pill">MIT</span>
+        <span class="pill">DOI 10.5281/zenodo.19158336</span>
+      </div>
+      <div class="footer"><span>Domande</span><span>14 / 14</span></div>
+    </section>
+
+  </div>
+</div>
+<div id="notes"></div>
+<script>
+(() => {
+  const slides = [...document.querySelectorAll(".slide")];
+  const notes = document.getElementById("notes");
+  const stage = document.getElementById("stage");
+  let i = 0;
+
+  function fit() {
+    const s = Math.min(window.innerWidth / 1920, window.innerHeight / 1080);
+    stage.style.transform = `translate(-50%, -50%) scale(${s})`;
+  }
+
+  function show(n) {
+    i = Math.max(0, Math.min(slides.length - 1, n));
+    slides.forEach((sl, idx) => sl.classList.toggle("active", idx === i));
+    notes.textContent = slides[i].dataset.notes || "";
+    history.replaceState(null, "", "#" + (i + 1));
+  }
+
+  window.addEventListener("resize", fit);
+  document.addEventListener("keydown", (e) => {
+    if (["ArrowRight", "PageDown", " "].includes(e.key)) { e.preventDefault(); show(i + 1); }
+    else if (["ArrowLeft", "PageUp", "Backspace"].includes(e.key)) { e.preventDefault(); show(i - 1); }
+    else if (e.key === "Home") show(0);
+    else if (e.key === "End") show(slides.length - 1);
+    else if (e.key === "n" || e.key === "N") document.body.classList.toggle("show-notes");
+    else if (e.key === "f" || e.key === "F") {
+      if (!document.fullscreenElement) document.documentElement.requestFullscreen();
+      else document.exitFullscreen();
+    }
+  });
+  document.addEventListener("click", (e) => {
+    if (e.target.closest("#notes")) return;
+    show(i + 1);
+  });
+
+  fit();
+  const start = parseInt((location.hash || "").replace("#", ""), 10);
+  show(Number.isFinite(start) && start > 0 ? start - 1 : 0);
+})();
+</script>
+</body>
+</html>

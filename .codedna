@@ -33,14 +33,6 @@ agent_sessions:
   - agent: "gpt-5"
     provider: "openai"
     date: "2026-08-21"
-    session_id: "s_20260821_star_history"
-    task: "Add requested Star History timeline"
-    changed: ["README.md",".codedna"]
-    visited: ["README.md",".codedna"]
-    message: "Replaced the legacy Date-mode Star History badge with a centered Timeline chart linked to the requested star-history.com view and bottom-right legend. Documentation tests pass."
-  - agent: "gpt-5"
-    provider: "openai"
-    date: "2026-08-21"
     session_id: "s_20260821_axl"
     task: "Add native AXL annotation frames"
     changed: ["README-it.md","README.md","SPEC.md","codedna-plugin/README.md","codedna_tool/audit.py","codedna_tool/cli.py","codedna_tool/languages/__init__.py","codedna_tool/languages/base.py","codedna_tool/languages/axl.py","docs/index.html","docs/install.html","docs/languages.md","tests/test_docs.py","tests/test_integration_langs.py","tests/test_language_adapters.py","tests/test_validator.py","tools/pre-commit","tools/validate_manifests.py"]
@@ -70,3 +62,11 @@ agent_sessions:
     changed: ["docs/challenge.md","docs/challenge.it.md","docs/challenge.html","challenge/SUBMISSION_TEMPLATE.md","challenge/SUBMISSION_TEMPLATE.it.md","README.md","README-it.md"]
     visited: ["docs/challenge.md","docs/challenge.it.md","docs/challenge.html","challenge/SUBMISSION_TEMPLATE.md","challenge/SUBMISSION_TEMPLATE.it.md","README.md","README-it.md"]
     message: "Documented experimental agent×language caveat + honesty/Meet review + public lives in challenge rules."
+  - agent: "grok-4.7"
+    provider: "xai"
+    date: "2026-10-07"
+    session_id: "s_20261007_001"
+    task: "Linux Day slide deck for CodeDNA"
+    changed: ["docs/talks/linuxday/index.html","docs/talks/linuxday/codedna-linuxday.pdf",".codedna"]
+    visited: ["docs/talks/linuxday/index.html","SPEC.md","docs/benchmark.md","docs/experiments.md"]
+    message: "14-slide Italian Linux Day deck. Portability, wiki as optional upper layer, and the three reported measurements. Pro is marked non-significant; related 5/5 is one case; patch 7/7 is separate from navigation F1."
