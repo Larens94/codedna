@@ -32,14 +32,6 @@ cross_cutting_patterns: {}
 agent_sessions:
   - agent: "gpt-5"
     provider: "openai"
-    date: "2026-08-21"
-    session_id: "s_20260821_axl"
-    task: "Add native AXL annotation frames"
-    changed: ["README-it.md","README.md","SPEC.md","codedna-plugin/README.md","codedna_tool/audit.py","codedna_tool/cli.py","codedna_tool/languages/__init__.py","codedna_tool/languages/base.py","codedna_tool/languages/axl.py","docs/index.html","docs/install.html","docs/languages.md","tests/test_docs.py","tests/test_integration_langs.py","tests/test_language_adapters.py","tests/test_validator.py","tools/pre-commit","tools/validate_manifests.py"]
-    visited: [".codedna","AGENTS.md","README-it.md","README.md","SPEC.md","codedna-plugin/README.md","codedna_tool/audit.py","codedna_tool/cli.py","codedna_tool/languages/__init__.py","codedna_tool/languages/base.py","codedna_tool/languages/axl.py","docs/index.html","docs/install.html","docs/languages.md","tests/test_docs.py","tests/test_integration_langs.py","tests/test_language_adapters.py","tests/test_validator.py","tools/pre-commit","tools/validate_manifests.py"]
-    message: "Implemented experimental native AXL opcode frames for module and symbol CodeDNA metadata across init, refresh, check, verify, validation, hooks, tests, and docs. Source preservation is covered; AX-IR and compiler propagation remain external AXL compiler responsibilities."
-  - agent: "gpt-5"
-    provider: "openai"
     date: "2026-08-27"
     session_id: "s_20260827_header_parser"
     task: "Unify header parsing and lazy-load LLM"
@@ -70,3 +62,11 @@ agent_sessions:
     changed: ["docs/talks/linuxday/index.html","docs/talks/linuxday/codedna-linuxday.pdf",".codedna"]
     visited: ["docs/talks/linuxday/index.html","SPEC.md","docs/benchmark.md","docs/experiments.md"]
     message: "14-slide Italian Linux Day deck. Portability, wiki as optional upper layer, and the three reported measurements. Pro is marked non-significant; related 5/5 is one case; patch 7/7 is separate from navigation F1."
+  - agent: "grok-4.7"
+    provider: "xai"
+    date: "2026-10-07"
+    session_id: "s_20261007_003"
+    task: "Talk modes and maintenance hooks"
+    changed: ["docs/talks/linuxday/index.html","docs/talks/linuxday/codedna-linuxday.pdf",".codedna"]
+    visited: ["docs/talks/linuxday/index.html","SPEC.md","codedna_tool/cli.py"]
+    message: "Deck is 17 slides. Added signed agent messages, human/semi/agent modes, and maintenance: pre-commit blocks missing headers, tool instructions remind the agent, refresh updates exports/used_by only, wiki sync is opt-in and non-blocking."

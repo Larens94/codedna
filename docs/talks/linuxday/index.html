@@ -105,7 +105,7 @@
         <span class="pill">Portatile con git</span>
         <span class="pill">MIT · open source</span>
       </div>
-      <div class="footer"><span>Frecce per avanzare · N note del relatore · F schermo intero</span><span>01 / 14</span></div>
+      <div class="footer"><span>Frecce per avanzare · N note del relatore · F schermo intero</span><span>01 / 17</span></div>
     </section>
 
     <section class="slide" data-notes="Tre storie vere di sessioni diverse. Non dire che gli agenti sono stupidi: non hanno il contesto. Chiudi sulla frase in basso e passa.">
@@ -129,7 +129,7 @@
         </article>
       </div>
       <div class="banner">Ogni agente riparte da zero. Modello diverso, strumento diverso, sessione diversa.</div>
-      <div class="footer"><span>Il problema</span><span>02 / 14</span></div>
+      <div class="footer"><span>Il problema</span><span>02 / 17</span></div>
     </section>
 
     <section class="slide" data-notes="Questo è il punto che vogliono sentire in un Linux Day. Portatile al 100% perché sta nel sorgente. Nessun servizio da raggiungere. Le annotazioni sono corte di proposito: poche decine di token.">
@@ -150,7 +150,7 @@
           <p>Per usarlo non serve una memoria esterna, un database vettoriale o un account.</p>
         </article>
       </div>
-      <div class="footer"><span>Portabilità</span><span>03 / 14</span></div>
+      <div class="footer"><span>Portabilità</span><span>03 / 17</span></div>
     </section>
 
     <section class="slide" data-notes="Non è un commento in cima al file. Quattro zoom. Lo zero è la mappa di progetto .codedna. Poi header, regole di funzione, note inline. Trenta secondi per livello, senza leggere la specifica.">
@@ -165,7 +165,7 @@
         <article class="level">
           <div class="n">LIVELLO 1</div>
           <h3>Header del modulo</h3>
-          <p>exports, used_by, related, rules, message. Poche decine di token, in cima al file.</p>
+          <p>exports, used_by, related, rules, agent. Poche decine di token, in cima al file.</p>
         </article>
         <article class="level">
           <div class="n">LIVELLO 2</div>
@@ -178,7 +178,7 @@
           <p>Una riga sopra la logica non ovvia: un if, un ordine di operazioni, un caso limite.</p>
         </article>
       </div>
-      <div class="footer"><span>Quattro livelli</span><span>04 / 14</span></div>
+      <div class="footer"><span>Quattro livelli</span><span>04 / 17</span></div>
     </section>
 
     <section class="slide" data-notes="Leggi il file ad alta voce, solo i campi. used_by con cascade: se cambio questo, aggiorno anche quello. rules: filtrare prima della somma. wiki: il puntatore c’è, quindi la pagina va letta. Non spiegare ancora tutti i campi: la slide dopo.">
@@ -194,7 +194,8 @@
 <span class="c-key">wiki:</span>    docs/wiki/revenue.md
 <span class="c-key">rules:</span>   get_invoices() ritorna TUTTI i tenant
         filtrare is_suspended() PRIMA della somma
-<span class="c-key">message:</span> arrotondamento multi-valuta
+<span class="c-key">agent:</span>   claude-sonnet | 2026-03-10
+        message: "arrotondamento multi-valuta"
 <span class="c-str">"""</span></pre>
         <div class="call">
           <p><strong>used_by</strong> — due file dipendono da questo. Uno è cascade: se cambio il contratto, va aggiornato.</p>
@@ -202,10 +203,10 @@
           <p><strong>wiki</strong> — la pagina esiste. L’agente sa che l’header non gli basta.</p>
         </div>
       </div>
-      <div class="footer"><span>Esempio</span><span>05 / 14</span></div>
+      <div class="footer"><span>Esempio</span><span>05 / 17</span></div>
     </section>
 
-    <section class="slide" data-notes="Quattro domande diverse. used_by chi mi importa. related chi fa la stessa cosa senza importarmi. rules il meccanismo, non la patch. message la staffetta: si promuove a regola solo se il successivo conferma.">
+    <section class="slide" data-notes="Quattro domande diverse. used_by chi mi importa. related chi fa la stessa cosa senza importarmi. rules il meccanismo, non la patch. agent è la firma: modello e data. La message sta sotto, ed è la slide dopo.">
       <p class="kicker">I campi non sono sinonimi</p>
       <h2>Quattro domande, quattro risposte.</h2>
       <div class="fields">
@@ -222,11 +223,31 @@
           <p>Il meccanismo, non la soluzione. «La conversione timezone avviene prima», non «modifica questi tre file».</p>
         </article>
         <article class="field">
-          <h3>message:</h3>
-          <p>Nota per l’agente successivo. Se la conferma, diventa una rules. Se non torna, la scarta con un motivo.</p>
+          <h3>agent:</h3>
+          <p>Chi ha lavorato il file: modello, data, cosa ha notato. La message: è la nota appesa a quella firma.</p>
         </article>
       </div>
-      <div class="footer"><span>I campi</span><span>06 / 14</span></div>
+      <div class="footer"><span>I campi</span><span>06 / 17</span></div>
+    </section>
+
+    <section class="slide" data-notes="Leggi le due firme ad alta voce: prima Claude, poi Gemini. La message non è anonima: sta sotto il modello che l’ha scritta. Se il successivo conferma, la nota diventa una rules. Nel file restano le ultime 5 sessioni; la sesta fa uscire la più vecchia. La storia intera resta in git. rules è il vincolo, senza data. agent è il diario.">
+      <p class="kicker">I messaggi</p>
+      <h2>Ogni nota porta il modello che l’ha scritta.</h2>
+      <div class="grid2">
+        <pre><span class="c-key">agent:</span> claude-sonnet | anthropic | 2026-03-10
+       message: "arrotondamento multi-valuta
+                 — da investigare"
+
+<span class="c-key">agent:</span> gemini-2.5-pro | google | 2026-03-18
+       message: "@prev: confermato → promosso
+                 a rules:"</pre>
+        <div class="call">
+          <p><strong>La firma</strong> — modello, provider, data e cosa ha fatto quella sessione. Chi apre il file vede chi ci è passato.</p>
+          <p><strong>Il messaggio</strong> — ipotesi per chi viene dopo. Se torna, diventa una rules. Se non torna, si scarta con un motivo.</p>
+          <p><strong>Le ultime 5</strong> — restano nel file. La più vecchia esce quando ne arriva una sesta. La storia intera resta in git.</p>
+        </div>
+      </div>
+      <div class="footer"><span>agent: e message:</span><span>07 / 17</span></div>
     </section>
 
     <section class="slide" data-notes="Esempio di armonia, non di sostituzione. CodeDNA non rimpiazza la LLM wiki. La wiki è il piano superiore per ciò che non entra nei token. Se il puntatore manca, non si va a cercare una pagina. CodeDNA genera già questa wiki, pattern di Karpathy: codedna wiki sync. Nel file la verità strutturale, nella wiki la visione d’insieme.">
@@ -256,7 +277,7 @@
         </div>
       </div>
       <p class="note">CodeDNA genera già questa memoria, nel pattern LLM-wiki di Karpathy. Nel file la verità strutturale. Nella wiki il racconto più lungo. Si usano insieme.</p>
-      <div class="footer"><span>Armonia con la LLM wiki</span><span>07 / 14</span></div>
+      <div class="footer"><span>Armonia con la LLM wiki</span><span>08 / 17</span></div>
     </section>
 
     <section class="slide" data-notes="Stesso prompt, stessi tool, stessi bug Django di SWE-bench. Metrica: F1 dei file aperti rispetto al ground truth. DeepSeek dal 51 al 68, 10 task su 10, p=0,001. Flash dal 60 al 72, p=0,040. Pro dal 60 al 69, p=0,11, non significativo: dillo, non nasconderlo. Sei task DeepSeek replicati da un’altra persona. I numeri sono risultati riportati, le run grezze non sono nel repo.">
@@ -305,7 +326,7 @@
         <text x="1157" y="470" text-anchor="middle" font-size="26" font-family="Segoe UI" font-weight="700" fill="#1c1917">Gemini 2.5 Pro</text>
         <text x="1157" y="502" text-anchor="middle" font-size="22" font-family="Segoe UI" fill="#b45309">+9 · p=0,11 · non significativo</text>
       </svg>
-      <div class="footer"><span>Risultati riportati dal progetto</span><span>08 / 14</span></div>
+      <div class="footer"><span>Risultati riportati dal progetto</span><span>09 / 17</span></div>
     </section>
 
     <section class="slide" data-notes="Task 11532, domini unicode, cinque file che condividono IDNA e non si importano. Controllo 2 su 5. used_by da solo ancora 2 su 5. Con related 5 su 5. È un caso, non la media del benchmark. L’annotazione diceva che condividono la logica di encoding, non quale riga cambiare. Sul benchmark largo, dove non c’è catena di chiamate, used_by da solo non basta: è il motivo per cui related esiste.">
@@ -332,7 +353,7 @@
           <p style="margin-top:12px">F1 100%. Un caso riportato, non una media.</p>
         </article>
       </div>
-      <div class="footer"><span>Il link semantico</span><span>09 / 14</span></div>
+      <div class="footer"><span>Il link semantico</span><span>10 / 17</span></div>
     </section>
 
     <section class="slide" data-notes="Questo non è l’F1 di navigazione. È un altro esperimento: qualità della patch, Claude Sonnet, bug timezone su Trunc. La regola diceva che la conversione deve avvenire prima delle funzioni datetime. Senza: 6 file su 7 e 5 modifiche fallite. Con: 7 su 7 e zero modifiche fallite. Se chiedono del 13495 nella tabella F1: lì alcuni modelli peggiorano. Sono due misure diverse.">
@@ -351,7 +372,7 @@
           <p>File allineati alla patch ufficiale. Nessuna modifica fallita.</p>
         </article>
       </div>
-      <div class="footer"><span>Un bug, stesso modello</span><span>10 / 14</span></div>
+      <div class="footer"><span>Un bug, stesso modello</span><span>11 / 17</span></div>
     </section>
 
     <section class="slide" data-notes="Due squadre da 5 agenti, stesso compito. RPG: 1 ora e 59 contro 3 ore e 11, gioco giocabile contro scena statica. Senza i contratti il direttore occupa i namespace e i moduli dichiarati non vengono scritti. SaaS: 83 minuti contro 99, adozione 98% senza promemoria, complessità 2,1 contro 3,1. Il primo agente scrive used_by anche per file che non esistono ancora. Se chiedono lo score di validazione SaaS: era più basso per un trattino lungo finito in una rules. Dillo solo se emerge.">
@@ -370,7 +391,55 @@
         </article>
       </div>
       <div class="banner">Il primo agente scrive used_by: anche per file che ancora non esistono.</div>
-      <div class="footer"><span>Coordinamento senza messaggi diretti</span><span>11 / 14</span></div>
+      <div class="footer"><span>Coordinamento senza messaggi diretti</span><span>12 / 17</span></div>
+    </section>
+
+    <section class="slide" data-notes="Tre modalità, non tre protocolli diversi. Tutte hanno header, rules e agent. human: team di persone, niente chat message. semi è il default, umani e agenti insieme: i message ci sono. agent: codebase scritta soprattutto dall’AI, e i nomi delle variabili diventano list_dict_users_from_db. Si cambia con codedna mode.">
+      <p class="kicker">Quanto protocollo vuoi</p>
+      <h2>Umano, semi, agent.</h2>
+      <div class="grid3">
+        <article class="card">
+          <span class="tag">human</span>
+          <h3>Il team è di persone</h3>
+          <p>Header, rules e firma ci sono. Niente message: tra agenti. Niente nomi inventati per le variabili.</p>
+        </article>
+        <article class="card">
+          <span class="tag">semi · default</span>
+          <h3>Persone e agenti</h3>
+          <p>Come human, più i messaggi firmati. Gli agenti si lasciano note. I nomi del codice restano i vostri.</p>
+        </article>
+        <article class="card">
+          <span class="tag">agent</span>
+          <h3>Scrive soprattutto l’AI</h3>
+          <p>Come semi, più i nomi semantici: list_dict_users_from_db. Protocollo completo.</p>
+        </article>
+      </div>
+      <div class="banner">codedna mode semi · si cambia quando cambia chi scrive il codice.</div>
+      <div class="footer"><span>Tre modalità</span><span>13 / 17</span></div>
+    </section>
+
+    <section class="slide" data-notes="Non dire che l’hook riscrive le rules da solo. Il pre-commit, messo da codedna install, blocca il commit se un file in stage non ha l’header. Si salta una volta con git commit --no-verify. Non sovrascrive un hook già tuo. Le rules e la firma le aggiorna chi modifica il file: le istruzioni dello strumento (CLAUDE.md, AGENTS.md, .cursorrules) e gli hook nativi, dove il tool li ha, glielo ricordano. codedna refresh ricalcola solo exports e used_by. Il post-commit della wiki è opt-in, con --with-wiki-sync, e non blocca mai il commit.">
+      <p class="kicker">Per non farla invecchiare</p>
+      <h2>Hook, regole, pre-commit.</h2>
+      <div class="fields">
+        <article class="field">
+          <h3>pre-commit</h3>
+          <p>codedna install lo mette in git. Se un file in stage non ha l’header, il commit si ferma. Una volta si salta con --no-verify.</p>
+        </article>
+        <article class="field">
+          <h3>istruzioni</h3>
+          <p>install scrive CLAUDE.md, AGENTS.md o .cursorrules. L’agente, prima di modificare, legge l’header e lascia la firma.</p>
+        </article>
+        <article class="field">
+          <h3>refresh</h3>
+          <p>codedna refresh ricalcola exports e used_by dal codice. rules e agent non li tocca.</p>
+        </article>
+        <article class="field">
+          <h3>wiki sync</h3>
+          <p>Opt-in: --with-wiki-sync rigenera la LLM wiki dopo il commit. Non blocca mai. Senza il flag, la wiki resta ferma.</p>
+        </article>
+      </div>
+      <div class="footer"><span>La manutenzione sta nel repository</span><span>14 / 17</span></div>
     </section>
 
     <section class="slide" data-notes="Chiudi sul gesto pratico. Tre comandi. Poi una frase: domani l’altro agente, o un altro strumento, legge le stesse note. Se c’è tempo, mostra un file vero già annotato. Non aprire la specifica.">
@@ -386,7 +455,7 @@
         <article class="card"><h3>2 · Strumento</h3><p>Al posto di codex: claude, cursor, copilot, aider e gli altri della tabella.</p></article>
         <article class="card"><h3>3 · Annota</h3><p>Pass strutturale gratuito: exports e used_by. Le rules semantiche sono un passo dopo, con un modello.</p></article>
       </div>
-      <div class="footer"><span>MIT · gira in locale</span><span>12 / 14</span></div>
+      <div class="footer"><span>MIT · gira in locale</span><span>15 / 17</span></div>
     </section>
 
     <section class="slide" data-notes="Slide di credibilità. Non scusarti. Leggi i quattro punti e vai alla chiusura. I numeri sono quelli pubblicati. Le run grezze non sono nel checkout.">
@@ -398,7 +467,7 @@
         <li>Il 7/7 del #13495 è la qualità della patch. L’F1 di navigazione sullo stesso bug, con altri modelli, non racconta la stessa storia.</li>
         <li>Sono risultati riportati dal progetto. Le run grezze non sono nel repository.</li>
       </ul>
-      <div class="footer"><span>Trasparenza</span><span>13 / 14</span></div>
+      <div class="footer"><span>Trasparenza</span><span>16 / 17</span></div>
     </section>
 
     <section class="slide title-slide" data-notes="Ripeti la tesi in una frase e fermati. Il file è il canale. È portatile perché sta nel sorgente. La wiki, quando serve, sta un piano sopra. Domande.">
@@ -410,7 +479,7 @@
         <span class="pill">MIT</span>
         <span class="pill">DOI 10.5281/zenodo.19158336</span>
       </div>
-      <div class="footer"><span>Domande</span><span>14 / 14</span></div>
+      <div class="footer"><span>Domande</span><span>17 / 17</span></div>
     </section>
 
   </div>
