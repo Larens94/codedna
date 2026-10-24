@@ -293,27 +293,30 @@ body{font-family:var(--sans);color:var(--fg);display:flex;align-items:center;jus
 .gnode text{font-family:var(--mono);font-size:10px;fill:#8b8b95}
 .gnode.on rect{stroke:var(--gc);fill:rgba(255,255,255,.035);filter:drop-shadow(0 0 9px var(--gc))}
 .gnode.on text{fill:#e4e4e7}
-.gedge{stroke:#2e2e36;stroke-width:1.4;fill:none;stroke-dasharray:4 4}
-.gedge.on{stroke:var(--gc);stroke-dasharray:none;filter:drop-shadow(0 0 6px var(--gc))}
+/* Rules: --gc va impostata anche sugli archi — senza fallback lo stroke diventa
+          invalido e l'arco scompare appena si accende. */
+.gedge{stroke:#3c3c46;stroke-width:1.6;fill:none;stroke-dasharray:4 4}
+.gedge.on{stroke:var(--gc,#6366f1);stroke-width:1.8;filter:drop-shadow(0 0 7px var(--gc,#6366f1))}
+.gedge.on.solid{stroke-dasharray:none}
 .gtag{font-family:var(--mono);font-size:8.5px;fill:var(--c-usedby);opacity:0}
 .gtag.on{opacity:1}
 
 /* ---------- comparison overlay ---------- */
 #versus{
   position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);z-index:36;
-  width:620px;background:rgba(13,13,17,.97);border:1px solid var(--line);border-radius:14px;padding:22px 26px;
-  box-shadow:0 30px 90px rgba(0,0,0,.8);backdrop-filter:blur(14px);opacity:0;pointer-events:none;transition:.4s cubic-bezier(.22,1,.36,1);
+  width:690px;background:rgba(13,13,17,.985);border:1px solid var(--line);border-radius:16px;padding:26px 30px;
+  box-shadow:0 30px 90px rgba(0,0,0,.85);backdrop-filter:blur(16px);opacity:0;pointer-events:none;transition:.4s cubic-bezier(.22,1,.36,1);
 }
 #versus.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
-#versus h3{font-size:13px;font-weight:700;margin-bottom:3px;letter-spacing:-.2px}
-#versus .sub{font-size:11px;color:var(--fg-faint);margin-bottom:20px}
-.vrow{margin-bottom:17px}
-.vrow .vl{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;margin-bottom:7px}
+#versus h3{font-size:17px;font-weight:650;margin-bottom:5px;letter-spacing:-.4px}
+#versus .sub{font-size:12px;color:var(--fg-faint);margin-bottom:24px}
+.vrow{margin-bottom:20px}
+.vrow .vl{display:flex;justify-content:space-between;align-items:baseline;font-family:var(--mono);font-size:12px;margin-bottom:8px}
 .vrow .vl span{color:var(--fg-dim)}
-.vrow .vl b{color:var(--vc);font-variant-numeric:tabular-nums}
-.vbar{height:11px;border-radius:6px;background:#1c1c22;overflow:hidden;position:relative}
-.vbar i{display:block;height:100%;width:0;background:var(--vc);border-radius:6px;box-shadow:0 0 14px var(--vc)}
-#versus .foot{border-top:1px solid var(--line-soft);padding-top:13px;font-size:11.5px;color:#b4b4bf;line-height:1.55}
+.vrow .vl b{color:var(--vc);font-variant-numeric:tabular-nums;font-size:16px;font-weight:700}
+.vbar{height:13px;border-radius:7px;background:#1c1c22;overflow:hidden;position:relative}
+.vbar i{display:block;height:100%;width:0;min-width:7px;background:var(--vc);border-radius:7px;box-shadow:0 0 18px var(--vc)}
+#versus .foot{border-top:1px solid var(--line-soft);padding-top:15px;font-size:13px;color:#b4b4bf;line-height:1.55}
 #versus .foot b{color:#fff}
 
 /* ---------- chat panel ---------- */
@@ -1042,7 +1045,9 @@ async function typeMsg(html, ms, my, me){
 
 const term = document.getElementById('term');
 function termClear(){ term.innerHTML = ''; }
-function termTrim(){ while (term.children.length > 9) term.removeChild(term.firstChild); }
+// Rules: il body del terminale regge 7 righe a 188px — con 8+ il blocco dei
+//        trailer git sfora sotto il bordo invece di scorrere.
+function termTrim(){ while (term.children.length > 7) term.removeChild(term.firstChild); }
 function tline(txt, cls){ const d = document.createElement('div'); d.className = 'tl' + (cls ? ' ' + cls : ''); d.innerHTML = txt; term.appendChild(d); termTrim(); return d; }
 async function typeCmd(txt, my){
   const d = tline('', 'cmd');
@@ -1127,7 +1132,9 @@ function buildGraph(){
     const F = GN.find(n => n.id === f), T = GN.find(n => n.id === t);
     const x1 = F.x + F.w, y1 = F.y + 15, x2 = T.x, y2 = T.y + 15;
     const mx = (x1 + x2) / 2;
-    h += `<path class="gedge" id="e${i}" d="M${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}"/>`;
+    // l'arco prende il colore del nodo di arrivo; `related:` resta tratteggiato
+    h += `<path class="gedge${T.rel ? '' : ' solid'}" id="e${i}" style="--gc:${T.c}"
+            d="M${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}"/>`;
   });
   GN.forEach(n => {
     h += `<g class="gnode" id="n-${n.id}" style="--gc:${n.c}">
