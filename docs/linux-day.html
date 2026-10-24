@@ -252,28 +252,29 @@ body{font-family:var(--sans);color:var(--fg);display:flex;align-items:center;jus
 }
 
 /* ---------- callout ---------- */
+/* barra esplicativa ancorata in basso nell'area di codice:
+   posizione fissa = l'occhio non la cerca, e regge la lettura da proiettore */
 #callout{
-  position:absolute;z-index:40;width:312px;background:rgba(15,15,19,.985);
-  border:1px solid var(--line);border-left:3px solid var(--cc,var(--accent));border-radius:11px;
-  padding:13px 15px;box-shadow:0 22px 64px rgba(0,0,0,.85);backdrop-filter:blur(16px);
-  opacity:0;transform:translateX(12px) scale(.97);pointer-events:none;transition:.32s cubic-bezier(.22,1,.36,1);
+  position:absolute;z-index:40;left:10px;right:200px;bottom:11px;
+  background:rgba(14,14,18,.975);border:1px solid var(--line);
+  border-left:3px solid var(--cc,var(--accent));border-radius:11px;
+  padding:14px 18px;box-shadow:0 -6px 44px rgba(0,0,0,.8);backdrop-filter:blur(16px);
+  display:flex;align-items:flex-start;gap:20px;
+  opacity:0;transform:translateY(14px);pointer-events:none;transition:.34s cubic-bezier(.22,1,.36,1);
 }
 #callout.on{opacity:1;transform:none}
-#callout::before{
-  content:'';position:absolute;left:-9px;top:17px;width:7px;height:7px;border-radius:50%;
-  background:var(--cc,var(--accent));box-shadow:0 0 12px var(--cc,var(--accent));
-}
+#callout .cl{flex:0 0 232px;display:flex;flex-direction:column;gap:7px;align-items:flex-start}
 #callout .ct{
-  font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--cc,var(--accent));
-  margin-bottom:7px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+  font-family:var(--mono);font-size:15px;font-weight:700;color:var(--cc,var(--accent));
+  line-height:1.2;letter-spacing:-.3px;
 }
 #callout .lvl{
-  font-family:var(--sans);font-size:8.5px;letter-spacing:.9px;text-transform:uppercase;
-  padding:2px 7px;border-radius:20px;border:1px solid var(--line);color:var(--fg-faint);font-weight:700;
+  font-size:8.5px;letter-spacing:.9px;text-transform:uppercase;
+  padding:3px 8px;border-radius:20px;border:1px solid var(--line);color:var(--fg-faint);font-weight:700;
 }
-#callout .cb{font-size:12px;line-height:1.58;color:#b8b8c4}
+#callout .cb{flex:1;font-size:13.5px;line-height:1.55;color:#b8b8c4;padding-top:1px}
 #callout .cb b{color:#fff;font-weight:650}
-#callout .cb code{font-family:var(--mono);font-size:11px;color:var(--cc,var(--accent));background:rgba(255,255,255,.05);padding:1px 4px;border-radius:4px}
+#callout .cb code{font-family:var(--mono);font-size:12.5px;color:var(--cc,var(--accent));background:rgba(255,255,255,.055);padding:1px 5px;border-radius:4px}
 
 /* ---------- impact graph overlay ---------- */
 #graph{
@@ -391,17 +392,22 @@ body{font-family:var(--sans);color:var(--fg);display:flex;align-items:center;jus
 .status .chip{border:1px solid var(--line);border-radius:4px;padding:1px 7px}
 .status .chip.g{color:#34d399;border-color:rgba(52,211,153,.35)}
 
-/* scene title toast */
+/* titolo di scena: grande e centrato, leggibile dal fondo della sala */
 #scene{
-  position:absolute;left:50%;bottom:238px;transform:translateX(-50%) translateY(10px);z-index:38;
-  background:rgba(17,17,21,.95);border:1px solid var(--line);border-radius:30px;padding:8px 20px;
-  font-size:12px;color:#d4d4dd;backdrop-filter:blur(12px);box-shadow:0 14px 44px rgba(0,0,0,.6);
-  opacity:0;transition:.4s cubic-bezier(.22,1,.36,1);display:flex;align-items:center;gap:10px;white-space:nowrap;
+  position:absolute;z-index:44;left:0;right:200px;top:0;bottom:0;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:16px;
+  background:rgba(9,9,11,.82);backdrop-filter:blur(3px);
+  opacity:0;pointer-events:none;transition:.45s cubic-bezier(.22,1,.36,1);
 }
-#scene.on{opacity:1;transform:translateX(-50%)}
+#scene.on{opacity:1}
 #scene .n{
-  font-family:var(--mono);font-size:10px;font-weight:800;color:#0b0b0e;background:var(--accent);
-  border-radius:20px;padding:2px 8px;
+  font-family:var(--mono);font-size:12px;font-weight:800;color:#0b0b0e;background:var(--accent);
+  border-radius:30px;padding:4px 14px;letter-spacing:1px;
+  box-shadow:0 0 28px rgba(99,102,241,.5);
+}
+#scene .tt{
+  font-size:25px;font-weight:600;letter-spacing:-.7px;color:#fff;text-align:center;
+  max-width:720px;line-height:1.35;
 }
 
 /* controls */
@@ -509,6 +515,13 @@ body{font-family:var(--sans);color:var(--fg);display:flex;align-items:center;jus
           </div>
           <div class="foot" id="vfoot">&nbsp;</div>
         </div>
+
+        <div id="callout">
+          <div class="cl"><div class="ct" id="cTitle"></div><div class="lvl" id="cLvl"></div></div>
+          <div class="cb" id="cBody"></div>
+        </div>
+
+        <div id="scene"><span class="n" id="scN">01</span><span class="tt" id="scT"></span></div>
       </div>
 
       <!-- terminal -->
@@ -549,8 +562,6 @@ body{font-family:var(--sans);color:var(--fg);display:flex;align-items:center;jus
     </div>
   </div>
 
-  <div id="callout"><div class="ct"><span id="cTitle"></span><span class="lvl" id="cLvl"></span></div><div class="cb" id="cBody"></div></div>
-  <div id="scene"><span class="n" id="scN">01</span><span id="scT"></span></div>
 </div>
 
 <div id="ctl">
@@ -930,18 +941,23 @@ function drawMinimap(){
   c.width = W * dpr; c.height = H * dpr;
   const g = c.getContext('2d'); g.scale(dpr, dpr);
   g.clearRect(0, 0, W, H);
-  const step = H / TOTAL;
-  for (let i = 0; i < TOTAL; i++){
-    const L = lineAt(i), y = i * step;
-    if (L.dim){
-      // il rumore: tratti grigi, larghezza pseudo-casuale come un vero minimap
-      g.fillStyle = 'rgba(255,255,255,.06)';
-      g.fillRect(14, y, 34 + ((i * 29) % 108), Math.max(.3, step));
-    } else {
-      // le annotazioni: bande colorate, sempre visibili anche a 0,04 px/riga
-      const key = L.hdr ? (L.hdr.f || 'doc') : (L.tag || 'doc');
-      g.fillStyle = FCOL[key] || '#52525b';
-      g.fillRect(10, y - 1.2, 170, Math.max(2.8, step));
+  // Rules: a ~24 righe per pixel NON si può disegnare riga per riga — l'alpha si
+  //        accumula e la minimappa diventa un blocco grigio uniforme. Si campiona
+  //        per pixel: se nella fascia cade un'annotazione, vince il colore.
+  const perPx = TOTAL / H;
+  for (let y = 0; y < H; y++){
+    const a = Math.floor(y * perPx), b = Math.max(a + 1, Math.floor((y + 1) * perPx));
+    let col = null;
+    for (let i = a; i < b && i < TOTAL; i++){
+      const L = lineAt(i);
+      if (!L.dim){ col = FCOL[L.hdr ? (L.hdr.f || 'doc') : (L.tag || 'doc')]; break; }
+    }
+    if (col){
+      g.fillStyle = col;
+      g.fillRect(10, y - .5, 168, 2.4);
+    } else if (y % 2 === 0){
+      g.fillStyle = 'rgba(255,255,255,.055)';
+      g.fillRect(14, y, 28 + ((y * 37) % 112), 1);
     }
   }
 }
@@ -950,34 +966,15 @@ function drawMinimap(){
    6 · callout
    ============================================================ */
 const co = document.getElementById('callout');
-const CO_LEFT = 742;   // px di design: a destra del codice, a sinistra del rail
 
+/* La barra è ancorata in basso nell'area di codice: niente calcolo di posizione.
+   Il legame con la riga spiegata lo fanno il beam e il marcatore nella gutter. */
 function showCallout(line, title, lvl, body, color){
   co.style.setProperty('--cc', color);
   document.getElementById('cTitle').innerHTML = esc(title);
   document.getElementById('cLvl').textContent = lvl;
   document.getElementById('cBody').innerHTML = body;
-
-  // Rules: le coordinate vanno calcolate nello spazio dello stage (1600x900),
-  //        non del viewport — lo stage è scalato con transform.
-  const sr = stage.getBoundingClientRect();
-  const k  = sr.width / STAGE_W;
-  const area = document.querySelector('.codearea');
-  const ar = area.getBoundingClientRect();
-  const areaTop = (ar.top - sr.top) / k;
-
-  co.style.left = CO_LEFT + 'px';
   co.classList.add('on');
-
-  const el = lineEl(line);
-  let top = areaTop + 24;
-  if (el){
-    const r = el.getBoundingClientRect();
-    top = (r.top - sr.top) / k - 15;
-  }
-  const h = co.offsetHeight || 130;
-  const lo = areaTop + 8, hi = areaTop + area.offsetHeight - h - 8;
-  co.style.top = Math.max(lo, Math.min(Math.max(lo, hi), top)) + 'px';
 }
 const hideCallout = () => co.classList.remove('on');
 
@@ -1093,9 +1090,9 @@ async function scene(n, t, my){
   document.getElementById('scN').textContent = n;
   document.getElementById('scT').textContent = t;
   scEl.classList.add('on');
-  await sleep(2100, my);
+  await sleep(2400, my);
   scEl.classList.remove('on');
-  await sleep(260, my);
+  await sleep(420, my);
 }
 
 /* ============================================================
