@@ -33,14 +33,6 @@ agent_sessions:
   - agent: "gpt-5"
     provider: "openai"
     date: "2026-08-21"
-    session_id: "s_20260821_commit_push"
-    task: "Prepare verified release changes for push"
-    changed: [".gitignore",".codedna"]
-    visited: [".gitignore",".vscode/settings.json",".codedna"]
-    message: "Ignored local VS Code Live Server settings before committing the accumulated verified CodeDNA changes. The removed legacy logo video and updated site logo are intentional site assets."
-  - agent: "gpt-5"
-    provider: "openai"
-    date: "2026-08-21"
     session_id: "s_20260821_gitbook_docs"
     task: "Redesign documentation like GitBook"
     changed: ["docs/install.html","docs/site.css",".codedna"]
@@ -70,3 +62,11 @@ agent_sessions:
     changed: ["codedna_tool/cli.py","codedna_tool/languages/base.py","tests/test_language_adapters.py","tests/test_refresh.py",".codedna"]
     visited: [".codedna","codedna_tool/cli.py","codedna_tool/audit.py","codedna_tool/wiki.py","codedna_tool/languages/__init__.py","codedna_tool/languages/base.py","codedna_tool/languages/php.py","codedna_tool/languages/_ts_php.py","tests/test_cli.py","tests/test_refresh.py","tests/test_validator.py","tests/test_language_adapters.py"]
     message: "Centralized compact block-comment L1 parsing, preserved reduced headers, proved PHP imports are not exports, and removed LiteLLM initialization from zero-LLM commands. 296 tests pass; verify and doctor are clean."
+  - agent: "claude-opus-5"
+    provider: "anthropic"
+    date: "2026-10-24"
+    session_id: "s_20261024_linuxday"
+    task: "Add animated Linux Day demo of the CodeDNA protocol"
+    changed: ["docs/linux-day.html"]
+    visited: ["README.md","SPEC.md",".codedna","codedna_tool/audit.py"]
+    message: "Committed docs/linux-day.html, a self-contained looping HTML/CSS/JS simulation of an AI agent navigating a 10k-line file via CodeDNA annotations. Dark theme currently, restyle to light theme still pending."

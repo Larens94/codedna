@@ -246,7 +246,7 @@ body{font-family:var(--sans);color:var(--fg);display:flex;align-items:center;jus
 .wframe i:nth-child(3){bottom:0;left:0;border-right:0;border-top:0}
 .wframe i:nth-child(4){bottom:0;right:0;border-left:0;border-top:0}
 .wframe b{
-  position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);
+  position:absolute;top:-8px;right:26px;
   background:var(--bg);padding:0 10px;font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;
   color:rgba(99,102,241,.9);font-weight:800;
 }
@@ -263,7 +263,7 @@ body{font-family:var(--sans);color:var(--fg);display:flex;align-items:center;jus
   opacity:0;transform:translateY(14px);pointer-events:none;transition:.34s cubic-bezier(.22,1,.36,1);
 }
 #callout.on{opacity:1;transform:none}
-#callout .cl{flex:0 0 232px;display:flex;flex-direction:column;gap:7px;align-items:flex-start}
+#callout .cl{flex:0 0 196px;display:flex;flex-direction:column;gap:7px;align-items:flex-start}
 #callout .ct{
   font-family:var(--mono);font-size:15px;font-weight:700;color:var(--cc,var(--accent));
   line-height:1.2;letter-spacing:-.3px;
@@ -833,16 +833,30 @@ function isHot(i){ const L = lineAt(i); return !!(L.hdr || L.hot); }
    3 · syntax highlight minimale
    ============================================================ */
 const KW = /\b(def|return|for|in|if|not|and|or|else|elif|raise|with|try|except|import|from|class|None|True|False|as|while|continue|pass|lambda|yield|assert)\b/g;
+const SEMVAR = /\b(list_dict_\w+|int_cents_\w+|str_sql_\w+|int_month_\w+|dict_\w+)\b/g;
+
+// Rules: stringhe e commenti vanno estratti PRIMA di qualunque altra regex.
+//        KW contiene `class`: applicato su HTML già iniettato distrugge gli
+//        attributi `class="…"` e il markup finisce a schermo come testo.
+const TOK = /("""|"(?:[^"\\]|\\.)*"|'(?:[^'\\]|\\.)*'|#.*$)/g;
+const S0 = '\uE000', S1 = '\uE001';
+
 function hl(src){
-  let s = esc(src);
-  if (/^\s*#/.test(src)) return `<span class="t-cmt">${s}</span>`;
-  s = s.replace(/("""|&quot;)/g, '<span class="t-str">$1</span>');
-  s = s.replace(/(&quot;[^&]*?&quot;|'[^']*?')/g, '<span class="t-str">$1</span>');
+  const store = [];
+  let s = src.replace(TOK, m => {
+    store.push(m);
+    return S0 + String.fromCharCode(0xE100 + store.length - 1) + S1;
+  });
+  s = esc(s);
   s = s.replace(KW, '<span class="t-kw">$1</span>');
-  s = s.replace(/\b(def)<\/span> (\w+)/g, '$1</span> <span class="t-def">$2</span>');
-  s = s.replace(/\b(\d+)\b/g, '<span class="t-num">$1</span>');
-  s = s.replace(/\b(list_dict_\w+|int_cents_\w+|str_sql_\w+|dict_\w+_computed|dict_grouped_\w+|int_month_\w+)\b/g, '<span class="sem">$1</span>');
-  return s;
+  s = s.replace(/<span class="t-kw">def<\/span> (\w+)/g,
+                '<span class="t-kw">def</span> <span class="t-def">$1</span>');
+  s = s.replace(/(?<![\w-])(\d+)(?![\w-])/g, '<span class="t-num">$1</span>');
+  s = s.replace(SEMVAR, '<span class="sem">$1</span>');
+  return s.replace(new RegExp(S0 + '(.)' + S1, 'g'), (_, c) => {
+    const raw = store[c.charCodeAt(0) - 0xE100];
+    return `<span class="${raw[0] === '#' ? 't-cmt' : 't-str'}">${esc(raw)}</span>`;
+  });
 }
 const TAGCLS = { L2R:'l2rules', L2M:'l2msg', INL:'inline', INM:'inlinem', SEM:'naming' };
 
@@ -956,7 +970,7 @@ function drawMinimap(){
       g.fillStyle = col;
       g.fillRect(10, y - .5, 168, 2.4);
     } else if (y % 2 === 0){
-      g.fillStyle = 'rgba(255,255,255,.055)';
+      g.fillStyle = 'rgba(255,255,255,.09)';
       g.fillRect(14, y, 28 + ((y * 37) % 112), 1);
     }
   }
