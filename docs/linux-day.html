@@ -1,0 +1,1554 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeDNA — come un agente AI legge un file da 10.000 righe</title>
+<style>
+/* ============================================================
+   CodeDNA · Linux Day — simulazione in loop di un agente AI
+   UI stile Cursor. Nessuna dipendenza esterna: funziona offline.
+   Stage a dimensione fissa 1600x900, scalato per riempire lo schermo.
+   ============================================================ */
+
+*{box-sizing:border-box;margin:0;padding:0}
+
+:root{
+  --bg:#09090b;
+  --chrome:#0e0e11;
+  --panel:#121216;
+  --panel-2:#17171c;
+  --line:#26262c;
+  --line-soft:#1d1d22;
+  --fg:#e4e4e7;
+  --fg-dim:#8b8b95;
+  --fg-faint:#4e4e57;
+  --accent:#6366f1;
+
+  /* un colore per ogni annotazione CodeDNA */
+  --c-exports:#3b82f6;
+  --c-usedby:#f97316;
+  --c-related:#ef4444;
+  --c-wiki:#06b6d4;
+  --c-rules:#f59e0b;
+  --c-agent:#10b981;
+  --c-message:#8b5cf6;
+  --c-naming:#ec4899;
+
+  --mono:'SF Mono','JetBrains Mono','Fira Code',Menlo,Consolas,'DejaVu Sans Mono',monospace;
+  --sans:-apple-system,BlinkMacSystemFont,'Inter','Segoe UI',system-ui,sans-serif;
+}
+
+html,body{height:100%;background:#000;overflow:hidden}
+body{font-family:var(--sans);color:var(--fg);display:flex;align-items:center;justify-content:center}
+
+#viewport{position:relative;width:100vw;height:100vh;overflow:hidden}
+#stage{
+  position:absolute;top:0;left:0;width:1600px;height:900px;
+  transform-origin:top left;background:var(--bg);
+  display:flex;flex-direction:column;overflow:hidden;
+}
+
+/* ---------- title bar ---------- */
+.titlebar{
+  height:38px;flex:0 0 38px;background:var(--chrome);border-bottom:1px solid var(--line);
+  display:flex;align-items:center;padding:0 12px;gap:14px;position:relative;z-index:30;
+}
+.lights{display:flex;gap:8px}
+.lights i{width:11px;height:11px;border-radius:50%;display:block}
+.lights i:nth-child(1){background:#ff5f57}
+.lights i:nth-child(2){background:#febc2e}
+.lights i:nth-child(3){background:#28c840}
+.ttl-center{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);
+  display:flex;align-items:center;gap:8px;font-size:11.5px;color:var(--fg-dim);
+  background:var(--panel-2);border:1px solid var(--line);border-radius:7px;padding:4px 14px;
+}
+.ttl-center .dna{color:var(--accent);font-weight:700}
+.ttl-right{margin-left:auto;display:flex;align-items:center;gap:10px}
+.pill{
+  font-size:10px;letter-spacing:.4px;text-transform:uppercase;font-weight:650;
+  padding:3px 9px;border-radius:20px;border:1px solid var(--line);color:var(--fg-dim);
+}
+.pill.live{color:var(--accent);border-color:rgba(99,102,241,.4);background:rgba(99,102,241,.09)}
+.pill.live::before{content:'';display:inline-block;width:5px;height:5px;border-radius:50%;background:var(--accent);margin-right:6px;vertical-align:1px;animation:blink 1.6s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:.25}}
+
+/* ---------- body grid ---------- */
+.shell{flex:1;display:flex;min-height:0}
+
+/* activity bar */
+.activity{
+  width:48px;flex:0 0 48px;background:var(--chrome);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;align-items:center;padding-top:10px;gap:4px;
+}
+.act{width:34px;height:34px;border-radius:8px;display:grid;place-items:center;color:var(--fg-faint);transition:.25s}
+.act.on{color:var(--fg);background:rgba(255,255,255,.055)}
+.act svg{width:17px;height:17px;stroke:currentColor;fill:none;stroke-width:1.6;stroke-linecap:round;stroke-linejoin:round}
+.act.dna{margin-top:auto;margin-bottom:12px;color:var(--accent)}
+
+/* explorer */
+.explorer{
+  width:232px;flex:0 0 232px;background:var(--panel);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;min-height:0;
+}
+.exp-head{
+  padding:11px 14px 9px;font-size:10px;letter-spacing:1.1px;text-transform:uppercase;
+  color:var(--fg-faint);font-weight:700;display:flex;justify-content:space-between;align-items:center;
+}
+.exp-head span.count{letter-spacing:0;text-transform:none;font-size:10px;color:var(--fg-faint)}
+.tree{flex:1;overflow:hidden;padding:0 6px 10px;font-size:12.5px}
+.row{
+  display:flex;align-items:center;gap:6px;padding:3.5px 8px;border-radius:6px;
+  color:var(--fg-dim);white-space:nowrap;position:relative;transition:background .2s,color .2s;
+}
+.row .caret{width:10px;color:var(--fg-faint);font-size:9px}
+.row.dir{color:#c9c9d2;font-weight:560}
+.row.file{padding-left:8px}
+.row.sel{background:rgba(99,102,241,.14);color:#fff}
+.row .ic{width:13px;height:13px;flex:0 0 13px}
+.row .nm{overflow:hidden;text-overflow:ellipsis}
+.row .dot{
+  margin-left:auto;width:6px;height:6px;border-radius:50%;background:var(--c-agent);
+  opacity:0;transform:scale(.3);transition:.3s;box-shadow:0 0 7px rgba(16,185,129,.8);
+}
+.row.annotated .dot{opacity:1;transform:scale(1)}
+.row.scanning{background:rgba(99,102,241,.1)}
+.exp-foot{
+  border-top:1px solid var(--line-soft);padding:10px 14px;font-size:10.5px;color:var(--fg-faint);
+  display:flex;flex-direction:column;gap:5px;
+}
+.exp-foot b{color:var(--fg-dim);font-weight:600}
+.legend{display:flex;flex-direction:column;gap:3px;margin-top:2px}
+.legend i{display:flex;align-items:center;gap:6px;font-style:normal;font-family:var(--mono);font-size:9.5px;color:var(--fg-faint);opacity:.45;transition:.3s}
+.legend i.on{opacity:1;color:var(--fg-dim)}
+.legend i::before{content:'';width:7px;height:7px;border-radius:2px;background:var(--lc);flex:0 0 7px}
+
+/* ---------- editor column ---------- */
+.main{flex:1;display:flex;flex-direction:column;min-width:0;min-height:0;background:var(--bg)}
+.tabs{height:36px;flex:0 0 36px;background:var(--chrome);display:flex;align-items:stretch;border-bottom:1px solid var(--line)}
+.tab{
+  display:flex;align-items:center;gap:7px;padding:0 15px;font-size:12px;color:var(--fg-faint);
+  border-right:1px solid var(--line);background:transparent;transition:.25s;white-space:nowrap;
+}
+.tab.on{background:var(--bg);color:var(--fg);box-shadow:inset 0 -1px 0 var(--bg),inset 0 2px 0 var(--accent)}
+.tab .x{margin-left:4px;opacity:.4;font-size:13px}
+.breadcrumb{
+  height:27px;flex:0 0 27px;display:flex;align-items:center;gap:7px;padding:0 16px;
+  font-size:11px;color:var(--fg-faint);border-bottom:1px solid var(--line-soft);font-family:var(--mono);
+}
+.breadcrumb .sep{opacity:.4}
+.breadcrumb .cur{color:var(--fg-dim)}
+
+/* code area */
+.codearea{flex:1;position:relative;overflow:hidden;min-height:0}
+#scroller{position:absolute;inset:0;overflow:hidden}
+#inner{position:absolute;left:0;top:0;right:0;will-change:transform}
+.ln{
+  height:20px;line-height:20px;display:flex;font-family:var(--mono);font-size:13px;
+  white-space:pre;position:relative;
+}
+.ln .num{
+  width:62px;flex:0 0 62px;text-align:right;padding-right:16px;color:#3a3a42;
+  font-size:11.5px;user-select:none;font-variant-numeric:tabular-nums;
+}
+.ln .mk{width:3px;flex:0 0 3px;background:transparent;border-radius:2px}
+.ln .txt{padding-left:13px;flex:1;overflow:hidden;color:#cdd0d8}
+.ln.dim .txt{color:#2f3038}
+.ln.dim .num{color:#222228}
+.ln.hot .num{color:#7a7a88}
+
+/* token colors */
+.t-kw{color:#c084fc}.t-def{color:#60a5fa}.t-str{color:#86efac}.t-num{color:#fbbf24}
+.t-cmt{color:#4b5563}.t-fn{color:#67e8f9}.t-op{color:#9ca3af}.t-self{color:#f472b6}
+
+/* annotation lines */
+.ln .fld{display:inline}
+.ln .fld .k{font-weight:700}
+.f-title .k,.f-title .v{color:#a5b4fc}
+.f-exports .k{color:var(--c-exports)}  .f-exports .v{color:#93c5fd}
+.f-used_by .k{color:var(--c-usedby)}   .f-used_by .v{color:#fdba74}
+.f-related .k{color:var(--c-related)}  .f-related .v{color:#fca5a5}
+.f-wiki .k{color:var(--c-wiki)}        .f-wiki .v{color:#67e8f9}
+.f-rules .k{color:var(--c-rules)}      .f-rules .v{color:#fcd34d}
+.f-agent .k{color:var(--c-agent)}      .f-agent .v{color:#6ee7b7}
+.f-message .k{color:var(--c-message)}  .f-message .v{color:#c4b5fd}
+.f-doc .k,.f-doc .v{color:#5b5b66}
+.f-l2rules .k{color:var(--c-rules)}    .f-l2rules .v{color:#fcd34d}
+.f-l2msg .k{color:var(--c-message)}    .f-l2msg .v{color:#c4b5fd}
+.f-inline .k,.f-inline .v{color:var(--c-rules);opacity:.92}
+.f-inlinem .k,.f-inlinem .v{color:var(--c-message);opacity:.92}
+.f-naming .v{color:#cdd0d8}
+.sem{color:var(--c-naming);font-weight:600}
+
+/* flash / focus on a line */
+.ln.flash{animation:flash .9s ease-out}
+@keyframes flash{0%{background:rgba(255,255,255,.14)}100%{background:transparent}}
+.ln.focus{background:rgba(255,255,255,.035)}
+.ln.focus .mk{background:var(--fc,var(--accent));box-shadow:0 0 10px var(--fc,var(--accent))}
+.ln.beam{background:linear-gradient(90deg,var(--fcb,rgba(99,102,241,.16)),transparent 72%)}
+.ln.cascade .v{text-shadow:0 0 12px rgba(249,115,22,.65)}
+
+/* typing caret */
+.caret{display:inline-block;width:7px;height:14px;background:var(--accent);vertical-align:-2px;animation:cb .9s steps(1) infinite;margin-left:1px}
+@keyframes cb{0%,49%{opacity:1}50%,100%{opacity:0}}
+
+/* ---------- right rail: HUD + minimappa ---------- */
+.rail{
+  position:absolute;top:0;right:0;bottom:0;width:190px;z-index:8;
+  background:#0a0a0d;border-left:1px solid var(--line);display:flex;flex-direction:column;
+}
+.minimap{position:relative;flex:1;min-height:0;overflow:hidden}
+#mm{position:absolute;inset:0;width:100%;height:100%}
+.mm-view{
+  position:absolute;left:2px;right:2px;border:1px solid rgba(99,102,241,.85);
+  background:rgba(99,102,241,.16);border-radius:2px;pointer-events:none;
+  box-shadow:0 0 18px rgba(99,102,241,.5);
+}
+.mm-cap{
+  flex:0 0 auto;padding:7px 12px 6px;font-size:8.5px;letter-spacing:.9px;
+  color:var(--fg-faint);text-transform:uppercase;font-weight:700;
+  border-bottom:1px solid var(--line-soft);display:flex;justify-content:space-between;
+}
+.mm-cap b{color:var(--fg-dim);font-weight:700}
+
+/* ---------- context window HUD (dentro il rail) ---------- */
+.hud{
+  flex:0 0 auto;padding:11px 12px 12px;border-bottom:1px solid var(--line);
+  opacity:.25;transition:.45s;background:rgba(99,102,241,.03);
+}
+.hud.on{opacity:1}
+.hud h4{
+  font-size:8.5px;letter-spacing:1px;text-transform:uppercase;color:var(--accent);
+  font-weight:800;margin-bottom:9px;display:flex;align-items:center;gap:6px;line-height:1.3;
+}
+.hud h4::before{content:'';width:5px;height:5px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--accent);flex:0 0 5px}
+.hud .big{
+  font-family:var(--mono);font-size:21px;font-weight:700;color:#fff;letter-spacing:-.8px;
+  font-variant-numeric:tabular-nums;line-height:1;
+}
+.hud .big em{font-style:normal;font-size:12px;color:var(--fg-faint);font-weight:500}
+.hud .sub2{font-size:9.5px;color:var(--fg-faint);margin-top:5px;font-family:var(--mono)}
+.hud .sub2 b{color:#a5b4fc;font-weight:700}
+.bar{height:5px;border-radius:3px;background:#232329;overflow:hidden;margin-top:9px}
+.bar i{display:block;height:100%;width:0;background:linear-gradient(90deg,var(--accent),#a78bfa);border-radius:3px;transition:width .2s linear}
+.hud .rowk{display:flex;justify-content:space-between;font-family:var(--mono);font-size:9.5px;color:var(--fg-faint);margin-top:9px}
+.hud .rowk b{color:var(--fg-dim);font-weight:600;font-variant-numeric:tabular-nums}
+.hud .note{font-size:9.5px;color:var(--fg-faint);margin-top:9px;line-height:1.5;border-top:1px solid var(--line-soft);padding-top:8px}
+.hud .note b{color:#fcd34d;font-weight:600}
+
+/* context window frame */
+.wframe{position:absolute;inset:10px 200px 10px 4px;pointer-events:none;z-index:5;opacity:0;transition:.5s}
+.wframe.on{opacity:1}
+.wframe i{position:absolute;width:20px;height:20px;border:2px solid rgba(99,102,241,.55)}
+.wframe i:nth-child(1){top:0;left:0;border-right:0;border-bottom:0}
+.wframe i:nth-child(2){top:0;right:0;border-left:0;border-bottom:0}
+.wframe i:nth-child(3){bottom:0;left:0;border-right:0;border-top:0}
+.wframe i:nth-child(4){bottom:0;right:0;border-left:0;border-top:0}
+.wframe b{
+  position:absolute;bottom:-9px;left:50%;transform:translateX(-50%);
+  background:var(--bg);padding:0 10px;font-size:9.5px;letter-spacing:1.2px;text-transform:uppercase;
+  color:rgba(99,102,241,.9);font-weight:800;
+}
+
+/* ---------- callout ---------- */
+#callout{
+  position:absolute;z-index:40;width:312px;background:rgba(15,15,19,.985);
+  border:1px solid var(--line);border-left:3px solid var(--cc,var(--accent));border-radius:11px;
+  padding:13px 15px;box-shadow:0 22px 64px rgba(0,0,0,.85);backdrop-filter:blur(16px);
+  opacity:0;transform:translateX(12px) scale(.97);pointer-events:none;transition:.32s cubic-bezier(.22,1,.36,1);
+}
+#callout.on{opacity:1;transform:none}
+#callout::before{
+  content:'';position:absolute;left:-9px;top:17px;width:7px;height:7px;border-radius:50%;
+  background:var(--cc,var(--accent));box-shadow:0 0 12px var(--cc,var(--accent));
+}
+#callout .ct{
+  font-family:var(--mono);font-size:12.5px;font-weight:700;color:var(--cc,var(--accent));
+  margin-bottom:7px;display:flex;align-items:center;gap:8px;flex-wrap:wrap;
+}
+#callout .lvl{
+  font-family:var(--sans);font-size:8.5px;letter-spacing:.9px;text-transform:uppercase;
+  padding:2px 7px;border-radius:20px;border:1px solid var(--line);color:var(--fg-faint);font-weight:700;
+}
+#callout .cb{font-size:12px;line-height:1.58;color:#b8b8c4}
+#callout .cb b{color:#fff;font-weight:650}
+#callout .cb code{font-family:var(--mono);font-size:11px;color:var(--cc,var(--accent));background:rgba(255,255,255,.05);padding:1px 4px;border-radius:4px}
+
+/* ---------- impact graph overlay ---------- */
+#graph{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-48%) scale(.96);z-index:35;
+  width:530px;height:270px;background:rgba(13,13,17,.96);border:1px solid var(--line);border-radius:14px;
+  box-shadow:0 30px 90px rgba(0,0,0,.8);backdrop-filter:blur(14px);opacity:0;pointer-events:none;transition:.4s cubic-bezier(.22,1,.36,1);
+}
+#graph.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#graph .gh{
+  padding:10px 15px;border-bottom:1px solid var(--line-soft);font-family:var(--mono);font-size:11px;color:var(--fg-dim);
+  display:flex;align-items:center;gap:8px;
+}
+#graph .gh b{color:var(--accent)}
+#graph svg{position:absolute;inset:38px 0 0 0;width:100%;height:calc(100% - 38px)}
+.gnode rect{fill:#1a1a20;stroke:#2e2e36;stroke-width:1.2;rx:7}
+.gnode text{font-family:var(--mono);font-size:10px;fill:#8b8b95}
+.gnode.on rect{stroke:var(--gc);fill:rgba(255,255,255,.035);filter:drop-shadow(0 0 9px var(--gc))}
+.gnode.on text{fill:#e4e4e7}
+.gedge{stroke:#2e2e36;stroke-width:1.4;fill:none;stroke-dasharray:4 4}
+.gedge.on{stroke:var(--gc);stroke-dasharray:none;filter:drop-shadow(0 0 6px var(--gc))}
+.gtag{font-family:var(--mono);font-size:8.5px;fill:var(--c-usedby);opacity:0}
+.gtag.on{opacity:1}
+
+/* ---------- comparison overlay ---------- */
+#versus{
+  position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.96);z-index:36;
+  width:620px;background:rgba(13,13,17,.97);border:1px solid var(--line);border-radius:14px;padding:22px 26px;
+  box-shadow:0 30px 90px rgba(0,0,0,.8);backdrop-filter:blur(14px);opacity:0;pointer-events:none;transition:.4s cubic-bezier(.22,1,.36,1);
+}
+#versus.on{opacity:1;transform:translate(-50%,-50%) scale(1)}
+#versus h3{font-size:13px;font-weight:700;margin-bottom:3px;letter-spacing:-.2px}
+#versus .sub{font-size:11px;color:var(--fg-faint);margin-bottom:20px}
+.vrow{margin-bottom:17px}
+.vrow .vl{display:flex;justify-content:space-between;font-family:var(--mono);font-size:11px;margin-bottom:7px}
+.vrow .vl span{color:var(--fg-dim)}
+.vrow .vl b{color:var(--vc);font-variant-numeric:tabular-nums}
+.vbar{height:11px;border-radius:6px;background:#1c1c22;overflow:hidden;position:relative}
+.vbar i{display:block;height:100%;width:0;background:var(--vc);border-radius:6px;box-shadow:0 0 14px var(--vc)}
+#versus .foot{border-top:1px solid var(--line-soft);padding-top:13px;font-size:11.5px;color:#b4b4bf;line-height:1.55}
+#versus .foot b{color:#fff}
+
+/* ---------- chat panel ---------- */
+.chat{
+  width:352px;flex:0 0 352px;background:var(--panel);border-left:1px solid var(--line);
+  display:flex;flex-direction:column;min-height:0;
+}
+.chat-head{
+  padding:10px 14px;border-bottom:1px solid var(--line);display:flex;align-items:center;gap:9px;flex:0 0 auto;
+}
+.avatar{
+  width:25px;height:25px;border-radius:7px;display:grid;place-items:center;font-size:11px;font-weight:800;
+  color:#0b0b0e;background:var(--av,#d97757);transition:.4s;flex:0 0 25px;
+}
+.chat-head .who{display:flex;flex-direction:column;gap:1px;min-width:0}
+.chat-head .who b{font-size:12px;font-weight:650;letter-spacing:-.1px;white-space:nowrap}
+.chat-head .who span{font-size:9.5px;color:var(--fg-faint);letter-spacing:.5px;text-transform:uppercase;font-weight:650}
+.chat-head .mode{margin-left:auto;font-family:var(--mono);font-size:9.5px;color:var(--fg-faint);border:1px solid var(--line);border-radius:5px;padding:2.5px 7px}
+.chat-body{flex:1;overflow:hidden;padding:13px 14px;display:flex;flex-direction:column;gap:9px;justify-content:flex-end}
+.msg{font-size:12.2px;line-height:1.55;color:#b8b8c4;animation:rise .35s cubic-bezier(.22,1,.36,1)}
+@keyframes rise{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:none}}
+.msg.me{color:#fff;background:rgba(255,255,255,.045);border:1px solid var(--line-soft);border-radius:10px;padding:9px 11px;font-size:12px}
+.msg b{color:#fff;font-weight:650}
+.msg code{font-family:var(--mono);font-size:11px;background:rgba(255,255,255,.055);padding:1px 5px;border-radius:4px;color:#c7d2fe}
+.msg .fx{font-family:var(--mono);font-weight:700}
+.tool{
+  display:flex;align-items:center;gap:8px;font-family:var(--mono);font-size:10.5px;color:var(--fg-dim);
+  background:rgba(255,255,255,.03);border:1px solid var(--line-soft);border-radius:8px;padding:6px 10px;
+  animation:rise .3s cubic-bezier(.22,1,.36,1);
+}
+.tool .sp{width:9px;height:9px;border-radius:50%;border:1.5px solid var(--accent);border-top-color:transparent;animation:spin .7s linear infinite;flex:0 0 9px}
+@keyframes spin{to{transform:rotate(360deg)}}
+.tool.done .sp{border:0;background:none;position:relative}
+.tool.done .sp::after{content:'✓';position:absolute;left:-2px;top:-5px;color:var(--c-agent);font-size:11px;font-weight:800}
+.tool .det{margin-left:auto;color:var(--fg-faint);font-size:9.5px}
+.chat-foot{border-top:1px solid var(--line);padding:11px 13px;flex:0 0 auto}
+.inputbox{
+  background:var(--panel-2);border:1px solid var(--line);border-radius:9px;padding:9px 11px;
+  font-size:11.5px;color:var(--fg-faint);display:flex;align-items:center;gap:8px;min-height:36px;
+}
+.inputbox .ph{color:#4a4a53}
+.chat-foot .hint{margin-top:7px;font-size:9.5px;color:#39393f;display:flex;gap:10px;font-family:var(--mono)}
+
+/* ---------- terminal ---------- */
+.term{
+  height:188px;flex:0 0 188px;background:#0b0b0e;border-top:1px solid var(--line);
+  display:flex;flex-direction:column;min-height:0;
+}
+.term-head{
+  height:30px;flex:0 0 30px;display:flex;align-items:center;gap:16px;padding:0 15px;border-bottom:1px solid var(--line-soft);
+}
+.term-head .t{font-size:10px;letter-spacing:.9px;text-transform:uppercase;font-weight:700;color:var(--fg-faint)}
+.term-head .t.on{color:var(--fg)}
+.term-head .t.on::after{content:'';display:block;height:2px;background:var(--accent);margin-top:7px;border-radius:2px}
+.term-body{flex:1;overflow:hidden;padding:9px 15px;font-family:var(--mono);font-size:11.8px;line-height:1.62;display:flex;flex-direction:column;justify-content:flex-end}
+.tl{white-space:pre;color:#8b8b95}
+.tl.cmd{color:#e4e4e7}
+.tl.cmd::before{content:'$ ';color:var(--accent);font-weight:700}
+.tl.ok{color:#34d399}
+.tl.warn{color:#fbbf24}
+.tl.err{color:#f87171}
+.tl.dimm{color:#4a4a53}
+.tl .hi{color:#e4e4e7}
+.tl .casc{color:var(--c-usedby);font-weight:700}
+.tl .trail{color:var(--c-agent)}
+
+/* ---------- status bar ---------- */
+.status{
+  height:26px;flex:0 0 26px;background:var(--chrome);border-top:1px solid var(--line);
+  display:flex;align-items:center;padding:0 14px;gap:18px;font-size:10.5px;color:var(--fg-faint);
+  font-family:var(--mono);
+}
+.status .s{display:flex;align-items:center;gap:6px}
+.status .s.brand{color:var(--accent);font-weight:700;font-family:var(--sans);letter-spacing:.3px}
+.status .right{margin-left:auto;display:flex;gap:18px;align-items:center}
+.status .chip{border:1px solid var(--line);border-radius:4px;padding:1px 7px}
+.status .chip.g{color:#34d399;border-color:rgba(52,211,153,.35)}
+
+/* scene title toast */
+#scene{
+  position:absolute;left:50%;bottom:238px;transform:translateX(-50%) translateY(10px);z-index:38;
+  background:rgba(17,17,21,.95);border:1px solid var(--line);border-radius:30px;padding:8px 20px;
+  font-size:12px;color:#d4d4dd;backdrop-filter:blur(12px);box-shadow:0 14px 44px rgba(0,0,0,.6);
+  opacity:0;transition:.4s cubic-bezier(.22,1,.36,1);display:flex;align-items:center;gap:10px;white-space:nowrap;
+}
+#scene.on{opacity:1;transform:translateX(-50%)}
+#scene .n{
+  font-family:var(--mono);font-size:10px;font-weight:800;color:#0b0b0e;background:var(--accent);
+  border-radius:20px;padding:2px 8px;
+}
+
+/* controls */
+#ctl{
+  position:absolute;right:14px;bottom:14px;z-index:60;display:flex;gap:7px;align-items:center;
+  background:rgba(17,17,21,.9);border:1px solid var(--line);border-radius:9px;padding:6px 9px;
+  backdrop-filter:blur(10px);opacity:.16;transition:.3s;font-family:var(--sans);
+}
+#ctl:hover{opacity:1}
+#ctl button{
+  background:var(--panel-2);border:1px solid var(--line);color:var(--fg-dim);border-radius:6px;
+  padding:4px 10px;font-size:11px;cursor:pointer;font-family:inherit;transition:.2s;
+}
+#ctl button:hover{color:#fff;border-color:var(--accent)}
+#ctl .sp{font-size:10px;color:var(--fg-faint);font-family:var(--mono);min-width:30px;text-align:center}
+</style>
+</head>
+<body>
+<div id="viewport">
+<div id="stage">
+
+  <!-- ══════════ TITLE BAR ══════════ -->
+  <div class="titlebar">
+    <div class="lights"><i></i><i></i><i></i></div>
+    <div class="ttl-center">
+      <span class="dna">◈</span> acme-billing <span style="opacity:.3">—</span> analytics/revenue.py
+    </div>
+    <div class="ttl-right">
+      <span class="pill" id="pillMode">mode: agent</span>
+      <span class="pill live">simulazione</span>
+    </div>
+  </div>
+
+  <div class="shell">
+
+    <!-- ══════════ ACTIVITY BAR ══════════ -->
+    <div class="activity">
+      <div class="act on"><svg viewBox="0 0 24 24"><path d="M3 5h7l2 2h9v12H3z"/></svg></div>
+      <div class="act"><svg viewBox="0 0 24 24"><circle cx="11" cy="11" r="7"/><path d="M20 20l-3.5-3.5"/></svg></div>
+      <div class="act"><svg viewBox="0 0 24 24"><circle cx="6" cy="6" r="2.5"/><circle cx="6" cy="18" r="2.5"/><circle cx="18" cy="9" r="2.5"/><path d="M6 8.5v7M8.5 6.6L15.6 8"/></svg></div>
+      <div class="act"><svg viewBox="0 0 24 24"><path d="M12 3l8 4.5v9L12 21l-8-4.5v-9z"/><path d="M12 12l8-4.5M12 12v9M12 12L4 7.5"/></svg></div>
+      <div class="act dna"><svg viewBox="0 0 24 24"><path d="M7 3c0 5 10 5 10 10S7 18 7 21"/><path d="M17 3c0 5-10 5-10 10s10 5 10 8"/><path d="M8.5 7h7M8.5 17h7M7.8 11h8.4"/></svg></div>
+    </div>
+
+    <!-- ══════════ EXPLORER ══════════ -->
+    <div class="explorer">
+      <div class="exp-head">esplora risorse <span class="count" id="covCount">0 / 54</span></div>
+      <div class="tree" id="tree"></div>
+      <div class="exp-foot">
+        <div><b>◈ CodeDNA</b> &nbsp;protocollo v0.9</div>
+        <div class="legend" id="legend">
+          <i data-f="exports" style="--lc:var(--c-exports)">exports:</i>
+          <i data-f="used_by" style="--lc:var(--c-usedby)">used_by:</i>
+          <i data-f="related" style="--lc:var(--c-related)">related:</i>
+          <i data-f="wiki"    style="--lc:var(--c-wiki)">wiki:</i>
+          <i data-f="rules"   style="--lc:var(--c-rules)">rules:</i>
+          <i data-f="agent"   style="--lc:var(--c-agent)">agent:</i>
+          <i data-f="message" style="--lc:var(--c-message)">message:</i>
+          <i data-f="naming"  style="--lc:var(--c-naming)">naming L3</i>
+        </div>
+      </div>
+    </div>
+
+    <!-- ══════════ EDITOR ══════════ -->
+    <div class="main">
+      <div class="tabs" id="tabs"></div>
+      <div class="breadcrumb" id="crumb"></div>
+
+      <div class="codearea">
+        <div id="scroller"><div id="inner"></div></div>
+
+        <div class="wframe" id="wframe"><i></i><i></i><i></i><i></i><b id="wflabel">finestra di contesto</b></div>
+
+        <div class="rail">
+          <div class="hud" id="hud">
+            <h4>righe lette dall'agente</h4>
+            <div class="big"><span id="hRead">0</span> <em>/ 10.247</em></div>
+            <div class="bar"><i id="hBar"></i></div>
+            <div class="sub2"><b id="hPct">0,0 %</b> del file</div>
+            <div class="rowk"><span>finestra</span><b id="hWin">1 – 29</b></div>
+            <div class="note" id="hNote">l'agente non legge il file: lo <b>attraversa</b></div>
+          </div>
+          <div class="mm-cap"><span>minimappa</span><b id="mmCap">10.247</b></div>
+          <div class="minimap">
+            <canvas id="mm"></canvas>
+            <div class="mm-view" id="mmv" style="top:0;height:40px"></div>
+          </div>
+        </div>
+
+        <div id="graph">
+          <div class="gh">◈ <b>codedna impact</b> analytics/revenue.py</div>
+          <svg viewBox="0 0 530 232" id="gsvg"></svg>
+        </div>
+
+        <div id="versus">
+          <h3>Stesso task, stesso modello, stesso file da 10.247 righe</h3>
+          <div class="sub">attraversamento necessario prima di poter scrivere la prima riga di codice</div>
+          <div class="vrow" style="--vc:#f87171">
+            <div class="vl"><span>senza CodeDNA — scansione lineare + grep</span><b id="v1">0 righe</b></div>
+            <div class="vbar"><i id="vb1"></i></div>
+          </div>
+          <div class="vrow" style="--vc:#34d399">
+            <div class="vl"><span>con CodeDNA — salti guidati dalle annotazioni</span><b id="v2">0 righe</b></div>
+            <div class="vbar"><i id="vb2"></i></div>
+          </div>
+          <div class="foot" id="vfoot">&nbsp;</div>
+        </div>
+      </div>
+
+      <!-- terminal -->
+      <div class="term">
+        <div class="term-head">
+          <span class="t on">terminale</span><span class="t">problemi</span><span class="t">output</span><span class="t">git</span>
+        </div>
+        <div class="term-body" id="term"></div>
+      </div>
+    </div>
+
+    <!-- ══════════ CHAT ══════════ -->
+    <div class="chat">
+      <div class="chat-head">
+        <div class="avatar" id="av">C</div>
+        <div class="who"><b id="avName">claude-sonnet-4-6</b><span id="avVendor">anthropic</span></div>
+        <div class="mode" id="chatMode">agent</div>
+      </div>
+      <div class="chat-body" id="chat"></div>
+      <div class="chat-foot">
+        <div class="inputbox"><span class="ph" id="ph">Aggiungi il riepilogo annuale dei ricavi…</span></div>
+        <div class="hint"><span>⌘K modifica</span><span>⌘L chat</span><span>⇥ accetta</span></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ STATUS BAR ══════════ -->
+  <div class="status">
+    <span class="s brand">◈ CodeDNA</span>
+    <span class="s" id="stBranch">⎇ main</span>
+    <span class="s chip g" id="stVerify">verify ✓</span>
+    <span class="s" id="stCov">L1 54 · L2 128 · L3 on</span>
+    <div class="right">
+      <span class="s" id="stPos">riga 1, col 1</span>
+      <span class="s">UTF-8</span>
+      <span class="s">Python</span>
+      <span class="s chip" id="stCtx">contesto 29 / 10.247</span>
+    </div>
+  </div>
+
+  <div id="callout"><div class="ct"><span id="cTitle"></span><span class="lvl" id="cLvl"></span></div><div class="cb" id="cBody"></div></div>
+  <div id="scene"><span class="n" id="scN">01</span><span id="scT"></span></div>
+</div>
+
+<div id="ctl">
+  <button id="bPlay">pausa</button>
+  <button id="bSlow">−</button><span class="sp" id="spd">1.0×</span><button id="bFast">+</button>
+  <button id="bRestart">riavvia</button>
+</div>
+</div>
+
+<script>
+"use strict";
+
+/* ============================================================
+   0 · scala lo stage per riempire qualsiasi proiettore
+   ============================================================ */
+const STAGE_W = 1600, STAGE_H = 900;
+const stage = document.getElementById('stage');
+function fit(){
+  const k = Math.min(innerWidth / STAGE_W, innerHeight / STAGE_H);
+  stage.style.transform = `translate(${(innerWidth - STAGE_W*k)/2}px, ${(innerHeight - STAGE_H*k)/2}px) scale(${k})`;
+}
+addEventListener('resize', fit); fit();
+
+/* ============================================================
+   1 · motore: sleep / animate / typing con pausa + velocità
+   ============================================================ */
+class Aborted extends Error {}
+const state = { speed: 1, paused: false };
+let RUN = 0;
+const guard = my => { if (my !== RUN) throw new Aborted(); };
+const raf = () => new Promise(r => requestAnimationFrame(r));
+
+async function sleep(ms, my){
+  let left = ms, last = performance.now();
+  while (left > 0){
+    await raf(); guard(my);
+    const now = performance.now(), dt = Math.min(now - last, 60); last = now;
+    if (!state.paused) left -= dt * state.speed;
+  }
+}
+async function animate(ms, cb, my, ease = t => t){
+  let el = 0, last = performance.now();
+  while (el < ms){
+    await raf(); guard(my);
+    const now = performance.now(), dt = Math.min(now - last, 60); last = now;
+    if (!state.paused) el = Math.min(ms, el + dt * state.speed);
+    cb(ease(el / ms));
+  }
+  cb(ease(1));
+}
+const easeOut  = t => 1 - Math.pow(1 - t, 3);
+const easeIO   = t => t < .5 ? 4*t*t*t : 1 - Math.pow(-2*t + 2, 3)/2;
+
+const esc = s => s.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+const it  = n => n.toLocaleString('it-IT');
+
+/* ============================================================
+   2 · il file sorgente virtuale — 10.247 righe
+   ============================================================ */
+const TOTAL = 10247;
+
+// ---- Livello 1: header del modulo (mutabile: l'agente ci scrive dentro) ----
+const HEADER_BASE = [
+  { k:'"""analytics/revenue.py', v:' — Aggregazione ricavi mensili e annuali da fatture pagate.', f:'title' },
+  { k:'', v:'', f:'doc' },
+  { k:'exports: ', v:'monthly_revenue(year, month) -> dict | annual_summary(year) -> list[dict]', f:'exports' },
+  { k:'used_by: ', v:'api/reports.py → revenue_route', f:'used_by' },
+  { k:'         ', v:'api/serializers.py → RevenueSchema [cascade]', f:'used_by', cascade:true },
+  { k:'related: ', v:'billing/currency.py — stessa conversione multi-valuta (nessun import)', f:'related' },
+  { k:'wiki:    ', v:'docs/wiki/revenue.md', f:'wiki' },
+  { k:'rules:   ', v:'get_invoices_for_period() restituisce TUTTI i tenant, NESSUN filtro sospesi →', f:'rules' },
+  { k:'         ', v:'il chiamante DEVE chiamare is_suspended() PRIMA di aggregare.', f:'rules' },
+  { k:'         ', v:'amount_cents è in centesimi, non euro — dividere per 100 solo in display.', f:'rules' },
+  { k:'agent:   ', v:'claude-sonnet-4-6 | anthropic | 2026-03-10 | s_20260310_004 | Implementata', f:'agent' },
+  { k:'         ', v:'monthly_revenue. L\'upstream non filtra i tenant sospesi.', f:'agent' },
+  { k:'         message: ', v:'"edge case di arrotondamento in multi-valuta — non', f:'message' },
+  { k:'                  ', v:' abbastanza certo per rules:, verificare prima della release"', f:'message' },
+  { k:'"""', v:'', f:'doc' },
+  { k:'', v:'', f:null },
+];
+// Rules: HEADER viene mutato dalle scene 08 — ripartire SEMPRE da HEADER_BASE,
+//        altrimenti il secondo giro di loop eredita le righe inserite.
+let HEADER = HEADER_BASE.map(o => ({ ...o }));
+
+const IMPORTS = [
+  'from datetime import date',
+  'from decimal import Decimal',
+  '',
+  'from billing.currency import to_base_currency',
+  'from tenants.models import is_suspended',
+  'from .db import db, build_period_query',
+  'from .errors import TenantSuspendedError',
+  '',
+].map(t => ({ raw:t }));
+
+// ---- blocco L2 "a monte": la funzione che NON filtra ----
+const FN_UPSTREAM = [
+  'def get_invoices_for_period(year: int, month: int) -> list[dict]:',
+  '    """Legge dal database tutte le fatture del periodo.',
+  '',
+  '@L2R    Rules:   restituisce TUTTI i tenant, sospesi inclusi —',
+  '@L2R             il filtro è responsabilità del chiamante, mai di qui.',
+  '    """',
+  '    str_sql_period_query = build_period_query(year, month)',
+  '    return db.execute(str_sql_period_query).fetchall()',
+  '',
+].map(mk);
+
+// ---- blocco eroe: tutte le annotazioni insieme ----
+const FN_MONTHLY = [
+  'def monthly_revenue(year: int, month: int) -> dict:',
+  '    """Aggrega le fatture pagate nel totale ricavi del mese.',
+  '',
+  '@L2R    Rules:   DEVE filtrare is_suspended() PRIMA di sommare.',
+  '@L2R             Non filtrare gonfia i ricavi con tenant sospesi.',
+  '@L2M    message: claude-sonnet-4-6 | 2026-03-10 | arrotondamento multi-valuta',
+  '@L2M             da verificare — non ancora promosso a Rules:',
+  '    Raises:  TenantSuspendedError se tutti i tenant sono sospesi.',
+  '    Returns: {year, month, total_cents, by_tenant: {id: [invoices]}}',
+  '    """',
+  '@SEM    list_dict_invoices_from_db = get_invoices_for_period(year, month)',
+  '',
+  '@INL    # Rules: l\'upstream NON filtra i sospesi — il filtro va qui, mai a valle',
+  '@SEM    list_dict_invoices_active = [',
+  '        inv for inv in list_dict_invoices_from_db',
+  '        if not is_suspended(inv["tenant_id"])',
+  '    ]',
+  '',
+  '@INM    # message: amount_cents è intero — nessun passaggio da float prima della somma',
+  '@SEM    int_cents_total_computed = sum(',
+  '        inv["amount_cents"] for inv in list_dict_invoices_active',
+  '    )',
+  '',
+  '    if not list_dict_invoices_active:',
+  '        raise TenantSuspendedError(year, month)',
+  '',
+  '    return {',
+  '        "year": year,',
+  '        "month": month,',
+  '        "total_cents": int_cents_total_computed,',
+  '        "by_tenant": group_by_tenant(list_dict_invoices_active),',
+  '    }',
+  '',
+].map(mk);
+
+// ---- blocco dove l'agente scriverà (inizialmente stub) ----
+let FN_ANNUAL = [
+  'def annual_summary(year: int) -> list[dict]:',
+  '    """Riepilogo annuale dei ricavi — 12 mesi.',
+  '',
+  '@L2R    Rules:   riusa monthly_revenue() — NON riscrivere l\'aggregazione.',
+  '    """',
+  '    raise NotImplementedError  # TODO',
+  '',
+].map(mk);
+
+const FN_ANNUAL_DONE = [
+  'def annual_summary(year: int) -> list[dict]:',
+  '    """Riepilogo annuale dei ricavi — 12 mesi.',
+  '',
+  '@L2R    Rules:   riusa monthly_revenue() — NON riscrivere l\'aggregazione.',
+  '@L2M    message: gemini-3-pro | 2026-10-24 | @prev: arrotondamento confermato,',
+  '@L2M             promosso a rules: nell\'header del modulo.',
+  '    """',
+  '@SEM    list_dict_months_computed = []',
+  '',
+  '@INL    # Rules: 12 chiamate, mai una query unica — il filtro sospesi è per mese',
+  '    for int_month_index in range(1, 13):',
+  '@SEM        dict_month_revenue_computed = monthly_revenue(year, int_month_index)',
+  '        list_dict_months_computed.append(dict_month_revenue_computed)',
+  '',
+  '    return list_dict_months_computed',
+  '',
+].map(mk);
+
+function mk(t){
+  let tag = null, raw = t;
+  const m = /^@(L2R|L2M|INL|INM|SEM)/.exec(t);
+  if (m){ tag = m[1]; raw = t.slice(m[0].length); }
+  return { raw, tag };
+}
+
+// posizione dei blocchi nel file virtuale
+const ANCHOR = { upstream: 1184, monthly: 4168, annual: 7312, tail: 9482 };
+
+const FN_TAIL = [
+  'def group_by_tenant(list_dict_invoices: list[dict]) -> dict:',
+  '    """Raggruppa le fatture per tenant_id.',
+  '',
+  '@L2R    Rules:   la chiave è tenant_id (UUID), mai l\'indice di riga.',
+  '    """',
+  '@SEM    dict_grouped_by_tenant = {}',
+  '    for inv in list_dict_invoices:',
+  '        dict_grouped_by_tenant.setdefault(inv["tenant_id"], []).append(inv)',
+  '    return dict_grouped_by_tenant',
+  '',
+].map(mk);
+
+let _blocks = null;
+const invalidate = () => { _blocks = null; };
+function blocks(){
+  if (_blocks) return _blocks;
+  _blocks = [
+    { s:0,               n:HEADER.length,      kind:'header' },
+    { s:HEADER.length,   n:IMPORTS.length,     kind:'imports' },
+    { s:ANCHOR.upstream, n:FN_UPSTREAM.length, kind:'fn', lines:FN_UPSTREAM },
+    { s:ANCHOR.monthly,  n:FN_MONTHLY.length,  kind:'fn', lines:FN_MONTHLY },
+    { s:ANCHOR.annual,   n:FN_ANNUAL.length,   kind:'fn', lines:FN_ANNUAL },
+    { s:ANCHOR.tail,     n:FN_TAIL.length,     kind:'fn', lines:FN_TAIL },
+  ];
+  return _blocks;
+}
+
+/* riempitivo deterministico: codice plausibile ma "rumore" per l'agente */
+const FILLER = [
+  '    rows = cursor.fetchall()',
+  '    if not rows:',
+  '        return []',
+  '    acc += row.amount_cents',
+  '    logger.debug("period=%s tenant=%s", period, tenant_id)',
+  '',
+  '    for key, value in payload.items():',
+  '        if value is None:',
+  '            continue',
+  '        buffer[key] = value',
+  '',
+  '    return {k: v for k, v in buffer.items() if v}',
+  '',
+  '@staticmethod',
+  '    def _coerce(raw):',
+  '        try:',
+  '            return Decimal(raw)',
+  '        except (TypeError, ValueError):',
+  '            return Decimal("0")',
+  '',
+  '    cache.set(cache_key, serialized, timeout=300)',
+  '    if settings.DEBUG:',
+  '        print(cache_key)',
+  '',
+  '    with transaction.atomic():',
+  '        obj.save(update_fields=["updated_at"])',
+  '',
+  '    assert isinstance(period, tuple)',
+  '    period_start, period_end = period',
+  '',
+];
+function filler(i){
+  const t = FILLER[i % FILLER.length];
+  if (t.includes('_coerce')) return `    def _coerce_${(i*37)%991}(raw):`;
+  if (t.includes('cache_key')) return `    cache.set("rev:${(i*17)%9973}", serialized, timeout=300)`;
+  return t;
+}
+
+/* lineAt → oggetto riga renderizzabile */
+function lineAt(i){
+  for (const b of blocks()){
+    if (i >= b.s && i < b.s + b.n){
+      const j = i - b.s;
+      if (b.kind === 'header') return { hdr: HEADER[j] };
+      if (b.kind === 'imports') return { raw: IMPORTS[j].raw, hot:true };
+      return { raw: b.lines[j].raw, tag: b.lines[j].tag, hot:true };
+    }
+  }
+  return { raw: filler(i), dim:true };
+}
+function isHot(i){ const L = lineAt(i); return !!(L.hdr || L.hot); }
+
+/* ============================================================
+   3 · syntax highlight minimale
+   ============================================================ */
+const KW = /\b(def|return|for|in|if|not|and|or|else|elif|raise|with|try|except|import|from|class|None|True|False|as|while|continue|pass|lambda|yield|assert)\b/g;
+function hl(src){
+  let s = esc(src);
+  if (/^\s*#/.test(src)) return `<span class="t-cmt">${s}</span>`;
+  s = s.replace(/("""|&quot;)/g, '<span class="t-str">$1</span>');
+  s = s.replace(/(&quot;[^&]*?&quot;|'[^']*?')/g, '<span class="t-str">$1</span>');
+  s = s.replace(KW, '<span class="t-kw">$1</span>');
+  s = s.replace(/\b(def)<\/span> (\w+)/g, '$1</span> <span class="t-def">$2</span>');
+  s = s.replace(/\b(\d+)\b/g, '<span class="t-num">$1</span>');
+  s = s.replace(/\b(list_dict_\w+|int_cents_\w+|str_sql_\w+|dict_\w+_computed|dict_grouped_\w+|int_month_\w+)\b/g, '<span class="sem">$1</span>');
+  return s;
+}
+const TAGCLS = { L2R:'l2rules', L2M:'l2msg', INL:'inline', INM:'inlinem', SEM:'naming' };
+
+function renderLineHTML(i){
+  const L = lineAt(i);
+  let cls = 'ln', mark = '', body = '';
+  if (L.hdr){
+    const h = L.hdr;
+    cls += ' hot' + (h.cascade ? ' cascade' : '');
+    body = `<span class="fld f-${h.f || 'doc'}"><span class="k">${esc(h.k)}</span><span class="v">${esc(h.v)}</span></span>`;
+    mark = h.f || '';
+  } else if (L.tag){
+    cls += ' hot';
+    const c = TAGCLS[L.tag];
+    if (L.tag === 'SEM'){ body = hl(L.raw); }
+    else { body = `<span class="fld f-${c}"><span class="k">${esc(L.raw)}</span></span>`; }
+    mark = L.tag;
+  } else {
+    cls += L.dim ? ' dim' : ' hot';
+    body = hl(L.raw);
+  }
+  return `<div class="${cls}" data-l="${i}" data-f="${mark}"><span class="num">${it(i+1)}</span><span class="mk"></span><span class="txt">${body}</span></div>`;
+}
+
+/* ============================================================
+   4 · scroll virtuale su 10.247 righe
+   ============================================================ */
+const LH = 20, BUF = 150;
+const scroller = document.getElementById('scroller');
+const inner = document.getElementById('inner');
+let scrollPx = 0, bufStart = -1;
+const visibleCount = () => Math.ceil(scroller.clientHeight / LH);
+
+function renderBuffer(){
+  let h = '';
+  for (let i = bufStart; i < Math.min(TOTAL, bufStart + BUF); i++) h += renderLineHTML(i);
+  inner.innerHTML = h;
+}
+function syncScroll(force){
+  // Rules: force=true è anche il segnale che HEADER o FN_ANNUAL sono mutati.
+  if (force) invalidate();
+  const first = Math.floor(scrollPx / LH);
+  if (force || bufStart < 0 || first < bufStart + 12 || first + visibleCount() > bufStart + BUF - 12){
+    bufStart = Math.max(0, first - 35);
+    renderBuffer();
+  }
+  inner.style.transform = `translateY(${-(scrollPx - bufStart * LH)}px)`;
+  updateHUD();
+}
+function setScrollLine(line, force){ scrollPx = Math.max(0, Math.min((TOTAL - visibleCount()) * LH, line * LH)); syncScroll(force); }
+async function scrollToLine(line, ms, my, ease = easeIO){
+  const from = scrollPx, to = Math.max(0, Math.min((TOTAL - visibleCount()) * LH, line * LH));
+  await animate(ms, p => { scrollPx = from + (to - from) * p; syncScroll(); }, my, ease);
+}
+const lineEl = i => inner.querySelector(`[data-l="${i}"]`);
+
+/* ============================================================
+   5 · HUD finestra di contesto + minimappa
+   ============================================================ */
+const readSet = new Set();
+let readCount = 0;
+const hud = document.getElementById('hud');
+const mmv = document.getElementById('mmv');
+const mmBox = document.querySelector('.minimap');
+
+function markRead(){
+  const first = Math.floor(scrollPx / LH), last = first + visibleCount();
+  for (let i = first; i < last && i < TOTAL; i++){
+    if (isHot(i) && !readSet.has(i)){ readSet.add(i); readCount++; }
+  }
+}
+function updateHUD(){
+  const first = Math.floor(scrollPx / LH), last = Math.min(TOTAL, first + visibleCount());
+  markRead();
+  document.getElementById('hWin').textContent  = `${it(first+1)} – ${it(last)}`;
+  document.getElementById('hRead').textContent = it(readCount);
+  const pct = readCount / TOTAL * 100;
+  document.getElementById('hPct').textContent  = pct.toFixed(1).replace('.', ',') + ' %';
+  document.getElementById('hBar').style.width  = Math.max(1.5, pct * 7) + '%';
+  document.getElementById('stPos').textContent = `riga ${it(first+1)}, col 1`;
+  document.getElementById('stCtx').textContent = `contesto ${visibleCount()} / ${it(TOTAL)}`;
+  const H = mmBox.clientHeight || 420;
+  mmv.style.top    = (first / TOTAL * H) + 'px';
+  mmv.style.height = Math.max(5, visibleCount() / TOTAL * H) + 'px';
+}
+
+/* minimappa su canvas */
+const FCOL = {
+  exports:'#3b82f6', used_by:'#f97316', related:'#ef4444', wiki:'#06b6d4',
+  rules:'#f59e0b', agent:'#10b981', message:'#8b5cf6', title:'#a5b4fc', doc:'#3f3f46',
+  L2R:'#f59e0b', L2M:'#8b5cf6', INL:'#f59e0b', INM:'#8b5cf6', SEM:'#ec4899'
+};
+function drawMinimap(){
+  const c = document.getElementById('mm');
+  const W = mmBox.clientWidth || 190, H = mmBox.clientHeight || 420, dpr = 2;
+  c.width = W * dpr; c.height = H * dpr;
+  const g = c.getContext('2d'); g.scale(dpr, dpr);
+  g.clearRect(0, 0, W, H);
+  const step = H / TOTAL;
+  for (let i = 0; i < TOTAL; i++){
+    const L = lineAt(i), y = i * step;
+    if (L.dim){
+      // il rumore: tratti grigi, larghezza pseudo-casuale come un vero minimap
+      g.fillStyle = 'rgba(255,255,255,.06)';
+      g.fillRect(14, y, 34 + ((i * 29) % 108), Math.max(.3, step));
+    } else {
+      // le annotazioni: bande colorate, sempre visibili anche a 0,04 px/riga
+      const key = L.hdr ? (L.hdr.f || 'doc') : (L.tag || 'doc');
+      g.fillStyle = FCOL[key] || '#52525b';
+      g.fillRect(10, y - 1.2, 170, Math.max(2.8, step));
+    }
+  }
+}
+
+/* ============================================================
+   6 · callout
+   ============================================================ */
+const co = document.getElementById('callout');
+const CO_LEFT = 742;   // px di design: a destra del codice, a sinistra del rail
+
+function showCallout(line, title, lvl, body, color){
+  co.style.setProperty('--cc', color);
+  document.getElementById('cTitle').innerHTML = esc(title);
+  document.getElementById('cLvl').textContent = lvl;
+  document.getElementById('cBody').innerHTML = body;
+
+  // Rules: le coordinate vanno calcolate nello spazio dello stage (1600x900),
+  //        non del viewport — lo stage è scalato con transform.
+  const sr = stage.getBoundingClientRect();
+  const k  = sr.width / STAGE_W;
+  const area = document.querySelector('.codearea');
+  const ar = area.getBoundingClientRect();
+  const areaTop = (ar.top - sr.top) / k;
+
+  co.style.left = CO_LEFT + 'px';
+  co.classList.add('on');
+
+  const el = lineEl(line);
+  let top = areaTop + 24;
+  if (el){
+    const r = el.getBoundingClientRect();
+    top = (r.top - sr.top) / k - 15;
+  }
+  const h = co.offsetHeight || 130;
+  const lo = areaTop + 8, hi = areaTop + area.offsetHeight - h - 8;
+  co.style.top = Math.max(lo, Math.min(Math.max(lo, hi), top)) + 'px';
+}
+const hideCallout = () => co.classList.remove('on');
+
+function focusLines(arr, color){
+  inner.querySelectorAll('.focus,.beam').forEach(e => { e.classList.remove('focus','beam'); });
+  arr.forEach(i => {
+    const el = lineEl(i);
+    if (!el) return;
+    el.style.setProperty('--fc', color);
+    el.style.setProperty('--fcb', color + '26');
+    el.classList.add('focus','beam');
+  });
+}
+const clearFocus = () => inner.querySelectorAll('.focus,.beam,.flash').forEach(e => e.classList.remove('focus','beam','flash'));
+
+/* ============================================================
+   7 · chat / terminale / explorer
+   ============================================================ */
+const AGENTS = {
+  claude: { name:'claude-sonnet-4-6', vendor:'anthropic', ini:'C', col:'#d97757' },
+  gemini: { name:'gemini-3-pro',      vendor:'google',    ini:'G', col:'#4285f4' }
+};
+function setAgent(key){
+  const a = AGENTS[key];
+  const av = document.getElementById('av');
+  av.textContent = a.ini; av.style.setProperty('--av', a.col);
+  document.getElementById('avName').textContent = a.name;
+  document.getElementById('avVendor').textContent = a.vendor;
+}
+const chat = document.getElementById('chat');
+function chatClear(){ chat.innerHTML = ''; }
+function chatTrim(){ while (chat.children.length > 9) chat.removeChild(chat.firstChild); }
+function say(html, me){ const d = document.createElement('div'); d.className = 'msg' + (me ? ' me' : ''); d.innerHTML = html; chat.appendChild(d); chatTrim(); return d; }
+function tool(label, det){
+  const d = document.createElement('div'); d.className = 'tool';
+  d.innerHTML = `<span class="sp"></span><span>${label}</span><span class="det">${det || ''}</span>`;
+  chat.appendChild(d); chatTrim(); return d;
+}
+async function toolDone(el, ms, my){ await sleep(ms, my); el.classList.add('done'); }
+async function typeMsg(html, ms, my, me){
+  const d = say('', me);
+  const plain = html.replace(/<[^>]+>/g, '');
+  await animate(ms, p => {
+    const n = Math.floor(plain.length * p);
+    d.textContent = plain.slice(0, n);
+    if (p < 1) d.innerHTML = esc(plain.slice(0, n)) + '<span class="caret"></span>';
+  }, my);
+  d.innerHTML = html;
+  return d;
+}
+
+const term = document.getElementById('term');
+function termClear(){ term.innerHTML = ''; }
+function termTrim(){ while (term.children.length > 9) term.removeChild(term.firstChild); }
+function tline(txt, cls){ const d = document.createElement('div'); d.className = 'tl' + (cls ? ' ' + cls : ''); d.innerHTML = txt; term.appendChild(d); termTrim(); return d; }
+async function typeCmd(txt, my){
+  const d = tline('', 'cmd');
+  await animate(txt.length * 34, p => { d.innerHTML = esc(txt.slice(0, Math.floor(txt.length * p))) + '<span class="caret"></span>'; }, my);
+  d.textContent = txt;
+  await sleep(260, my);
+  return d;
+}
+
+/* explorer tree */
+const TREE = [
+  { d:'acme-billing', lvl:0 },
+  { d:'analytics', lvl:1 },
+  { f:'revenue.py', lvl:2, sel:true },
+  { f:'kpi.py', lvl:2 },
+  { f:'exporters.py', lvl:2 },
+  { d:'api', lvl:1 },
+  { f:'reports.py', lvl:2 },
+  { f:'serializers.py', lvl:2, casc:true },
+  { f:'routes.py', lvl:2 },
+  { d:'billing', lvl:1 },
+  { f:'currency.py', lvl:2, rel:true },
+  { f:'stripe_client.py', lvl:2 },
+  { d:'tenants', lvl:1 },
+  { f:'models.py', lvl:2 },
+  { f:'middleware.py', lvl:2 },
+  { f:'.codedna', lvl:1, cfg:true },
+  { f:'AGENTS.md', lvl:1, cfg:true },
+];
+const treeEl = document.getElementById('tree');
+function buildTree(){
+  treeEl.innerHTML = TREE.map((n, i) => {
+    const pad = 8 + n.lvl * 11;
+    if (n.d) return `<div class="row dir" data-i="${i}" style="padding-left:${pad}px"><span class="caret">▾</span><span class="nm">${n.d}</span></div>`;
+    const col = n.cfg ? 'var(--accent)' : '#6b7280';
+    return `<div class="row file${n.sel ? ' sel' : ''}" data-i="${i}" style="padding-left:${pad + 11}px">
+      <svg class="ic" viewBox="0 0 16 16" fill="none" stroke="${col}" stroke-width="1.3"><path d="M9 1.5H4a1 1 0 00-1 1v11a1 1 0 001 1h8a1 1 0 001-1V5.5z"/><path d="M9 1.5v4h4"/></svg>
+      <span class="nm">${n.f}</span><span class="dot"></span></div>`;
+  }).join('');
+}
+const treeRow = i => treeEl.querySelector(`[data-i="${i}"]`);
+const fileRows = () => TREE.map((n, i) => n.f ? i : -1).filter(i => i >= 0);
+
+/* tabs */
+function setTabs(list, active){
+  document.getElementById('tabs').innerHTML = list.map(t =>
+    `<div class="tab${t === active ? ' on' : ''}">
+      <svg width="12" height="12" viewBox="0 0 16 16" fill="none" stroke="${t.endsWith('.py') ? '#6366f1' : '#6b7280'}" stroke-width="1.3"><path d="M9 1.5H4a1 1 0 00-1 1v11a1 1 0 001 1h8a1 1 0 001-1V5.5z"/><path d="M9 1.5v4h4"/></svg>
+      ${t}<span class="x">×</span></div>`).join('');
+}
+function setCrumb(parts){
+  document.getElementById('crumb').innerHTML = parts.map((p, i) =>
+    `${i ? '<span class="sep">›</span> ' : ''}<span class="${i === parts.length - 1 ? 'cur' : ''}">${p}</span>`).join(' ');
+}
+
+/* scene toast */
+const scEl = document.getElementById('scene');
+async function scene(n, t, my){
+  document.getElementById('scN').textContent = n;
+  document.getElementById('scT').textContent = t;
+  scEl.classList.add('on');
+  await sleep(2100, my);
+  scEl.classList.remove('on');
+  await sleep(260, my);
+}
+
+/* ============================================================
+   8 · grafo di impact
+   ============================================================ */
+const GN = [
+  { id:'root', x:26,  y:98,  w:150, label:'analytics/revenue.py', c:'#6366f1' },
+  { id:'a',    x:224, y:34,  w:152, label:'api/reports.py',       c:'#f97316' },
+  { id:'b',    x:224, y:98,  w:152, label:'api/serializers.py',   c:'#f97316', casc:true },
+  { id:'c',    x:224, y:162, w:152, label:'billing/currency.py',  c:'#ef4444', rel:true },
+  { id:'d',    x:400, y:34,  w:110, label:'api/routes.py',        c:'#f97316' },
+];
+const GE = [ ['root','a'], ['root','b'], ['root','c'], ['a','d'] ];
+function buildGraph(){
+  const svg = document.getElementById('gsvg');
+  let h = '';
+  GE.forEach(([f, t], i) => {
+    const F = GN.find(n => n.id === f), T = GN.find(n => n.id === t);
+    const x1 = F.x + F.w, y1 = F.y + 15, x2 = T.x, y2 = T.y + 15;
+    const mx = (x1 + x2) / 2;
+    h += `<path class="gedge" id="e${i}" d="M${x1} ${y1} C ${mx} ${y1}, ${mx} ${y2}, ${x2} ${y2}"/>`;
+  });
+  GN.forEach(n => {
+    h += `<g class="gnode" id="n-${n.id}" style="--gc:${n.c}">
+      <rect x="${n.x}" y="${n.y}" width="${n.w}" height="30"/>
+      <text x="${n.x + 11}" y="${n.y + 19}">${n.label}</text></g>`;
+    if (n.casc) h += `<text class="gtag" id="tag-casc" x="${n.x + n.w + 8}" y="${n.y + 19}">[cascade]</text>`;
+    if (n.rel)  h += `<text class="gtag" id="tag-rel" style="fill:#ef4444" x="${n.x + n.w + 8}" y="${n.y + 19}">related:</text>`;
+  });
+  svg.innerHTML = h;
+}
+
+/* ============================================================
+   9 · reset
+   ============================================================ */
+function reset(){
+  HEADER = HEADER_BASE.map(o => ({ ...o }));
+  FN_ANNUAL = [
+    'def annual_summary(year: int) -> list[dict]:',
+    '    """Riepilogo annuale dei ricavi — 12 mesi.',
+    '',
+    '@L2R    Rules:   riusa monthly_revenue() — NON riscrivere l\'aggregazione.',
+    '    """',
+    '    raise NotImplementedError  # TODO',
+    '',
+  ].map(mk);
+
+  readSet.clear(); readCount = 0;
+  chatClear(); termClear(); buildTree(); buildGraph();
+  setAgent('claude');
+  setTabs(['revenue.py'], 'revenue.py');
+  setCrumb(['acme-billing', 'analytics', 'revenue.py']);
+  document.querySelectorAll('.legend i').forEach(e => e.classList.remove('on'));
+  document.getElementById('graph').classList.remove('on');
+  document.getElementById('versus').classList.remove('on');
+  hud.classList.remove('on');
+  document.getElementById('wframe').classList.remove('on');
+  hideCallout(); clearFocus();
+  document.getElementById('covCount').textContent = '0 / 54';
+  document.getElementById('stVerify').textContent = 'verify —';
+  document.getElementById('stVerify').classList.remove('g');
+  document.getElementById('ph').textContent = 'Aggiungi il riepilogo annuale dei ricavi…';
+  bufStart = -1; setScrollLine(0, true);
+  drawMinimap();
+}
+const legendOn = f => document.querySelector(`.legend i[data-f="${f}"]`)?.classList.add('on');
+
+/* ============================================================
+   10 · SCENE
+   ============================================================ */
+
+// ── 01 — il prompt umano
+async function sc_prompt(my){
+  await scene('01', 'Un umano chiede. L\'agente non ha mai visto questo repository.', my);
+  say('<b>acme-billing</b> · 54 file · 212.000 righe · nessun contesto in memoria');
+  await sleep(500, my);
+  const ph = document.getElementById('ph');
+  const txt = 'Aggiungi il riepilogo annuale dei ricavi in analytics/revenue.py';
+  await animate(txt.length * 30, p => { ph.textContent = txt.slice(0, Math.floor(txt.length * p)) + '▌'; }, my);
+  ph.textContent = txt;
+  await sleep(400, my);
+  await typeMsg('Aggiungi il riepilogo annuale dei ricavi in analytics/revenue.py', 900, my, true);
+  await sleep(600, my);
+}
+
+// ── 02 — codedna init: le annotazioni entrano nel codice
+async function sc_init(my){
+  await scene('02', 'codedna init — le annotazioni vengono scritte dentro i file', my);
+  await typeCmd('codedna init . --no-llm', my);
+  tline('  rilevati  python · typescript · 54 file sorgente', 'dimm');
+  await sleep(420, my);
+  const rows = fileRows();
+  let done = 0;
+  for (const i of rows){
+    const el = treeRow(i);
+    el.classList.add('scanning');
+    await sleep(85, my);
+    el.classList.remove('scanning'); el.classList.add('annotated');
+    done++;
+    document.getElementById('covCount').textContent = `${done + 37} / 54`;
+    if (done % 4 === 0){
+      tline(`  annotato  ${TREE[i].f.padEnd(22)}<span class="hi">L1</span> + ${2 + (i % 5)} L2`, 'dimm');
+    }
+  }
+  document.getElementById('covCount').textContent = '54 / 54';
+  tline('  ✓ 54 file annotati · 0 chiamate LLM · costo $0.00', 'ok');
+  await sleep(500, my);
+  await typeCmd('codedna doctor --path .', my);
+  tline('  ok  manifest .codedna            ok  adapter tree-sitter (28 est.)', 'ok');
+  tline('  ok  hook pre-commit              ok  .codedna.lock in .gitignore', 'ok');
+  await sleep(700, my);
+}
+
+// ── 03 — Livello 0: la mappa di progetto
+async function sc_manifest(my){
+  await scene('03', 'Livello 0 — .codedna: la vista dall\'alto, prima di aprire qualsiasi sorgente', my);
+  const t1 = tool('Read', '.codedna · 38 righe');
+  await toolDone(t1, 900, my);
+  await typeMsg('Leggo prima la mappa di progetto: 4 pacchetti, analytics dipende da payments e tenants. Le ultime 5 sessioni agente sono nel manifest.', 1500, my);
+  await sleep(300, my);
+  say('<span class="fx" style="color:var(--c-agent)">agent_sessions:</span> gemini-2.5-pro ha toccato questo file il 18/03 — <b>visited</b> elenca anche i file solo <i>letti</i>, non solo quelli modificati.');
+  await sleep(1400, my);
+}
+
+// ── 04 — Livello 1: l'header, campo per campo
+async function sc_header(my){
+  await scene('04', 'Livello 1 — l\'header del modulo: 16 righe invece di 10.247', my);
+  setScrollLine(0, true);
+  const t = tool('Read', 'analytics/revenue.py · righe 1–16');
+  await toolDone(t, 800, my);
+  hud.classList.add('on');
+  await sleep(400, my);
+
+  const steps = [
+    { lines:[0], f:'title', col:'#a5b4fc', title:'prima riga', lvl:'obbligatoria',
+      body:'Il <b>cosa</b>, non il come. Massimo 15 parole. È la sola riga che un umano leggerebbe comunque.' },
+    { lines:[2], f:'exports', col:'#3b82f6', title:'exports:', lvl:'L1 · obbligatoria',
+      body:'L\'API pubblica con firma e tipo di ritorno. È un <b>contratto</b>: l\'agente non può rinominarla né rimuoverla senza istruzione esplicita.' },
+    { lines:[3,4], f:'used_by', col:'#f97316', title:'used_by:', lvl:'L1 · obbligatoria',
+      body:'Grafo <b>inverso</b> delle dipendenze: chi mi importa. Il tag <code>[cascade]</code> marca i file che <b>DEVONO</b> essere aggiornati se cambio un export. Niente grep.' },
+    { lines:[5], f:'related', col:'#ef4444', title:'related:', lvl:'L1 · opzionale',
+      body:'Link <b>semantico</b>: chi condivide la mia logica <i>senza importarmi</i>. Su Django #11532 è il campo che porta i file trovati da 2/5 a 5/5.' },
+    { lines:[6], f:'wiki', col:'#06b6d4', title:'wiki:', lvl:'L1 · opzionale',
+      body:'Puntatore opt-in a un markdown curato. È raro per scelta: <b>la rarità è il segnale</b>. Se c\'è, un agente precedente ha deciso che serve.' },
+    { lines:[7,8,9], f:'rules', col:'#f59e0b', title:'rules:', lvl:'L1 · obbligatoria',
+      body:'<b>La legge.</b> Vincoli duri e azionabili, aggiornati in-place. Qui c\'è la conoscenza che il codice non può dire: l\'upstream non filtra i sospesi, e gli importi sono in centesimi.' },
+    { lines:[10,11], f:'agent', col:'#10b981', title:'agent:', lvl:'L1 · obbligatoria',
+      body:'<b>Il diario.</b> Chi ha toccato il file, con quale provider, quando, e cosa ha notato. Finestra scorrevole delle ultime 5 sessioni — lo storico completo resta in git.' },
+    { lines:[12,13], f:'message', col:'#8b5cf6', title:'message:', lvl:'L1 · chat tra agenti',
+      body:'<b>La conversazione che precede la legge.</b> Un\'osservazione non ancora abbastanza certa per diventare <code>rules:</code>. Append-only: si chiude solo con una risposta.' },
+  ];
+
+  for (const s of steps){
+    focusLines(s.lines, s.col);
+    legendOn(s.f);
+    showCallout(s.lines[0], s.title, s.lvl, s.body, s.col);
+    await sleep(2550, my);
+  }
+  hideCallout(); clearFocus();
+  await sleep(300, my);
+  await typeMsg('16 righe e so già tutto: cosa esporto, chi dipende da me, quale vincolo non posso violare e cosa ha lasciato in sospeso l\'agente precedente.', 1600, my);
+  await sleep(900, my);
+}
+
+// ── 05 — impact: il grafo si accende
+async function sc_impact(my){
+  await scene('05', 'codedna impact — chi si rompe se tocco questo file', my);
+  await typeCmd('codedna impact analytics/revenue.py --path .', my);
+  const g = document.getElementById('graph');
+  g.classList.add('on');
+  const on = id => document.getElementById(id)?.classList.add('on');
+  await sleep(450, my);
+  on('n-root');
+  tline('  MATCH    analytics/revenue.py');
+  await sleep(500, my);
+  tline('  RULES    get_invoices_for_period() restituisce TUTTI i tenant, nessun filtro', 'warn');
+  await sleep(600, my);
+  on('e0'); on('n-a');
+  tline('  AFFECTS  api/reports.py        → revenue_route');
+  await sleep(450, my);
+  on('e1'); on('n-b'); on('tag-casc');
+  tline('  AFFECTS  api/serializers.py    → RevenueSchema  <span class="casc">[cascade]</span>');
+  treeRow(7).classList.add('sel');
+  await sleep(450, my);
+  on('e3'); on('n-d');
+  tline('  AFFECTS  api/routes.py         → via api/reports.py');
+  await sleep(450, my);
+  on('e2'); on('n-c'); on('tag-rel');
+  tline('  RELATED  billing/currency.py   → stessa logica, nessun import', 'warn');
+  await sleep(700, my);
+  tline('  3 dipendenti · 1 cascade · 1 related', 'ok');
+  await sleep(1300, my);
+  g.classList.remove('on');
+  treeRow(7).classList.remove('sel');
+  await sleep(400, my);
+}
+
+// ── 06 — LA SCENA: la finestra di contesto su 10.247 righe
+async function sc_window(my){
+  const VC = visibleCount();
+  const blind = (100 - VC / TOTAL * 100).toFixed(1).replace('.', ',');
+  await scene('06', `10.247 righe. L'agente ne legge ${VC} alla volta.`, my);
+  document.getElementById('wframe').classList.add('on');
+  document.getElementById('wflabel').textContent = `finestra di contesto · ${VC} righe`;
+  await sleep(600, my);
+
+  showCallout(2, 'finestra di contesto', 'il vincolo fisico',
+    `Un agente non "vede" il file: ne tiene <b>${VC} righe alla volta</b>, come un occhio che scorre. Tutto il resto è fuori dal contesto. In ogni istante il <b>${blind}%</b> di questo file è invisibile.`,
+    '#6366f1');
+  await sleep(3000, my);
+  hideCallout();
+
+  // discesa: il rumore
+  document.getElementById('hNote').innerHTML = 'attraversamento del <b>rumore</b> — nessuna annotazione';
+  await scrollToLine(760, 2600, my, easeIO);
+  await sleep(300, my);
+  showCallout(0, 'riempitivo', '≈ 9.900 righe',
+    'Codice perfettamente valido e perfettamente <b>muto</b>. Nessun vincolo di dominio, nessun contratto. Senza annotazioni l\'agente deve attraversarlo tutto per trovare i tre punti che contano.',
+    '#52525b');
+  await sleep(2600, my);
+  hideCallout();
+
+  // stop 1: l'upstream
+  document.getElementById('hNote').innerHTML = 'aggancio <b>Livello 2</b> — riga 1.185';
+  await scrollToLine(ANCHOR.upstream - 4, 1500, my, easeOut);
+  await sleep(250, my);
+  focusLines([ANCHOR.upstream + 3, ANCHOR.upstream + 4], '#f59e0b');
+  showCallout(ANCHOR.upstream + 3, 'Rules:', 'L2 · docstring di funzione',
+    'Qui l\'header del modulo è <b>già fuori dalla finestra</b> da mille righe. Il Livello 2 ripete il vincolo dove serve: <i>restituisce TUTTI i tenant, il filtro è del chiamante</i>.',
+    '#f59e0b');
+  legendOn('rules');
+  await sleep(3100, my);
+  hideCallout(); clearFocus();
+
+  // stop 2: il blocco eroe
+  document.getElementById('hNote').innerHTML = 'aggancio <b>Livello 2 + 3</b> — riga 4.169';
+  await scrollToLine(ANCHOR.monthly - 2, 2200, my, easeIO);
+  await sleep(350, my);
+
+  const M = ANCHOR.monthly;
+  const beats = [
+    { lines:[M+3, M+4], col:'#f59e0b', f:'rules', title:'Rules:', lvl:'L2 · il vincolo locale',
+      body:'<b>DEVE filtrare is_suspended() PRIMA di sommare.</b> L\'agente che legge solo questa finestra riceve comunque il vincolo. È la stessa logica del L1, ripetuta a portata di finestra.' },
+    { lines:[M+5, M+6], col:'#8b5cf6', f:'message', title:'message:', lvl:'L2 · thread aperto',
+      body:'Un thread di conversazione <b>dentro la funzione</b>. Claude ha lasciato un dubbio sull\'arrotondamento multi-valuta a marzo. È ancora aperto, e ora lo sto leggendo io.' },
+    { lines:[M+10, M+13, M+19], col:'#ec4899', f:'naming', title:'<type>_<shape>_<domain>_<origin>', lvl:'L3 · naming semantico',
+      body:'<code>list_dict_invoices_from_db</code> e <code>int_cents_total_computed</code>. Nessun hover, nessun "vai alla definizione": tipo, forma e origine sono <b>dentro il nome</b>, leggibili in qualsiasi finestra di 10 righe.' },
+    { lines:[M+12], col:'#f59e0b', f:'rules', title:'# Rules:', lvl:'annotazione inline',
+      body:'Sopra il blocco che codifica la regola di business. Il filtro dei sospesi va <b>esattamente qui</b> e mai a valle. È la riga che nel benchmark Django separa 6/7 da 7/7 file corretti.' },
+    { lines:[M+18], col:'#8b5cf6', f:'message', title:'# message:', lvl:'annotazione inline',
+      body:'Osservazione volatile accanto al codice che la genera: <code>amount_cents</code> è intero, nessun passaggio da float prima della somma.' },
+  ];
+  for (const b of beats){
+    focusLines(b.lines, b.col);
+    legendOn(b.f);
+    showCallout(b.lines[0], b.title, b.lvl, b.body, b.col);
+    await sleep(2800, my);
+  }
+  hideCallout(); clearFocus();
+  await sleep(300, my);
+
+  // il confronto
+  document.getElementById('versus').classList.add('on');
+  const vb1 = document.getElementById('vb1'), vb2 = document.getElementById('vb2');
+  const v1 = document.getElementById('v1'), v2 = document.getElementById('v2');
+  document.getElementById('vfoot').innerHTML = '&nbsp;';
+  await animate(2600, p => {
+    const n = Math.floor(10247 * p);
+    v1.textContent = it(n) + ' righe'; vb1.style.width = (p * 100) + '%';
+  }, my);
+  await sleep(500, my);
+  await animate(700, p => {
+    const n = Math.floor(readCount * p);
+    v2.textContent = it(n) + ' righe'; vb2.style.width = (p * (readCount / 10247 * 100)) + '%';
+  }, my, easeOut);
+  await sleep(500, my);
+  document.getElementById('vfoot').innerHTML =
+    `Stessa finestra di contesto. Stesso modello. L'agente annotato ha letto <b>${it(readCount)} righe su 10.247</b> e conosce ogni vincolo del file. Non è compressione: è <b>navigazione</b>.`;
+  await sleep(4200, my);
+  document.getElementById('versus').classList.remove('on');
+  document.getElementById('wframe').classList.remove('on');
+  document.getElementById('hNote').innerHTML = 'l\'agente non legge il file: lo <b>attraversa</b>';
+  await sleep(500, my);
+}
+
+// ── 07 — l'agente scrive
+async function sc_write(my){
+  await scene('07', 'L\'agente scrive — rispettando i vincoli che ha letto', my);
+  setAgent('gemini');
+  document.getElementById('avName').textContent = 'gemini-3-pro';
+  say('<b>nuova sessione</b> · altro modello, altro vendor, nessuna memoria condivisa');
+  await sleep(700, my);
+  await typeMsg('Leggo l\'header e il Rules: della funzione. Riuso monthly_revenue() invece di riscrivere l\'aggregazione, e applico il naming semantico.', 1600, my);
+
+  await scrollToLine(ANCHOR.annual - 4, 1800, my, easeIO);
+  await sleep(400, my);
+
+  // sostituisce lo stub riga per riga
+  const target = FN_ANNUAL_DONE;
+  for (let i = 0; i < target.length; i++){
+    FN_ANNUAL = target.slice(0, i + 1);
+    syncScroll(true);
+    const el = lineEl(ANCHOR.annual + i);
+    if (el) el.classList.add('flash');
+    await sleep(220, my);
+  }
+  FN_ANNUAL = target.slice();
+  syncScroll(true);
+  drawMinimap();
+  await sleep(500, my);
+
+  focusLines([ANCHOR.annual + 9], '#f59e0b');
+  showCallout(ANCHOR.annual + 9, '# Rules:', 'scritta dall\'agente',
+    'L\'agente non consuma soltanto le annotazioni: ne <b>produce</b>. Ha appena lasciato il vincolo che ha scoperto mentre scriveva, per chi arriverà dopo.',
+    '#f59e0b');
+  await sleep(2900, my);
+  hideCallout(); clearFocus();
+}
+
+// ── 08 — firma: agent: + message: e promozione a rules:
+async function sc_sign(my){
+  await scene('08', 'La risposta — un message: aperto a marzo si chiude a ottobre', my);
+  await scrollToLine(0, 1900, my, easeIO);
+  await sleep(400, my);
+
+  focusLines([12, 13], '#8b5cf6');
+  showCallout(12, 'message: aperto', 'marzo · claude-sonnet-4-6',
+    'Sette mesi fa un altro modello, di un altro vendor, ha lasciato un dubbio qui dentro. Nessun database, nessun orchestratore: solo il file.',
+    '#8b5cf6');
+  await sleep(2800, my);
+  hideCallout(); clearFocus();
+
+  // promozione: la riga rules: si estende
+  const newRule = { k:'         ', v:'arrotondamento multi-valuta: arrotondare SOLO al totale, mai per fattura.', f:'rules' };
+  HEADER.splice(10, 0, newRule);
+  syncScroll(true);
+  lineEl(10)?.classList.add('flash');
+  focusLines([10], '#f59e0b');
+  showCallout(10, 'promosso a rules:', 'l\'ipotesi diventa legge',
+    'Gemini ha verificato l\'osservazione di Claude e l\'ha <b>promossa</b>: da <code>message:</code> incerto a <code>rules:</code> vincolante. Il file ha imparato qualcosa in modo permanente.',
+    '#f59e0b');
+  await sleep(3000, my);
+  hideCallout(); clearFocus();
+
+  // nuova entry agent: + message: di risposta
+  const entry = [
+    { k:'agent:   ', v:'gemini-3-pro | google | 2026-10-24 | s_20261024_001 | Implementata', f:'agent' },
+    { k:'         ', v:'annual_summary riusando monthly_revenue. Nessun cascade rotto.', f:'agent' },
+    { k:'         message: ', v:'"@prev: arrotondamento confermato e promosso a', f:'message' },
+    { k:'                  ', v:' rules:. Nuovo aperto: rollover di gennaio in utils/dates.py"', f:'message' },
+  ];
+  for (let i = 0; i < entry.length; i++){
+    HEADER.splice(15 + i, 0, entry[i]);
+    syncScroll(true);
+    lineEl(15 + i)?.classList.add('flash');
+    await sleep(430, my);
+  }
+  drawMinimap();
+  focusLines([17, 18], '#8b5cf6');
+  showCallout(17, '@prev:', 'il ciclo si chiude',
+    'La risposta resta nel file. Append-only: nessun messaggio viene cancellato. Il prossimo agente leggerà entrambi i lati della conversazione — <b>e il nuovo thread appena aperto</b>.',
+    '#8b5cf6');
+  await sleep(3200, my);
+  hideCallout(); clearFocus();
+}
+
+// ── 09 — verify + commit con i trailer
+async function sc_verify(my){
+  await scene('09', 'I gate — verify strutturale e audit log su git', my);
+  await typeCmd('codedna verify .', my);
+  await sleep(500, my);
+  tline('  files_checked 54 · export_drift 0 · used_by_drift 0', 'dimm');
+  tline('  ✓ ok — exports: e used_by: coerenti con l\'AST', 'ok');
+  document.getElementById('stVerify').textContent = 'verify ✓';
+  document.getElementById('stVerify').classList.add('g');
+  await sleep(700, my);
+  say('<span class="fx" style="color:#f87171">nota onesta:</span> <code>verify</code> prova la coerenza <b>strutturale</b>. Non certifica che le <span class="fx" style="color:var(--c-rules)">rules:</span> in linguaggio naturale siano vere — per quello serve un <b>verification agent</b>.');
+  await sleep(2600, my);
+
+  await typeCmd('git commit -m "add annual_summary"', my);
+  await sleep(400, my);
+  tline(' [main 7f3a91c] add annual_summary · 2 file modificati', 'dimm');
+  const trailers = [
+    'AI-Agent:    gemini-3-pro',
+    'AI-Provider: google',
+    'AI-Session:  s_20261024_001',
+    'AI-Visited:  analytics/revenue.py, api/serializers.py, billing/currency.py',
+    'AI-Message:  @prev: arrotondamento confermato → promosso a rules:'
+  ];
+  for (const t of trailers){ tline(`  <span class="trail">${esc(t)}</span>`); await sleep(300, my); }
+  await sleep(600, my);
+  say('<b>AI-Visited</b> è l\'unico dato che git non ha già: i file <i>letti</i>, non quelli modificati. Da qui un verification agent calcola l\'efficienza di navigazione e scova le violazioni di <code>[cascade]</code>.');
+  await sleep(3200, my);
+}
+
+// ── 10 — chiusura
+async function sc_close(my){
+  await scene('10', 'Il file è il canale. Ogni frammento porta il tutto.', my);
+  setScrollLine(0, true);
+  hud.classList.add('on');
+  focusLines([0,2,3,4,5,6,7,8,9,10], '#6366f1');
+  showCallout(2, '◈ CodeDNA', 'protocollo v0.9',
+    'Nessuna infrastruttura. Nessuna pipeline di retrieval. Nessuna memoria esterna.<br><br>Due modelli di due vendor diversi si sono passati un vincolo architetturale attraverso <b>venti righe di commento</b>. +17pp di F1 nella navigazione su SWE-bench, 98,2% di adozione spontanea in un team di 5 agenti.',
+    '#6366f1');
+  await sleep(5200, my);
+  hideCallout(); clearFocus();
+  await sleep(900, my);
+}
+
+/* ============================================================
+   11 · loop
+   ============================================================ */
+async function play(my){
+  reset();
+  await sleep(700, my);
+  await sc_prompt(my);
+  await sc_init(my);
+  await sc_manifest(my);
+  await sc_header(my);
+  await sc_impact(my);
+  await sc_window(my);
+  await sc_write(my);
+  await sc_sign(my);
+  await sc_verify(my);
+  await sc_close(my);
+}
+function loop(){
+  const my = ++RUN;
+  play(my)
+    .then(() => { if (my === RUN) loop(); })
+    .catch(e => { if (!(e instanceof Aborted)) console.error(e); });
+}
+
+/* controlli — utili allo stand, invisibili in proiezione */
+const spd = document.getElementById('spd');
+document.getElementById('bPlay').onclick = e => {
+  state.paused = !state.paused;
+  e.target.textContent = state.paused ? 'riprendi' : 'pausa';
+};
+document.getElementById('bSlow').onclick = () => { state.speed = Math.max(.25, state.speed - .25); spd.textContent = state.speed.toFixed(2).replace(/0$/,'') + '×'; };
+document.getElementById('bFast').onclick = () => { state.speed = Math.min(4, state.speed + .25); spd.textContent = state.speed.toFixed(2).replace(/0$/,'') + '×'; };
+document.getElementById('bRestart').onclick = () => loop();
+addEventListener('keydown', e => {
+  if (e.code === 'Space'){ e.preventDefault(); document.getElementById('bPlay').click(); }
+  if (e.key === 'r') loop();
+});
+
+/* avvio */
+requestAnimationFrame(() => {
+  buildTree(); buildGraph(); drawMinimap(); setScrollLine(0, true);
+  addEventListener('resize', () => { drawMinimap(); syncScroll(true); });
+  loop();
+});
+</script>
+</body>
+</html>
