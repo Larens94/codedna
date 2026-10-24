@@ -33,22 +33,6 @@ agent_sessions:
   - agent: "gpt-5"
     provider: "openai"
     date: "2026-08-21"
-    session_id: "s_20260821_gitbook_docs"
-    task: "Redesign documentation like GitBook"
-    changed: ["docs/install.html","docs/site.css",".codedna"]
-    visited: ["docs/install.html","docs/site.css",".codedna"]
-    message: "Reworked the documentation shell with a GitBook-inspired three-column layout, searchable hierarchical sidebar, keyboard shortcut, breadcrumb, page metadata, sticky outline, pagination, feedback, and responsive spacing. HTML/CSS checks, Ruff, and 284 tests pass."
-  - agent: "gpt-5"
-    provider: "openai"
-    date: "2026-08-21"
-    session_id: "s_20260821_star_history"
-    task: "Add requested Star History timeline"
-    changed: ["README.md",".codedna"]
-    visited: ["README.md",".codedna"]
-    message: "Replaced the legacy Date-mode Star History badge with a centered Timeline chart linked to the requested star-history.com view and bottom-right legend. Documentation tests pass."
-  - agent: "gpt-5"
-    provider: "openai"
-    date: "2026-08-21"
     session_id: "s_20260821_axl"
     task: "Add native AXL annotation frames"
     changed: ["README-it.md","README.md","SPEC.md","codedna-plugin/README.md","codedna_tool/audit.py","codedna_tool/cli.py","codedna_tool/languages/__init__.py","codedna_tool/languages/base.py","codedna_tool/languages/axl.py","docs/index.html","docs/install.html","docs/languages.md","tests/test_docs.py","tests/test_integration_langs.py","tests/test_language_adapters.py","tests/test_validator.py","tools/pre-commit","tools/validate_manifests.py"]
@@ -62,6 +46,22 @@ agent_sessions:
     changed: ["codedna_tool/cli.py","codedna_tool/languages/base.py","tests/test_language_adapters.py","tests/test_refresh.py",".codedna"]
     visited: [".codedna","codedna_tool/cli.py","codedna_tool/audit.py","codedna_tool/wiki.py","codedna_tool/languages/__init__.py","codedna_tool/languages/base.py","codedna_tool/languages/php.py","codedna_tool/languages/_ts_php.py","tests/test_cli.py","tests/test_refresh.py","tests/test_validator.py","tests/test_language_adapters.py"]
     message: "Centralized compact block-comment L1 parsing, preserved reduced headers, proved PHP imports are not exports, and removed LiteLLM initialization from zero-LLM commands. 296 tests pass; verify and doctor are clean."
+  - agent: "composer"
+    provider: "cursor"
+    date: "2026-09-06"
+    session_id: "s_20260906_issues467"
+    task: "Fix issues #4 #6 #7"
+    changed: ["codedna_tool/languages/php.py","codedna_tool/languages/base.py","codedna_tool/languages/vbnet.py","codedna_tool/languages/__init__.py","codedna_tool/cli.py","integrations/.roorules","integrations/install.sh","integrations/README.md","docs/languages.md","README.md","README-it.md","CHANGELOG.md","tests/test_issues_4_6_7.py","tests/test_docs.py"]
+    visited: ["codedna_tool/languages/php.py","codedna_tool/languages/base.py","codedna_tool/languages/csharp.py","codedna_tool/languages/__init__.py","codedna_tool/cli.py","integrations/.clinerules"]
+    message: "Validated #4/#6/#7 still open. Fixed PHP mixed-HTML injection + full-file has_codedna_header; added VbNetAdapter; added Roo --tools roo. 306 tests pass."
+  - agent: "composer-2.5"
+    provider: "cursor"
+    date: "2026-09-08"
+    session_id: "s_20260908_001"
+    task: "Challenge honesty + experimental notes"
+    changed: ["docs/challenge.md","docs/challenge.it.md","docs/challenge.html","challenge/SUBMISSION_TEMPLATE.md","challenge/SUBMISSION_TEMPLATE.it.md","README.md","README-it.md"]
+    visited: ["docs/challenge.md","docs/challenge.it.md","docs/challenge.html","challenge/SUBMISSION_TEMPLATE.md","challenge/SUBMISSION_TEMPLATE.it.md","README.md","README-it.md"]
+    message: "Documented experimental agent×language caveat + honesty/Meet review + public lives in challenge rules."
   - agent: "claude-opus-5"
     provider: "anthropic"
     date: "2026-10-24"
@@ -69,4 +69,4 @@ agent_sessions:
     task: "Add animated Linux Day demo of the CodeDNA protocol"
     changed: ["docs/linux-day.html"]
     visited: ["README.md","SPEC.md",".codedna","codedna_tool/audit.py"]
-    message: "Committed docs/linux-day.html, a self-contained looping HTML/CSS/JS simulation of an AI agent navigating a 10k-line file via CodeDNA annotations. Dark theme currently, restyle to light theme still pending."
+    message: "Self-contained looping HTML demo of an agent navigating a 10k-line file via CodeDNA annotations. Merged with origin/main; session re-appended after taking upstream .codedna."

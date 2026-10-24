@@ -1,0 +1,534 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeDNA Challenge — €200 · Classifica pubblica</title>
+<meta name="description" content="CodeDNA Challenge €200: valutazione sul tuo progetto reale con classifica pubblica live. Stessi task con e senza CodeDNA. Apri una PR metrics per iscriverti.">
+<meta property="og:title" content="CodeDNA Challenge — €200">
+<meta property="og:description" content="Public ranking for the CodeDNA Challenge. Real projects · same tasks with/without CodeDNA · €200 prize.">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://larens94.github.io/codedna/challenge.html">
+<meta property="og:image" content="https://larens94.github.io/codedna/logo.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --black: #0a0a0a;
+  --white: #ffffff;
+  --gray-100: #f5f5f5;
+  --gray-200: #e8e8e8;
+  --gray-400: #999999;
+  --gray-600: #555555;
+  --gray-800: #222222;
+  --radius: 3px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--font); background: var(--white); color: var(--black); line-height: 1.6; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+code, .mono { font-family: 'JetBrains Mono', monospace; }
+a { color: inherit; }
+
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px; height: 60px;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--gray-200);
+}
+.nav-logo { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
+.nav-logo-mark {
+  width: 32px; height: 32px; border-radius: var(--radius);
+  overflow: hidden; flex-shrink: 0; border: 1px solid var(--gray-200);
+}
+.nav-logo-mark img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.nav-logo-text { font-size: 0.9375rem; font-weight: 700; letter-spacing: -0.02em; }
+.nav-version {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em;
+  padding: 0.15rem 0.5rem; border-radius: var(--radius);
+  background: var(--gray-100); color: var(--gray-600); border: 1px solid var(--gray-200);
+}
+.nav-links { display: flex; align-items: center; gap: 2rem; }
+.nav-links a { font-size: 0.875rem; font-weight: 500; color: var(--gray-600); text-decoration: none; transition: color .15s; }
+.nav-links a:hover, .nav-links a.active { color: var(--black); }
+.nav-cta {
+  padding: 0.45rem 1.1rem; border-radius: var(--radius); font-size: 0.85rem; font-weight: 600;
+  background: var(--black); color: #fff !important; text-decoration: none; border: 1px solid var(--black);
+}
+.lang-toggle {
+  padding: 0.35rem 0.85rem; border-radius: var(--radius); font-size: 0.78rem; font-weight: 600;
+  background: transparent; color: var(--gray-600); border: 1px solid var(--gray-200);
+  cursor: pointer; font-family: inherit;
+}
+.nav-hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 4px; }
+.nav-hamburger span { display: block; width: 22px; height: 2px; background: var(--gray-800); }
+
+.page-hero {
+  padding: 120px 28px 56px;
+  border-bottom: 1px solid var(--gray-200);
+  background:
+    linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.page-hero-inner { max-width: 1100px; margin: 0 auto; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray-400);
+}
+.eyebrow-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gray-400); }
+.page-hero h1 {
+  font-size: clamp(2.2rem, 5vw, 3.6rem); font-weight: 700; letter-spacing: -0.03em;
+  line-height: 1.08; margin-bottom: 1rem; max-width: 16ch;
+}
+.page-hero h1 em { font-style: normal; text-decoration: underline; text-underline-offset: 5px; }
+.lead { font-size: 1.05rem; color: var(--gray-600); max-width: 560px; line-height: 1.7; margin-bottom: 1.75rem; }
+.hero-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.btn-primary, .btn-secondary {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.75rem 1.5rem; border-radius: var(--radius); font-size: 0.875rem; font-weight: 600;
+  text-decoration: none; border: 1px solid var(--black); transition: opacity .15s, border-color .15s;
+  cursor: pointer; font-family: inherit; background: transparent; color: var(--black);
+}
+.btn-primary { background: var(--black); color: #fff; }
+.btn-secondary { background: transparent; color: var(--black); border-color: var(--gray-200); }
+.btn-secondary:hover { border-color: var(--black); }
+.copy-status {
+  margin-top: 0.75rem; font-size: 0.85rem; color: var(--gray-600);
+}
+
+.section { max-width: 1100px; margin: 0 auto; padding: 64px 28px; }
+.section + .section { border-top: 1px solid var(--gray-200); }
+.section h2 { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+.section-lead { color: var(--gray-600); margin-bottom: 1.75rem; max-width: 640px; }
+
+.meta-strip {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; margin-bottom: 2rem;
+}
+.meta-cell { padding: 1.25rem 1.35rem; border-right: 1px solid var(--gray-200); background: var(--white); }
+.meta-cell:last-child { border-right: none; }
+.meta-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray-400); margin-bottom: 0.35rem; }
+.meta-value { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; }
+.meta-sub { font-size: 12px; color: var(--gray-600); margin-top: 0.2rem; }
+
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--gray-200); border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
+.step { background: var(--white); padding: 1.5rem 1.35rem; }
+.step-num { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gray-400); margin-bottom: 0.6rem; }
+.step h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem; }
+.step p { font-size: 0.875rem; color: var(--gray-600); line-height: 1.65; }
+
+.levels {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+  background: var(--gray-200); border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden;
+  margin-top: 1.25rem;
+}
+.level { background: var(--white); padding: 1.25rem 1.2rem; }
+.level-tag { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; margin-bottom: 0.45rem; }
+.level p { font-size: 0.85rem; color: var(--gray-600); }
+
+.board-toolbar {
+  display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.board-updated { font-size: 12px; color: var(--gray-400); font-family: 'JetBrains Mono', monospace; }
+.filters { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.filters select {
+  font-family: inherit; font-size: 13px; padding: 0.45rem 0.7rem;
+  border: 1px solid var(--gray-200); border-radius: var(--radius); background: var(--white); color: var(--black);
+}
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--gray-200); border-radius: var(--radius); }
+table.board { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+table.board th {
+  text-align: left; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--gray-400); font-weight: 700; padding: 0.85rem 1rem; border-bottom: 1px solid var(--gray-200);
+  background: var(--gray-100); white-space: nowrap;
+}
+table.board td { padding: 0.95rem 1rem; border-bottom: 1px solid var(--gray-200); vertical-align: top; }
+table.board tr:last-child td { border-bottom: none; }
+table.board a { text-decoration: underline; text-underline-offset: 2px; }
+.pill {
+  display: inline-block; padding: 0.15rem 0.5rem; border-radius: var(--radius);
+  border: 1px solid var(--gray-200); font-size: 11px; font-family: 'JetBrains Mono', monospace;
+  margin: 0 0.2rem 0.2rem 0; white-space: nowrap;
+}
+.favors-codedna { color: #16a34a; font-weight: 600; }
+.favors-control { color: #d97706; font-weight: 600; }
+.favors-tie, .favors-inconclusive { color: var(--gray-600); font-weight: 600; }
+.empty {
+  padding: 3.25rem 1.75rem; text-align: center; color: var(--gray-600);
+  border: 1px dashed var(--gray-200); border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, #fafafa 0%, #fff 100%);
+}
+.empty strong { display: block; color: var(--black); font-size: 1.05rem; margin-bottom: 0.55rem; }
+.empty span { display: block; max-width: 420px; margin: 0 auto 1.25rem; line-height: 1.65; }
+.empty-meta {
+  display: inline-flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gray-600);
+}
+.empty-meta span {
+  display: inline-block; margin: 0; padding: 0.35rem 0.65rem;
+  border: 1px solid var(--gray-200); border-radius: var(--radius); background: var(--white);
+}
+
+.note {
+  margin-top: 1.25rem; font-size: 0.85rem; color: var(--gray-600);
+  padding: 1rem 1.1rem; border-left: 2px solid var(--black); background: var(--gray-100);
+}
+
+footer.site-footer {
+  border-top: 1px solid var(--gray-200); padding: 2rem 28px; color: var(--gray-400); font-size: 0.8rem;
+}
+.footer-inner { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.footer-inner a { color: var(--gray-600); text-decoration: none; }
+.footer-inner a:hover { color: var(--black); }
+
+@media (max-width: 900px) {
+  .meta-strip, .steps, .levels { grid-template-columns: 1fr 1fr; }
+  .meta-cell { border-right: none; border-bottom: 1px solid var(--gray-200); }
+}
+@media (max-width: 720px) {
+  .nav-links { display: none; position: absolute; top: 68px; left: 0; right: 0; flex-direction: column; gap: 0.5rem; background: var(--white); border-bottom: 1px solid var(--gray-200); padding: 0.85rem 1.1rem 1.15rem; }
+  .nav-links.open { display: flex; }
+  .nav-links a { padding: 0.7rem 0; }
+  .nav-links a.nav-cta { margin-top: 0.35rem; margin-bottom: 0.35rem; }
+  .nav-links .lang-toggle { margin-top: 0.15rem; align-self: stretch; }
+  .nav-hamburger { display: flex; }
+  .meta-strip, .steps, .levels { grid-template-columns: 1fr; }
+  .page-hero h1 { max-width: none; }
+  .page-hero, .section, footer.site-footer { padding-left: 20px; padding-right: 20px; }
+}
+</style>
+<link rel="stylesheet" href="site.css">
+<style>
+/* Challenge page overrides — site.css zeros horizontal .section padding */
+body.challenge-page .page-hero {
+  padding: 120px clamp(18px, 5vw, 28px) 56px !important;
+}
+body.challenge-page .section {
+  max-width: 1100px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding: 64px clamp(18px, 5vw, 28px) !important;
+}
+body.challenge-page footer.site-footer {
+  padding: 2rem clamp(18px, 5vw, 28px) !important;
+}
+body.challenge-page .note {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+body.challenge-page .nav-links .lang-toggle {
+  margin-top: 0;
+  align-self: flex-start;
+}
+@media (max-width: 720px) {
+  body.challenge-page .page-hero {
+    padding: 108px 20px 40px !important;
+  }
+  body.challenge-page .section {
+    padding: 48px 20px !important;
+  }
+  body.challenge-page footer.site-footer {
+    padding: 1.75rem 20px !important;
+  }
+  body.challenge-page .nav-links {
+    gap: 0.35rem !important;
+    padding: 0.85rem 1.1rem 1.15rem !important;
+    top: 68px !important;
+  }
+  body.challenge-page .nav-links a {
+    padding: 0.7rem 0 !important;
+  }
+  body.challenge-page .nav-links a.nav-cta {
+    margin-top: 0.55rem !important;
+    margin-bottom: 0.65rem !important;
+    width: 100%;
+    justify-content: center;
+  }
+  body.challenge-page .nav-links .lang-toggle {
+    margin-top: 0.15rem !important;
+    align-self: stretch;
+    min-height: 40px;
+  }
+  body.challenge-page .hero-actions {
+    width: 100%;
+  }
+  body.challenge-page .hero-actions .btn-primary,
+  body.challenge-page .hero-actions .btn-secondary {
+    width: 100%;
+  }
+}
+</style>
+</head>
+<body class="challenge-page">
+
+<nav>
+  <a class="nav-logo" href="index.html">
+    <div class="nav-logo-mark"><img src="logo.png" alt="CodeDNA logo"></div>
+    <span class="nav-logo-text">CodeDNA</span>
+    <span class="nav-version">v0.9</span>
+  </a>
+  <div class="nav-links" id="nav-links">
+    <a href="index.html" data-i18n="navHome">Home</a>
+    <a href="challenge.html" class="active" data-i18n="navChallenge">Challenge</a>
+    <a href="challenge-ranking.html" data-i18n="navRanking">Classifica</a>
+    <a href="install.html" data-i18n="navInstall">Install</a>
+    <a href="https://github.com/Larens94/codedna" target="_blank" class="nav-cta">GitHub →</a>
+    <button class="lang-toggle" id="lang-toggle" onclick="toggleLang()">EN</button>
+  </div>
+  <button class="nav-hamburger" onclick="document.getElementById('nav-links').classList.toggle('open')" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<header class="page-hero">
+  <div class="page-hero-inner">
+    <div class="eyebrow"><span class="eyebrow-dot"></span><span data-i18n="eyebrow">Valutazione pubblica · €200</span></div>
+    <h1 data-i18n-html="h1">CodeDNA Challenge<br><em>€200</em></h1>
+    <p class="lead" data-i18n="lead">Prova CodeDNA sul tuo progetto reale. Metodologia uguale per tutti: due branch o progetti gemelli, stessi task con vs senza CodeDNA. Copia il prompt per l’agente, poi apri la PR metrics.</p>
+    <div class="hero-actions">
+      <a class="btn-primary" href="challenge-ranking.html" data-i18n="ctaRanking">Vedi classifica →</a>
+      <button type="button" class="btn-secondary" id="copy-agent-prompt" data-i18n="ctaCopyAgent">Copia per il tuo agente</button>
+      <a class="btn-secondary" href="challenge.it.md" data-i18n="ctaRulesIt">Regolamento (IT)</a>
+      <a class="btn-secondary" href="challenge.md" data-i18n="ctaRules">Rules (EN)</a>
+      <a class="btn-secondary" href="https://github.com/Larens94/codedna/blob/main/challenge/metrics.example.json" target="_blank" data-i18n="ctaExample">Copia metrics.json →</a>
+    </div>
+    <p class="copy-status" id="copy-status" hidden></p>
+    <p class="note" style="margin-top:1.75rem;max-width:640px" data-i18n-html="experimentalNote">
+      <strong>Sperimentale.</strong> I risultati possono variare per agente AI e linguaggio (Claude Code, OpenCode, Cursor, Codex, …).
+      Pubblica come hai installato CodeDNA. Se annotazioni o CLI si comportano male, apri una
+      <a href="https://github.com/Larens94/codedna/issues/new">issue</a> o una
+      <a href="https://github.com/Larens94/codedna/compare">pull request</a> di fix.
+      Quel feedback fa parte della challenge.
+    </p>
+  </div>
+</header>
+
+<section class="section" id="status">
+  <h2 data-i18n="statusTitle">Stato challenge</h2>
+  <p class="section-lead" data-i18n="statusLead">La classifica pubblica è su una pagina dedicata. File sorgente: <code class="mono">docs/challenge-board.json</code>.</p>
+  <div class="meta-strip">
+    <div class="meta-cell">
+      <div class="meta-label" data-i18n="metaPrize">Premio</div>
+      <div class="meta-value" id="meta-prize">€200</div>
+      <div class="meta-sub" data-i18n="metaPrizeSub">pagato dopo review</div>
+    </div>
+    <div class="meta-cell">
+      <div class="meta-label" data-i18n="metaSubs">Submission</div>
+      <div class="meta-value" id="meta-subs">0</div>
+      <div class="meta-sub" id="meta-unlock">min 5 per sbloccare</div>
+    </div>
+    <div class="meta-cell">
+      <div class="meta-label" data-i18n="metaStatus">Stato</div>
+      <div class="meta-value" id="meta-status">open</div>
+      <div class="meta-sub" id="meta-window">in arrivo</div>
+    </div>
+    <div class="meta-cell">
+      <div class="meta-label" data-i18n="metaEnroll">Iscrizione</div>
+      <div class="meta-value" style="font-size:1.05rem" data-i18n="metaEnrollVal">PR = dentro</div>
+      <div class="meta-sub" data-i18n="metaEnrollSub">niente signup ufficiale</div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="how">
+  <h2 data-i18n="howTitle">Come funziona</h2>
+  <p class="section-lead" data-i18n="howLead">Metodologia uguale per tutti: progetto reale · due branch/checkout/progetti · ≥10 stessi task con vs senza CodeDNA · copia prompt per l’agente · pubblica install · segnala bug.</p>
+  <div class="steps">
+    <div class="step">
+      <div class="step-num">01</div>
+      <h3 data-i18n="s1t">Progetto reale + stack</h3>
+      <p data-i18n="s1p">Niente siti giocattolo. Dichiara linguaggi, framework, numero file, size band e come hai installato CodeDNA.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">02</div>
+      <h3 data-i18n="s2t">Due branch o due progetti</h3>
+      <p data-i18n="s2p">Stessi ≥10 task su Control e CodeDNA. Separa con due branch, due checkout o due progetti gemelli — dichiara `setup.layout`.</p>
+    </div>
+    <div class="step">
+      <div class="step-num">03</div>
+      <h3 data-i18n="s3t">Copia prompt → PR</h3>
+      <p data-i18n="s3p">Copia il prompt per il tuo agente, esegui la lista attività, apri la PR metrics. La classifica si aggiorna quando arrivano PR valide.</p>
+    </div>
+  </div>
+  <div class="levels">
+    <div class="level">
+      <div class="level-tag">L0 · CodeDNA</div>
+      <p data-i18n="l0">Header in-source — layer sotto test.</p>
+    </div>
+    <div class="level">
+      <div class="level-tag">L1 · Wiki / skills</div>
+      <p data-i18n="l1">Wiki LLM, skill pack, instruction file — parity obbligatoria.</p>
+    </div>
+    <div class="level">
+      <div class="level-tag">L2 · Graphify</div>
+      <p data-i18n="l2">Memoria graph / strutturale — parity obbligatoria.</p>
+    </div>
+  </div>
+  <p class="note" style="margin-top:1.5rem" data-i18n-html="honestyNote">
+    <strong>Onestà.</strong> Non inventare risultati o progetti finti. Fabrizio o il team di review possono richiedere una call + presentazione per verificare progetto e processo di test.
+    Quando possibile faremo anche live pubbliche sui test inviati.
+  </p>
+</section>
+
+<section class="section" id="ranking">
+  <h2 data-i18n="boardTitle">Classifica pubblica</h2>
+  <p class="section-lead" data-i18n="boardLead">La classifica live è su una pagina dedicata (filtri, File-F1, giudice). Ora include dati demo per vedere il layout.</p>
+  <p style="margin-bottom:1.25rem">
+    <a class="btn-primary" href="challenge-ranking.html" data-i18n="boardOpen">Apri la classifica →</a>
+  </p>
+  <p class="note" data-i18n="boardNote">Classifica live, curata dai maintainer. Aprire una PR ti iscrive; comparire lì significa che formato e dichiarazione di stack sono stati accettati. Gap agente × linguaggio sono attesi — apri issue o PR di fix.</p>
+</section>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span>CodeDNA Challenge · MIT</span>
+    <span>
+      <a href="challenge-ranking.html">Classifica</a>
+      ·
+      <a href="https://github.com/Larens94/codedna">GitHub</a>
+      ·
+      <a href="challenge.md">Rules EN</a>
+      ·
+      <a href="challenge.it.md">Regolamento IT</a>
+    </span>
+  </div>
+</footer>
+
+<script>
+const I18N = {
+  en: {
+    navHome:'Home', navChallenge:'Challenge', navRanking:'Ranking', navInstall:'Install',
+    eyebrow:'Public evaluation · €200',
+    h1:'CodeDNA Challenge<br><em>€200</em>',
+    lead:'Test CodeDNA on your own real project. Same methodology for everyone: two branches or twin projects, same tasks with vs without CodeDNA. Copy the agent prompt, then open a metrics PR.',
+    ctaRanking:'View ranking →', ctaCopyAgent:'Copy for your agent', ctaExample:'Copy metrics.json →', ctaRules:'Full rules (EN)', ctaRulesIt:'Regolamento (IT)', ctaCopied:'Copied — paste into your AI agent', ctaCopyFail:'Could not copy — open challenge-agent-prompt.md',
+    experimentalNote:'<strong>Experimental.</strong> Results can vary by AI coding agent and language (Claude Code, OpenCode, Cursor, Codex, …). Publish how you installed CodeDNA. If annotations or the CLI misbehave, open a <a href="https://github.com/Larens94/codedna/issues/new">GitHub issue</a> or a fix <a href="https://github.com/Larens94/codedna/compare">pull request</a>. That feedback is part of the challenge.',
+    statusTitle:'Challenge status',
+    statusLead:'Public ranking lives on its own page. Source file: docs/challenge-board.json.',
+    metaPrize:'Prize', metaPrizeSub:'paid after review',
+    metaSubs:'Submissions', metaStatus:'Status',
+    metaEnroll:'Enrollment', metaEnrollVal:'PR = in', metaEnrollSub:'no official signup',
+    howTitle:'How it works',
+    howLead:'Same methodology for everyone: real project · two branches/checkouts/projects · ≥10 same tasks with vs without CodeDNA · copy agent prompt · publish install · report bugs.',
+    s1t:'Real project + stack', s1p:'No toy sites. Declare languages, frameworks, file count, size band, and how you installed CodeDNA.',
+    s2t:'Two branches or twin projects', s2p:'Same ≥10 tasks on Control and CodeDNA. Split with two branches, two checkouts, or twin projects — declare setup.layout.',
+    s3t:'Copy prompt → PR', s3p:'Copy the agent prompt, run the activity list, open the metrics PR. Ranking updates as valid PRs arrive.',
+    l0:'In-source headers — the layer under test.',
+    l1:'LLM wiki, skill packs, instruction files — parity required.',
+    l2:'Graph / structural memory — parity required.',
+    honestyNote:'<strong>Honesty.</strong> Do not invent results or fake projects. Fabrizio or the review team may require a conference call + presentation to verify your project and test process. When possible we will also host public lives discussing submitted tests.',
+    boardTitle:'Public ranking',
+    boardLead:'The live ranking is on a dedicated page (filters, File-F1, judge). Demo data is included so you can preview the layout.',
+    boardOpen:'Open the ranking →',
+    boardNote:'Live ranking, curated by maintainers. Opening a PR enrolls you; appearing there means the submission format and stack declaration were accepted. Agent × language gaps are expected — file issues or fix PRs.',
+    unlock:'min {n} to unlock', windowFallback:'coming soon'
+  },
+  it: {
+    navHome:'Home', navChallenge:'Challenge', navRanking:'Classifica', navInstall:'Install',
+    eyebrow:'Valutazione pubblica · €200',
+    h1:'CodeDNA Challenge<br><em>€200</em>',
+    lead:'Prova CodeDNA sul tuo progetto reale. Metodologia uguale per tutti: due branch o progetti gemelli, stessi task con vs senza CodeDNA. Copia il prompt per l’agente, poi apri la PR metrics.',
+    ctaRanking:'Vedi classifica →', ctaCopyAgent:'Copia per il tuo agente', ctaExample:'Copia metrics.json →', ctaRules:'Rules (EN)', ctaRulesIt:'Regolamento (IT)', ctaCopied:'Copiato — incollalo nel tuo agente AI', ctaCopyFail:'Copia non riuscita — apri challenge-agent-prompt.it.md',
+    experimentalNote:'<strong>Sperimentale.</strong> I risultati possono variare per agente AI e linguaggio (Claude Code, OpenCode, Cursor, Codex, …). Pubblica come hai installato CodeDNA. Se annotazioni o CLI si comportano male, apri una <a href="https://github.com/Larens94/codedna/issues/new">issue</a> o una <a href="https://github.com/Larens94/codedna/compare">pull request</a> di fix. Quel feedback fa parte della challenge.',
+    statusTitle:'Stato challenge',
+    statusLead:'La classifica pubblica è su una pagina dedicata. File sorgente: docs/challenge-board.json.',
+    metaPrize:'Premio', metaPrizeSub:'pagato dopo review',
+    metaSubs:'Submission', metaStatus:'Stato',
+    metaEnroll:'Iscrizione', metaEnrollVal:'PR = dentro', metaEnrollSub:'niente signup ufficiale',
+    howTitle:'Come funziona',
+    howLead:'Metodologia uguale per tutti: progetto reale · due branch/checkout/progetti · ≥10 stessi task con vs senza CodeDNA · copia prompt per l’agente · pubblica install · segnala bug.',
+    s1t:'Progetto reale + stack', s1p:'Niente siti giocattolo. Dichiara linguaggi, framework, numero file, size band e come hai installato CodeDNA.',
+    s2t:'Due branch o due progetti', s2p:'Stessi ≥10 task su Control e CodeDNA. Separa con due branch, due checkout o due progetti gemelli — dichiara setup.layout.',
+    s3t:'Copia prompt → PR', s3p:'Copia il prompt per il tuo agente, esegui la lista attività, apri la PR metrics. La classifica si aggiorna quando arrivano PR valide.',
+    l0:'Header in-source — layer sotto test.',
+    l1:'Wiki LLM, skill pack, instruction file — parity obbligatoria.',
+    l2:'Memoria graph / strutturale — parity obbligatoria.',
+    honestyNote:'<strong>Onestà.</strong> Non inventare risultati o progetti finti. Fabrizio o il team di review possono richiedere una call + presentazione per verificare progetto e processo di test. Quando possibile faremo anche live pubbliche sui test inviati.',
+    boardTitle:'Classifica pubblica',
+    boardLead:'La classifica live è su una pagina dedicata (filtri, File-F1, giudice). Ora include dati demo per vedere il layout.',
+    boardOpen:'Apri la classifica →',
+    boardNote:'Classifica live, curata dai maintainer. Aprire una PR ti iscrive; comparire lì significa che formato e dichiarazione di stack sono stati accettati. Gap agente × linguaggio sono attesi — apri issue o PR di fix.',
+    unlock:'min {n} per sbloccare', windowFallback:'in arrivo'
+  }
+};
+
+let currentLang = 'it';
+let boardData = null;
+
+function applyI18n() {
+  const dict = I18N[currentLang];
+  document.documentElement.lang = currentLang;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.getAttribute('data-i18n');
+    if (dict[k] != null) el.textContent = dict[k];
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const k = el.getAttribute('data-i18n-html');
+    if (dict[k] != null) el.innerHTML = dict[k];
+  });
+  document.getElementById('lang-toggle').textContent = currentLang === 'en' ? 'IT' : 'EN';
+  if (boardData) renderStatus(boardData);
+}
+
+function toggleLang() {
+  currentLang = currentLang === 'en' ? 'it' : 'en';
+  applyI18n();
+}
+
+function renderStatus(data) {
+  const dict = I18N[currentLang];
+  const subs = Array.isArray(data.submissions) ? data.submissions : [];
+  document.getElementById('meta-prize').textContent = '€' + (data.prize_eur ?? 200);
+  document.getElementById('meta-subs').textContent = String(subs.length);
+  document.getElementById('meta-status').textContent = data.status || '—';
+  const min = data.min_submissions_to_unlock ?? 5;
+  document.getElementById('meta-unlock').textContent = dict.unlock.replace('{n}', min);
+  const w = data.window || {};
+  document.getElementById('meta-window').textContent =
+    (w.start && w.end) ? `${w.start} → ${w.end}` : (w.note || dict.windowFallback);
+}
+
+async function loadBoard() {
+  try {
+    const res = await fetch('challenge-board.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error(res.statusText);
+    boardData = await res.json();
+  } catch (e) {
+    boardData = { prize_eur: 200, min_submissions_to_unlock: 5, status: 'open', submissions: [], updated_at: null };
+  }
+  renderStatus(boardData);
+}
+
+
+async function copyAgentPrompt() {
+  const dict = I18N[currentLang];
+  const status = document.getElementById('copy-status');
+  const file = currentLang === 'it' ? 'challenge-agent-prompt.it.md' : 'challenge-agent-prompt.md';
+  try {
+    const res = await fetch(file, { cache: 'no-store' });
+    if (!res.ok) throw new Error(res.statusText);
+    const text = await res.text();
+    await navigator.clipboard.writeText(text);
+    status.hidden = false;
+    status.textContent = dict.ctaCopied;
+  } catch (e) {
+    status.hidden = false;
+    status.textContent = dict.ctaCopyFail;
+    window.open(file, '_blank');
+  }
+}
+document.getElementById('copy-agent-prompt').addEventListener('click', copyAgentPrompt);
+
+applyI18n();
+loadBoard();
+
+</script>
+</body>
+</html>

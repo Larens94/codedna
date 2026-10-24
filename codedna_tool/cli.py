@@ -6,6 +6,7 @@ used_by: codedna_tool/audit.py → _auto_detect_extensions, _get_extension, _nor
          codedna_tool/wiki.py → _DEFAULT_SKIP_DIRS, _parse_existing_docstring, _parse_lang_header
          tests/test_audit.py → run
          tests/test_cli.py → FileInfo, FuncInfo, LLM, _DEFAULT_SKIP_DIRS, _MANIFEST_SKIP, _TOOL_FILES, _detect_ai_tools, _detect_project_meta, _extract_funcs, _parse_exclude_field, _write_codedna, build_module_docstring, inject_function_rules
+         tests/test_issues_4_6_7.py → _TOOL_FILES, _detect_ai_tools
          tests/test_language_adapters.py → collect_files
          tests/test_refresh.py → _parse_existing_docstring, _parse_lang_header, _rebuild_docstring, _rebuild_lang_header, _replace_lang_header
 wiki:    docs/wiki/cli.md
@@ -22,6 +23,7 @@ gpt-5 | openai | 2026-08-20 | s_20260820_audit | expose read-only doctor, impact
 gpt-5 | openai | 2026-08-20 | s_20260820_adoption | add explicit Codex and Aider installers and prevent AGENTS.md from implying OpenCode hooks
 gpt-5 | openai | 2026-08-21 | s_20260821_axl | route refresh through native AXL frame parsing without comment rewrites
 gpt-5 | openai | 2026-08-27 | s_20260827_header_parser | delegate all comment headers to the canonical parser and lazy-load LLM provider SDKs
+claude-opus | anthropic | 2026-09-03 | s_20260903_refresh_body | refresh preserves Python docstring prose body and parses the raw slice
 AST for structure (exports, used_by, candidates). Python only.
 LLM only for semantic content (rules:, function Rules:).
 Language adapters for non-Python files (TypeScript, Go, …) via languages/ package.
@@ -38,7 +40,7 @@ Requires: ANTHROPIC_API_KEY env var (or --api-key) for Anthropic models.
 No API key needed for local models via Ollama (pip install 'codedna[litellm]').
 Provider priority: litellm (all providers) > anthropic (fallback, Claude only).
 Multi-language: pass --extensions ts go php rs java kt rb cs swift axl (or with dots).
-Supported: .ts .tsx .js .jsx .mjs | .go | .php | .rs | .java | .kt .kts | .rb | .cs | .swift | .axl
+Supported: .ts .tsx .js .jsx .mjs | .go | .php | .rs | .java | .kt .kts | .rb | .cs | .vb | .swift | .axl
 message:
 """
 
@@ -1457,11 +1459,16 @@ def _parse_existing_docstring(docstring: str) -> dict[str, str]:
     """Parse a CodeDNA docstring into field dict, preserving raw values.
 
     Rules:   Must preserve multi-line field values (rules: with continuations).
-             Returns dict with keys: first_line, exports, used_by, rules, agent (+ any message: lines).
+             Returns dict with keys: first_line, body, exports, used_by, rules, agent (+ any message: lines).
+             body = prose between the summary line and the first CodeDNA field
+             (Issue #10 — hand-authored module documentation). Kept verbatim
+             (indentation, blank lines) minus leading/trailing blank lines so
+             _rebuild_docstring can round-trip it; refresh used to drop it.
     """
     fields: dict[str, str] = {}
     current_field = None
     current_lines: list[str] = []
+    body_lines: list[str] = []
 
     for i, line in enumerate(docstring.splitlines()):
         stripped = line.strip()
@@ -1478,12 +1485,21 @@ def _parse_existing_docstring(docstring: str) -> dict[str, str]:
                 current_lines = [stripped]
                 break
         else:
+            if current_field is None:
+                body_lines.append(line.rstrip())
             # Continuation line (indented) or blank
-            if current_field and stripped:
+            elif stripped:
                 current_lines.append(stripped)
 
     if current_field:
         fields[current_field] = "\n".join(current_lines)
+
+    while body_lines and not body_lines[0].strip():
+        body_lines.pop(0)
+    while body_lines and not body_lines[-1].strip():
+        body_lines.pop()
+    if body_lines:
+        fields["body"] = "\n".join(body_lines)
 
     return fields
 
@@ -1502,12 +1518,14 @@ def _rebuild_docstring(fields: dict[str, str], new_exports: str, new_used_by: st
     agent = fields.get("agent", "agent:   unknown")
     message = fields.get("message", "message: ")
 
-    lines = [
-        f'"""{first_line}',
-        "",
+    lines = [f'"""{first_line}', ""]
+    body = fields.get("body", "")
+    if body:
+        lines.extend([body, ""])
+    lines.extend([
         f"exports: {new_exports}",
         f"used_by: {new_used_by}",
-    ]
+    ])
     if related:
         lines.append(related)
     if wiki:
@@ -1739,7 +1757,10 @@ def cmd_refresh(target: Path, repo_root: Optional[Path], exclude: list[str],
             skipped += 1
             continue
 
-        old_fields = _parse_existing_docstring(info.docstring)
+        # Issue #12: prefer the raw slice so backslash escapes round-trip.
+        old_fields = _parse_existing_docstring(
+            info.docstring_raw_body if info.docstring_raw_body is not None else info.docstring
+        )
 
         # Check if anything changed
         old_exports_raw = old_fields.get("exports", "")
@@ -1949,6 +1970,7 @@ _TOOL_FILES = {
     "copilot":  ("copilot-instructions.md", ".github/copilot-instructions.md"),
     "cline":    (".clinerules",  ".clinerules"),
     "windsurf": (".windsurfrules", ".windsurfrules"),
+    "roo":      (".roorules", ".roorules"),
     "opencode": ("AGENTS.md",   "AGENTS.md"),
     "agents":   [("AGENTS.md", "AGENTS.md"),
                  (".agent/workflows/codedna.md", ".agent/workflows/codedna.md")],
@@ -2049,6 +2071,7 @@ for f in $STAGED; do
         kt|kts)            EXTS="$EXTS kt" ;;
         rb)                EXTS="$EXTS rb" ;;
         cs)                EXTS="$EXTS cs" ;;
+        vb)                EXTS="$EXTS vb" ;;
         swift|axl)         EXTS="$EXTS $ext" ;;
         j2|jinja2)         EXTS="$EXTS j2" ;;
         twig)              EXTS="$EXTS twig" ;;
@@ -2128,6 +2151,7 @@ def _detect_ai_tools(repo_root: Path) -> list[str]:
         "copilot":  [".github/copilot-instructions.md"],
         "cline":    [".clinerules", ".cline"],
         "windsurf": [".windsurfrules", ".windsurf"],
+        "roo":      [".roo", ".roorules"],
         "opencode": [".opencode"],
         # Antigravity uses .agent/ (singular) + GEMINI.md — see
         # https://antigravity.google/docs/rules-workflows
@@ -3249,7 +3273,7 @@ def main():
     )
     install_p.add_argument(
         "--tools", nargs="*", default=None,
-        help="AI tools: claude codex aider cursor copilot cline windsurf opencode agents, their supported *-hooks variants, or all (default: auto-detect). 'agents' installs the Antigravity workflow.",
+        help="AI tools: claude codex aider cursor copilot cline windsurf roo opencode agents, their supported *-hooks variants, or all (default: auto-detect). 'agents' installs the Antigravity workflow.",
     )
     install_p.add_argument("--skip-hook", action="store_true", help="Skip pre-commit hook installation")
     install_p.add_argument("--skip-prompt", action="store_true", help="Skip AI tool prompt installation")

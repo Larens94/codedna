@@ -1,0 +1,560 @@
+<!DOCTYPE html>
+<html lang="it">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>CodeDNA Challenge — Classifica · €200</title>
+<meta name="description" content="Classifica pubblica CodeDNA Challenge €200. Pass rate, File-F1 opzionale, giudice. Aggiornata quando arrivano PR valide.">
+<meta property="og:title" content="CodeDNA Challenge — €200">
+<meta property="og:description" content="Live public ranking for the CodeDNA Challenge (€200).">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://larens94.github.io/codedna/challenge-ranking.html">
+<meta property="og:image" content="https://larens94.github.io/codedna/logo.png">
+<meta name="twitter:card" content="summary">
+<link rel="icon" href="logo.png" type="image/png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+:root {
+  --black: #0a0a0a;
+  --white: #ffffff;
+  --gray-100: #f5f5f5;
+  --gray-200: #e8e8e8;
+  --gray-400: #999999;
+  --gray-600: #555555;
+  --gray-800: #222222;
+  --radius: 3px;
+  --font: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+html { scroll-behavior: smooth; }
+body { font-family: var(--font); background: var(--white); color: var(--black); line-height: 1.6; overflow-x: hidden; -webkit-font-smoothing: antialiased; }
+code, .mono { font-family: 'JetBrains Mono', monospace; }
+a { color: inherit; }
+
+nav {
+  position: fixed; top: 0; left: 0; right: 0; z-index: 200;
+  display: flex; align-items: center; justify-content: space-between;
+  padding: 0 28px; height: 60px;
+  background: rgba(255,255,255,0.92); backdrop-filter: blur(12px);
+  border-bottom: 1px solid var(--gray-200);
+}
+.nav-logo { display: flex; align-items: center; gap: 0.6rem; text-decoration: none; }
+.nav-logo-mark {
+  width: 32px; height: 32px; border-radius: var(--radius);
+  overflow: hidden; flex-shrink: 0; border: 1px solid var(--gray-200);
+}
+.nav-logo-mark img { width: 100%; height: 100%; object-fit: cover; display: block; }
+.nav-logo-text { font-size: 0.9375rem; font-weight: 700; letter-spacing: -0.02em; }
+.nav-version {
+  font-size: 0.6rem; font-weight: 700; letter-spacing: 0.08em;
+  padding: 0.15rem 0.5rem; border-radius: var(--radius);
+  background: var(--gray-100); color: var(--gray-600); border: 1px solid var(--gray-200);
+}
+.nav-links { display: flex; align-items: center; gap: 2rem; }
+.nav-links a { font-size: 0.875rem; font-weight: 500; color: var(--gray-600); text-decoration: none; transition: color .15s; }
+.nav-links a:hover, .nav-links a.active { color: var(--black); }
+.nav-cta {
+  padding: 0.45rem 1.1rem; border-radius: var(--radius); font-size: 0.85rem; font-weight: 600;
+  background: var(--black); color: #fff !important; text-decoration: none; border: 1px solid var(--black);
+}
+.lang-toggle {
+  padding: 0.35rem 0.85rem; border-radius: var(--radius); font-size: 0.78rem; font-weight: 600;
+  background: transparent; color: var(--gray-600); border: 1px solid var(--gray-200);
+  cursor: pointer; font-family: inherit;
+}
+.nav-hamburger { display: none; flex-direction: column; gap: 5px; background: none; border: none; cursor: pointer; padding: 4px; }
+.nav-hamburger span { display: block; width: 22px; height: 2px; background: var(--gray-800); }
+
+.page-hero {
+  padding: 120px 28px 56px;
+  border-bottom: 1px solid var(--gray-200);
+  background:
+    linear-gradient(rgba(0,0,0,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,0,0,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+}
+.page-hero-inner { max-width: 1100px; margin: 0 auto; }
+.eyebrow {
+  display: inline-flex; align-items: center; gap: 0.5rem; margin-bottom: 1.25rem;
+  font-size: 11px; font-weight: 600; letter-spacing: 0.12em; text-transform: uppercase; color: var(--gray-400);
+}
+.eyebrow-dot { width: 5px; height: 5px; border-radius: 50%; background: var(--gray-400); }
+.page-hero h1 {
+  font-size: clamp(2.2rem, 5vw, 3.6rem); font-weight: 700; letter-spacing: -0.03em;
+  line-height: 1.08; margin-bottom: 1rem; max-width: 16ch;
+}
+.page-hero h1 em { font-style: normal; text-decoration: underline; text-underline-offset: 5px; }
+.lead { font-size: 1.05rem; color: var(--gray-600); max-width: 560px; line-height: 1.7; margin-bottom: 1.75rem; }
+.hero-actions { display: flex; gap: 0.75rem; flex-wrap: wrap; }
+.btn-primary, .btn-secondary {
+  display: inline-flex; align-items: center; gap: 0.5rem;
+  padding: 0.75rem 1.5rem; border-radius: var(--radius); font-size: 0.875rem; font-weight: 600;
+  text-decoration: none; border: 1px solid var(--black); transition: opacity .15s, border-color .15s;
+  cursor: pointer; font-family: inherit; background: transparent; color: var(--black);
+}
+.btn-primary { background: var(--black); color: #fff; }
+.btn-secondary { background: transparent; color: var(--black); border-color: var(--gray-200); }
+.btn-secondary:hover { border-color: var(--black); }
+.copy-status {
+  margin-top: 0.75rem; font-size: 0.85rem; color: var(--gray-600);
+}
+
+.section { max-width: 1100px; margin: 0 auto; padding: 64px 28px; }
+.section + .section { border-top: 1px solid var(--gray-200); }
+.section h2 { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; margin-bottom: 0.5rem; }
+.section-lead { color: var(--gray-600); margin-bottom: 1.75rem; max-width: 640px; }
+
+.meta-strip {
+  display: grid; grid-template-columns: repeat(4, 1fr);
+  border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; margin-bottom: 2rem;
+}
+.meta-cell { padding: 1.25rem 1.35rem; border-right: 1px solid var(--gray-200); background: var(--white); }
+.meta-cell:last-child { border-right: none; }
+.meta-label { font-size: 10px; font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase; color: var(--gray-400); margin-bottom: 0.35rem; }
+.meta-value { font-size: 1.35rem; font-weight: 700; letter-spacing: -0.02em; }
+.meta-sub { font-size: 12px; color: var(--gray-600); margin-top: 0.2rem; }
+
+.steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px; background: var(--gray-200); border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden; }
+.step { background: var(--white); padding: 1.5rem 1.35rem; }
+.step-num { font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gray-400); margin-bottom: 0.6rem; }
+.step h3 { font-size: 0.95rem; font-weight: 700; margin-bottom: 0.4rem; }
+.step p { font-size: 0.875rem; color: var(--gray-600); line-height: 1.65; }
+
+.levels {
+  display: grid; grid-template-columns: repeat(3, 1fr); gap: 1px;
+  background: var(--gray-200); border: 1px solid var(--gray-200); border-radius: var(--radius); overflow: hidden;
+  margin-top: 1.25rem;
+}
+.level { background: var(--white); padding: 1.25rem 1.2rem; }
+.level-tag { font-family: 'JetBrains Mono', monospace; font-size: 11px; font-weight: 600; margin-bottom: 0.45rem; }
+.level p { font-size: 0.85rem; color: var(--gray-600); }
+
+.board-toolbar {
+  display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; justify-content: space-between;
+  margin-bottom: 1rem;
+}
+.board-updated { font-size: 12px; color: var(--gray-400); font-family: 'JetBrains Mono', monospace; }
+.filters { display: flex; flex-wrap: wrap; gap: 0.5rem; }
+.filters select {
+  font-family: inherit; font-size: 13px; padding: 0.45rem 0.7rem;
+  border: 1px solid var(--gray-200); border-radius: var(--radius); background: var(--white); color: var(--black);
+}
+
+.table-wrap { overflow-x: auto; border: 1px solid var(--gray-200); border-radius: var(--radius); }
+table.board { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+table.board th {
+  text-align: left; font-size: 10px; letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--gray-400); font-weight: 700; padding: 0.85rem 1rem; border-bottom: 1px solid var(--gray-200);
+  background: var(--gray-100); white-space: nowrap;
+}
+table.board td { padding: 0.95rem 1rem; border-bottom: 1px solid var(--gray-200); vertical-align: top; }
+table.board tr:last-child td { border-bottom: none; }
+table.board a { text-decoration: underline; text-underline-offset: 2px; }
+.pill {
+  display: inline-block; padding: 0.15rem 0.5rem; border-radius: var(--radius);
+  border: 1px solid var(--gray-200); font-size: 11px; font-family: 'JetBrains Mono', monospace;
+  margin: 0 0.2rem 0.2rem 0; white-space: nowrap;
+}
+.favors-codedna { color: #16a34a; font-weight: 600; }
+.favors-control { color: #d97706; font-weight: 600; }
+.favors-tie, .favors-inconclusive { color: var(--gray-600); font-weight: 600; }
+.empty {
+  padding: 3.25rem 1.75rem; text-align: center; color: var(--gray-600);
+  border: 1px dashed var(--gray-200); border-radius: var(--radius);
+  background:
+    linear-gradient(180deg, #fafafa 0%, #fff 100%);
+}
+.empty strong { display: block; color: var(--black); font-size: 1.05rem; margin-bottom: 0.55rem; }
+.empty span { display: block; max-width: 420px; margin: 0 auto 1.25rem; line-height: 1.65; }
+.empty-meta {
+  display: inline-flex; flex-wrap: wrap; gap: 0.5rem; justify-content: center;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gray-600);
+}
+.empty-meta span {
+  display: inline-block; margin: 0; padding: 0.35rem 0.65rem;
+  border: 1px solid var(--gray-200); border-radius: var(--radius); background: var(--white);
+}
+
+.note {
+  margin-top: 1.25rem; font-size: 0.85rem; color: var(--gray-600);
+  padding: 1rem 1.1rem; border-left: 2px solid var(--black); background: var(--gray-100);
+}
+
+footer.site-footer {
+  border-top: 1px solid var(--gray-200); padding: 2rem 28px; color: var(--gray-400); font-size: 0.8rem;
+}
+.footer-inner { max-width: 1100px; margin: 0 auto; display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap; }
+.footer-inner a { color: var(--gray-600); text-decoration: none; }
+.footer-inner a:hover { color: var(--black); }
+
+@media (max-width: 900px) {
+  .meta-strip, .steps, .levels { grid-template-columns: 1fr 1fr; }
+  .meta-cell { border-right: none; border-bottom: 1px solid var(--gray-200); }
+}
+@media (max-width: 720px) {
+  .nav-links { display: none; position: absolute; top: 68px; left: 0; right: 0; flex-direction: column; gap: 0.5rem; background: var(--white); border-bottom: 1px solid var(--gray-200); padding: 0.85rem 1.1rem 1.15rem; }
+  .nav-links.open { display: flex; }
+  .nav-links a { padding: 0.7rem 0; }
+  .nav-links a.nav-cta { margin-top: 0.35rem; margin-bottom: 0.35rem; }
+  .nav-links .lang-toggle { margin-top: 0.15rem; align-self: stretch; }
+  .nav-hamburger { display: flex; }
+  .meta-strip, .steps, .levels { grid-template-columns: 1fr; }
+  .page-hero h1 { max-width: none; }
+  .page-hero, .section, footer.site-footer { padding-left: 20px; padding-right: 20px; }
+}
+</style>
+<link rel="stylesheet" href="site.css">
+<style>
+/* Challenge page overrides — site.css zeros horizontal .section padding */
+body.challenge-page .page-hero {
+  padding: 120px clamp(18px, 5vw, 28px) 56px !important;
+}
+body.challenge-page .section {
+  max-width: 1100px !important;
+  margin-left: auto !important;
+  margin-right: auto !important;
+  padding: 64px clamp(18px, 5vw, 28px) !important;
+}
+body.challenge-page footer.site-footer {
+  padding: 2rem clamp(18px, 5vw, 28px) !important;
+}
+body.challenge-page .note {
+  margin-left: 0 !important;
+  margin-right: 0 !important;
+}
+body.challenge-page .nav-links .lang-toggle {
+  margin-top: 0;
+  align-self: flex-start;
+}
+@media (max-width: 720px) {
+  body.challenge-page .page-hero {
+    padding: 108px 20px 40px !important;
+  }
+  body.challenge-page .section {
+    padding: 48px 20px !important;
+  }
+  body.challenge-page footer.site-footer {
+    padding: 1.75rem 20px !important;
+  }
+  body.challenge-page .nav-links {
+    gap: 0.35rem !important;
+    padding: 0.85rem 1.1rem 1.15rem !important;
+    top: 68px !important;
+  }
+  body.challenge-page .nav-links a {
+    padding: 0.7rem 0 !important;
+  }
+  body.challenge-page .nav-links a.nav-cta {
+    margin-top: 0.55rem !important;
+    margin-bottom: 0.65rem !important;
+    width: 100%;
+    justify-content: center;
+  }
+  body.challenge-page .nav-links .lang-toggle {
+    margin-top: 0.15rem !important;
+    align-self: stretch;
+    min-height: 40px;
+  }
+  body.challenge-page .hero-actions {
+    width: 100%;
+  }
+  body.challenge-page .hero-actions .btn-primary,
+  body.challenge-page .hero-actions .btn-secondary {
+    width: 100%;
+  }
+}
+
+.demo-banner {
+  margin: 0 0 1.5rem; padding: 0.85rem 1.1rem;
+  border: 1px dashed #d97706; background: #fff7ed; color: #9a3412;
+  border-radius: var(--radius); font-size: 0.875rem;
+}
+.demo-banner strong { color: #7c2d12; }
+.preview-card {
+  border: 1px solid var(--gray-200); border-radius: var(--radius);
+  padding: 1.5rem 1.35rem; background: var(--white);
+}
+.preview-card p { color: var(--gray-600); margin: 0.5rem 0 1.1rem; max-width: 520px; }
+.preview-stats {
+  display: flex; flex-wrap: wrap; gap: 0.5rem; margin-bottom: 1.1rem;
+  font-family: 'JetBrains Mono', monospace; font-size: 11px; color: var(--gray-600);
+}
+.preview-stats span {
+  padding: 0.35rem 0.65rem; border: 1px solid var(--gray-200); border-radius: var(--radius);
+}
+</style>
+</head>
+<body class="challenge-page">
+
+<nav>
+  <a class="nav-logo" href="index.html">
+    <div class="nav-logo-mark"><img src="logo.png" alt="CodeDNA logo"></div>
+    <span class="nav-logo-text">CodeDNA</span>
+    <span class="nav-version">v0.9</span>
+  </a>
+  <div class="nav-links" id="nav-links">
+    <a href="index.html" data-i18n="navHome">Home</a>
+    <a href="challenge.html" data-i18n="navChallenge">Challenge</a>
+    <a href="challenge-ranking.html" class="active" data-i18n="navRanking">Classifica</a>
+    <a href="install.html" data-i18n="navInstall">Install</a>
+    <a href="https://github.com/Larens94/codedna" target="_blank" class="nav-cta">GitHub →</a>
+    <button class="lang-toggle" id="lang-toggle" onclick="toggleLang()">EN</button>
+  </div>
+  <button class="nav-hamburger" onclick="document.getElementById('nav-links').classList.toggle('open')" aria-label="Menu">
+    <span></span><span></span><span></span>
+  </button>
+</nav>
+
+<header class="page-hero">
+  <div class="page-hero-inner">
+    <div class="eyebrow"><span class="eyebrow-dot"></span><span data-i18n="eyebrow">CodeDNA Challenge · €200</span></div>
+    <h1 data-i18n-html="h1">Classifica<br><em>pubblica</em></h1>
+    <p class="lead" data-i18n="lead">Aggiornata quando arrivano PR metrics valide. Pass C/DNA, File-F1 opzionale, giudice. Iscrizione = apri la PR.</p>
+    <div class="hero-actions">
+      <a class="btn-primary" href="challenge.html" data-i18n="ctaChallenge">Come partecipare →</a>
+      <a class="btn-secondary" href="challenge.it.md" data-i18n="ctaRulesIt">Regolamento (IT)</a>
+      <a class="btn-secondary" href="challenge.md" data-i18n="ctaRules">Rules (EN)</a>
+    </div>
+  </div>
+</header>
+
+<section class="section" id="status">
+  <div class="demo-banner" id="demo-banner" hidden>
+    <strong data-i18n="demoTitle">Dati di esempio.</strong>
+    <span data-i18n="demoBody"> Righe fittizie per anteprima layout — verranno sostituite dalle submission reali al lancio.</span>
+  </div>
+  <h2 data-i18n="statusTitle">Stato challenge</h2>
+  <p class="section-lead" data-i18n="statusLead">Sorgente: <code class="mono">docs/challenge-board.json</code>. Pagina dedicata della classifica.</p>
+  <div class="meta-strip">
+    <div class="meta-cell">
+      <div class="meta-label" data-i18n="metaPrize">Premio</div>
+      <div class="meta-value" id="meta-prize">€200</div>
+      <div class="meta-sub" data-i18n="metaPrizeSub">pagato dopo review</div>
+    </div>
+    <div class="meta-cell">
+      <div class="meta-label" data-i18n="metaSubs">Submission</div>
+      <div class="meta-value" id="meta-subs">0</div>
+      <div class="meta-sub" id="meta-unlock">min 5 per sbloccare</div>
+    </div>
+    <div class="meta-cell">
+      <div class="meta-label" data-i18n="metaStatus">Stato</div>
+      <div class="meta-value" id="meta-status">open</div>
+      <div class="meta-sub" id="meta-window">in arrivo</div>
+    </div>
+    <div class="meta-cell">
+      <div class="meta-label" data-i18n="metaEnroll">Iscrizione</div>
+      <div class="meta-value" style="font-size:1.05rem" data-i18n="metaEnrollVal">PR = dentro</div>
+      <div class="meta-sub" data-i18n="metaEnrollSub">niente signup ufficiale</div>
+    </div>
+  </div>
+</section>
+
+<section class="section" id="ranking">
+  <h2 data-i18n="boardTitle">Classifica</h2>
+  <p class="section-lead" data-i18n="boardLead">Filtra per favors e size band. File-F1 e giudice compaiono solo se presenti nella submission.</p>
+
+  <div class="board-toolbar">
+    <div class="board-updated" id="board-updated">updated —</div>
+    <div class="filters">
+      <select id="filter-favors" aria-label="Filter by favors">
+        <option value="">favors: all</option>
+        <option value="codedna">codedna</option>
+        <option value="control">control</option>
+        <option value="tie">tie</option>
+        <option value="inconclusive">inconclusive</option>
+      </select>
+      <select id="filter-size" aria-label="Filter by size">
+        <option value="">size: all</option>
+        <option value="S">S</option>
+        <option value="M">M</option>
+        <option value="L">L</option>
+        <option value="XL">XL</option>
+      </select>
+    </div>
+  </div>
+
+  <div id="board-root">
+    <div class="empty">
+      <strong data-i18n="emptyTitle">Classifica pronta — in attesa delle prime PR</strong>
+      <span data-i18n="emptyBody">Appena arrivano PR metrics valide e vengono reviewate, le righe compaiono qui.</span>
+    </div>
+  </div>
+
+  <p class="note" data-i18n="boardNote">Classifica live, curata dai maintainer. Aprire una PR ti iscrive; comparire qui significa che formato e dichiarazione di stack sono stati accettati.</p>
+</section>
+
+<footer class="site-footer">
+  <div class="footer-inner">
+    <span>CodeDNA Challenge · MIT</span>
+    <span>
+      <a href="challenge.html">Challenge</a>
+      ·
+      <a href="challenge.it.md">Regolamento IT</a>
+      ·
+      <a href="challenge.md">Rules EN</a>
+    </span>
+  </div>
+</footer>
+
+<script>
+const I18N = {
+  en: {
+    navHome:'Home', navChallenge:'Challenge', navRanking:'Ranking', navInstall:'Install',
+    eyebrow:'CodeDNA Challenge · €200',
+    h1:'Public<br><em>ranking</em>',
+    lead:'Updated as valid metrics PRs arrive. Pass C/DNA, optional File-F1, judge. Enrollment = open the PR.',
+    ctaChallenge:'How to enter →', ctaRules:'Rules (EN)', ctaRulesIt:'Regolamento (IT)',
+    demoTitle:'Sample data.',
+    demoBody:' Fictional rows for layout preview — replace with real submissions before launch.',
+    statusTitle:'Challenge status',
+    statusLead:'Source: docs/challenge-board.json. Dedicated ranking page.',
+    metaPrize:'Prize', metaPrizeSub:'paid after review',
+    metaSubs:'Submissions', metaStatus:'Status',
+    metaEnroll:'Enrollment', metaEnrollVal:'PR = in', metaEnrollSub:'no official signup',
+    boardTitle:'Ranking',
+    boardLead:'Filter by favors and size band. File-F1 and judge appear only when present on the submission.',
+    emptyTitle:'Ranking ready — waiting for first PRs',
+    emptyBody:'As soon as valid metrics PRs arrive and are reviewed, rows appear here.',
+    boardNote:'Live ranking, curated by maintainers. Opening a PR enrolls you; appearing here means format and stack declaration were accepted.',
+    thHandle:'Entrant', thStack:'Language / framework', thSize:'Size', thFiles:'Files',
+    thMode:'Mode', thScore:'Pass C / DNA', thF1:'File-F1 C / DNA', thFavors:'Favors', thJudge:'Judge', thPr:'PR',
+    unlock:'min {n} to unlock', windowFallback:'coming soon'
+  },
+  it: {
+    navHome:'Home', navChallenge:'Challenge', navRanking:'Classifica', navInstall:'Install',
+    eyebrow:'CodeDNA Challenge · €200',
+    h1:'Classifica<br><em>pubblica</em>',
+    lead:'Aggiornata quando arrivano PR metrics valide. Pass C/DNA, File-F1 opzionale, giudice. Iscrizione = apri la PR.',
+    ctaChallenge:'Come partecipare →', ctaRules:'Rules (EN)', ctaRulesIt:'Regolamento (IT)',
+    demoTitle:'Dati di esempio.',
+    demoBody:' Righe fittizie per anteprima layout — verranno sostituite dalle submission reali al lancio.',
+    statusTitle:'Stato challenge',
+    statusLead:'Sorgente: docs/challenge-board.json. Pagina dedicata della classifica.',
+    metaPrize:'Premio', metaPrizeSub:'pagato dopo review',
+    metaSubs:'Submission', metaStatus:'Stato',
+    metaEnroll:'Iscrizione', metaEnrollVal:'PR = dentro', metaEnrollSub:'niente signup ufficiale',
+    boardTitle:'Classifica',
+    boardLead:'Filtra per favors e size band. File-F1 e giudice compaiono solo se presenti nella submission.',
+    emptyTitle:'Classifica pronta — in attesa delle prime PR',
+    emptyBody:'Appena arrivano PR metrics valide e vengono reviewate, le righe compaiono qui.',
+    boardNote:'Classifica live, curata dai maintainer. Aprire una PR ti iscrive; comparire qui significa che formato e dichiarazione di stack sono stati accettati.',
+    thHandle:'Partecipante', thStack:'Linguaggio / framework', thSize:'Size', thFiles:'File',
+    thMode:'Mode', thScore:'Pass C / DNA', thF1:'File-F1 C / DNA', thFavors:'Favors', thJudge:'Giudice', thPr:'PR',
+    unlock:'min {n} per sbloccare', windowFallback:'in arrivo'
+  }
+};
+
+let currentLang = 'it';
+let boardData = null;
+
+function applyI18n() {
+  const dict = I18N[currentLang];
+  document.documentElement.lang = currentLang;
+  document.querySelectorAll('[data-i18n]').forEach(el => {
+    const k = el.getAttribute('data-i18n');
+    if (dict[k] != null) el.textContent = dict[k];
+  });
+  document.querySelectorAll('[data-i18n-html]').forEach(el => {
+    const k = el.getAttribute('data-i18n-html');
+    if (dict[k] != null) el.innerHTML = dict[k];
+  });
+  document.getElementById('lang-toggle').textContent = currentLang === 'en' ? 'IT' : 'EN';
+  if (boardData) renderBoard(boardData);
+}
+
+function toggleLang() {
+  currentLang = currentLang === 'en' ? 'it' : 'en';
+  applyI18n();
+}
+
+function favorsClass(v) {
+  return 'favors-' + (v || 'inconclusive');
+}
+
+function renderBoard(data) {
+  const dict = I18N[currentLang];
+  const subs = Array.isArray(data.submissions) ? data.submissions : [];
+  const demoBanner = document.getElementById('demo-banner');
+  if (demoBanner) demoBanner.hidden = !data.demo;
+  document.getElementById('meta-prize').textContent = '€' + (data.prize_eur ?? 200);
+  document.getElementById('meta-subs').textContent = String(subs.length);
+  document.getElementById('meta-status').textContent = data.status || '—';
+  const min = data.min_submissions_to_unlock ?? 5;
+  document.getElementById('meta-unlock').textContent = dict.unlock.replace('{n}', min);
+  const w = data.window || {};
+  document.getElementById('meta-window').textContent =
+    (w.start && w.end) ? `${w.start} → ${w.end}` : (w.note || dict.windowFallback);
+  document.getElementById('board-updated').textContent = 'updated ' + (data.updated_at || '—');
+
+  const favorsFilter = document.getElementById('filter-favors').value;
+  const sizeFilter = document.getElementById('filter-size').value;
+  const rows = subs.filter(s => {
+    if (favorsFilter && s.favors !== favorsFilter) return false;
+    if (sizeFilter && s.size_band !== sizeFilter) return false;
+    return true;
+  });
+
+  const root = document.getElementById('board-root');
+  if (!rows.length) {
+    root.innerHTML = `<div class="empty"><strong>${dict.emptyTitle}</strong><span>${dict.emptyBody}</span></div>`;
+    return;
+  }
+
+  const body = rows.map(s => {
+    const langs = (s.languages || []).map(x => `<span class="pill">${escapeHtml(x)}</span>`).join('');
+    const fws = (s.frameworks || []).map(x => `<span class="pill">${escapeHtml(x)}</span>`).join('');
+    const pr = s.pr_url ? `<a href="${escapeAttr(s.pr_url)}" target="_blank" rel="noopener">#${escapeHtml(String(s.pr_number || 'PR'))}</a>` : '—';
+    const f1c = s.control_file_f1_avg;
+    const f1d = s.codedna_file_f1_avg;
+    const f1 = (f1c != null || f1d != null)
+      ? `${f1c != null ? Number(f1c).toFixed(2) : '—'} / ${f1d != null ? Number(f1d).toFixed(2) : '—'}`
+      : '—';
+    const judge = s.judge_favors || '—';
+    const demo = s.demo ? ' <span class="pill">demo</span>' : '';
+    return `<tr>
+      <td><strong>${escapeHtml(s.handle || '—')}</strong>${demo}</td>
+      <td>${langs}<div style="margin-top:4px">${fws || '<span class="pill">—</span>'}</div></td>
+      <td><span class="pill">${escapeHtml(s.size_band || '—')}</span></td>
+      <td class="mono">${s.approx_source_files != null ? escapeHtml(String(s.approx_source_files)) : '—'}</td>
+      <td class="mono">${escapeHtml(s.mode || '—')}</td>
+      <td class="mono">${escapeHtml(String(s.control_passed ?? '—'))} / ${escapeHtml(String(s.codedna_passed ?? '—'))}</td>
+      <td class="mono">${escapeHtml(f1)}</td>
+      <td class="${favorsClass(s.favors)}">${escapeHtml(s.favors || '—')}</td>
+      <td class="${favorsClass(s.judge_favors)}">${escapeHtml(String(judge))}</td>
+      <td>${pr}</td>
+    </tr>`;
+  }).join('');
+
+  root.innerHTML = `<div class="table-wrap"><table class="board">
+    <thead><tr>
+      <th>${dict.thHandle}</th><th>${dict.thStack}</th><th>${dict.thSize}</th><th>${dict.thFiles}</th>
+      <th>${dict.thMode}</th><th>${dict.thScore}</th><th>${dict.thF1}</th><th>${dict.thFavors}</th><th>${dict.thJudge}</th><th>${dict.thPr}</th>
+    </tr></thead>
+    <tbody>${body}</tbody>
+  </table></div>`;
+}
+
+function escapeHtml(s) {
+  return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+function escapeAttr(s) { return escapeHtml(s).replace(/`/g, ''); }
+
+async function loadBoard() {
+  try {
+    const res = await fetch('challenge-board.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error(res.statusText);
+    boardData = await res.json();
+  } catch (e) {
+    boardData = { prize_eur: 200, min_submissions_to_unlock: 5, status: 'open', submissions: [], updated_at: null };
+  }
+  renderBoard(boardData);
+}
+
+document.getElementById('filter-favors').addEventListener('change', () => boardData && renderBoard(boardData));
+document.getElementById('filter-size').addEventListener('change', () => boardData && renderBoard(boardData));
+applyI18n();
+loadBoard();
+</script>
+</body>
+</html>
